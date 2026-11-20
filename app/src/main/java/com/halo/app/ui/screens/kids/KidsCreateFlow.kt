@@ -20,7 +20,8 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun KidsCreateFlow(project: KidsProjectViewModel, onOpenCanvas: ((String) -> Unit)?) {
     val state by project.state.collectAsStateWithLifecycle()
-    val cloudAllowed by Graph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
+    val appMode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
+    val cloudAllowed = appMode == com.halo.app.ai.PrivacyMode.CLOUD && Graph.privacyModes.sharingAcknowledged
     val scope = rememberCoroutineScope()
     val library by project.library.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current

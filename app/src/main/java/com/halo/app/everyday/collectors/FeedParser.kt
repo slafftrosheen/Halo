@@ -17,8 +17,8 @@ import org.xml.sax.helpers.DefaultHandler
 
 /** Feed HTML becomes inert text. This parser never resolves a URL or requests any resource. */
 object SafeFeedText {
-    fun plain(markup: String, maximum: Int = 16000): String {
-        require(markup.length <= 65536 && maximum in 1..16000)
+    fun plain(markup: String, maximum: Int = 200000): String {
+        require(markup.length <= 262144 && maximum in 1..200000)
         val document = Jsoup.parseBodyFragment(markup)
         document.select("script,style,noscript,iframe,object,embed,svg,math,form,input,button").remove()
         return document.body().text().replace(Regex("[\\p{Cc}&&[^\\n\\t]]"), "").trim().take(maximum)
@@ -45,7 +45,9 @@ object FeedParser {
     private class Item {
         var id: String? = null; var title = ""; var text = ""; var url: String? = null
         var published: String? = null; var language: String? = null
+        var bodyMarkup: String? = null
         val categories = mutableListOf<String>()
+        val images = mutableListOf<ArticleImage>()
         val cap = mutableMapOf<String, String>()
     }
     fun parse(bytes: ByteArray, source: CollectorSource): ParsedFeed {
@@ -72,13 +74,19 @@ object FeedParser {
                     item!!.language = attributes.getValue("http://www.w3.org/XML/1998/namespace", "lang") ?: attributes.getValue("xml:lang")
                 }
                 val active = item ?: return
+                if (name in setOf("thumbnail", "content", "enclosure", "img") && active.images.size < ArticleExtractor.MAX_IMAGES) {
+                    val raw = attributes.getValue("url") ?: attributes.getValue("src")
+                    val type = attributes.getValue("type").orEmpty()
+                    if (name in setOf("thumbnail", "img") || type.startsWith("image/") || attributes.getValue("medium") == "image")
+                        link(raw, source.endpoint)?.let { active.images += ArticleImage(it) }
+                }
                 if (name == "link" && attributes.getValue("href") != null && attributes.getValue("rel") in setOf(null, "alternate"))
                     active.url = active.url ?: link(attributes.getValue("href"), source.endpoint)
                 if (name == "category" && active.categories.size < 20) attributes.getValue("term")?.let { active.categories += SafeFeedText.plain(it.take(65536), 80) }
                 if (name in fields && field == null) { field = name; fieldDepth = depth; buffer.setLength(0) }
             }
             override fun characters(chars: CharArray, start: Int, length: Int) {
-                if (field != null && buffer.length < 32768) buffer.append(chars, start, minOf(length, 32768 - buffer.length))
+                if (field != null && buffer.length < 262144) buffer.append(chars, start, minOf(length, 262144 - buffer.length))
             }
             override fun endElement(uri: String?, localName: String?, qName: String?) {
                 val active = item
@@ -87,19 +95,23 @@ object FeedParser {
                     when (field) {
                         "guid", "id" -> if (active.id == null && value.isNotEmpty()) active.id = value.take(2000)
                         "title" -> if (active.title.isEmpty()) active.title = SafeFeedText.plain(value, 500)
-                        "description", "summary", "content", "encoded" -> if (value.length > active.text.length) active.text = SafeFeedText.plain(value)
+                        "description", "summary", "content", "encoded" -> {
+                            if (value.length > (active.bodyMarkup?.length ?: 0)) { active.text = SafeFeedText.plain(value); active.bodyMarkup = value }
+                        }
                         "link" -> active.url = active.url ?: link(value, source.endpoint)
                         "pubdate", "published", "date", "updated" -> if (active.published == null && date(value) != null) active.published = value
                         "category" -> if (active.categories.size < 20 && value.isNotBlank()) active.categories += SafeFeedText.plain(value, 80)
                         else -> active.cap[field!!] = SafeFeedText.plain(value, if (field == "areadesc") 1000 else 500)
                     }
                     field = null; buffer.setLength(0)
-                } else if (active != null && field != null && depth > fieldDepth && buffer.length < 32768) buffer.append(' ')
+                } else if (active != null && field != null && depth > fieldDepth && buffer.length < 262144) buffer.append(' ')
                 if (active != null && depth == itemDepth) {
                     if (articles.size < CollectorRefreshPolicy.MAX_ITEMS && active.title.isNotBlank()) {
+                        active.bodyMarkup?.let { markup -> (active.url ?: source.endpoint)?.let { base -> active.images += ArticleExtractor.images(markup, base) } }
                         val identity = source.id + ":" + digest(active.id ?: active.url ?: "${active.title}\n${active.published}")
                         articles.putIfAbsent(identity, ArticleFact(identity, active.title, active.text, active.url, source.publisher,
-                            date(active.published), active.language?.take(35) ?: source.language, active.categories.distinct()))
+                            date(active.published), active.language?.take(35) ?: source.language, active.categories.distinct(),
+                            active.images.distinctBy { it.url }.take(ArticleExtractor.MAX_IMAGES)))
                         if (source.kind == CollectorKind.ALERTS) warnings.putIfAbsent(identity, WarningFact(identity,
                             active.cap["headline"]?.takeIf { it.isNotBlank() } ?: active.title, active.text, active.cap["areadesc"], active.cap["severity"],
                             date(active.cap["onset"] ?: active.cap["effective"]), date(active.cap["expires"]), link(active.cap["web"], source.endpoint) ?: active.url, source.publisher))

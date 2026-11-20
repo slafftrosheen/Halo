@@ -2,6 +2,12 @@ package com.halo.app.ui.shell
 
 import androidx.navigation.NavHostController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import kotlinx.coroutines.flow.first
+
+/** Scaffold subcomposition may attach the graph after the resumed Activity's effects start. */
+internal suspend fun NavHostController.awaitNavigationReady() {
+    if (currentDestination == null) currentBackStackEntryFlow.first()
+}
 
 private val settingsRoutes = setOf(
     "ai_settings", "voice_settings", "permissions", "provider_setup", "model_browser",
@@ -27,11 +33,19 @@ fun primaryNavigationRoute(route: String?): String? = when {
 
 fun NavHostController.navigateToPrimary(route: String, restoreSavedState: Boolean = true) {
     if (currentDestination?.route == route) return
+    // Configuration opened from a resumed guide is a child of that exact entry.
+    // Popping to Home would discard the guide and its saved verification state.
+    val guidedSetupActive = try {
+        getBackStackEntry("guided_setup")
+        true
+    } catch (_: IllegalArgumentException) {
+        false
+    }
     navigate(route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
+        if (!guidedSetupActive) popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         // An explicit destination request must not restore a detail above that root.
-        restoreState = restoreSavedState
+        restoreState = restoreSavedState && !guidedSetupActive
     }
 }
 

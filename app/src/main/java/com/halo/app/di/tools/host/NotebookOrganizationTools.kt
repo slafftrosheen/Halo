@@ -12,11 +12,12 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 /** Typed organization operations through the existing VM and Room organization owner. */
-class NotebookOrganizationTools(private val session: NotebookLibrarySession) : ToolExecutor {
+class NotebookOrganizationTools(private val session: NotebookLibrarySession,
+    private val remoteAuthority: () -> (() -> Boolean)? = { null }) : ToolExecutor {
     override fun definitions() = listOf(
-        ToolDefinition(READ, READ, "Explicitly read local favorite/membership metadata for an object visible in the current Library and/or an existing collection. Requires its fresh settled halo_library_view snapshot. Returns a one-use organization snapshot for guarded changes. No title, document content, source context attachment, remote disclosure or navigation. Omit targets when preparing creation of a collection.",
+        ToolDefinition(READ, READ, "Explicitly read favorite/membership metadata for an object visible in the current Library and/or an existing collection. Requires its fresh settled halo_library_view snapshot. Returns a one-use organization snapshot for guarded changes. No title, document content, source context attachment or navigation; Power requires existing Workspace sharing. Omit targets when preparing creation of a collection.",
             schema(mapOf("expectedSnapshot" to token, "objectId" to id, "collectionId" to id), listOf("expectedSnapshot"))),
-        ToolDefinition(WRITE, WRITE, "After explicit approval, apply exactly one persisted Library organization operation: set_favorite(objectId,value), set_membership(objectId,collectionId,value), create_collection(name), delete_collection(collectionId). Explicit target IDs must match the organization read. Requires the exact view and one-use organization snapshots returned by local read tools. Source row, favorite, collection list and relevant memberships are compared atomically within the existing Room transaction; changed source/selection/entry is rejected. Delete collection removes its organization record/memberships, never its source objects. No mixed batch/archive/trash/restore/purge. Never retry/replay without a fresh read and approval.",
+        ToolDefinition(WRITE, WRITE, "After explicit approval, apply exactly one persisted Library organization operation: set_favorite(objectId,value), set_membership(objectId,collectionId,value), create_collection(name), delete_collection(collectionId). Explicit target IDs must match the organization read. Requires the exact view and one-use organization snapshots returned by the read tools. Source row, favorite, collection list and relevant memberships are compared atomically within the existing Room transaction; changed source/selection/entry is rejected. Delete collection removes its organization record/memberships, never its source objects. No mixed batch/archive/trash/restore/purge. Never retry/replay without a fresh read and approval.",
             schema(mapOf("expectedSnapshot" to token, "expectedOrganization" to token,
                 "operation" to mapOf("type" to "string", "enum" to listOf("set_favorite", "set_membership", "create_collection", "delete_collection")),
                 "objectId" to id, "collectionId" to id, "value" to mapOf("type" to "boolean"), "name" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 60)),
@@ -25,7 +26,9 @@ class NotebookOrganizationTools(private val session: NotebookLibrarySession) : T
     override suspend fun execute(toolCall: ToolCall) = execute(toolCall, ToolExecutionContext())
     override suspend fun execute(toolCall: ToolCall, context: ToolExecutionContext): ToolExecutionResult {
         if (toolCall.functionName !in NAMES) return reject(toolCall, ToolRejectionKind.TOOL_UNKNOWN)
-        if (currentCoroutineContext()[RunToolScope]?.targetIsLocal != true) return reject(toolCall, ToolRejectionKind.PERMISSION_REQUIRED)
+        val scope = currentCoroutineContext()[RunToolScope]
+        val admit = if (scope?.targetIsLocal == true) ({ true }) else if (scope != null) remoteAuthority() else null
+        if (admit == null || !admit()) return reject(toolCall, ToolRejectionKind.PERMISSION_REQUIRED)
         if (toolCall.functionName == WRITE && context.interactionId.isNullOrBlank()) return reject(toolCall, ToolRejectionKind.PERMISSION_REQUIRED)
         val args = toolCall.arguments
         val expected = (args["expectedSnapshot"] as? String)?.takeIf { it.length in 1..100 }
@@ -35,6 +38,7 @@ class NotebookOrganizationTools(private val session: NotebookLibrarySession) : T
             for (key in listOf("objectId", "collectionId")) if (key in args && ((args[key] as? String)?.takeIf { it.length in 1..240 } == null))
                 return reject(toolCall, ToolRejectionKind.INVALID_ARGUMENTS)
             return withContext(Dispatchers.Main.immediate) {
+                if (!admit()) return@withContext reject(toolCall)
                 val result = session.organization(expected, args["objectId"] as? String, args["collectionId"] as? String)
                     ?: return@withContext reject(toolCall)
                 val data = result.data
@@ -42,6 +46,7 @@ class NotebookOrganizationTools(private val session: NotebookLibrarySession) : T
                     .put("objectId", data.objectId ?: JSONObject.NULL).put("collectionId", data.collectionId ?: JSONObject.NULL)
                     .put("favorite", data.favorite != null).put("member", data.members.any { it.objectId == data.objectId })
                     .put("collectionExists", data.collections.any { it.id == data.collectionId }).put("contentRead", false)
+                if (!admit()) return@withContext reject(toolCall)
                 ToolExecutionResult.Success(toolCall.id, READ, output.toString(), ActionTruth.ACKNOWLEDGED)
             }
         }
@@ -68,14 +73,15 @@ class NotebookOrganizationTools(private val session: NotebookLibrarySession) : T
             else -> return reject(toolCall, ToolRejectionKind.INVALID_ARGUMENTS)
         }
         return withContext(Dispatchers.Main.immediate) {
+            if (!admit()) return@withContext reject(toolCall)
             try {
             val readback = session.readbackLease() ?: return@withContext reject(toolCall)
             val result = try {
-                session.organize(expected, organization, change, args["objectId"] as? String, args["collectionId"] as? String)
+                session.organize(expected, organization, change, args["objectId"] as? String, args["collectionId"] as? String, admit)
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) { return@withContext uncertain(toolCall) }
             if (result == null) return@withContext reject(toolCall)
-            if (!session.canReadback(readback)) return@withContext uncertain(toolCall)
+            if (!session.canReadback(readback) || !admit()) return@withContext uncertain(toolCall)
             val output = JSONObject().put("schemaVersion", 1).put("operation", result.operation)
                 .put("objectId", result.objectId ?: JSONObject.NULL).put("collectionId", result.collectionId ?: JSONObject.NULL)
                 .put("value", result.value ?: JSONObject.NULL).put("applied", true).put("readbackConfirmed", true)
@@ -114,8 +120,8 @@ class NotebookOrganizationTools(private val session: NotebookLibrarySession) : T
             resultSchema = mapOf("type" to "object", "properties" to mapOf("schemaVersion" to mapOf("type" to "integer"),
                 "objectId" to mapOf("type" to listOf("string", "null")), "collectionId" to mapOf("type" to listOf("string", "null")),
                 "organizationSnapshot" to token, "applied" to mapOf("type" to "boolean"), "readbackConfirmed" to mapOf("type" to "boolean"))),
-            limitations = setOf("Foreground grown-up local Library only; writes require ALWAYS approval and NEVER_REPLAY registration.",
-                "Only explicit favorite/membership/collection operations, not mixed batch lifecycle, document content, remote disclosure or actual voice acceptance.",
+            limitations = setOf("Foreground grown-up Library only; writes require ALWAYS approval and NEVER_REPLAY registration.",
+                "Only explicit favorite/membership/collection operations; Power requires Workspace sharing. No mixed batch lifecycle or document body read.",
                 "Favorite/membership changes reject trashed objects. Metadata comparison is exact inside the existing transaction; view lease is checked at admission."))
     }
 }

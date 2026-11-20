@@ -315,7 +315,7 @@ class ToolRegistry(
             descriptor(toolCall.functionName)?.security?.risk == ToolRiskClass.READ_ONLY) {
             val classification = when {
                 toolCall.functionName.startsWith("mcp.") -> PayloadClassification.MCP_RESULT
-                toolCall.functionName == "halo_fetch_url" -> PayloadClassification.WEB_CONTENT
+                toolCall.functionName in setOf("halo_fetch_url", "halo_web_search") -> PayloadClassification.WEB_CONTENT
                 toolCall.functionName.contains("memory") -> PayloadClassification.MEMORY_RESULT
                 else -> PayloadClassification.TOOL_RESULT
             }

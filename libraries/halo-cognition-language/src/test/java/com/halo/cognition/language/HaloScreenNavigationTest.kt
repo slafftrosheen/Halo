@@ -7,7 +7,7 @@ class HaloScreenNavigationTest {
     @Test fun primaryPagesResolveWithoutAModelInEverySupportedLanguage() {
         val commands = mapOf(
             "notebook" to listOf("open workspace", "открой рабочее пространство", "atver darbvietu", "otwórz obszar roboczy"),
-            "screen" to listOf("open halo screen", "открой экран halo", "atver halo ekrānu", "otwórz ekran halo"),
+            "home" to listOf("open halo home", "открой главную halo", "atver halo sākumu", "otwórz stronę główną halo"),
             "studio" to listOf("open studio", "открой студию", "atver studiju", "otwórz studio"),
             "file_tools" to listOf("open file tools", "открой инструменты файлов", "atver failu rīkus", "otwórz narzędzia plików"),
             "study" to listOf("open study", "открой обучение", "atver mācības", "otwórz naukę"),
@@ -16,6 +16,13 @@ class HaloScreenNavigationTest {
         commands.forEach { (screen, phrases) -> phrases.forEach { phrase ->
             assertEquals(phrase, NativeHaloScreenIntent(screen), NativeCommandParser.parse(phrase))
         } }
+    }
+
+    @Test fun retiredAmbientScreenIsNotAStandaloneDestination() {
+        assertNull(NativeHaloScreenDestination.fromWire("screen"))
+        listOf("open halo screen", "открой экран halo", "atver halo ekrānu", "otwórz ekran halo").forEach {
+            assertFalse(it, NativeCommandParser.parse(it) is NativeHaloScreenIntent)
+        }
     }
 
     @Test fun registeredPhrasesAreUniqueAndUseTheSameClosedScreenContract() {

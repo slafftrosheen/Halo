@@ -22,12 +22,15 @@ class AndroidLocalCollectors(private val context: Context, private val database:
         LocalStateCollector(CollectorKind.LOCAL_ORGANIZER) {
             organizer.records().filter { it.status == OrganizerStatus.ACTIVE }
                 .sortedWith(compareByDescending<OrganizerRecord> { it.priority }.thenByDescending { it.updatedAt }.thenBy { it.id })
-                .take(100).map { record -> LocalFact(record.id, record.kind.name, record.title, record.details.take(500),
+                .take(100).map { record -> LocalFact(record.id, record.kind.name, record.title, record.details,
                     "halo://organizer/record/${record.id}", record.version.toString(), record.updatedAt) }
         },
         LocalStateCollector(CollectorKind.LOCAL_WORKSPACE) {
-            database.notebookDao().recentNoteObjects(100).map { note -> LocalFact(note.id, "NOTE", note.title, "",
-                "halo://workspace/object/${note.id}", note.updatedAt.toString(), Instant.ofEpochMilli(note.updatedAt)) }
+            database.notebookDao().recentNoteObjects(100).mapNotNull { note ->
+                val document = database.notebookDocumentDao().getDocument(note.id)?.takeIf { it.lifecycle == "ACTIVE" } ?: return@mapNotNull null
+                LocalFact(note.id, "NOTE", document.title, document.body.take(10000),
+                    "halo://workspace/object/${note.id}", "${document.updatedAt}:${document.revision}", Instant.ofEpochMilli(document.updatedAt))
+            }
         },
         LocalStateCollector(CollectorKind.LOCAL_ACTIVITY) {
             val runs = database.agentRunDao().recentRoots(60).map { run -> LocalFact("run:${run.id}", "ACTIVITY",

@@ -32,13 +32,14 @@ class CurrentScreenExposurePolicyTest {
         assertEquals(setOf(RemoteDataCategory.TOOLS, RemoteDataCategory.SCREEN, RemoteDataCategory.WORKSPACE),
             remoteToolResultCategories("halo_current_screen"))
     }
-    @Test fun localLibraryAndSavedHistoryAreNotAdvertisedRemotelyEvenWithBroadCategoryConsent() {
+    @Test fun libraryAndSavedHistoryRequireTheirExistingDisclosureCategories() {
         val gate = DefaultToolExposureGate()
         val remote = ToolExposureContext(isLocalTarget = false,
             policy = AiContextPolicy(allowCloudScreenContext = true, allowCloudWorkspace = true, allowCloudMemories = true))
         (PersonalConfigurationToolAccess.library + PersonalConfigurationToolAccess.savedChats).forEach { name ->
-            val tool = descriptor.copy(id = ToolId(name), definition = ToolDefinition(name, name, "Local owner"))
-            assertTrue(name, gate.evaluate(tool, remote) is ToolExposureDecision.Deny)
+            val tool = descriptor.copy(id = ToolId(name), definition = ToolDefinition(name, name, "Canonical owner"))
+            assertEquals(name, ToolExposureDecision.Allow, gate.evaluate(tool, remote))
+            assertTrue(name, gate.evaluate(tool, remote.copy(policy = remote.policy.copy(allowCloudWorkspace = false))) is ToolExposureDecision.Deny)
         }
         PersonalConfigurationToolAccess.savedChats.forEach { name ->
             assertEquals(setOf(RemoteDataCategory.TOOLS, RemoteDataCategory.WORKSPACE, RemoteDataCategory.CONVERSATION), remoteToolResultCategories(name))

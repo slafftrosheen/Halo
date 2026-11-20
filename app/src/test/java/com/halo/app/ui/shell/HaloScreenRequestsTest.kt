@@ -5,6 +5,12 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class HaloScreenRequestsTest {
+    @Test fun retiredAmbientRequestReturnsHomeAndEverydayDestinationsRemainAvailable() {
+        assertEquals("home", HaloScreenRequests.claim(MutableStateFlow<String?>("screen"), true))
+        for (route in listOf("screen/organizer", "screen/sources", "screen/clocks", "screen/brief", "mini_halo"))
+            assertEquals(route, HaloScreenRequests.claim(MutableStateFlow<String?>(route), true))
+        assertFalse(HaloScreenCatalog.screens.containsKey("screen"))
+    }
     @Test fun backgroundHostCannotStealTheCompactHostsRequest() {
         val pending = MutableStateFlow<String?>("mini_halo")
         assertNull(HaloScreenRequests.claim(pending,false))

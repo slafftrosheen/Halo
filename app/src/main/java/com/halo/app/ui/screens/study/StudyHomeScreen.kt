@@ -66,7 +66,6 @@ fun StudyHomeScreen(
     val reads by model.reads.collectAsStateWithLifecycle()
 
     var picker by remember { mutableStateOf(false) }
-    var executionChoice by rememberSaveable { mutableStateOf<String?>(null) }
     var setupStep by rememberSaveable { mutableIntStateOf(0) }
     // A source/passage arriving from Notebook or capture enters the wizard,
     // not the existing-lesson home. Model selection is populated by the host.
@@ -123,7 +122,6 @@ fun StudyHomeScreen(
                         style = StudySupportStyle.GUIDED
                         policy = StudyKnowledgePolicy.SOURCE_ONLY
                         setupStep = 0
-                        executionChoice = null
                         newLesson = true
     }
     val hasLearningInput = topic.isNotBlank() || selected.isNotEmpty()
@@ -131,7 +129,7 @@ fun StudyHomeScreen(
     val setupLabels = listOf("Goal", "Material", "Style", "Options")
     val startLesson = {
         model.start(topic, language, assignment, strongest, level, style,
-            studyKnowledgePolicyForSources(selected.isNotEmpty(), policy), executionChoice = executionChoice)
+            studyKnowledgePolicyForSources(selected.isNotEmpty(), policy))
     }
     val returnFromSetup: () -> Unit = {
         when {
@@ -155,7 +153,7 @@ fun StudyHomeScreen(
         it.objectId == id && it !is ResolvedStudySource.Unsupported && it.revision != null
     } }
     val canContinueSetup = studySetupCanContinue(setupStep, hasLearningInput, busy) &&
-        (setupStep < 3 || executionChoice != null && materialReady)
+        (setupStep < 3 || materialReady)
     val continueSetup: () -> Unit = { if (setupStep < 3) setupStep++ else startLesson() }
     val pageOwner = ShellPageOwner("study", sourceIdentity = "home:$setupActive:$setupStep:${selected.hashCode()}:${previews.hashCode()}:$busy",
         canonicalToolIds = listOf("halo_study_sessions"),
@@ -166,7 +164,6 @@ fun StudyHomeScreen(
         disabledActionReasons = mapOf("page.study.next" to when {
             busy -> stringResource(R.string.action_wait)
             setupStep == 3 && !materialReady -> stringResource(studyMaterialUnavailableMessage(reads))
-            setupStep == 3 && executionChoice == null -> stringResource(R.string.action_choose_execution)
             else -> setupHelp
         }),
         helpSteps = if (setupActive) listOf(com.halo.app.ui.presence.ShellGuideStep("study-setup-$setupStep.v1", "page.study.next", setupHelp))
@@ -445,17 +442,7 @@ fun StudyHomeScreen(
             if ((setupActive) && setupStep == 3) {
             item(key = "learning_options") {
                 StudyHomeStep(4, "Learning options") {
-                    Text(uiText("Where should halo think?"), style = MaterialTheme.typography.titleMedium)
-                    Text(uiText("Choose for this lesson. Neither option is selected for you."), style = MaterialTheme.typography.bodyMedium)
-                    listOf("phone" to "On this phone", "cloud" to "With cloud help").forEach { (choice, label) ->
-                        OutlinedButton(onClick = { executionChoice = choice },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), enabled = !busy,
-                            border = BorderStroke(if (executionChoice == choice) 2.dp else 1.dp,
-                                if (executionChoice == choice) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)) {
-                            Text(uiText(label))
-                            if (executionChoice == choice) { Spacer(Modifier.width(8.dp)); Text("✓") }
-                        }
-                    }
+                    com.halo.app.ui.components.PrivacyModeControl(detail = true)
                     if (optionsExpanded) {
                         StudyLearningSetup(
                             level, style, policy,

@@ -22,7 +22,9 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     private var activating = false
     private var loadError: String? = null
     private var snapshot: ModeProfiles = try {
-        backing.getString(MODE_PROFILES_KEY)?.let(ModeProfiles::decode) ?: ModeProfiles.migrate(backing)
+        (backing.getString(MODE_PROFILES_KEY)?.let(ModeProfiles::decode) ?: ModeProfiles.migrate(backing)).let {
+            it.replacing(PrivacyMode.PRIVATE, it.privateProfile).replacing(PrivacyMode.CLOUD, it.powerProfile)
+        }
     } catch (_: Exception) {
         loadError = "Mode profiles could not be restored. Local mode is active. Review Mode profiles."
         ModeProfiles(PrivacyMode.PRIVATE, ModeProfiles.defaults(PrivacyMode.PRIVATE),
@@ -132,9 +134,9 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     }
 
     /** Readiness is transient; restoring identical family settings must not invalidate durable queued work. */
-    fun reconcileFamilyAuthority(ready: Boolean, enabled: Boolean, cloudAllowed: Boolean) = synchronized(lock) {
+    fun reconcileFamilyAuthority(ready: Boolean, enabled: Boolean) = synchronized(lock) {
         if (!ready) { revoke(); return@synchronized }
-        val value = "$enabled:$cloudAllowed"
+        val value = "$enabled:false"
         try {
             if (backing.getString(FAMILY_AUTHORITY_KEY) != value) {
                 // Persist the new revision first. A crash between writes remains conservative on restart.
@@ -241,7 +243,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     companion object {
         private const val FAMILY_AUTHORITY_KEY = "remote_family_authority_v1"
         // These transport owners do not need model/provider construction to decide authority.
-        private val SHIPPED_TRANSPORTS = setOf("web.public", "mcp.configured", "google.mail", MODEL_DOWNLOAD_OWNER, PUBLIC_COLLECTOR_OWNER)
+        private val SHIPPED_TRANSPORTS = setOf("web.public", "mcp.configured", "google.mail", "account.chatgpt", MODEL_DOWNLOAD_OWNER, PUBLIC_COLLECTOR_OWNER)
     }
 }
 

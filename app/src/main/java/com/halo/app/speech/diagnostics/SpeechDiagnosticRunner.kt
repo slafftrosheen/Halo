@@ -16,7 +16,8 @@ data class SpeechDiagnosticResult(val target: SpeechDiagnosticTarget, val temper
 data class SpeechDiagnosticSession(val capture: DiagnosticAudioCapture, val language: String,
     val reference: String = "", val id: String = UUID.randomUUID().toString(),
     val timestamp: Long = System.currentTimeMillis(), val activity: SpeechActivityEstimate,
-    val rms: Double, val warnings: List<String>, val results: MutableList<SpeechDiagnosticResult> = mutableListOf()) : AutoCloseable {
+    val rms: Double, val warnings: List<String>, val results: MutableList<SpeechDiagnosticResult> = mutableListOf(),
+    val recognitionCapture: RecognitionCaptureContext = RecognitionCaptureContext("unavailable")) : AutoCloseable {
     override fun close() { capture.close(); results.clear() }
     fun summary(includeTranscripts: Boolean = false): String = buildString {
         appendLine("Speech session $id @ $timestamp; source=${capture.source}; language=$language")
@@ -55,6 +56,7 @@ class SpeechDiagnosticRunner(
         var sample: DiagnosticAudioCapture? = null
         var stage = SpeechDiagnosticStage.CAPTURE
         try {
+            val recognitionCapture = selected.captureContext()
             sample = capture(maxDurationMs, finish)
             stage = SpeechDiagnosticStage.PREPROCESS
             check(sample.audio.frames.all { it.sampleRate == 16000 && it.channels == 1 }) { "Expected 16 kHz mono PCM" }
@@ -64,7 +66,7 @@ class SpeechDiagnosticRunner(
             val count = frames.sumOf { it.samples.size }
             val rms = sqrt(frames.sumOf { frame -> frame.samples.sumOf { it.toDouble() * it } } / count.coerceAtLeast(1))
             return SpeechDiagnosticSession(sample, language(), reference, activity = activity, rms = rms,
-                warnings = buildList {
+                recognitionCapture = recognitionCapture, warnings = buildList {
                     if (activity.peakAmplitude < 1000) add("Low amplitude")
                     if (frames.any { f -> f.samples.any { kotlin.math.abs(it.toInt()) >= 32760 } }) add("Possible clipping")
                     if (activity.voicedDurationMs < 120) add("Little detected voice")
@@ -117,7 +119,7 @@ class SpeechDiagnosticRunner(
             check(provider.health()) { provider.healthDetails().message ?: "Verified model unavailable" }
             stage = SpeechDiagnosticStage.DECODE
             // JNI cannot be interrupted. Do not free native state or PCM until this returns.
-            val result = withContext(Dispatchers.Default) { provider.recognize(session.capture.audio) }
+            val result = withContext(Dispatchers.Default + session.recognitionCapture.context) { provider.recognize(session.capture.audio) }
             currentCoroutineContext().ensureActive()
             stage = SpeechDiagnosticStage.TRANSCRIPT_GATE
             val a = session.activity

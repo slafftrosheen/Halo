@@ -28,7 +28,9 @@
     "halo_source_save",
     "halo_widget_configure",
     "halo_widget_pin",
-    "halo_widget_query"
+    "halo_widget_query",
+    "halo_day_context",
+    "halo_source_image"
   ],
   "toolDefinitions": [
     {
@@ -138,6 +140,16 @@
     },
     {
       "toolId": "halo_widget_query",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_day_context",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_source_image",
       "risk": "READ_ONLY",
       "requiredPermissions": []
     }

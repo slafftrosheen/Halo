@@ -26,9 +26,9 @@
     <string name="device_files_next">Далее</string>
     <string name="device_files_import">В Библиотеку: %1$d файлов</string>
     <string name="device_files_limits">До 16 файлов за передачу, не более 256 МиБ каждый.</string>
-    <string name="device_files_empty">Очки не сообщили о файлах.</string>
+    <string name="device_files_empty">Нет новых файлов для копирования. Ранее сохранённые файлы находятся в Библиотеке.</string>
     <string name="device_files_saved">Полученные файлы · продолжить в Halo</string>
     <string name="device_files_in_trash">Эта копия уже в Корзине. При необходимости восстановите её в Библиотеке.</string>
     <string name="device_files_original">Исходные данные сохранены. Для этого формата может понадобиться другое приложение; воспроизведение не проверено.</string>
-    <string name="device_files_local_only">Копии остаются на телефоне, пока вы не выберете, как использовать или отправить их. Действия в Библиотеке затрагивают копию. Оригиналы на очках сохраняются.</string>
+    <string name="device_files_local_only">Копии остаются на телефоне, пока вы не решите ими поделиться. Действия в Библиотеке затрагивают только копию. После передачи очки могут перестать предоставлять файлы, поэтому сохраняйте нужные копии.</string>
 </resources>

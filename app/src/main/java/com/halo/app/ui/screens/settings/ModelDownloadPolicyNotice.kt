@@ -15,10 +15,8 @@ internal fun modelDownloadsAllowed(): Boolean {
     val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
     val revision by Graph.privacyModes.profileChanges.collectAsStateWithLifecycle()
     val ready by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
-    val kids by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
-    val childCloud by Graph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
-    return remember(mode, revision, ready, kids, childCloud) {
-        mode == PrivacyMode.CLOUD && Graph.privacyModes.sharingAcknowledged && ready && (!kids || childCloud) &&
+    return remember(mode, revision, ready) {
+        mode == PrivacyMode.CLOUD && Graph.privacyModes.sharingAcknowledged && ready &&
             OnlineFeature.CONNECTED_SERVICES in Graph.privacyModes.profile(PrivacyMode.CLOUD).onlineFeatures
     }
 }

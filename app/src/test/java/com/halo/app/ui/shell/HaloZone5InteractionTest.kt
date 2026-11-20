@@ -163,11 +163,12 @@ class HaloZone5InteractionTest {
     @Test fun menuExposesRootsAndProfileWithoutInstrumentActionsOrVoice() {
         show()
         compose.onNodeWithText("Menu").performClick()
-        for (label in listOf("HaloScreen", "Home", "Workspace", "Devices", "Activities & notifications", "Settings"))
-            compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed()
-        compose.onNodeWithText("Local profile control").assertIsDisplayed()
+        for (label in listOf("Home", "Organizer", "Sources", "Your day in halo", "World clocks", "Workspace", "Devices", "Activities & notifications", "Settings"))
+            compose.onNode(hasText(label) and hasClickAction()).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("HaloScreen").assertDoesNotExist()
+        compose.onNodeWithText("Local profile control").performScrollTo().assertIsDisplayed()
         compose.onNode(hasText("Edit 1") and hasClickAction() and hasAnyAncestor(isDialog())).assertDoesNotExist()
-        compose.onNode(hasText("Workspace") and hasClickAction()).assertIsSelected().performClick()
+        compose.onNode(hasText("Workspace") and hasClickAction()).performScrollTo().assertIsSelected().performClick()
         assertEquals(listOf("notebook"), invoked)
         compose.onNodeWithText("Unsaved document").assertIsDisplayed()
     }

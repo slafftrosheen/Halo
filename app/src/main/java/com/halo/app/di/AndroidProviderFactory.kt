@@ -67,6 +67,13 @@ class AndroidProviderFactory(
         val sherpaModelDirectory = File(speechRoot, SherpaSpeechModelCatalog.WHISPER_TINY_DIRECTORY)
         val speechSelector = DefaultSpeechProviderSelector(SpeechSelectionRepository(storage))
         val androidTts = AndroidTTSProvider(context)
+        val openRouterTts = com.halo.providers.openrouter.OpenRouterSpeechProvider(storage,
+            decodeMp3 = com.halo.app.audio.SpeechMp3Decoder()::decode,
+            client = com.halo.providers.openrouter.OpenRouterSpeechProvider.defaultClient()
+                .withRemoteDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy) { request ->
+                    RemoteDispatchRequest("provider.openrouter.tts", RemoteOperation.HOSTED_SPEECH,
+                        setOf(if (request.method == "GET") RemoteDataCategory.ACCOUNT_METADATA else RemoteDataCategory.TEXT))
+                })
         val elevenLabsTts = com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider(storage,
             client = okhttp3.OkHttpClient.Builder().connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
                 .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS).callTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
@@ -76,6 +83,14 @@ class AndroidProviderFactory(
                 })
         val kokoroTts = com.halo.app.audio.KokoroSpeechProvider(context,storage,nativeResourceCoordinator)
         val supertonicTts = com.halo.app.audio.SupertonicSpeechProvider(context,storage,nativeResourceCoordinator)
+        val openRouterStt = com.halo.providers.openrouter.OpenRouterRecognitionProvider(storage,
+            language = { speechLanguageSettings?.languageMode?.value ?: storage.getString("speech_locale") ?: "auto" },
+            policy = ManualDependencyGraph.remoteDispatchPolicy,
+            client = com.halo.providers.openrouter.OpenRouterSpeechProvider.defaultClient()
+                .withRemoteDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy) { request ->
+                    RemoteDispatchRequest(com.halo.providers.openrouter.OpenRouterRecognitionProvider.ID, RemoteOperation.HOSTED_SPEECH,
+                        setOf(if (request.method == "GET") RemoteDataCategory.ACCOUNT_METADATA else RemoteDataCategory.AUDIO))
+                })
         val speechRecognition: SpeechRecognitionProvider = ReloadableSpeechRecognitionProvider(
             modelDirectory = sherpaModelDirectory,
             getLanguage = {
@@ -85,6 +100,9 @@ class AndroidProviderFactory(
                 configuredLocale.substringBefore('-').substringBefore('_')
             },
             selector = speechSelector,
+            externalProviders = listOf(openRouterStt),
+            // Read the synchronized active profile, including during mode preparation.
+            allowExternal = { storage.getString(com.halo.app.ai.PRIVACY_MODE_KEY) == com.halo.app.ai.PrivacyMode.CLOUD.name },
             languageChanges = speechLanguageSettings?.languageMode,
             prepareLanguage = { speechLanguageSettings?.loadAndMigrate(); Unit },
             nativeResourceCoordinator = nativeResourceCoordinator,
@@ -103,7 +121,7 @@ class AndroidProviderFactory(
         // failing preset can never prevent local inference from coming up.
         val remoteProviders = buildList<AiInferenceProvider> {
             listOf(
-                runCatching { GroqProvider(storage, transport("groq", "https://api.groq.com/v1")) }.getOrNull(),
+                runCatching { GroqProvider(storage, transport("groq", "https://api.groq.com/openai/v1")) }.getOrNull(),
                 runCatching { CerebrasProvider(storage, transport("cerebras", "https://api.cerebras.ai/v1")) }.getOrNull(),
                 runCatching { OpenCodeZenProvider(storage, transport("opencode.zen", "https://opencode.ai/inference/v1")) }.getOrNull(),
                 runCatching { XaiProvider(storage, transport("xai", "https://api.x.ai/v1")) }.getOrNull(),
@@ -151,15 +169,25 @@ class AndroidProviderFactory(
             }
         }
 
+        val chatGpt = secretStore?.let { protectedStore ->
+            val account = com.halo.providers.openai.ChatGptAccount(protectedStore,
+                com.halo.providers.openai.ChatGptSubscriptionProvider.defaultClient().withRemoteDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy) {
+                    RemoteDispatchRequest("account.chatgpt", RemoteOperation.CONNECTED_SERVICE, setOf(RemoteDataCategory.ACCOUNT_METADATA))
+                }, diagnostic = { stage -> android.util.Log.i("HaloChatGPT", "CONNECTION_STAGE ${stage.name}") })
+            com.halo.providers.openai.ChatGptSubscriptionProvider(account, storage,
+                com.halo.providers.openai.ChatGptSubscriptionProvider.defaultClient().withProviderDispatchPolicy(
+                    ManualDependencyGraph.remoteDispatchPolicy, com.halo.providers.openai.ChatGptSubscriptionProvider.ID))
+        }
         return Providers(
             inference = localProvider,
             speechRecognition = speechRecognition,
             speechSynthesis = androidTts,
-            ttsProviders = listOf(androidTts, elevenLabsTts, kokoroTts, supertonicTts),
+            ttsProviders = listOf(androidTts, openRouterTts, elevenLabsTts, kokoroTts, supertonicTts),
             speechSelector = speechSelector,
             wakeWord = wakeWord,
             aiProviders = listOfNotNull(
                 localProvider,
+                chatGpt,
                 runCatching { OllamaProvider(storage, ManualDependencyGraph.remoteDispatchPolicy) }.getOrNull(),
                 runCatching { OpenRouterProvider(storage, OpenRouterProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "openrouter"), logger = ManualDependencyGraph.logger) }.getOrNull(),
                 runCatching { OpenAiProvider(storage, OpenAiProvider.defaultClient().withProviderDispatchPolicy(ManualDependencyGraph.remoteDispatchPolicy, "openai")) }.getOrNull(),

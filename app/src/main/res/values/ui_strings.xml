@@ -2834,6 +2834,7 @@
     <string name="ui_e7e66d327903" formatted="false">"Describe the change in a text field, then review the generated draft before using it."</string>
     <string name="ui_646bab811bee" formatted="false">"A local model could not draft this change. You can edit the original text yourself."</string>
     <string name="ui_d9897824ec41" formatted="false">"Automatic reading uses an on-device voice. Cloud reading always asks before sending text."</string>
+    <string name="ui_d14869a7c176" formatted="false">"Reading follows Local / Power mode. Local uses an on-device voice; Power uses your selected voice for content allowed to be shared."</string>
     <string name="ui_3d2905f67867" formatted="false">"Check the JSON syntax before using this draft."</string>
     <string name="ui_fbf30cdb18f7" formatted="false">"Choose how much help"</string>
     <string name="ui_1e777f576a23" formatted="false">"Cloud is off by default. For this app session, you can allow learning text and selected worksheets to reach configured providers. Privacy and source restrictions still apply."</string>
@@ -3451,7 +3452,7 @@
     <string name="ui_da43136d860c" formatted="false">"Sound is checked separately below."</string>
     <string name="ui_5ea99146a82f" formatted="false">"Connect your glasses before taking photos or recording."</string>
     <string name="ui_5ccbf937ca92" formatted="false">"Wearing"</string>
-    <string name="ui_9cc6de5b4730" formatted="false">"Photos on glasses"</string>
+    <string name="ui_9cc6de5b4730" formatted="false">"Photos to copy"</string>
     <string name="ui_251112909570" formatted="false">"These glasses need attention. Copy your photos, then reconnect."</string>
     <string name="ui_66a16b299e6f" formatted="false">"Photo requested"</string>
     <string name="ui_8a51882778d9" formatted="false">"Review a fresh photo before choosing what halo may use. Taking it does not send it to an AI service."</string>
@@ -4753,4 +4754,52 @@
     <string name="ui_c6f974c44b32" formatted="false">"Use BuddyBot’s local IP address."</string>
     <string name="ui_1ca2a9635d72" formatted="false">"Active items"</string>
     <string name="ui_19e82138c35f" formatted="false">"Due today"</string>
+    <string name="ui_900853a64cd0" formatted="false">"OpenRouter speech"</string>
+    <string name="ui_38002b209fe3" formatted="false">"Uses your saved OpenRouter key. No ElevenLabs key is needed. Speech is charged to your OpenRouter account."</string>
+    <string name="ui_50db005f2acb" formatted="false">"Add your OpenRouter key in AI services."</string>
+    <string name="ui_200eaf3f0733" formatted="false">"Could not load speech models. Check Power mode, your OpenRouter key and connection."</string>
+    <string name="ui_639ef5f6cbfc" formatted="false">"Load speech models"</string>
+    <string name="ui_69facf5bbb5e" formatted="false">"Choose a speech model"</string>
+    <string name="ui_7405e8d2c16a" formatted="false">"Voice name"</string>
+    <string name="ui_8a19bef35cd0" formatted="false">"Choose a voice supported by this model. Voice names differ between models."</string>
+    <string name="ui_1d28e8928466" formatted="false">"Model voices and pricing"</string>
+    <string name="ui_6053eaa0827d" formatted="false">"OpenRouter speech selected. Use Play test phrase to hear it."</string>
+    <string name="ui_31213e78230d" formatted="false">"Voice settings could not be saved. Load the models and try again."</string>
+    <string name="ui_fc6126956559" formatted="false">"Use OpenRouter speech"</string>
+    <string name="ui_f6de648021fd" formatted="false">"Sign in with ChatGPT"</string>
+    <string name="ui_c4e46df5702b" formatted="false">"Disconnect ChatGPT"</string>
+    <string name="ui_c1e83786d445" formatted="false">"Sign in with ChatGPT to use eligible subscription models. OpenAI controls your account limits. This connection does not use API credits."</string>
+    <string name="ui_e0c5adabf5df" formatted="false">"ChatGPT account connected"</string>
+    <string name="ui_c31ad52cb4a8" formatted="false">"No ChatGPT account connected"</string>
+    <string name="ui_8da49c66b493" formatted="false">"Finish signing in in your browser, then return to halo."</string>
+    <string name="ui_2d7a6c64a4d7" formatted="false">"ChatGPT connected. Fetch your models to choose an answer model."</string>
+    <string name="ui_37564d40d0c4" formatted="false">"Signed in, but ChatGPT did not grant subscription access to this account."</string>
+    <string name="ui_aaa4d03fa0dc" formatted="false">"ChatGPT sign-in stopped. You can try again."</string>
+    <string name="ui_9ae1eb8544f0" formatted="false">"ChatGPT sign-in could not finish. Return to halo and try again."</string>
+    <string name="ui_b02fc80325c8" formatted="false">"ChatGPT disconnected."</string>
+    <string name="ui_db79856cc4fb" formatted="false">"ChatGPT was removed from halo. Remote disconnection could not be confirmed; remove halo in ChatGPT settings."</string>
+    <string name="ui_d1a15ca820e4" formatted="false">"Account settings changed or are unavailable. Try again."</string>
+    <string name="ui_620c886585bc" formatted="false">"Google authorization here uses a Google Cloud project, not a Google AI subscription."</string>
+    <string name="ui_a4b440838a0a" formatted="false">"OpenRouter transcription"</string>
+    <string name="ui_71d79c76f07c" formatted="false">"Power mode can transcribe your speech with your saved OpenRouter key. Local mode keeps recognition on this phone. Transcription is charged to your OpenRouter account."</string>
+    <string name="ui_aba8bd11612d" formatted="false">"Could not load transcription models. Check Power mode, your OpenRouter key and connection."</string>
+    <string name="ui_98a73886011d" formatted="false">"Load transcription models"</string>
+    <string name="ui_a473e964488d" formatted="false">"Choose a transcription model"</string>
+    <string name="ui_49842efca74a" formatted="false">"Model details and pricing"</string>
+    <string name="ui_47953e360f65" formatted="false">"OpenRouter transcription selected. Use the microphone test to try it."</string>
+    <string name="ui_ad4a282ce8ff" formatted="false">"Listening settings could not be saved. Load the models and try again."</string>
+    <string name="ui_4a30481fac11" formatted="false">"Use OpenRouter transcription"</string>
+    <string name="ui_5bd2d15a8918" formatted="false">"Saved article text"</string>
+    <string name="ui_163f55a12563" formatted="false">"Some article content may be missing. The saved text is shown below."</string>
+    <string name="ui_c8134f6fb54b" formatted="false">"This image has not been saved."</string>
+    <string name="ui_d6fb5f2c74f2" formatted="false">"Up to eight images are saved per article. Additional images may be available from the publisher."</string>
+    <string name="ui_d7b9c873dcda" formatted="false">"Plan ready"</string>
+    <string name="ui_e079d88e1cb3" formatted="false">"Read complete"</string>
+    <string name="ui_f29db185f450" formatted="false">"Plan recorded"</string>
+    <string name="ui_f2fc5b74cb19" formatted="false">"Reviewing your day"</string>
+    <string name="ui_0389519dad69" formatted="false">"Reading source image"</string>
+    <string name="ui_d8c885f8623d" formatted="false">"Reading sources"</string>
+    <string name="ui_a242d11b47ee" formatted="false">"Finding available actions"</string>
+    <string name="ui_1763ec4aca04" formatted="false">"Read your day"</string>
+    <string name="ui_587943da5e6f" formatted="false">"Read saved source image"</string>
 </resources>

@@ -26,9 +26,9 @@
     <string name="device_files_next">Next</string>
     <string name="device_files_import">Copy selected (%1$d) to Library</string>
     <string name="device_files_limits">Select up to 16 files per transfer, up to 256 MiB each.</string>
-    <string name="device_files_empty">No files reported by these glasses.</string>
+    <string name="device_files_empty">Nothing new to copy. Previously imported files are in Library.</string>
     <string name="device_files_saved">Received files · continue in Halo</string>
     <string name="device_files_in_trash">This copy is already in Trash. Restore it from Library if needed.</string>
     <string name="device_files_original">Original bytes preserved. This format may need another app; playback is not verified.</string>
-    <string name="device_files_local_only">Copies stay on this phone until you choose how to use or share them. Library actions affect the copy. Originals on the glasses are retained.</string>
+    <string name="device_files_local_only">Copies stay on this phone until you choose to share them. Library actions affect only the copy. The glasses may stop offering files after transfer, so keep the copies you need.</string>
 </resources>

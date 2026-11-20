@@ -17,6 +17,10 @@ internal fun homeTaskProgress(steps: List<AgentStep>): StructuredPresentation {
     fun outcome(id: String, success: Boolean, truth: ActionTruth, toolId: String? = null) {
         actions[id] = when {
             !success || truth == ActionTruth.FAILED -> "Could not finish" to PresentationStepState.FAILED
+            truth == ActionTruth.ACKNOWLEDGED && toolId == "halo_workflow_plan" ->
+                "Plan ready" to PresentationStepState.COMPLETED
+            truth == ActionTruth.ACKNOWLEDGED && toolId in completedReadTools ->
+                "Read complete" to PresentationStepState.COMPLETED
             truth == ActionTruth.CONFIRMED -> "Action confirmed" to PresentationStepState.COMPLETED
             toolId == "halo_open_settings" && truth == ActionTruth.DISPATCHED ->
                 "Action confirmed" to PresentationStepState.COMPLETED
@@ -83,7 +87,19 @@ internal fun homeTaskProgress(steps: List<AgentStep>): StructuredPresentation {
     return StructuredPresentation(root = PresentationNode.Checklist("home-progress", items, "Task progress"))
 }
 
+private val completedReadTools = setOf("halo_day_context", "halo_source_get", "halo_source_query", "halo_source_image",
+    "halo_organizer_query", "halo_organizer_get", "halo_get_workspace_object", "halo_search_notebook",
+    "halo_web_search", "halo_discover_tools", "halo_use_skill", "halo_saved_chat_get", "halo_library_view")
+
 private fun homeProgressActionLabel(name: String): String = when {
+    name == "halo_workflow_plan" -> "Plan recorded"
+    name == "halo_day_context" -> "Reviewing your day"
+    name == "halo_source_image" -> "Reading source image"
+    name.startsWith("halo_source_") -> "Reading sources"
+    name.startsWith("halo_organizer_") -> "Organizer"
+    name.startsWith("halo_workspace_") || name.startsWith("halo_get_workspace_") -> "Workspace"
+    name == "halo_web_search" -> "Web search"
+    name == "halo_discover_tools" || name == "halo_use_skill" -> "Finding available actions"
     name == "halo_open_settings" -> "Settings"
     name.startsWith("halo_appfn_") -> "Current app action"
     name.contains("calendar") -> "Calendar"

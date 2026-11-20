@@ -31,9 +31,10 @@ class DeviceMediaToolsTest {
             val descriptors = definitions.map { requireNotNull(HaloToolDescriptors.device(it)) }
             val registry = ToolRegistry(listOf(media, review, export), descriptors)
             assertEquals(9, registry.definitions().size)
-            assertTrue(registry.operabilityReport(listOf(ToolFeatureOperability("device-files", DeviceMediaTools.NAMES),
+            val problems = registry.operabilityReport(listOf(ToolFeatureOperability("device-files", DeviceMediaTools.NAMES),
                 ToolFeatureOperability("capture-review", CaptureReviewTools.NAMES),
-                ToolFeatureOperability("external-export", WorkspaceExportTools.NAMES))).isEmpty())
+                ToolFeatureOperability("external-export", WorkspaceExportTools.NAMES)))
+            assertTrue(problems.joinToString(), problems.isEmpty())
             descriptors.filter { !it.name.endsWith("_status") }.forEach {
                 assertEquals(ReplaySafety.NEVER_REPLAY, it.security.replaySafety)
                 assertNotEquals(ConfirmationPolicy.NONE, it.security.confirmation)

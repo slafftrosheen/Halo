@@ -2834,6 +2834,7 @@
     <string name="ui_e7e66d327903" formatted="false">"Opisz zmianę w polu tekstowym, a potem przejrzyj wygenerowany szkic przed użyciem."</string>
     <string name="ui_646bab811bee" formatted="false">"Model lokalny nie przygotował szkicu zmiany. Możesz samodzielnie edytować oryginalny tekst."</string>
     <string name="ui_d9897824ec41" formatted="false">"Czytanie automatyczne używa głosu z urządzenia. Czytanie w chmurze zawsze pyta przed wysłaniem tekstu."</string>
+    <string name="ui_d14869a7c176" formatted="false">"Czytanie działa zgodnie z trybem Local / Power. Local używa głosu na urządzeniu; Power używa wybranego głosu dla treści, które można udostępniać."</string>
     <string name="ui_3d2905f67867" formatted="false">"Sprawdź składnię JSON przed użyciem tego szkicu."</string>
     <string name="ui_fbf30cdb18f7" formatted="false">"Wybierz zakres pomocy"</string>
     <string name="ui_1e777f576a23" formatted="false">"Chmura jest domyślnie wyłączona. Na tę sesję aplikacji możesz zezwolić na wysyłanie tekstu nauki i wybranych arkuszy do skonfigurowanych dostawców. Nadal obowiązują ograniczenia prywatności i źródeł."</string>
@@ -3451,7 +3452,7 @@
     <string name="ui_da43136d860c" formatted="false">"Dźwięk jest sprawdzany oddzielnie poniżej."</string>
     <string name="ui_5ea99146a82f" formatted="false">"Połącz okulary przed robieniem zdjęć lub nagrywaniem."</string>
     <string name="ui_5ccbf937ca92" formatted="false">"Założone"</string>
-    <string name="ui_9cc6de5b4730" formatted="false">"Zdjęcia w okularach"</string>
+    <string name="ui_9cc6de5b4730" formatted="false">"Zdjęcia do skopiowania"</string>
     <string name="ui_251112909570" formatted="false">"Te okulary wymagają uwagi. Skopiuj zdjęcia, a potem połącz ponownie."</string>
     <string name="ui_66a16b299e6f" formatted="false">"Zlecono zdjęcie"</string>
     <string name="ui_8a51882778d9" formatted="false">"Przejrzyj nowe zdjęcie przed wybraniem, z czego halo może korzystać. Zrobienie zdjęcia nie wysyła go do usługi AI."</string>
@@ -4753,4 +4754,52 @@
     <string name="ui_c6f974c44b32" formatted="false">"Użyj lokalnego adresu IP BuddyBot."</string>
     <string name="ui_1ca2a9635d72" formatted="false">"Aktywne elementy"</string>
     <string name="ui_19e82138c35f" formatted="false">"Termin dzisiaj"</string>
+    <string name="ui_900853a64cd0" formatted="false">"Mowa OpenRouter"</string>
+    <string name="ui_38002b209fe3" formatted="false">"Używa zapisanego klucza OpenRouter. Klucz ElevenLabs nie jest potrzebny. Opłaty za mowę są pobierane z konta OpenRouter."</string>
+    <string name="ui_50db005f2acb" formatted="false">"Dodaj klucz OpenRouter w usługach AI."</string>
+    <string name="ui_200eaf3f0733" formatted="false">"Nie udało się wczytać modeli mowy. Sprawdź tryb Power, klucz OpenRouter i połączenie."</string>
+    <string name="ui_639ef5f6cbfc" formatted="false">"Wczytaj modele mowy"</string>
+    <string name="ui_69facf5bbb5e" formatted="false">"Wybierz model mowy"</string>
+    <string name="ui_7405e8d2c16a" formatted="false">"Nazwa głosu"</string>
+    <string name="ui_8a19bef35cd0" formatted="false">"Wybierz głos obsługiwany przez ten model. Nazwy głosów różnią się między modelami."</string>
+    <string name="ui_1d28e8928466" formatted="false">"Głosy modelu i cennik"</string>
+    <string name="ui_6053eaa0827d" formatted="false">"Wybrano mowę OpenRouter. Użyj opcji „Odtwórz frazę testową”, aby posłuchać głosu."</string>
+    <string name="ui_31213e78230d" formatted="false">"Nie udało się zapisać ustawień głosu. Wczytaj modele i spróbuj ponownie."</string>
+    <string name="ui_fc6126956559" formatted="false">"Użyj mowy OpenRouter"</string>
+    <string name="ui_f6de648021fd" formatted="false">"Zaloguj się przez ChatGPT"</string>
+    <string name="ui_c4e46df5702b" formatted="false">"Odłącz ChatGPT"</string>
+    <string name="ui_c1e83786d445" formatted="false">"Zaloguj się przez ChatGPT, aby używać modeli dostępnych w subskrypcji. Limity konta ustala OpenAI. To połączenie nie używa środków API."</string>
+    <string name="ui_e0c5adabf5df" formatted="false">"Konto ChatGPT połączone"</string>
+    <string name="ui_c31ad52cb4a8" formatted="false">"Brak połączonego konta ChatGPT"</string>
+    <string name="ui_8da49c66b493" formatted="false">"Dokończ logowanie w przeglądarce i wróć do halo."</string>
+    <string name="ui_2d7a6c64a4d7" formatted="false">"Połączono ChatGPT. Pobierz listę modeli i wybierz model odpowiedzi."</string>
+    <string name="ui_37564d40d0c4" formatted="false">"Zalogowano, ale ChatGPT nie przyznał temu kontu dostępu do subskrypcji."</string>
+    <string name="ui_aaa4d03fa0dc" formatted="false">"Logowanie do ChatGPT zatrzymano. Możesz spróbować ponownie."</string>
+    <string name="ui_9ae1eb8544f0" formatted="false">"Nie udało się dokończyć logowania do ChatGPT. Wróć do halo i spróbuj ponownie."</string>
+    <string name="ui_b02fc80325c8" formatted="false">"ChatGPT odłączony."</string>
+    <string name="ui_db79856cc4fb" formatted="false">"ChatGPT usunięto z halo. Nie udało się potwierdzić odłączenia na serwerze; usuń halo w ustawieniach ChatGPT."</string>
+    <string name="ui_d1a15ca820e4" formatted="false">"Ustawienia konta zmieniły się lub są niedostępne. Spróbuj ponownie."</string>
+    <string name="ui_620c886585bc" formatted="false">"Autoryzacja Google korzysta tutaj z projektu Google Cloud, a nie z subskrypcji Google AI."</string>
+    <string name="ui_a4b440838a0a" formatted="false">"Rozpoznawanie mowy OpenRouter"</string>
+    <string name="ui_71d79c76f07c" formatted="false">"W trybie Power mowa może być rozpoznawana za pomocą zapisanego klucza OpenRouter. W trybie Local rozpoznawanie odbywa się na telefonie. Opłaty są pobierane z konta OpenRouter."</string>
+    <string name="ui_aba8bd11612d" formatted="false">"Nie udało się wczytać modeli rozpoznawania mowy. Sprawdź tryb Power, klucz OpenRouter i połączenie."</string>
+    <string name="ui_98a73886011d" formatted="false">"Wczytaj modele rozpoznawania mowy"</string>
+    <string name="ui_a473e964488d" formatted="false">"Wybierz model rozpoznawania mowy"</string>
+    <string name="ui_49842efca74a" formatted="false">"Szczegóły modelu i ceny"</string>
+    <string name="ui_47953e360f65" formatted="false">"Wybrano rozpoznawanie mowy OpenRouter. Wypróbuj je w teście mikrofonu."</string>
+    <string name="ui_ad4a282ce8ff" formatted="false">"Nie udało się zapisać ustawień rozpoznawania mowy. Wczytaj modele i spróbuj ponownie."</string>
+    <string name="ui_4a30481fac11" formatted="false">"Użyj rozpoznawania mowy OpenRouter"</string>
+    <string name="ui_5bd2d15a8918" formatted="false">"Zapisana treść artykułu"</string>
+    <string name="ui_163f55a12563" formatted="false">"Część artykułu może być niedostępna. Poniżej znajduje się zapisana treść."</string>
+    <string name="ui_c8134f6fb54b" formatted="false">"Ten obraz nie został zapisany."</string>
+    <string name="ui_d6fb5f2c74f2" formatted="false">"Dla każdego artykułu zapisuje się maksymalnie osiem obrazów. Pozostałe mogą być dostępne na stronie wydawcy."</string>
+    <string name="ui_d7b9c873dcda" formatted="false">"Plan gotowy"</string>
+    <string name="ui_e079d88e1cb3" formatted="false">"Odczyt zakończony"</string>
+    <string name="ui_f29db185f450" formatted="false">"Plan zapisany"</string>
+    <string name="ui_f2fc5b74cb19" formatted="false">"Przegląd Twojego dnia"</string>
+    <string name="ui_0389519dad69" formatted="false">"Odczytywanie obrazu ze źródła"</string>
+    <string name="ui_d8c885f8623d" formatted="false">"Odczytywanie źródeł"</string>
+    <string name="ui_a242d11b47ee" formatted="false">"Wyszukiwanie dostępnych działań"</string>
+    <string name="ui_1763ec4aca04" formatted="false">"Przegląd dnia"</string>
+    <string name="ui_587943da5e6f" formatted="false">"Odczytaj zapisany obraz źródła"</string>
 </resources>

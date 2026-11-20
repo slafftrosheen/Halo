@@ -48,7 +48,7 @@ class SpeechSynthesisRegistry(
         // Private material is never silently handed to a network voice, even if
         // an account's general assistant TTS preference is cloud-based.
         if (explicitPreviewProviderId != null && !allowCloudSpeech() && !configured.metadata.local)
-            error("Cloud voice needs Power mode. Use the mode control beside the halo Orb. Kids sessions also need grown-up approval.")
+            error("Cloud voice needs Power mode. Use the mode control beside the halo Orb.")
         val selected = if (privateOnly && !configured.metadata.local) {
             if (localOnly || privateMaterial) android else error("The selected speech provider needs Power. Choose an on-device voice in Mode profiles.")
         } else configured

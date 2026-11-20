@@ -24,6 +24,7 @@ data class AgentContinuationMessage(
     val toolCallId: String? = null,
     val toolName: String? = null,
     val argumentsJson: String? = null,
+    val providerMetadata: Map<String, String> = emptyMap(),
 )
 
 enum class AgentContinuationRole { USER, ASSISTANT, TOOL }
@@ -53,6 +54,7 @@ object AgentContinuationAssembler {
                     toolCallId = call.toolCallId,
                     toolName = call.toolName,
                     argumentsJson = call.argumentsJson,
+                    providerMetadata = call.providerMetadata,
                 )
                 resultFor(run, call.toolCallId)?.let { result ->
                     messages += AgentContinuationMessage(

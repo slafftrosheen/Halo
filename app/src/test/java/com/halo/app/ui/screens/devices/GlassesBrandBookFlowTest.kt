@@ -62,11 +62,12 @@ class GlassesBrandBookFlowTest {
         compose.onNodeWithText("Available").assertDoesNotExist()
     }
 
-    @Test fun copyingBlocksDuplicateCaptureAndCopyRequests() {
+    @Test fun mediaTransferBlocksNewPhotoVideoAudioAndReview() {
         show(SessionState.READY, busy = true)
         compose.onNodeWithText("Take photo").performScrollTo().assertIsNotEnabled()
         compose.onNodeWithText("Review a photo with halo").performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithText("Copying…").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Start video").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Start audio").performScrollTo().assertIsNotEnabled()
     }
 
     @Test fun largeTextForgetRequiresConfirmationAndCancelPreservesDevice() {

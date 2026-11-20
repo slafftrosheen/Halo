@@ -16,7 +16,12 @@ object CollectorPayloadLimits {
         when (payload) {
             is CollectorPayload.Articles -> {
                 require(payload.items.size <= 100)
-                payload.items.forEach { require(it.id.length <= 2000 && it.title.length <= 1000 && it.text.length <= 100_000 &&
+                payload.items.forEach { article ->
+                    require(article.contentKey == null || article.contentKey.matches(Regex("[a-f0-9]{64}")))
+                    require(article.contentStatus.length <= 64 && article.images.size <= ArticleExtractor.MAX_IMAGES)
+                    article.images.forEach { require(it.url.length <= 4096 && it.caption.length <= 1000) }
+                }
+                payload.items.forEach { require(it.id.length <= 2000 && it.title.length <= 1000 && it.text.length <= 200_000 &&
                     it.publisher.length <= 200 && it.categories.size <= 20 && it.categories.all { category -> category.length <= 200 }) }
             }
             is CollectorPayload.Warnings -> {

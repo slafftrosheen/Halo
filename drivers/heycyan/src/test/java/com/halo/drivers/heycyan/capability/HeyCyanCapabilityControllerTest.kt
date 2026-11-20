@@ -47,6 +47,18 @@ class HeyCyanCapabilityControllerTest {
         )
     }
 
+    @Test fun ownVideoStartCanBeStoppedWhenItsModeReplyWasLost() = runTest {
+        controller.execute(HeyCyanOperation.StartVideo).getOrThrow()
+        assertTrue("An owned start needs a bounded stop even without telemetry",
+            controller.execute(HeyCyanOperation.StopVideo).isSuccess)
+    }
+
+    @Test fun ownAudioStartCanBeStoppedWhenItsModeReplyWasLost() = runTest {
+        controller.execute(HeyCyanOperation.StartRecording).getOrThrow()
+        assertTrue("An owned start needs a bounded stop even without telemetry",
+            controller.execute(HeyCyanOperation.StopRecording).isSuccess)
+    }
+
     @Test
     fun videoCapabilityIsAvailable() {
         assertEquals(

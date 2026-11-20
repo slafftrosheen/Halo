@@ -126,7 +126,10 @@ class DefaultCognitiveResponseCommitter(
                     "interactionId" to interactionId.value,
                     "runId" to (commit.runId?.value ?: ""),
                     "sourceCaptureId" to (commit.sourceCaptureId ?: "")
-                ) + mapOf("inputSurface" to (commit.metadata["inputSurface"] ?: if (commit.outputTarget is SpeechOutputTarget.Device) "WEARABLE" else "PHONE")) + presentationMetadata
+                ) + mapOf("inputSurface" to (commit.metadata["inputSurface"] ?: if (commit.outputTarget is SpeechOutputTarget.Device) "WEARABLE" else "PHONE")) + presentationMetadata +
+                    commit.remoteProvenance?.let { mapOf(
+                        "speechRemoteCategories" to it.categories.map { category -> category.name }.sorted().joinToString(","),
+                        "speechRemoteRevision" to it.revision.toString()) }.orEmpty()
             )
         } else null
 

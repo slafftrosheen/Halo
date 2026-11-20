@@ -411,6 +411,10 @@ class DefaultCognitiveTurnPreparer(
         }
 
         var finalContext = assemblyResult.context
+        if (finalContext.availableTools.any { it.name == com.halo.runtime.cognition.tools.WorkflowPlanTool.ID }) {
+            finalContext = finalContext.copy(conversation = listOf(AIMessage(Role.SYSTEM,
+                "WORKFLOW CONTRACT: Answer simple questions directly. For a request that changes anything, first call halo_workflow_plan with a short ordered plan, then execute the steps through discovered tools and verify their receipts. Use a plan for multi-step research and full-day summaries too. The plan is visible to the user; write practical steps, not private reasoning. Report actual current work, approval waits and failures. Planned, requested or dispatched actions are not verified success. Do not ask for permission already provided; existing runtime approvals remain authoritative. For day summaries, discover halo_day_context and read its full-content sections and pagination instead of substituting a headline/count brief.")) + finalContext.conversation)
+        }
         // Embedding and generation are distinct native tasks. Semantic retrieval
         // is optional, local-only, bounded, never a tool/action authority. It is
         // disabled without explicit source consent and an exact EMBED binding.
@@ -600,7 +604,8 @@ class DefaultCognitiveTurnPreparer(
                         ToolCall(
                             id = msg.toolCallId,
                             functionName = msg.toolName,
-                            arguments = ToolArgumentCanonicalizer.parseToArgumentsMap(msg.argumentsJson.orEmpty()).mapValues { it.value ?: "" }
+                            arguments = ToolArgumentCanonicalizer.parseToArgumentsMap(msg.argumentsJson.orEmpty()).mapValues { it.value ?: "" },
+                            providerMetadata = msg.providerMetadata,
                         )
                     )
                 } else emptyList()

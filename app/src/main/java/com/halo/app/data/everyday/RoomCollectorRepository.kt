@@ -134,6 +134,16 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
             failureLineage), token))
         CollectorAdmission.Accepted(CollectorReservation(token, source, current.snapshot, now, failureLineage))
     }
+    override suspend fun reserveContent(reservation: CollectorReservation, now: Instant): Boolean = database.withTransaction {
+        val current = dao.source(reservation.source.id) ?: return@withTransaction false
+        val source = CollectorCodec.source(current.body)
+        if (current.version != reservation.source.version || dao.attempt(source.id)?.token != reservation.token ||
+            !source.selected || !source.enabled || source.kind != CollectorKind.FEED) return@withTransaction false
+        val key = CollectorEndpointIdentity.budgetKey(requireNotNull(source.endpoint))
+        if (quotaLimit(key, now) != null) return@withTransaction false
+        dao.request(CollectorRequestEntity(UUID.randomUUID().toString(), key, now.toEpochMilli()))
+        true
+    }
     override suspend fun reservePreview(sourceId: String, now: Instant): Boolean = database.withTransaction {
         require(sourceId.startsWith("preview:") && sourceId.length <= 160)
         val key = "endpoint:${sourceId.removePrefix("preview:")}"

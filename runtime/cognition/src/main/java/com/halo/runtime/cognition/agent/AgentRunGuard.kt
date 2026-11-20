@@ -80,7 +80,7 @@ fun interface AgentRunThermalGate {
 class AgentRunGuard(
     val runId: String,
     val interactionId: String?,
-    private val limits: AgentRunLimits,
+    private var limits: AgentRunLimits,
     private val thermalGate: AgentRunThermalGate = AgentRunThermalGate.NONE,
     private val clock: AgentRunClock = AgentRunClock.System,
 ) {
@@ -141,6 +141,10 @@ class AgentRunGuard(
     val uiRepeatLimit: Int get() = limits.maxRepeatedSameUiAction
     val currentFailureStreak: Int get() = failureStreak
     val tokenSnapshot: AgentRunTokenLedger get() = tokens.snapshot()
+    /** Raise only the default interactive ceiling once; never reset time, tokens, failures or a stop. */
+    fun enablePlannedWorkflow() {
+        if (limits == AgentRunLimits.INTERACTIVE && lastStop == null) limits = AgentRunLimits.PLANNED_WORKFLOW
+    }
 
     /** Re-read the injected thermal source; called before each round. */
     fun refreshThermal() {

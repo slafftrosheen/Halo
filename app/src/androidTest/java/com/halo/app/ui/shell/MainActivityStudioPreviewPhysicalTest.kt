@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeFalse
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,21 +37,32 @@ class MainActivityStudioPreviewPhysicalTest {
                 setLocale(Locale.forLanguageTag(language))
             }).getString(id)
         }.distinct().joinToString("|", "^(?:", ")$") { Pattern.quote(it) })
+        fun clickAction(text: Pattern) {
+            // Click the actionable ancestor of the localized label.
+            val targets = device.findObjects(By.text(text)).mapNotNull { node ->
+                generateSequence(node) { it.parent }.firstOrNull { it.isClickable }
+            }.distinctBy { it.visibleBounds }
+            assertEquals("Expected one actionable label", 1, targets.size)
+            targets.single().click()
+        }
 
         ActivityScenario.launch<MainActivity>(intent("studio")).use {
             runBlocking { withTimeout(30_000) { ManualDependencyGraph.kidsPreferences.loadedState.first { it } } }
             assumeFalse("Preserve Kids policy", ManualDependencyGraph.kidsPreferences.enabled.value)
             assumeFalse("Preserve unfinished setup", ManualDependencyGraph.setupProgress.shouldAutoLaunch())
             repeat(3) { iteration ->
-                assertTrue("Studio entry did not render", device.wait(Until.hasObject(By.text(label(R.string.studio_new_project))), 60_000))
-                device.findObject(By.text(label(R.string.studio_new_project))).click()
+                assertTrue("Studio entry did not render", device.wait(Until.hasObject(By.res("studio-content")), 60_000))
+                // Existing projects may themselves be named "New project". Use the shell action.
+                clickAction(label(R.string.zone5_all_actions))
+                assertTrue("Studio actions did not render", device.wait(Until.hasObject(By.text(label(R.string.studio_new_project))), 30_000))
+                clickAction(label(R.string.studio_new_project))
                 val field = By.clazz("android.widget.EditText").pkg(context.packageName)
                 assertTrue("New Project dialog did not render", device.wait(Until.hasObject(field), 30_000))
                 device.findObject(field).text = "HALO-QA-preview-$iteration"
                 assertTrue("Rendered preview did not appear", device.wait(Until.hasObject(By.desc(label(R.string.studio_title))), 30_000))
                 // The next frame must still be drawable after replacing the preview.
                 device.waitForIdle()
-                device.findObject(By.text(label(R.string.studio_cancel))).click()
+                clickAction(label(R.string.studio_cancel))
                 assertTrue("Preview dialog did not close", device.wait(Until.gone(field), 30_000))
                 context.startActivity(intent("notebook"))
                 assertTrue("Workspace did not render", device.wait(Until.hasObject(By.clazz("android.widget.EditText").pkg(context.packageName)), 30_000))

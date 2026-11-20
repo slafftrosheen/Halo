@@ -31,6 +31,8 @@ class CognitiveResponseCommitterLifecycleTest {
         val spoken = bus.events.filterIsInstance<TtsRequested>().single()
         assertEquals(setOf("WORKSPACE", "SCREEN"), spoken.remoteDataCategories)
         assertEquals(47L, spoken.remoteDispatchRevision)
+        assertEquals("SCREEN,WORKSPACE", store.turns.value.single().metadata["speechRemoteCategories"])
+        assertEquals("47", store.turns.value.single().metadata["speechRemoteRevision"])
     }
 
     @Test fun nonterminalActionIsVisibleButNotRecordedAsCompletedAndTerminalReceiptIsIdempotent() = runTest {

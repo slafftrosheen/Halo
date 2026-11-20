@@ -105,6 +105,37 @@ class NotebookLibraryBatchTest {
     private fun snapshot() = requireNotNull(session.read()).snapshot
     private suspend fun lifecycle(id: String) = requireNotNull(f.database.notebookDao().getWorkspaceObject(id)).lifecycle
 
+    @Test fun powerLibraryReadsAndBatchRespectCapturedDisclosureRevocation() = runBlocking {
+        val note = f.notes.createNote("QA source", title = "QA title").id
+        visible(setOf(note)); select(setOf(note))
+        var permitted = true
+        val view = com.halo.app.di.tools.host.NotebookLibraryTools(session) { { permitted } }
+        val batch = NotebookBatchTools(session) { { permitted } }
+        withContext(RunToolScope(AgentRunId("power-library"), false)) {
+            assertTrue(view.execute(ToolCall("view", "halo_library_view", emptyMap())) is ToolExecutionResult.Success)
+            val snapshot = snapshot()
+            val ticket = requireNotNull(session.prepareBatch(snapshot, NotebookBatchAction.TRASH))
+            // Revocation is also checked inside the canonical batch owner, independently of exposure.
+            assertNull(session.applyBatch(snapshot, ticket.token, NotebookBatchAction.TRASH, admission = { false }))
+            permitted = false
+            assertTrue(batch.execute(ToolCall("apply", NotebookBatchTools.WRITE, mapOf("expectedSnapshot" to snapshot,
+                "expectedBatch" to ticket.token, "operation" to "TRASH")),
+                ToolExecutionContext(interactionId = "qa", directUserAuthority = true)) is ToolExecutionResult.Rejected)
+            assertEquals("ACTIVE", lifecycle(note))
+            permitted = true
+            val stale = batch.execute(ToolCall("apply-after-grant", NotebookBatchTools.WRITE, mapOf("expectedSnapshot" to snapshot,
+                "expectedBatch" to ticket.token, "operation" to "TRASH")),
+                ToolExecutionContext(interactionId = "qa-new", directUserAuthority = true))
+            assertTrue(stale is ToolExecutionResult.Rejected)
+            val fresh = requireNotNull(session.prepareBatch(snapshot, NotebookBatchAction.TRASH))
+            val result = batch.execute(ToolCall("apply-fresh", NotebookBatchTools.WRITE, mapOf("expectedSnapshot" to snapshot,
+                "expectedBatch" to fresh.token, "operation" to "TRASH")),
+                ToolExecutionContext(interactionId = "qa-new", directUserAuthority = true))
+            assertTrue(result is ToolExecutionResult.Success)
+            assertEquals("TRASHED", lifecycle(note))
+        }
+    }
+
     @Test fun mixedTrashHasExactSuccessfulUndoAndNeverChangesActiveChatWriter() = runBlocking {
         val note = f.notes.createNote("private note body", title = "private note title").id
         val canvas = f.canvases.create("private canvas title")

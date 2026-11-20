@@ -11,12 +11,21 @@ internal object HaloScreenRequests {
         if (!resumed) return null
         val screen = expectedValue ?: return null
         if (!pending.compareAndSet(screen, null)) return null
+        if (screen == "screen") return "home" // Saved requests from older versions.
         return screen.takeIf { it in HaloScreenCatalog.screens || com.halo.app.ui.everyday.EverydayBriefEntry.acceptsRoute(it) || com.halo.app.ui.everyday.EverydayRoutes.acceptsEntry(it) }
     }
 
     /** Collect requests directly: a repeated route must not depend on Compose state/key changes. */
-    suspend fun collectResumed(lifecycle: Lifecycle, pending: MutableStateFlow<String?>, navigate: (String) -> Unit) {
+    suspend fun collectResumed(
+        lifecycle: Lifecycle,
+        pending: MutableStateFlow<String?>,
+        navigate: (String) -> Unit,
+        awaitReady: suspend () -> Unit = {},
+    ) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            // Keep the request unclaimed until the resumed host can actually navigate.
+            // Stopping this host cancels the wait so a ready successor can claim it.
+            awaitReady()
             pending.collect { observed ->
                 if (observed != null) {
                     claim(pending, lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED), observed)?.let(navigate)

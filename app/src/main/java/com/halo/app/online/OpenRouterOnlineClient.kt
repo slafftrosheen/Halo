@@ -17,7 +17,7 @@ import kotlin.coroutines.resumeWithException
 
 data class WebSource(val title: String, val url: String, val excerpt: String)
 data class GroundedWebAnswer(val answer: String, val sources: List<WebSource>, val retrievedAtMs: Long,
-    val resolvedModel: String?, val reportedCostUsd: BigDecimal?)
+    val resolvedModel: String?, val reportedCostUsd: BigDecimal?, val operationId: String? = null)
 data class OpenRouterKeyUsage(val checkedAtMs: Long, val monthlyUsd: BigDecimal?, val totalUsd: BigDecimal?,
     val limitUsd: BigDecimal?, val remainingUsd: BigDecimal?, val limitReset: String?,
     val byokMonthlyUsd: BigDecimal?, val includesByok: Boolean?)

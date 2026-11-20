@@ -25,21 +25,17 @@ import com.halo.app.ui.icons.HaloIcon
 /** Compact shell projection; uses exactly the same durable profiles and sharing disclosure. */
 @Composable fun CompactPrivacyModeControl(modifier: Modifier = Modifier) {
     val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
-    val kids by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
-    val cloudAllowed by Graph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
     val loaded by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
     val changeMode = rememberModeChangeAction()
     val label = uiText(if (mode == PrivacyMode.PRIVATE) "Local" else "Power")
     val description = uiText("AI privacy mode") + ": " + label
-    CompactPrivacyModeButton(mode, description, loaded && (!kids || cloudAllowed || mode == PrivacyMode.CLOUD),
+    CompactPrivacyModeButton(mode, description, loaded,
         { changeMode(if (mode == PrivacyMode.PRIVATE) PrivacyMode.CLOUD else PrivacyMode.PRIVATE) }, modifier)
 }
 
 /** Shared, persistent control; every app screen observes the same durable mode. */
 @Composable fun PrivacyModeControl(modifier: Modifier = Modifier, detail: Boolean = false) {
     val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
-    val kids by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
-    val kidsCloud by Graph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
     val kidsLoaded by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
     val modeDescription = uiText("AI privacy mode")
     val changeMode = rememberModeChangeAction()
@@ -52,7 +48,7 @@ import com.halo.app.ui.icons.HaloIcon
                     color = if (mode == PrivacyMode.PRIVATE) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                 Switch(mode == PrivacyMode.CLOUD, onCheckedChange = { cloud ->
                     changeMode(if (cloud) PrivacyMode.CLOUD else PrivacyMode.PRIVATE)
-                }, enabled = kidsLoaded && (!kids || kidsCloud || mode == PrivacyMode.CLOUD),
+                }, enabled = kidsLoaded,
                     modifier = Modifier.padding(horizontal = 12.dp).semantics { contentDescription = modeDescription })
                 Text(uiText("Power"), modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.labelLarge,

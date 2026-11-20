@@ -11,24 +11,36 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
 class ModeProfilesTest {
+    @Test fun powerIsTheSingleOnlineSwitchEvenWithLegacyFeatureRestrictions() {
+        val store = owner()
+        store.edit(PrivacyMode.CLOUD) { it.copy(onlineFeatures = emptySet(),
+            booleans = it.booleans + (KEY_CLOUD_WORKSPACE to false)) }
+        power(store)
+        val speech = RemoteDispatchRequest("provider.elevenlabs.tts", RemoteOperation.HOSTED_SPEECH,
+            setOf(RemoteDataCategory.TEXT, RemoteDataCategory.WORKSPACE))
+        store.acquire(speech, store.revision) {}.close()
+        assertTrue(store.storage.readRuntimeAiContextPolicy().allowCloudWorkspace)
+        store.set(PrivacyMode.PRIVATE)
+        blocked { store.acquire(speech, store.revision) {} }
+    }
     @Test fun restoringUnchangedFamilyAuthorityKeepsQueuedRevisionButChangedSessionRevokesIt() {
         val disk = Memory(); val first = owner(disk)
-        first.reconcileFamilyAuthority(true, false, false); power(first)
+        first.reconcileFamilyAuthority(true, false); power(first)
         val admitted = first.revision
         val restored = owner(disk)
-        restored.reconcileFamilyAuthority(false, false, false)
-        restored.reconcileFamilyAuthority(true, false, false)
+        restored.reconcileFamilyAuthority(false, false)
+        restored.reconcileFamilyAuthority(true, false)
         assertEquals(admitted, restored.revision)
         restored.acquire(textRequest, admitted) {}.close()
-        restored.reconcileFamilyAuthority(true, true, false)
+        restored.reconcileFamilyAuthority(true, true)
         assertTrue(restored.revision > admitted)
         blocked { restored.acquire(textRequest, admitted) {} }
-        // Session-only cloud permission must not survive process death in Kids.
-        restored.reconcileFamilyAuthority(true, true, true)
+        // Kids keeps the same app-wide processing choice across restart.
         val childSession = restored.revision
         owner(disk).also { restarted ->
-            restarted.reconcileFamilyAuthority(true, true, false)
-            assertTrue(restarted.revision > childSession)
+            restarted.reconcileFamilyAuthority(true, true)
+            assertEquals(childSession, restarted.revision)
+            restarted.acquire(textRequest, childSession) {}.close()
         }
     }
     @Test fun shippedDownloadsAndCollectorsUseTheSameModeWithoutInitializingModels() {
@@ -47,7 +59,7 @@ class ModeProfilesTest {
         leases.forEach { blocked { it.requireCurrent() } }
         power(store)
         store.edit(PrivacyMode.CLOUD) { it.copy(onlineFeatures = it.onlineFeatures - OnlineFeature.WEB) }
-        blocked { store.acquire(collectors, store.revision) {} }
+        store.acquire(collectors, store.revision) {}.close()
         store.acquire(downloads, store.revision) {}.close()
         store.remoteAllowed = { false }
         blocked { store.acquire(downloads, store.revision) {} }
@@ -159,7 +171,7 @@ class ModeProfilesTest {
         val request = textRequest.copy(categories = setOf(RemoteDataCategory.TEXT, RemoteDataCategory.WORKSPACE))
         store.acquire(request, store.revision) {}.finish(RemoteDispatchOutcome.COMPLETED)
         assertTrue(RemoteDataCategory.WORKSPACE in store.activity.receipts.value.first().categories)
-        store.edit(PrivacyMode.CLOUD) { it.copy(booleans = it.booleans + (KEY_CLOUD_WORKSPACE to false)) }
+        store.edit(PrivacyMode.CLOUD) { it.copy(booleans = it.booleans + (KEY_WORKSPACE to false)) }
         blocked { store.acquire(request, store.revision) {} }
     }
 
@@ -191,13 +203,13 @@ class ModeProfilesTest {
         store.acquire(textRequest, store.revision) {}.close()
     }
 
-    @Test fun categoryFeatureKidsAndKnownProviderChecksApplyAtDispatch() {
+    @Test fun powerIgnoresLegacyCloudFlagsButStillChecksReadinessAndKnownProviders() {
         val store = owner(); power(store)
         blocked { store.acquire(textRequest.copy(providerId = "unregistered"), store.revision) {} }
         store.edit(PrivacyMode.CLOUD) { it.copy(onlineFeatures = it.onlineFeatures - OnlineFeature.WEB) }
-        blocked { store.acquire(textRequest.copy(providerId = "web.public", operation = RemoteOperation.WEB), store.revision) {} }
+        store.acquire(textRequest.copy(providerId = "web.public", operation = RemoteOperation.WEB), store.revision) {}.close()
         store.edit(PrivacyMode.CLOUD) { it.copy(booleans = it.booleans + (KEY_CLOUD_SCREEN to false)) }
-        blocked { store.acquire(textRequest.copy(categories = setOf(RemoteDataCategory.SCREEN)), store.revision) {} }
+        store.acquire(textRequest.copy(categories = setOf(RemoteDataCategory.SCREEN)), store.revision) {}.close()
         store.remoteAllowed = { false }
         blocked { store.acquire(textRequest, store.revision) {} }
     }

@@ -10,6 +10,15 @@ import kotlinx.coroutines.flow.asStateFlow
  * matrix without each preset carrying its own bespoke HTTP stack.
  */
 object RemoteProviderPresets {
+    /** Official tool-use tables checked 2026-11-16. Hints supplement missing metadata only;
+     * a model must still be returned by the live catalog and explicit server flags win. */
+    fun documentedToolModels(providerId: String): List<AiModel> = (when (providerId) {
+        RemoteProviderIds.GROQ -> listOf("openai/gpt-oss-20b", "openai/gpt-oss-120b", "openai/gpt-oss-safeguard-20b",
+            "qwen/qwen3.8-27b", "minimaxai/minimax-m2.7", "meta-models/muse-spark-open", "llama-3.3-70b-versatile", "llama-3.1-8b-instant")
+        RemoteProviderIds.CEREBRAS -> listOf("gpt-oss-120b", "zai-glm-4.7", "llama3.1-8b")
+        RemoteProviderIds.XAI -> listOf("grok-4.7", "grok-4.20-multi-agent-beta-0309")
+        else -> emptyList()
+    }).map { AiModel(it, it, providerId, setOf(AiCapability.TEXT), null, supportsStreaming = true, supportsTools = true) }
 
     val groq = RemoteProviderDescriptor(
         id = RemoteProviderIds.GROQ,

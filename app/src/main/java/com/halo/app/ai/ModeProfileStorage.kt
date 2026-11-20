@@ -13,12 +13,13 @@ internal val profileStringKeys: Set<String> = buildSet {
     addAll(listOf("active_ai_provider", "active_ai_model", "ai_routing_policy",
         "speech_stt_provider", "speech_tts_provider", "workload.role.embedding.v1",
         "workspace_image_provider", "workspace_image_model", "elevenlabs_voice_id", "elevenlabs_tts_model_id",
-        "elevenlabs_stability", "elevenlabs_similarity_boost", "elevenlabs_speed"))
+        "elevenlabs_stability", "elevenlabs_similarity_boost", "elevenlabs_speed",
+        "openrouter_tts_model", "openrouter_tts_voice", "openrouter_stt_model"))
     AiModelRole.entries.forEach { role ->
         listOf("selection", "provider", "model").forEach { add("role_${role.name}_$it") }
     }
     LocalWorkload.entries.forEach { add("workload.execution.v1.${it.name}") }
-    listOf("provider.litert.local", "provider.llamacpp.native", "provider.ollama", "openrouter", "openai", "anthropic", "gemini",
+    listOf("provider.litert.local", "provider.llamacpp.native", "provider.ollama", "openrouter", "openai", "chatgpt.subscription", "anthropic", "gemini",
         RemoteProviderIds.GROQ, RemoteProviderIds.CEREBRAS, RemoteProviderIds.XAI,
         RemoteProviderIds.OPENCODE_ZEN, RemoteProviderIds.OPENCODE_COMPANION,
         RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE).forEach { add("ai_last_model_$it") }
@@ -27,6 +28,12 @@ internal val profileBooleanKeys: Set<String> = setOf(KEY_CONVERSATION, KEY_DEVIC
     KEY_RECENT_EVENTS, KEY_MEMORIES, KEY_TOOLS, KEY_LOCATION, KEY_IMAGES, KEY_AUDIO,
     KEY_VIDEO, KEY_WORKSPACE, KEY_CLOUD_WORKSPACE, KEY_CLOUD_SCREEN, KEY_CLOUD_IMAGES,
     "policy_cloud_memories", "active_ai_selection_migrated_v1", "policy_dynamic_web_extraction")
+
+/** Legacy per-feature cloud flags are retained on disk for compatibility, but the app-wide mode owns them. */
+internal fun ModeProfile.withAppWideMode(mode: PrivacyMode): ModeProfile = copy(
+    onlineFeatures = if (mode == PrivacyMode.CLOUD) OnlineFeature.entries.toSet() else emptySet(),
+    booleans = booleans + setOf(KEY_CLOUD_WORKSPACE, KEY_CLOUD_SCREEN, KEY_CLOUD_IMAGES, "policy_cloud_memories")
+        .associateWith { mode == PrivacyMode.CLOUD })
 
 enum class OnlineFeature { INFERENCE, SPEECH, WEB, IMAGES, CONNECTED_SERVICES }
 
@@ -72,7 +79,7 @@ internal data class ModeProfiles(
 ) {
     fun profile(mode: PrivacyMode) = if (mode == PrivacyMode.PRIVATE) privateProfile else powerProfile
     fun replacing(mode: PrivacyMode, profile: ModeProfile) = if (mode == PrivacyMode.PRIVATE)
-        copy(privateProfile = profile) else copy(powerProfile = profile)
+        copy(privateProfile = profile.withAppWideMode(mode)) else copy(powerProfile = profile.withAppWideMode(mode))
 
     fun encode(): String = JSONObject().put("schema", 1).put("active", active.name)
         .put("private", privateProfile.encode()).put("power", powerProfile.encode())

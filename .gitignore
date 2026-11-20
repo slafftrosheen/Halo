@@ -29,6 +29,8 @@ local.properties
 debug.keystore
 
 *.apk
+__pycache__/
+*.pyc
 hs_err_pid*.log
 replay_pid*.log
 

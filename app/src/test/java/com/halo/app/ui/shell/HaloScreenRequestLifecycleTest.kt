@@ -5,6 +5,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -77,6 +78,45 @@ class HaloScreenRequestLifecycleTest {
             assertNull("The live collector must consume each accepted request", pending.value)
         }
         assertEquals(routes, navigated)
+    }
+
+    @Test fun coldRequestRemainsUnclaimedUntilNavigationExistsAndUsesLatestRequest() = lifecycleTest { owner ->
+        val ready = CompletableDeferred<Unit>()
+        val pending = MutableStateFlow<String?>("devices")
+        val navigated = mutableListOf<String>()
+        owner.lifecycle.currentState = Lifecycle.State.RESUMED
+        backgroundScope.launch {
+            HaloScreenRequests.collectResumed(owner.lifecycle, pending, navigated::add) { ready.await() }
+        }
+        runCurrent()
+        assertEquals("devices", pending.value)
+        assertEquals(emptyList<String>(), navigated)
+        pending.value = "notebook"
+        ready.complete(Unit)
+        runCurrent()
+        assertEquals(listOf("notebook"), navigated)
+        assertNull(pending.value)
+    }
+
+    @Test fun hostStoppedBeforeNavigationIsReadyCannotConsumeTheQueuedRequest() = lifecycleTest { owner ->
+        val ready = CompletableDeferred<Unit>()
+        val pending = MutableStateFlow<String?>("devices")
+        val navigated = mutableListOf<String>()
+        owner.lifecycle.currentState = Lifecycle.State.RESUMED
+        backgroundScope.launch {
+            HaloScreenRequests.collectResumed(owner.lifecycle, pending, navigated::add) { ready.await() }
+        }
+        runCurrent()
+        owner.lifecycle.currentState = Lifecycle.State.CREATED
+        runCurrent()
+        ready.complete(Unit)
+        runCurrent()
+        assertEquals("devices", pending.value)
+        assertEquals(emptyList<String>(), navigated)
+        owner.lifecycle.currentState = Lifecycle.State.RESUMED
+        runCurrent()
+        assertEquals(listOf("devices"), navigated)
+        assertNull(pending.value)
     }
 
     @Test fun stoppedHostCannotStealItsResumedSuccessorsRequestOrReplayOnReturn() = lifecycleTest { owner ->

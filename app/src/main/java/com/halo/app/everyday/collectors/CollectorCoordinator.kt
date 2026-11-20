@@ -18,6 +18,7 @@ class CollectorCoordinator(
     private val registry: CollectorRegistry,
     private val policy: RemoteDispatchPolicy,
     private val clock: Clock = Clock.systemUTC(),
+    private val enrich: suspend (CollectorReservation, CollectorPayload) -> CollectorPayload = { _, payload -> payload },
 ) {
     private val locks = ConcurrentHashMap<String, Mutex>()
     private val jobs = ConcurrentHashMap<String, Job>()
@@ -55,7 +56,20 @@ class CollectorCoordinator(
                         try {
                             val context = RemoteDispatchContext.intent.asContextElement(RemoteDispatchIntent(
                                 RemoteDispatchRequest(PUBLIC_COLLECTOR_OWNER, RemoteOperation.CONNECTED_SERVICE, categories), revision))
-                            val result = withContext(context) { registry.require(active.source.kind).fetch(active.source, active.cached) }
+                            val result = withContext(context) {
+                                when (val fetched = registry.require(active.source.kind).fetch(active.source, active.cached)) {
+                                    is CollectorFetchResult.Updated -> fetched.copy(payload = enrich(active, fetched.payload)).let { updated ->
+                                        updated.copy(contentRevision = contentRevision(updated.contentRevision, updated.payload))
+                                    }
+                                    CollectorFetchResult.NotModified -> {
+                                        val cached = requireNotNull(active.cached)
+                                        val enriched = enrich(active, cached.payload)
+                                        if (enriched == cached.payload) fetched else CollectorFetchResult.Updated(enriched,
+                                            contentRevision(cached.contentRevision, enriched), cached.etag, cached.lastModified, cached.effectiveUrl)
+                                    }
+                                    else -> fetched
+                                }
+                            }
                             authority?.requireCurrent(); ensureActive()
                             val now = clock.instant()
                             when (result) {
@@ -107,6 +121,13 @@ class CollectorCoordinator(
             }
             CollectorRefreshReceipt(repository.state(sourceId)?.let { state -> deferred?.let { state.copy(attempt = it) } ?: state }, reservation != null)
         }
+    }
+
+    private fun contentRevision(feedRevision: String, payload: CollectorPayload): String {
+        if (payload !is CollectorPayload.Articles || payload.items.all { it.contentKey == null && it.contentStatus == "FEED_ONLY" }) return feedRevision
+        val refs = payload.items.joinToString("\n") { "${it.id}:${it.contentKey}:${it.contentStatus}" }
+        return java.security.MessageDigest.getInstance("SHA-256").digest("$feedRevision\n$refs".toByteArray())
+            .joinToString("") { "%02x".format(it) }
     }
 
     /** Internal snapshots are useful in Local; external adapters still recheck global admission per request. */

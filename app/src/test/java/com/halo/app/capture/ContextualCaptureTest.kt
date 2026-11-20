@@ -194,6 +194,31 @@ class ContextualCaptureTest {
             controller.discard().join();assertNull(controller.state.value);assertNull(store.metadata(first.mediaRef))
         }
     }
+    @Test fun secondWearableThumbnailPreservesTheOpenReviewWithoutCrashingItsEventOwner() = runBlocking {
+        fixture { store, scope, db, prefs ->
+            val notes = RoomNotebookRepository(db.notebookDao())
+            val controller = ContextualCaptureController(context, store, LocalCaptureStore(context, db, notes, Events()),
+                VisualAttachmentStore(context, store), NotebookAssetRepository(context, db), scope, WorkspaceMediaAiPolicy(db, prefs))
+            val content = image()
+            controller.receive(content, CaptureSource.MANAGED_WEARABLE_CAMERA, "Glasses", "first", "selected")
+            val original = requireNotNull(controller.state.value)
+            val thumbnail = com.halo.drivers.heycyan.thumbnail.HeyCyanCapturedThumbnail(content.bytes, 3, null,
+                photoReadyAtMs = 1, completedAtMs = 2, width = 16, height = 8)
+            val rejected = deliverHeyCyanThumbnail(Result.success(thumbnail)) {
+                controller.receive(content, CaptureSource.MANAGED_WEARABLE_CAMERA, "Glasses", "second", "selected")
+            }
+            assertTrue(rejected.exceptionOrNull() is IllegalStateException)
+            assertEquals(original, controller.state.value)
+            assertArrayEquals(content.bytes, store.open(original.mediaRef).bytes)
+            assertTrue(notes.observeNotes().first().isEmpty())
+            controller.discard().join()
+            assertTrue(deliverHeyCyanThumbnail(Result.success(thumbnail)) {
+                controller.receive(content, CaptureSource.MANAGED_WEARABLE_CAMERA, "Glasses", "third", "selected")
+            }.isSuccess)
+            assertEquals("third", controller.state.value?.captureId)
+        }
+    }
+
     @Test fun invalidReceiptCannotBecomeReviewable()=runBlocking {
         fixture {store,scope,db,prefs->
             val controller=ContextualCaptureController(context,store,LocalCaptureStore(context,db,RoomNotebookRepository(db.notebookDao()),Events()),VisualAttachmentStore(context,store),NotebookAssetRepository(context,db),scope,WorkspaceMediaAiPolicy(db,prefs))

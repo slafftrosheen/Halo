@@ -17,26 +17,28 @@ class PersonalConfigurationPolicyTest {
     @Test fun personalMetadataRequiresItsDeclaredDisclosureRegardlessOfCategory() {
         val gate = DefaultToolExposureGate()
         val names = PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current"
-        // Includes the six saved-workflow actions, whose templates can contain personal content.
-        assertEquals(78, names.size)
-        val localOnly = PersonalConfigurationToolAccess.library + PersonalConfigurationToolAccess.savedChats
-        assertTrue(localOnly.containsAll(setOf("halo_library_batch", "halo_library_apply_batch")))
+        // Exercise disclosure for every registered tool without freezing the growing catalogue's size.
+        assertTrue(names.isNotEmpty())
+        assertTrue(PersonalConfigurationToolAccess.library.containsAll(setOf("halo_library_batch", "halo_library_apply_batch")))
         names.forEach { name ->
             val denied = gate.evaluate(descriptor(name), ToolExposureContext(isLocalTarget = false,
                 policy = AiContextPolicy(allowCloudWorkspace = false, allowCloudScreenContext = true)))
-            assertEquals(name, ToolExposureDecision.Deny(if (name in localOnly) ToolExposureDenyReason.POLICY_DENIED else ToolExposureDenyReason.REMOTE_WORKSPACE_DISABLED), denied)
+            assertEquals(name, ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_WORKSPACE_DISABLED), denied)
             val allowed = gate.evaluate(descriptor(name), ToolExposureContext(isLocalTarget = false,
                 policy = AiContextPolicy(allowCloudWorkspace = true, allowCloudScreenContext = false)))
             val expected = when (name) {
-                in localOnly -> ToolExposureDecision.Deny(ToolExposureDenyReason.POLICY_DENIED)
                 in PersonalConfigurationToolAccess.currentScreen -> ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_SCREEN_DISABLED)
                 else -> ToolExposureDecision.Allow
             }
             assertEquals(name, expected, allowed)
-            assertEquals(name, if (name in localOnly) ToolExposureDecision.Deny(ToolExposureDenyReason.POLICY_DENIED) else ToolExposureDecision.Allow,
+            assertEquals(name, ToolExposureDecision.Allow,
                 gate.evaluate(descriptor(name), ToolExposureContext(isLocalTarget = false,
                     policy = AiContextPolicy(allowCloudWorkspace = true, allowCloudScreenContext = true))))
             assertEquals(name, ToolExposureDecision.Allow, gate.evaluate(descriptor(name), ToolExposureContext(isLocalTarget = true)))
+        }
+        PersonalConfigurationToolAccess.savedChats.forEach { name ->
+            assertEquals(ToolExposureDecision.Deny(ToolExposureDenyReason.POLICY_DENIED), gate.evaluate(descriptor(name),
+                ToolExposureContext(isLocalTarget = false, policy = AiContextPolicy(allowCloudWorkspace = true, includeConversation = false))))
         }
         // Personal-layout consent cannot silently grant cross-app observation.
         assertEquals(ToolExposureDecision.Deny(ToolExposureDenyReason.REMOTE_SCREEN_DISABLED),
@@ -48,6 +50,15 @@ class PersonalConfigurationPolicyTest {
         (PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current").forEach { name ->
             assertTrue(name, name in WorkspaceToolAccess.readTools)
             val extra = when (name) {
+                "halo_day_context" -> setOf(RemoteDataCategory.RECENT_EVENTS, RemoteDataCategory.DEVICE_STATE)
+                "halo_source_image" -> setOf(RemoteDataCategory.IMAGES, RemoteDataCategory.LOCATION)
+                "halo_source_get", "halo_brief_query", "halo_brief_action" -> setOf(
+                    RemoteDataCategory.LOCATION, RemoteDataCategory.RECENT_EVENTS, RemoteDataCategory.DEVICE_STATE)
+                "halo_screen_card_configuration",
+                "halo_clock_query", "halo_clock_save", "halo_clock_action",
+                "halo_source_query", "halo_source_preview", "halo_source_save", "halo_source_action",
+                "halo_brief_settings", "halo_everyday_open",
+                "halo_widget_query", "halo_widget_configure", "halo_widget_pin" -> setOf(RemoteDataCategory.LOCATION)
                 in PersonalConfigurationToolAccess.currentScreen -> setOf(RemoteDataCategory.SCREEN)
                 in PersonalConfigurationToolAccess.savedChats -> setOf(RemoteDataCategory.CONVERSATION)
                 else -> emptySet()
@@ -55,12 +66,15 @@ class PersonalConfigurationPolicyTest {
             assertEquals(name, setOf(RemoteDataCategory.TOOLS, RemoteDataCategory.WORKSPACE) + extra, remoteToolResultCategories(name))
         }
         // Routing follows actual registered identities, not a broad prefix guess.
-        assertEquals(setOf(RemoteDataCategory.TOOLS), remoteToolResultCategories("halo_screen_unregistered_example"))
+        listOf("screen", "clock", "source", "brief", "widget").forEach { prefix ->
+            val name = "halo_${prefix}_unregistered_example"
+            assertEquals(name, setOf(RemoteDataCategory.TOOLS), remoteToolResultCategories(name))
+        }
     }
 
     @Test fun configurationToolsRemainOnDemandAndDoNotExpandLocalBootstrapSchemas() {
         val policy = LocalModelToolPolicy.forProtocol(ToolCallProtocol.HALO_PROMPT)
-        assertEquals(setOf("halo_discover_tools", "halo_use_skill", "halo_current_time"), policy.allowedToolIds)
+        assertEquals(setOf("halo_workflow_plan", "halo_discover_tools", "halo_use_skill", "halo_current_time"), policy.allowedToolIds)
         (PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current").forEach { name ->
             assertFalse(name, policy.allows(name))
             assertTrue(name, policy.mayExpose(name))

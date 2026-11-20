@@ -18,17 +18,17 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class ModeProfileToolsTest {
-    @Test fun expandingRemoteSharingNeverUsesProfileApprovalAsDisclosureConsent() = runBlocking {
+    @Test fun obsoleteCloudSwitchCannotBeEditedOrUsedToActivatePower() = runBlocking {
         val modes = PrivacyModeStore(MemoryStorage())
         modes.edit(PrivacyMode.CLOUD) { it.copy(onlineFeatures = emptySet()) }
         val tools = ModeProfileTools(modes, { _, _, _ -> fail("Expanded sharing must not be saved without disclosure review") })
         val state = JSONObject((tools.execute(ToolCall("read", "halo_get_mode_profile", mapOf("mode" to "CLOUD"))) as ToolExecutionResult.Success).output)
         val response = tools.execute(ToolCall("expand", "halo_edit_mode_profile", mapOf("mode" to "CLOUD",
             "revision" to state.getLong("revision"), "snapshot" to state.getString("snapshot"), "onlineFeatures" to listOf("INFERENCE"))))
-        assertEquals(ToolRejectionKind.PERMISSION_REQUIRED, (response as ToolExecutionResult.Rejected).kind)
+        assertEquals(ToolRejectionKind.INVALID_ARGUMENTS, (response as ToolExecutionResult.Rejected).kind)
         assertEquals(PrivacyMode.PRIVATE, modes.mode.value)
         assertFalse(modes.sharingAcknowledged)
-        assertTrue(modes.profile(PrivacyMode.CLOUD).onlineFeatures.isEmpty())
+        assertEquals(OnlineFeature.entries.toSet(), modes.profile(PrivacyMode.CLOUD).onlineFeatures)
     }
 
     @Test fun exactProfileEditsPersistWithoutActivatingModeAndStaleRequestsStop() = runBlocking {

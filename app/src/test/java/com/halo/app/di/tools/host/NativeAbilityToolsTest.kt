@@ -186,7 +186,7 @@ class NativeAbilityToolsTest {
 
     @Test
     fun `web reader refuses local and non-web targets before any request`() = runTest {
-        val tools = WebInsightTools()
+        val tools = WebInsightTools(privacyModes = kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.ai.PrivacyMode.CLOUD))
 
         val fileScheme = tools.execute(ToolCall("c1", "halo_fetch_url", mapOf("url" to "file:///etc/hosts")))
         assertTrue(fileScheme is ToolExecutionResult.Rejected)
@@ -211,7 +211,7 @@ class NativeAbilityToolsTest {
 
     @Test
     fun `web reader rejects a relative url and an unknown mode`() = runTest {
-        val tools = WebInsightTools()
+        val tools = WebInsightTools(privacyModes = kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.ai.PrivacyMode.CLOUD))
         assertTrue(
             tools.execute(ToolCall("c1", "halo_fetch_url", mapOf("url" to "example.com")))
                 is ToolExecutionResult.Rejected,
@@ -225,7 +225,8 @@ class NativeAbilityToolsTest {
 
     @Test
     fun `web reader refuses a hostname that resolves inside the local network`() = runTest {
-        val tools = WebInsightTools(hostResolver = { listOf("192.168.0.10") })
+        val tools = WebInsightTools(hostResolver = { listOf("192.168.0.10") },
+            privacyModes = kotlinx.coroutines.flow.MutableStateFlow(com.halo.app.ai.PrivacyMode.CLOUD))
         val result = tools.execute(ToolCall("c1", "halo_fetch_url", mapOf("url" to "https://example.com")))
         assertTrue(result is ToolExecutionResult.Rejected)
         assertEquals(

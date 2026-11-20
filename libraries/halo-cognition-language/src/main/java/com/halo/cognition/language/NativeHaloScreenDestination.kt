@@ -3,7 +3,6 @@ package com.halo.cognition.language
 /** Parameter-free Halo navigation only. Object IDs and protected setup flows are resolved by their owners. */
 enum class NativeHaloScreenDestination(val wireId: String, vararg val phrases: String) {
     HOME("home", "open halo", "open halo home", "open halo home screen", "открой главную halo", "atver halo sākumu", "otwórz stronę główną halo"),
-    SCREEN("screen", "open halo screen", "открой экран halo", "atver halo ekrānu", "otwórz ekran halo"),
     WORKSPACE("notebook", "open workspace", "open my workspace", "open halo workspace", "open notebook", "open my notebook", "open halo notebook", "show my notebook", "открой рабочее пространство", "atver darbvietu", "otwórz obszar roboczy"),
     STUDY("study", "open study", "open halo study", "open study page", "открой обучение", "atver mācības", "otwórz naukę"),
     STUDIO("studio", "open studio", "open halo studio", "открой студию", "atver studiju", "otwórz studio"),

@@ -1,0 +1,11 @@
+<resources>
+    <string name="a2_wifi_ready">Wi-Fi ir gatavs. Izvēlieties kopējamos failus. Savienojums tiks aizvērts pēc minūtes vai izejot no Halo.</string>
+    <string name="a2_wifi_disabled">Ieslēdziet Wi-Fi, lai kopētu failus no brillēm, un mēģiniet vēlreiz. Internets nav nepieciešams.</string>
+    <string name="a2_wifi_settings">Atvērt Wi-Fi iestatījumus</string>
+    <string name="a2_audio_choose">Izvēlieties briļļu audio</string>
+    <string name="a2_audio_choose_help">Izvēlieties brilles, kas jau savienotas pārī Android iestatījumos. Android lūgs atļaut Halo piekļuvi.</string>
+    <string name="a2_audio_discover">Meklēt jaunu audioierīci</string>
+    <string name="a2_wifi_choose">Izvēlieties briļļu Wi-Fi ierīci</string>
+    <string name="a2_wifi_choose_help">Turiet brilles tuvumā un izvēlieties tās, tiklīdz tās parādās. Apstipriniet Android savienojuma pieprasījumu. Ja savienojums iestrēgst, atceliet to un mēģiniet vēlreiz. Faili paliks tālrunī.</string>
+    <string name="a2_wifi_searching">Meklē Wi-Fi ierīces…</string>
+</resources>

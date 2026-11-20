@@ -1,0 +1,4 @@
+<resources>
+    <string name="device_files_empty">Nie ma nowych plików do skopiowania. Wcześniej zaimportowane pliki są w Bibliotece.</string>
+    <string name="device_files_local_only">Kopie pozostają na telefonie, dopóki nie zdecydujesz się ich udostępnić. Działania w Bibliotece dotyczą tylko kopii. Po transferze okulary mogą przestać udostępniać pliki, dlatego zachowaj potrzebne kopie.</string>
+</resources>

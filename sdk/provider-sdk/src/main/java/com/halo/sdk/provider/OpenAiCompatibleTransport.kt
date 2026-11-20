@@ -149,7 +149,7 @@ class OpenAiCompatibleTransport(
                     throw transportError(response.code, response.body?.string(), response.header("Retry-After"))
                 }
                 val body = response.body?.string() ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Empty model metadata response")
-                parseModelList(body, freeModelIds)
+                parseModelList(body, freeModelIds, staticHints)
             }
         } catch (e: CancellationException) {
             throw e
@@ -176,7 +176,7 @@ class OpenAiCompatibleTransport(
         systemPrompt: String?,
         allowInsecureLocal: Boolean,
     ): AiResponse = withContext(Dispatchers.IO) {
-        request.validateForTextGeneration()
+        request.validateAgainst(setOf(AiCapability.TEXT, AiCapability.IMAGE))
         val url = wireUrl("generate")
         if (credentialHeader != null && credentialHeaderValue != null) {
             val security = credentialsAllowedFor(url, allowInsecureLocal)
@@ -291,6 +291,7 @@ class OpenAiCompatibleTransport(
     }
 
     private fun buildRequestPayload(request: AiRequest, context: AiContext, model: String, systemPrompt: String?, stream: Boolean): JSONObject {
+        request.validateAgainst(setOf(AiCapability.TEXT, AiCapability.IMAGE))
         val payload = JSONObject()
         payload.put("model", model)
         payload.put("stream", stream)
@@ -310,42 +311,29 @@ class OpenAiCompatibleTransport(
             if (systemText.isNotBlank()) {
                 messages.put(JSONObject().put("role", "system").put("content", systemText))
             }
-            context.conversation.filterNot { it.role == Role.SYSTEM }.forEach { messages.put(it.messageToResponsesJson()) }
-            context.screenContext?.let { messages.put(JSONObject().put("role", "user").put("content", it.asUntrustedPromptSection())) }
-            request.text?.takeIf { request.appendTextAsUserMessage }?.let { text ->
-                val content: Any = request.image?.let { image ->
-                    JSONArray().apply {
-                        put(JSONObject().put("type", "text").put("text", text))
-                        put(JSONObject().apply {
-                            put("type", "image_url")
-                            put("image_url", JSONObject().put("url", "data:${request.imageMimeType()};base64,${Base64.getEncoder().encodeToString(image)}"))
-                        })
-                    }
-                } ?: text
-                messages.put(JSONObject().put("role", "user").put("content", content))
+            context.conversation.filterNot { it.role == Role.SYSTEM }.forEach { message ->
+                if (message.role == Role.TOOL) {
+                    messages.put(JSONObject().put("type", "function_call_output")
+                        .put("call_id", requireNotNull(message.toolCallId)).put("output", message.content))
+                } else {
+                    if (message.content.isNotBlank()) messages.put(JSONObject().put("role", message.role.name.lowercase()).put("content", message.content))
+                    message.toolCalls.forEach { call -> messages.put(JSONObject().put("type", "function_call")
+                        .put("call_id", call.id).put("name", call.functionName).put("arguments", JSONObject(call.arguments).toString())) }
+                }
             }
+            context.screenContext?.let { messages.put(JSONObject().put("role", "user").put("content", it.asUntrustedPromptSection())) }
+            requestContent(request, responses = true)?.let { messages.put(JSONObject().put("role", "user").put("content", it)) }
             payload.put("input", messages)
         } else {
             val messages = JSONArray()
             messages.put(JSONObject().put("role", "system").put("content", systemPrompt ?: "You are Halo, a helpful AI assistant."))
             context.conversation.forEach { messages.put(it.toChatCompletionsJson()) }
             context.screenContext?.let { messages.put(JSONObject().put("role", "user").put("content", it.asUntrustedPromptSection())) }
-            request.text?.takeIf { request.appendTextAsUserMessage }?.let { text ->
-                val content: Any = request.image?.let { image ->
-                    JSONArray().apply {
-                        put(JSONObject().put("type", "text").put("text", text))
-                        put(JSONObject().apply {
-                            put("type", "image_url")
-                            put("image_url", JSONObject().put("url", "data:${request.imageMimeType()};base64,${Base64.getEncoder().encodeToString(image)}"))
-                        })
-                    }
-                } ?: text
-                messages.put(JSONObject().put("role", "user").put("content", content))
-            }
+            requestContent(request, responses = false)?.let { messages.put(JSONObject().put("role", "user").put("content", it)) }
             payload.put("messages", messages)
         }
         if (request.toolUseMode != com.halo.sdk.provider.ToolUseMode.NONE && context.availableTools.isNotEmpty()) {
-            payload.put("tool_choice", "auto")
+            payload.put("tool_choice", if (request.toolUseMode == ToolUseMode.REQUIRED && request.turnKind == ProviderTurnKind.INITIAL) "required" else "auto")
             payload.put("tools", JSONArray().apply {
                 context.availableTools.forEach { tool ->
                     put(JSONObject().apply {
@@ -382,25 +370,19 @@ class OpenAiCompatibleTransport(
             }
         }
 
-    private fun AIMessage.messageToResponsesJson(): JSONObject = JSONObject()
-        .put("role", if (role == Role.ASSISTANT) "assistant" else if (role == Role.TOOL) "tool" else role.name.lowercase())
-        .put("content", content)
-        .apply {
-            toolCallId?.let { put("tool_call_id", it) }
-            if (toolCalls.isNotEmpty()) {
-                put("tools", JSONArray().apply {
-                    toolCalls.forEach { call ->
-                        put(JSONObject().apply {
-                            put("tool_call", JSONObject().apply {
-                                put("id", call.id)
-                                put("tool_name", call.functionName)
-                                put("input", JSONObject(call.arguments))
-                            })
-                        })
-                    }
-                })
+    private fun requestContent(request: AiRequest, responses: Boolean): Any? {
+        if (!request.appendTextAsUserMessage) return null
+        val media = request.inlineMedia()
+        if (media.isEmpty()) return request.text?.takeIf { it.isNotBlank() }
+        return JSONArray().apply {
+            request.text?.takeIf { it.isNotBlank() }?.let { put(JSONObject().put("type", if (responses) "input_text" else "text").put("text", it)) }
+            media.forEach { part ->
+                val url = "data:${part.mimeType};base64,${Base64.getEncoder().encodeToString(part.bytes)}"
+                put(JSONObject().put("type", if (responses) "input_image" else "image_url")
+                    .put("image_url", if (responses) url else JSONObject().put("url", url)))
             }
         }
+    }
 
     private fun parseGenerateResponse(body: String, model: String, requestedModelId: String?): AiResponse {
         val json = JSONObject(body)
@@ -482,9 +464,7 @@ class OpenAiCompatibleTransport(
         }
     }
 
-    private fun JSONObject.toMap(): Map<String, Any> = buildMap {
-        keys().forEach { put(it, get(it)) }
-    }
+    private fun JSONObject.toMap(): Map<String, Any> = ToolArgumentJson.decode(this)
 
     private fun parseToolCalls(calls: JSONArray?): List<ToolCall> = buildList {
         if (calls == null) return@buildList
@@ -495,7 +475,7 @@ class OpenAiCompatibleTransport(
                 ?: if (fn.has("id")) fn.getString("id") else throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Remote tool call has no id")
             val name = fn.optString("name").takeIf { it.isNotBlank() }
                 ?: if (fn.has("tool_name")) fn.getString("tool_name") else throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Remote tool call has no name")
-            add(ToolCall(id, name, fn.optJSONObject("arguments")?.toMap() ?: fn.optJSONObject("input")?.toMap() ?: emptyMap()))
+            add(ToolCall(id, name, ToolArgumentJson.decode(fn.opt("arguments") ?: fn.opt("input"))))
         }
     }
 
@@ -685,7 +665,7 @@ class OpenAiCompatibleTransport(
         )
     }
 
-    private fun parseModelList(body: String, freeModelIds: Set<String>): List<AiModel> {
+    private fun parseModelList(body: String, freeModelIds: Set<String>, staticHints: List<AiModel>): List<AiModel> {
         val data = JSONObject(body).getJSONArray("data")
         return buildList {
             for (i in 0 until data.length()) {
@@ -693,9 +673,10 @@ class OpenAiCompatibleTransport(
                 val id = item.optString("id").trim().ifEmpty { continue }
                 val name = item.optString("name", id)
                 val owned = item.optJSONObject("owner")?.optString("id")?.takeIf { it.isNotBlank() }?.toString()
-                val modelId = if (!owned.isNullOrBlank()) "$owned/$id" else id
+                val modelId = id // Catalog ids are already the exact wire identifiers.
+                val hint = staticHints.firstOrNull { it.id == modelId }
                 val architecture = item.optJSONObject("architecture")
-                val modalities = architecture?.optJSONArray("input_modalities")?.let { arr ->
+                val modalities = (item.optJSONArray("input_modalities") ?: architecture?.optJSONArray("input_modalities"))?.let { arr ->
                     buildSet {
                         for (j in 0 until arr.length()) add(arr.optString(j).lowercase())
                     }
@@ -714,9 +695,9 @@ class OpenAiCompatibleTransport(
                             if (modalities?.contains("audio") == true) add(AiCapability.AUDIO)
                             if (modalities?.contains("video") == true) add(AiCapability.VIDEO)
                         },
-                        contextLength = item.optLong("context_length").takeIf { it > 0L },
+                        contextLength = item.optLong("context_length").takeIf { it > 0L } ?: item.optLong("context_window").takeIf { it > 0L },
                         supportsStreaming = true,
-                        supportsTools = architecture?.optJSONArray("supported_parameters")?.let { arr ->
+                        supportsTools = (item.optJSONArray("supported_parameters") ?: architecture?.optJSONArray("supported_parameters"))?.let { arr ->
                             var tools = false
                             for (j in 0 until arr.length()) {
                                 if (arr.optString(j) == "tools") {
@@ -725,8 +706,10 @@ class OpenAiCompatibleTransport(
                                 }
                             }
                             tools
-                        } ?: false,
+                        } ?: (hint?.supportsTools == true),
                         isFree = isFree,
+                        capabilityEvidence = if (modalities?.contains("image") == true)
+                            mapOf(AiCapability.IMAGE to CapabilityEvidence.AUTHORITATIVE_METADATA) else emptyMap(),
                     ),
                 )
             }

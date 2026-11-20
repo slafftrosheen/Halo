@@ -61,6 +61,9 @@ data class AgentRunLimits(
 
         /** CPU image encoding/prefill can exceed 90s; this lane cannot invoke tools. */
         val LOCAL_IMAGE = INTERACTIVE.copy(maxWallClockMs = 240_000L)
+        /** Explicit visible multi-step cloud workflow. Same replay, failure, UI and thermal bounds. */
+        val PLANNED_WORKFLOW = INTERACTIVE.copy(maxWallClockMs = 300_000L, maxToolRounds = 24,
+            maxEstimatedInputTokens = 160_000, maxOutputTokens = 12_000)
 
         /** Unattended routine execution: bounded, but allowed to take longer. */
         val ROUTINE = AgentRunLimits(

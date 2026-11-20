@@ -9,8 +9,11 @@ import com.halo.app.ui.screens.settings.isDeveloperDestination
 internal object ShellOrbCatalog {
     /** Adult shell roots only. Child mode retains its existing allowlist. */
     fun globalDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) destinations(true) else listOf(
-        HaloOrbDestination("screen", "HaloScreen", HaloGlyph.HOME),
         HaloOrbDestination("home", "Home", HaloGlyph.HOME),
+        HaloOrbDestination("screen/organizer", "Organizer", HaloGlyph.CALENDAR),
+        HaloOrbDestination("screen/sources", "Sources", HaloGlyph.SEARCH),
+        HaloOrbDestination("screen/brief", "Your day in Halo", HaloGlyph.ACTIVITY),
+        HaloOrbDestination("screen/clocks", "World clocks", HaloGlyph.WATCH),
         HaloOrbDestination("notebook", "Workspace", HaloGlyph.NOTE),
         HaloOrbDestination("devices", "Devices", HaloGlyph.DEVICE),
         HaloOrbDestination("activity", "Activities & notifications", HaloGlyph.ACTIVITY),
@@ -31,7 +34,7 @@ internal object ShellOrbCatalog {
 
     fun pageOwnerMatches(owner: ShellPageOwner, route: String?, objectId: String?): Boolean = when (owner.routeFamily) {
         "home", "kids" -> route == "home"
-        "screen" -> route == "screen"
+        "screen" -> false // Retired ambient page; OS screen capture remains separate.
         "everyday_organizer" -> route?.substringBefore("?") == "screen/organizer" && owner.objectId==objectId
         "everyday_clocks" -> route?.substringBefore("?") == "screen/clocks"
         "everyday_brief" -> route?.substringBefore("?") == "screen/brief"

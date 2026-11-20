@@ -19,7 +19,7 @@ import okhttp3.OkHttpClient
 class GroqProvider(
     private val storage: Storage,
     private val transport: OpenAiCompatibleTransport = OpenAiCompatibleTransport.defaultClient().let {
-        OpenAiCompatibleTransport(it, "https://api.groq.com/v1", AiWireProtocol.OPENAI_CHAT_COMPLETIONS)
+        OpenAiCompatibleTransport(it, "https://api.groq.com/openai/v1", AiWireProtocol.OPENAI_CHAT_COMPLETIONS)
     },
     private val credentialProvider: CredentialProvider = GroqCredentialProvider(storage),
 ) : AiInferenceProvider, CredentialProvider by credentialProvider, ProviderConfigurationReporting {

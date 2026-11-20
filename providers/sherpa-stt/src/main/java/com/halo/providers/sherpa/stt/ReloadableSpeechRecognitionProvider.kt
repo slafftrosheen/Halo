@@ -41,6 +41,8 @@ class ReloadableSpeechRecognitionProvider(
     private val selector: SpeechProviderSelector? = null,
     private val languageChanges: StateFlow<String>? = null,
     private val prepareLanguage: suspend () -> Unit = {},
+    val externalProviders: List<BufferedSpeechRecognitionProvider> = emptyList(),
+    private val allowExternal: () -> Boolean = { false },
     private val installed: (File, SherpaSpeechModelCatalog.ModelSpec) -> Boolean = SherpaSpeechModelCatalog::isInstalled,
     private val delegateFactory: (File, SherpaSpeechModelCatalog.ModelSpec, String) -> BufferedSpeechRecognitionProvider = { directory, spec, language ->
         SherpaSpeechRecognizerFactory.create(directory, spec, language, nativeResourceCoordinator)
@@ -81,14 +83,16 @@ class ReloadableSpeechRecognitionProvider(
             }
         }
         val sttSelectedId = selector?.sttSelection?.value?.id ?: "AUTOMATIC"
-        val spec = SherpaSpeechModelCatalog.resolve(sttSelectedId) {
+        val external = externalProviders.firstOrNull { it.metadata.id == sttSelectedId && allowExternal() }
+        val localId = if (!allowExternal() && externalProviders.any { it.metadata.id == sttSelectedId }) "AUTOMATIC" else sttSelectedId
+        val spec = SherpaSpeechModelCatalog.resolve(localId) {
             installed(directory(it), it)
         }
         val language = getLanguage().trim().lowercase(java.util.Locale.ROOT).ifBlank { "auto" }
-        val key = RecognizerKey(spec?.id, language,
+        val key = RecognizerKey(external?.metadata?.id ?: spec?.id, language,
             "cpu:greedy:${spec?.revision}:${spec?.effectiveThreads()}:${spec?.whisperTailPaddings}")
         if (key == activeKey && currentDelegate.get() !is UnavailableSpeechRecognitionProvider && currentDelegate.get().health()) {
-            updateReadiness(spec, language)
+            updateReadiness(spec, language, external)
             return@withLock
         }
         _availability.value = false
@@ -112,6 +116,7 @@ class ReloadableSpeechRecognitionProvider(
         }
         pendingCleanup = null
         val newDelegate: BufferedSpeechRecognitionProvider = try { when {
+            external != null -> external
             spec == null -> UnavailableSpeechRecognitionProvider("Selected speech model is not installed.")
             !spec.supportsLanguage(language) -> UnavailableSpeechRecognitionProvider("Model does not support $language")
             else -> delegateFactory(directory(spec), spec, language)
@@ -120,15 +125,16 @@ class ReloadableSpeechRecognitionProvider(
         currentDelegate.set(newDelegate)
         activeKey = key
         _availability.value = newDelegate.health()
-        updateReadiness(spec, language)
+        updateReadiness(spec, language, external)
     }
 
-    private suspend fun updateReadiness(spec: SherpaSpeechModelCatalog.ModelSpec?, language: String) {
+    private suspend fun updateReadiness(spec: SherpaSpeechModelCatalog.ModelSpec?, language: String,
+        external: BufferedSpeechRecognitionProvider? = null) {
         val provider = currentDelegate.get()
         val healthy = provider.health()
         _availability.value = healthy
-        _readiness.value = RecognitionReadiness(spec?.id, spec?.displayName ?: "No active model", language,
-            when { spec == null -> "Missing"; !healthy -> "Failed";
+        _readiness.value = RecognitionReadiness(external?.metadata?.id ?: spec?.id, external?.metadata?.displayName ?: spec?.displayName ?: "No active model", language,
+            when { external != null -> if (healthy) "Ready" else "Missing"; spec == null -> "Missing"; !healthy -> "Failed";
                 (provider as? SherpaOfflineSpeechRecognitionProvider)?.isResident == true -> "Ready"; else -> "Installed" },
             provider.healthDetails().message)
     }
@@ -162,6 +168,16 @@ class ReloadableSpeechRecognitionProvider(
 
     override suspend fun recognize(audio: AudioBuffer): RecognitionResult = withContext(dispatchers.default) {
         lifecycle.withLock { currentDelegate.get().recognize(audio) }
+    }
+
+    override fun captureContext() = currentDelegate.get().captureContext()
+
+    /** Memo transcription is explicitly local, even if settings change while decoding the file. */
+    suspend fun recognizeLocal(audio: AudioBuffer): RecognitionResult = withContext(dispatchers.default) {
+        lifecycle.withLock {
+            check(currentDelegate.get().metadata.local) { "Choose an installed local speech model for memo transcription" }
+            currentDelegate.get().recognize(audio)
+        }
     }
 
     override suspend fun close() {

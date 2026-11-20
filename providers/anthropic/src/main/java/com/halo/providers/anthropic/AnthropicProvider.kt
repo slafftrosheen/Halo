@@ -11,7 +11,7 @@ import com.halo.sdk.provider.AiFailureDetails
 import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiProviderException
-import com.halo.sdk.provider.imageMimeType
+import com.halo.sdk.provider.inlineMedia
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
@@ -179,22 +179,17 @@ class AnthropicProvider(
         context.screenContext?.let { screen ->
             messages.put(JSONObject().put("role", "user").put("content", screen.asUntrustedPromptSection()))
         }
-        request.text?.takeIf { request.appendTextAsUserMessage }?.let { text ->
-            val content: Any = request.image?.let { image ->
-                JSONArray()
-                    .put(
-                        JSONObject()
-                            .put("type", "image")
-                            .put(
-                                "source",
-                                JSONObject()
-                                    .put("type", "base64")
-                                    .put("media_type", request.imageMimeType())
-                                    .put("data", Base64.encodeToString(image, Base64.NO_WRAP)),
-                            ),
-                    )
-                    .put(JSONObject().put("type", "text").put("text", text))
-            } ?: text
+        val media = request.inlineMedia()
+        if (media.any { it.capability != AiCapability.IMAGE }) throw AiProviderException(
+            AiErrorType.UNSUPPORTED_CAPABILITY, "This Anthropic adapter supports text and images, not audio or video.")
+        val text = request.text?.takeIf { request.appendTextAsUserMessage }
+        if (text != null || media.isNotEmpty()) {
+            val content: Any = if (media.isEmpty()) text.orEmpty() else JSONArray().apply {
+                media.forEach { image -> put(JSONObject().put("type", "image").put("source",
+                    JSONObject().put("type", "base64").put("media_type", image.mimeType)
+                        .put("data", Base64.encodeToString(image.bytes, Base64.NO_WRAP)))) }
+                text?.takeIf { it.isNotBlank() }?.let { put(JSONObject().put("type", "text").put("text", it)) }
+            }
             messages.put(JSONObject().put("role", "user").put("content", content))
         }
 
@@ -290,9 +285,7 @@ class AnthropicProvider(
         )
     }
 
-    private fun JSONObject.toMap(): Map<String, Any> = buildMap {
-        keys().forEach { key -> put(key, get(key)) }
-    }
+    private fun JSONObject.toMap(): Map<String, Any> = com.halo.sdk.provider.ToolArgumentJson.decode(this)
 
     private suspend fun <T> execute(request: Request, read: (String) -> T): T {
         try {

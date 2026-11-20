@@ -45,6 +45,7 @@ fun HeyCyanControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack: 
     val scope = rememberCoroutineScope()
     var reviewing by remember(deviceId) { mutableStateOf(false) }
     var reviewFailed by remember(deviceId) { mutableStateOf(false) }
+    var audioChoices by remember(deviceId) { mutableStateOf<List<com.halo.app.audio.BondedAudioChoice>?>(null) }
     val device = state.devices.find { it.id == deviceId }
     val captureReady = device?.sessionState == SessionState.READY && device.hasLiveGlasses
     val scopedMedia = media.takeIf { it.deviceId == deviceId } ?: WearableCaptureStatus()
@@ -88,7 +89,7 @@ fun HeyCyanControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack: 
                 }
             },
             onCopy = { viewModel.syncMedia(deviceId) }, onRefresh = { viewModel.refreshMedia(deviceId) },
-            onConnectAudio = { viewModel.connectAudio(deviceId) },
+            onConnectAudio = { audioChoices = viewModel.bondedAudioChoices() },
             onAutoConnect = { viewModel.toggleAutoConnect(deviceId, it) },
             onForget = { viewModel.forgetDevice(deviceId); onBack() },
             reviewing = reviewing, reviewFailed = reviewFailed,
@@ -99,6 +100,24 @@ fun HeyCyanControlScreen(deviceId: String, viewModel: DevicesViewModel, onBack: 
                 } else Text(uiText("Connect these glasses to change their buttons."))
             })
         Spacer(Modifier.height(16.dp))
+    }
+    audioChoices?.let { choices ->
+        AlertDialog(onDismissRequest = { audioChoices = null },
+            title = { Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.a2_audio_choose)) },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.a2_audio_choose_help))
+                Column(Modifier.heightIn(max = 300.dp).verticalScroll(rememberScrollState())) {
+                    choices.forEach { choice -> TextButton(onClick = {
+                        audioChoices = null; viewModel.connectAudio(deviceId, choice.address)
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Column { Text(choice.name); Text(choice.address, style = MaterialTheme.typography.bodySmall) }
+                    } }
+                }
+                TextButton(onClick = { audioChoices = null; viewModel.connectAudio(deviceId) }) {
+                    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.a2_audio_discover))
+                }
+            } },
+            confirmButton = {}, dismissButton = { TextButton(onClick = { audioChoices = null }) { Text(uiText("Cancel")) } })
     }
 }
 

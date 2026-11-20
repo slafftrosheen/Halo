@@ -42,6 +42,21 @@ class HeyCyanDeviceStateReducer {
                     lastEventAtMillis = timestamp,
                 )
 
+            is HeyCyanEvent.RecordingStateChanged -> {
+                val mode = if (event.recording) event.mode else state.mode.takeUnless { it == event.mode }
+                state.copy(
+                    mode = mode,
+                    rawMode = state.rawMode.takeIf { mode == state.mode },
+                    videoRecordingState = if (event.mode == HeyCyanMode.VIDEO)
+                        (if (event.recording) VideoRecordingState.RECORDING else VideoRecordingState.IDLE)
+                        else state.videoRecordingState,
+                    audioRecordingState = if (event.mode == HeyCyanMode.AUDIO)
+                        (if (event.recording) AudioRecordingState.RECORDING else AudioRecordingState.IDLE)
+                        else state.audioRecordingState,
+                    lastEventAtMillis = timestamp,
+                )
+            }
+
             is HeyCyanEvent.ModeChanged -> {
                 val mappedMode = HeyCyanMode.fromValue(event.mode)
                 val videoState = when (mappedMode) {

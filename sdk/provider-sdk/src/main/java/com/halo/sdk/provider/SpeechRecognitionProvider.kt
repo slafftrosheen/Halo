@@ -3,6 +3,7 @@ package com.halo.sdk.provider
 import com.halo.sdk.host.AudioBuffer
 import kotlinx.coroutines.flow.Flow
 import com.halo.sdk.runtime.RecognitionQuality
+import kotlinx.coroutines.asContextElement
 
 data class RecognitionResult(
     val text: String,
@@ -37,10 +38,15 @@ sealed interface SpeechRecognitionProvider {
 
 interface BufferedSpeechRecognitionProvider : SpeechRecognitionProvider {
     override val mode: SpeechRecognitionMode get() = SpeechRecognitionMode.BUFFERED
+    /** Pin authority before collecting audio, including pre-roll. Never grant it at decode time. */
+    fun captureContext(): RecognitionCaptureContext = RecognitionCaptureContext(metadata.id)
     suspend fun recognize(audio: AudioBuffer): RecognitionResult
     /** Wait until native stream destruction completes before reuse or another model. */
     suspend fun awaitQuiescent() = Unit
 }
+
+data class RecognitionCaptureContext(val providerId: String, val revision: Long = 0,
+    val context: kotlin.coroutines.CoroutineContext = RemoteDispatchContext.intent.asContextElement(null))
 
 interface LiveSpeechRecognitionProvider : SpeechRecognitionProvider {
     override val mode: SpeechRecognitionMode get() = SpeechRecognitionMode.LIVE

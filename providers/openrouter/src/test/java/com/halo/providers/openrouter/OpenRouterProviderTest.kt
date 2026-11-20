@@ -11,6 +11,42 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class OpenRouterProviderTest {
+    @Test fun nestedPlanAndRecordArgumentsAreRuntimeCollectionsForGenerateAndStream() = kotlinx.coroutines.runBlocking {
+        val args = JSONObject.quote("""{"summary":"QA workflow","steps":["Create","Read"],"record":{"title":"QA","tags":["one","two"]}}""")
+        for (streaming in listOf(false, true)) {
+            val call = """{"index":0,"id":"qa-call","type":"function","function":{"name":"qa_nested","arguments":$args}}"""
+            val response = if (streaming)
+                "data: {\"choices\":[{\"delta\":{\"tool_calls\":[$call]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n"
+            else """{"choices":[{"message":{"content":"","tool_calls":[$call]},"finish_reason":"tool_calls"}]}"""
+            val provider = diagnosticProvider(response, DiagnosticLogger())
+            val request = com.halo.sdk.provider.AiRequest(text = "Synthetic QA", modelId = "fixture")
+            val context = com.halo.sdk.provider.AiContext.EMPTY
+            val answer = if (streaming) provider.stream(request, context).toList()
+                .filterIsInstance<com.halo.sdk.provider.AiStreamEvent.Completed>().single().response
+            else provider.generate(request, context)
+            val arguments = answer.toolCalls.single().arguments
+            assertEquals(listOf("Create", "Read"), arguments["steps"])
+            assertEquals(mapOf("title" to "QA", "tags" to listOf("one", "two")), arguments["record"])
+        }
+    }
+
+    @Test fun audioVideoAndImageOnlyRequestsReachTheSelectedModel() = kotlinx.coroutines.runBlocking {
+        var sent: JSONObject? = null
+        val client = okhttp3.OkHttpClient.Builder().addInterceptor { chain ->
+            val buffer = okio.Buffer(); chain.request().body!!.writeTo(buffer); sent = JSONObject(buffer.readUtf8())
+            okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1).code(200).message("OK")
+                .body(okhttp3.ResponseBody.create(null, """{"choices":[{"message":{"content":"done"},"finish_reason":"stop"}]}""")).build()
+        }.build()
+        val provider = OpenRouterProvider(FakeStorage().apply { putString("openrouter_api_key", "fixture") }, client)
+        assertTrue(provider.getCapabilities().containsAll(listOf(AiCapability.AUDIO, AiCapability.VIDEO)))
+        provider.generate(com.halo.sdk.provider.AiRequest(image = byteArrayOf(1), audio = byteArrayOf(2), video = byteArrayOf(3),
+            mimeTypes = listOf("image/png", "audio/wav", "video/mp4"), modelId = "fixture/multimodal"), com.halo.sdk.provider.AiContext.EMPTY)
+        val parts = sent!!.getJSONArray("messages").getJSONObject(1).getJSONArray("content")
+        assertEquals("image_url", parts.getJSONObject(0).getString("type"))
+        assertEquals("wav", parts.getJSONObject(1).getJSONObject("input_audio").getString("format"))
+        assertEquals("Ag==", parts.getJSONObject(1).getJSONObject("input_audio").getString("data"))
+        assertEquals("data:video/mp4;base64,Aw==", parts.getJSONObject(2).getJSONObject("video_url").getString("url"))
+    }
     @Test fun http404IsAnUnavailableModelForGenerateAndStreamWithoutRetryOrBodyDisclosure() = kotlinx.coroutines.runBlocking {
         for (streaming in listOf(false, true)) {
             val logger = DiagnosticLogger()

@@ -26,10 +26,9 @@ class WorkspaceImageRecoveryTest {
         val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {
-            val storage = MemoryStorage()
-            PrivacyModeStore(storage).apply { acknowledgeSharing(); set(PrivacyMode.CLOUD) }
+            val modes = powerMode()
             val provider = CreditBlockedProvider()
-            val studio = WorkspaceImageStudio(scope, WorkspaceImageService(Router(provider), storage),
+            val studio = WorkspaceImageStudio(scope, WorkspaceImageService(Router(provider), modes.storage, privacyModes = modes.mode),
                 NotebookAssetRepository(context, database), save = { _, _ -> fail("No image to save") })
             studio.prepare(com.halo.app.data.workspace.NoteAttachment("missing", "note", "asset", 0, null,
                 "IMAGE", "image/png", "MANAGED_FILE", java.io.File(context.cacheDir, "missing-image.png").absolutePath,
@@ -37,6 +36,7 @@ class WorkspaceImageRecoveryTest {
             val state = withTimeout(5_000) { studio.state.first { !it.loading && it.referenceUnavailable } }
             assertTrue(state.editing) // A missing display name must not turn Edit into Create.
             assertNull(state.referenceBytes)
+            assertNotNull(state.selected)
             studio.prompt("Synthetic edit")
             studio.generate()
             assertNull(studio.state.value.spendPreview)
@@ -50,13 +50,13 @@ class WorkspaceImageRecoveryTest {
         val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         try {
-            val storage = MemoryStorage()
-            PrivacyModeStore(storage).apply { acknowledgeSharing(); set(PrivacyMode.CLOUD) }
+            val modes = powerMode()
             val provider = CreditBlockedProvider()
-            val service = WorkspaceImageService(Router(provider), storage)
+            val service = WorkspaceImageService(Router(provider), modes.storage, privacyModes = modes.mode)
             val studio = WorkspaceImageStudio(scope, service, NotebookAssetRepository(context, database), save = { _, _ -> fail("No image to save") })
             studio.refresh()
-            withTimeout(5_000) { studio.state.first { !it.loading && it.selected != null } }
+            val ready = withTimeout(5_000) { studio.state.first { !it.loading } }
+            assertNotNull(ready.error, ready.selected)
             studio.prompt("Synthetic mint circle")
             studio.generate()
             withTimeout(5_000) { studio.state.first { !it.busy && it.spendPreview != null } }
@@ -72,6 +72,13 @@ class WorkspaceImageRecoveryTest {
         } finally { scope.cancel(); database.close() }
     }
 
+    private fun powerMode() = PrivacyModeStore(MemoryStorage()).apply {
+        remoteAllowed = { true }
+        configuredProviders = { setOf("openrouter") }
+        acknowledgeSharing()
+        set(PrivacyMode.CLOUD)
+    }
+
     private class CreditBlockedProvider : AiImageProvider {
         override val id = "openrouter"
         override val displayName = "OpenRouter"
@@ -80,7 +87,7 @@ class WorkspaceImageRecoveryTest {
         var calls = 0
         override suspend fun getCapabilities() = setOf(AiCapability.TEXT, AiCapability.IMAGE)
         override suspend fun listModels() = emptyList<AiModel>()
-        override suspend fun listImageModels() = listOf(AiImageModel("synthetic/image"))
+        override suspend fun listImageModels() = listOf(AiImageModel("synthetic/image", supportsEditing = true))
         override suspend fun generateImage(request: AiImageRequest): AiImageResult {
             calls++
             throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE, "Provider HTTP 402", AiFailureDetails(httpStatus = 402))

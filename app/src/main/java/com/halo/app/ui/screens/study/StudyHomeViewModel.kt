@@ -165,11 +165,10 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     val notice = message.asStateFlow()
     private val events = Channel<String>(Channel.BUFFERED)
     val navigation = events.receiveAsFlow()
-    /** Child execution follows the existing parent grant; starting never grants cloud access. */
-    fun startChildLesson(topic: String, cloudGranted: Boolean) = start(topic, "",
+    /** Starting a lesson never overrides the app-wide Local/Power choice. */
+    fun startChildLesson(topic: String) = start(topic, "",
         level = StudyLearnerLevel.PRIMARY, style = StudySupportStyle.GUIDED,
-        policy = StudyKnowledgePolicy.SOURCE_PLUS_GENERAL,
-        executionChoice = if (cloudGranted) "cloud" else "phone")
+        policy = StudyKnowledgePolicy.SOURCE_PLUS_GENERAL)
 
     fun start(topic: String, language: String, assignment: String = "", strongest: String = "",
         level: StudyLearnerLevel = StudyLearnerLevel.ADULT, style: StudySupportStyle = StudySupportStyle.GUIDED,
@@ -183,10 +182,6 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
                 it.objectId == id && it !is ResolvedStudySource.Unsupported && it.revision != null
             } }) {
             message.value = StudyUnavailableReason.SOURCE_CHANGED.explanation
-            return
-        }
-        if (executionChoice !in setOf("phone", "cloud")) {
-            message.value = "Choose where halo should think before starting."
             return
         }
         val version = ++startVersion
@@ -205,8 +200,6 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
                         expectedVersions = expected, sourceReferences = sourceReferences.toMap())
                 when (result) {
                     is StudyStartResult.Started -> {
-                        if (executionChoice in setOf("phone", "cloud"))
-                            executionStorage?.putString("study_execution_${result.session.id}", executionChoice!!)
                         if (selected.value.isEmpty()) {
                             check(study.setPreferences(result.session.id, languages, topic))
                             check(study.updateSetup(result.session.id, level, style, StudyKnowledgePolicy.SOURCE_PLUS_GENERAL))

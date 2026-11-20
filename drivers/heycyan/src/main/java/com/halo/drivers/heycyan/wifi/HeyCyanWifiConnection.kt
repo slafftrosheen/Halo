@@ -17,6 +17,12 @@ interface HeyCyanWifiConnection {
     /** Current connection state. Collect to observe transitions. */
     val state: StateFlow<WifiConnectionState>
 
+    /** Wi-Fi Direct needs peer discovery, not hotspot credentials. */
+    val requiresCredentials: Boolean get() = true
+    suspend fun prepare(deviceId: String) = Unit
+    suspend fun connectDirect(deviceId: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Wi-Fi Direct is not supported by this connection"))
+
     /**
      * Connects to the glasses Wi-Fi hotspot using the provided credentials.
      *

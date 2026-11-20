@@ -59,7 +59,7 @@ class GroundedWebSearchService(
             reported?.let { costs.providerReportedCostUsd(it.toPlainString()) }
             val result = OpenRouterOnlineClient.parseAnswer(root, System.currentTimeMillis())
             complete = true
-            result
+            result.copy(operationId = record)
         } finally {
             // Cancellation/timeout may still be charged. Preserve the reservation even on process recovery.
             withContext(NonCancellable + Dispatchers.IO) {
@@ -86,7 +86,7 @@ class GroundedWebSearchService(
         if (router.getAllProviders().none { it.id == "openrouter" }) throw OnlineOperationRejected(OnlineProblem.UNAVAILABLE)
     }
     private fun checkLanguage(language: String) {
-        if (language !in setOf("en", "ru", "lv")) throw OnlineOperationRejected(OnlineProblem.INVALID_RESPONSE)
+        if (language !in setOf("en", "ru", "lv", "pl")) throw OnlineOperationRejected(OnlineProblem.INVALID_RESPONSE)
     }
     private fun key(): String = storage.getString("openrouter_api_key")?.trim()?.takeIf { it.isNotEmpty() }
         ?: throw OnlineOperationRejected(OnlineProblem.KEY_REQUIRED)

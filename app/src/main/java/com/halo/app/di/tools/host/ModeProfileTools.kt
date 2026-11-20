@@ -20,14 +20,13 @@ class ModeProfileTools(
     companion object {
         private val strings = linkedMapOf("providerId" to "active_ai_provider", "modelId" to "active_ai_model",
             "routing" to "ai_routing_policy", "sttProvider" to "speech_stt_provider", "ttsProvider" to "speech_tts_provider")
-        private val contextKeys = profileBooleanKeys - setOf("active_ai_selection_migrated_v1")
+        internal val contextKeys = profileBooleanKeys - setOf("active_ai_selection_migrated_v1",
+            KEY_CLOUD_WORKSPACE, KEY_CLOUD_SCREEN, KEY_CLOUD_IMAGES, "policy_cloud_memories")
         private val modeSchema = mapOf("type" to "string", "enum" to PrivacyMode.entries.map { it.name })
         private val revisionSchema = mapOf("type" to "integer", "minimum" to 0)
         private val snapshotSchema = mapOf("type" to "string", "pattern" to "^[a-f0-9]{64}$")
         private val editFields = mapOf<String, Any>("mode" to modeSchema, "revision" to revisionSchema, "snapshot" to snapshotSchema,
             "booleans" to mapOf("type" to "object", "properties" to contextKeys.associateWith { mapOf("type" to "boolean") }, "additionalProperties" to false),
-            "onlineFeatures" to mapOf("type" to "array", "maxItems" to OnlineFeature.entries.size, "uniqueItems" to true,
-                "items" to mapOf("type" to "string", "enum" to OnlineFeature.entries.map { it.name })),
             "localFallback" to mapOf("type" to "boolean")) + strings.keys.associateWith { mapOf("type" to "string", "maxLength" to 200) }
     }
     private fun definition(name: String, description: String, fields: Map<String, Any>, required: List<String>) =
@@ -96,7 +95,8 @@ class ModeProfileTools(
             val localVoices = setOf(null, "AUTOMATIC", "provider.android.tts", com.halo.app.audio.KokoroSpeechProvider.ID,
                 com.halo.app.audio.SupertonicSpeechProvider.ID)
             if ("ttsProvider" in args && nextStrings["speech_tts_provider"] !in
-                (if (mode == PrivacyMode.PRIVATE) localVoices else localVoices + com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider.ID))
+                (if (mode == PrivacyMode.PRIVATE) localVoices else localVoices + setOf(
+                    com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider.ID, com.halo.providers.openrouter.OpenRouterSpeechProvider.ID)))
                 return reject("Choose an existing permitted speech-output provider")
             var booleans = old.booleans
             if ("booleans" in args) {
@@ -104,13 +104,7 @@ class ModeProfileTools(
                 if (values.keys.any { it !in contextKeys } || values.values.any { it !is Boolean }) return reject("Invalid context option")
                 booleans = booleans + values.entries.associate { (it.key as String) to (it.value as Boolean) }
             }
-            var features = old.onlineFeatures
-            if ("onlineFeatures" in args) {
-                val values = args["onlineFeatures"] as? List<*> ?: return reject("Expected online feature list")
-                if (values.size != values.toSet().size || values.any { value -> OnlineFeature.entries.none { it.name == value } }) return reject("Invalid online feature")
-                features = values.map { value -> OnlineFeature.valueOf(value as String) }.toSet()
-            }
-            if (mode == PrivacyMode.PRIVATE && features.isNotEmpty()) return reject("Private profiles cannot enable online features")
+            val features = old.onlineFeatures
             if ("localFallback" in args && args["localFallback"] !is Boolean) return reject("localFallback must be boolean")
             val fallback = if ("routing" in args) mode == PrivacyMode.CLOUD && routing == "PREFERRED_WITH_FALLBACK" else
                 args["localFallback"] as? Boolean ?: old.localFallback
@@ -119,7 +113,8 @@ class ModeProfileTools(
             val next = old.copy(strings = nextStrings, booleans = booleans, onlineFeatures = features, localFallback = fallback)
             if (mode == PrivacyMode.CLOUD && ((next.enabledRemoteCategories() - old.enabledRemoteCategories()).isNotEmpty() ||
                     (next.onlineFeatures - old.onlineFeatures).isNotEmpty() || next.providerId != old.providerId ||
-                    next.strings["speech_tts_provider"] == com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider.ID &&
+                    next.strings["speech_tts_provider"] in setOf(com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider.ID,
+                        com.halo.providers.openrouter.OpenRouterSpeechProvider.ID) &&
                         next.strings["speech_tts_provider"] != old.strings["speech_tts_provider"]))
                 return reject("Expanded sharing or a different remote provider needs the existing Mode profiles disclosure review. No profile was changed.", ToolRejectionKind.PERMISSION_REQUIRED)
             if (next == old) return ToolExecutionResult.Success(toolCall.id, toolCall.functionName,

@@ -52,8 +52,6 @@ import java.util.UUID
 
 val LocalPrivateSpeech = compositionLocalOf { false }
 
-private data class CloudReadConsent(val providerId: String, val providerName: String,
-    val content: String)
 
 /**
  * One explicit, reusable Voice/Text affordance for Study and Workspace editors.
@@ -101,7 +99,7 @@ fun HaloVoiceTextActions(
     var acceptedStopEpoch by remember { mutableLongStateOf(VoiceFieldCancellation.epoch.value) }
     var permissionEpoch by remember { mutableStateOf<Long?>(null) }
     val kidsPrivate by ManualDependencyGraph.kidsPreferences.enabled.collectAsState()
-    val privateSpeech = LocalPrivateSpeech.current || kidsPrivate
+    val privateSpeech = LocalPrivateSpeech.current
     val context=LocalContext.current
     val lifecycle=LocalLifecycleOwner.current
     val scope=rememberCoroutineScope()
@@ -126,7 +124,6 @@ fun HaloVoiceTextActions(
     var spokenContent by remember { mutableStateOf<String?>(null) }
     var publishJob by remember { mutableStateOf<Job?>(null) }
     var microphonePermissionPending by remember { mutableStateOf(false) }
-    var pendingCloudRead by remember { mutableStateOf<CloudReadConsent?>(null) }
     val localReady by ManualDependencyGraph.speechRecognitionAvailability.collectAsState()
     val output=remember { ManualDependencyGraph.haloSpeechOutputCoordinator }
     val reader = remember { ManualDependencyGraph.readAloud }
@@ -262,7 +259,6 @@ fun HaloVoiceTextActions(
         if (stopEpoch != acceptedStopEpoch) {
             microphonePermissionPending = false
             pending = null
-            pendingCloudRead = null
             cancelCapture()
             publishJob?.cancel()
             spokenId?.let(output::cancelScopedTransaction)
@@ -270,8 +266,8 @@ fun HaloVoiceTextActions(
         }
     }
 
-    DisposableEffect(phase, pending, pendingCloudRead, longCapture) {
-        VoiceFieldCancellation.active(fieldId, phase != "IDLE" || pending != null || pendingCloudRead != null || longCapture)
+    DisposableEffect(phase, pending, longCapture) {
+        VoiceFieldCancellation.active(fieldId, phase != "IDLE" || pending != null || longCapture)
         onDispose { VoiceFieldCancellation.active(fieldId, false) }
     }
     val askPermission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) permissionResult@{ granted ->
@@ -291,8 +287,6 @@ fun HaloVoiceTextActions(
         }
     }
     LaunchedEffect(readText,enabled) {
-        val consent=pendingCloudRead
-        if(!enabled || consent?.content != readText?.take(120_000)) pendingCloudRead=null
         if (spokenId != null && readingState?.id == spokenId && readText?.take(120_000) != spokenContent) {
             reader.stop(); spokenId = null; spokenContent = null
         }
@@ -310,7 +304,6 @@ fun HaloVoiceTextActions(
                     publishJob?.cancel()
                     spokenId?.let(output::cancelScopedTransaction)
                     spokenId=null
-                    pendingCloudRead=null
                 }
                 else -> Unit
             }
@@ -322,7 +315,6 @@ fun HaloVoiceTextActions(
             publishJob?.cancel()
             spokenId?.let(output::cancelScopedTransaction)
             microphonePermissionPending=false
-            pendingCloudRead=null
         }
     }
 
@@ -358,7 +350,7 @@ fun HaloVoiceTextActions(
                     error = "Reading stays on this phone. The cloud voice is not used."
                     publishReading(content, selectedId)
                 }
-                selected?.metadata?.local == false -> pendingCloudRead = CloudReadConsent(selectedId, selected.metadata.displayName, content)
+                selected?.metadata?.local == false -> publishReading(content, selectedId, cloudApproved = ManualDependencyGraph.powerModeEnabled())
                 else -> publishReading(content, selectedId)
             }
         }
@@ -460,23 +452,6 @@ fun HaloVoiceTextActions(
                 searchUndo = null
             }) { Text(uiText("Undo")) }
         }
-    }
-    pendingCloudRead?.let { consent ->
-        AlertDialog(onDismissRequest={pendingCloudRead=null},
-            title={Text(uiText("Cloud voice confirmation"))},
-            text={
-                Text(uiText("The selected cloud voice will receive this text. Do you want to send it?")+
-                    " ("+consent.providerName+")")
-            },
-            confirmButton={
-                TextButton(onClick={
-                    pendingCloudRead=null
-                    publishReading(consent.content,consent.providerId,cloudApproved=true)
-                }) { Text(uiText("Send and read")) }
-            },
-            dismissButton={
-                TextButton(onClick={pendingCloudRead=null}) { Text(uiText("Keep text private")) }
-            })
     }
     pending?.let {
         androidx.compose.material3.Surface(color = MaterialTheme.colorScheme.primaryContainer,

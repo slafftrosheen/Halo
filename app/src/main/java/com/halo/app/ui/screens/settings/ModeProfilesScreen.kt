@@ -128,22 +128,6 @@ import java.util.Date
                 HaloWorkspaceToggleRow(stringResource(categoryResource(category)), draft.booleans[key] == true,
                     { boolean(key, it) }, enabled = editable && !busy)
             }
-            if (mode == PrivacyMode.CLOUD) {
-                Text(stringResource(R.string.mode47_online_categories), style = MaterialTheme.typography.titleSmall)
-                listOf(KEY_CLOUD_WORKSPACE to RemoteDataCategory.WORKSPACE, KEY_CLOUD_SCREEN to RemoteDataCategory.SCREEN,
-                    KEY_CLOUD_IMAGES to RemoteDataCategory.IMAGES, "policy_cloud_memories" to RemoteDataCategory.MEMORIES).forEach { (key, category) ->
-                    HaloWorkspaceToggleRow(stringResource(categoryResource(category)), draft.booleans[key] == true,
-                        { boolean(key, it) }, enabled = editable && !busy)
-                }
-                Text(stringResource(R.string.mode47_features), style = MaterialTheme.typography.titleSmall)
-                OnlineFeature.entries.forEach { feature ->
-                    val label = onlineFeatureResource(feature)
-                    HaloWorkspaceToggleRow(stringResource(label), feature in draft.onlineFeatures, { enabled ->
-                        draft = draft.copy(onlineFeatures = if (enabled) draft.onlineFeatures + feature else draft.onlineFeatures - feature)
-                        saved = false
-                    }, enabled = editable && !busy)
-                }
-            }
             TextButton(enabled = editable && !busy && draft != committed, onClick = { scope.launch {
                 busy = true
                 try { withContext(Dispatchers.IO) { Graph.saveModeProfile(mode, draft) }; failed = false; saved = true }

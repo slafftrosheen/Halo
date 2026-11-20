@@ -15,13 +15,14 @@ import org.json.JSONObject
 
 /** Saved-history adapter only. Room owns lifecycle/content; Home owns presentation/continuation. */
 class SavedChatTools(private val store: RoomConversationStore, private val canAccess: () -> Boolean,
-    private val openDetail: (suspend (String, String) -> Boolean)? = null) : ToolExecutor {
+    private val openDetail: (suspend (String, String) -> Boolean)? = null,
+    private val remoteAuthority: () -> (() -> Boolean)? = { null }) : ToolExecutor {
     private val idField = mapOf("type" to "string", "pattern" to WorkspaceActionIds.PATTERN)
     private val versionField = mapOf("type" to "string", "pattern" to "^chat:[a-f0-9]{64}$")
     private val scopeField = mapOf("type" to "string", "enum" to listOf("ACTIVE", "TRASHED"))
     private fun integer(max: Int) = mapOf("type" to "integer", "minimum" to 0, "maximum" to max)
     private fun definition(name: String, description: String, fields: Map<String, Any>, required: List<String>) =
-        ToolDefinition(name, name, description + " Local inference, unlocked foreground grown-up access only. No remote history disclosure, account action or automatic replay.",
+        ToolDefinition(name, name, description + " Unlocked foreground grown-up access only. Power requires existing Workspace and conversation sharing. No account action or automatic replay.",
             mapOf("type" to "object", "properties" to fields, "required" to required, "additionalProperties" to false))
     override fun definitions() = listOf(
         definition(LIST, "List bounded saved chat identities/titles in the explicitly chosen ACTIVE or TRASHED scope; no transcript. Empty unsaved chats are omitted. nextOffset is live-list pagination, not an immutable search snapshot.",
@@ -43,11 +44,12 @@ class SavedChatTools(private val store: RoomConversationStore, private val canAc
     override suspend fun execute(toolCall: ToolCall) = execute(toolCall, ToolExecutionContext())
     override suspend fun execute(toolCall: ToolCall, context: ToolExecutionContext): ToolExecutionResult {
         fun refuse(kind: ToolRejectionKind = ToolRejectionKind.RESOURCE_UNAVAILABLE) = ToolExecutionResult.Rejected(
-            toolCall.id, toolCall.functionName, "Saved chat scope, source version or local access is unavailable. Read the exact current chat before asking to change it.", kind)
+            toolCall.id, toolCall.functionName, "Saved chat scope, source version or disclosure authority is unavailable. Read the exact current chat before asking to change it.", kind)
         val definition = definitions().firstOrNull { it.name == toolCall.functionName } ?: return refuse(ToolRejectionKind.TOOL_UNKNOWN)
         val scope = currentCoroutineContext()[RunToolScope] ?: return refuse(ToolRejectionKind.PERMISSION_REQUIRED)
-        fun admit() { check(scope.targetIsLocal && canAccess()) { "Saved chat access denied" } }
-        if (!scope.targetIsLocal || !canAccess()) return refuse(ToolRejectionKind.PERMISSION_REQUIRED)
+        val disclosure = if (scope.targetIsLocal) ({ true }) else remoteAuthority()
+        fun admit() { check(disclosure?.invoke() == true && canAccess()) { "Saved chat access denied" } }
+        if (disclosure?.invoke() != true || !canAccess()) return refuse(ToolRejectionKind.PERMISSION_REQUIRED)
         val mutation = toolCall.functionName in setOf(TRASH, RESTORE)
         if (mutation && !context.directUserAuthority) return refuse(ToolRejectionKind.PERMISSION_REQUIRED)
         var effectStarted = false
@@ -152,7 +154,7 @@ class SavedChatTools(private val store: RoomConversationStore, private val canAc
                 "version" to mapOf("type" to "string", "pattern" to "^chat:[a-f0-9]{64}$"),
                 "state" to mapOf("type" to "string", "enum" to listOf("READ", "SAVED", "DISPATCHED"))),
                 "required" to listOf("schemaVersion", "state")),
-            limitations = setOf("Explicit lifecycle; local unlocked foreground grown-up reads only. Remote history disclosure is unavailable.",
+            limitations = setOf("Explicit lifecycle; unlocked foreground grown-up reads with current Workspace and conversation disclosure authority.",
                 "Exact content-derived versions; max 2048 turns/2 MB source, eight turns per page and 1000 characters per speaker. Metadata omitted.",
                 "Trash refuses active writer. Mutations require explicit current authority and original confirmation; no replay after uncertainty.",
                 "Open only dispatches saved detail; direct active-session continuation is unavailable. Human Continue uses the original owner."))

@@ -31,13 +31,15 @@ class HeyCyanMediaDownloadQueueTest {
                 val session = repository.beginWrite(media)
                 val bytes = "TEST_BYTES".toByteArray()
                 session.write(bytes, 0, bytes.size)
-                val stored = repository.commit(session, "fakehash").getOrThrow()
+                val hash = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(bytes).joinToString("") { "%02x".format(it) }
+                val stored = repository.commit(session, hash).getOrThrow()
                 Result.success(
                     MediaDownloadResult(
                         media = media,
                         bytesWritten = bytes.size.toLong(),
                         destination = MediaLocation(stored.localPath),
-                        integrity = MediaIntegrity(bytes.size.toLong(), bytes.size.toLong(), "fakehash")
+                        integrity = MediaIntegrity(bytes.size.toLong(), bytes.size.toLong(), hash)
                     )
                 )
             } else {
@@ -59,8 +61,8 @@ class HeyCyanMediaDownloadQueueTest {
         val queue = HeyCyanMediaDownloadQueue(strategy, repository)
 
         val items = listOf(
-            HeyCyanMedia.Photo("p1.jpg", "p1.jpg", 100L, 100L, null, null),
-            HeyCyanMedia.Video("v1.mp4", "v1.mp4", 500L, 200L, null),
+            HeyCyanMedia.Photo("p1.jpg", "p1.jpg", 10L, 100L, null, null),
+            HeyCyanMedia.Video("v1.mp4", "v1.mp4", 10L, 200L, null),
         )
 
         val queueResult = queue.process(items) { _, _, _, _ -> }

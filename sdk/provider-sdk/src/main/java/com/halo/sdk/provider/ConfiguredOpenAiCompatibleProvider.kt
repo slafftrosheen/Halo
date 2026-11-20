@@ -28,7 +28,7 @@ class ConfiguredOpenAiCompatibleProvider(
     private val optionalHeaders: Map<String, String> = emptyMap(),
     private val freeModelIds: Set<String> = emptySet(),
     private val fallbackWhenUnauthenticated: Boolean = false,
-    private val staticHints: List<AiModel> = emptyList(),
+    private val staticHints: List<AiModel> = RemoteProviderPresets.documentedToolModels(descriptor.id),
 ) : AiInferenceProvider, CredentialProvider by credentialProvider, ProviderConfigurationReporting {
 
     override val configurationDescriptor: ProviderConfigurationDescriptor get() = ProviderConfigurationDescriptor(
@@ -126,7 +126,7 @@ class ConfiguredOpenAiCompatibleProvider(
                 }
             }
             ModelDiscoveryMode.NONE -> emptyList()
-        }.map { it.copy(executionLocation = descriptor.executionLocation) }
+        }.map { it.copy(providerId = id, executionLocation = descriptor.executionLocation) }
     }
 
     fun setAuthState(state: ProviderAuthState, failure: String? = null) {

@@ -12,6 +12,31 @@ import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ReloadableModelSelectionTest {
+    @Test fun explicitRemoteSelectionWorksInPowerAndLocalModeAlwaysResolvesOffline() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val selector = Selector().also { it.selectStt("remote.stt") }
+        var power = true
+        var remoteClosed = false
+        val external = object : BufferedSpeechRecognitionProvider {
+            override val metadata = ProviderMetadata("remote.stt", "Remote", local = false)
+            override suspend fun health() = true
+            override suspend fun close() { remoteClosed = true }
+            override suspend fun recognize(audio: AudioBuffer) = RecognitionResult("remote", "en")
+        }
+        val provider = ReloadableSpeechRecognitionProvider(File("test/sherpa-whisper-tiny"), selector = selector,
+            externalProviders = listOf(external), allowExternal = { power },
+            dispatchers = HaloDispatchers(dispatcher, dispatcher, dispatcher), installed = { _, _ -> true },
+            delegateFactory = { _, spec, language -> Fake(spec, language) })
+        runCurrent()
+        assertFalse(provider.metadata.local); assertTrue(provider.availability.value)
+        assertEquals("Ready", provider.readiness.value.phase)
+        assertEquals("remote.stt", provider.captureContext().providerId)
+        assertTrue(runCatching { provider.recognizeLocal(AudioBuffer(emptyList())) }.isFailure)
+        power = false; provider.refresh(); runCurrent()
+        assertTrue(remoteClosed); assertTrue(provider.metadata.local)
+        assertNotEquals("remote.stt", provider.captureContext().providerId)
+        provider.close()
+    }
     @Test fun failedConstructionCannotRetainClosedReadyDelegateAndSelectionCanRecover() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val selector = Selector()

@@ -18,6 +18,7 @@ import com.halo.sdk.driver.Driver
 import com.halo.sdk.driver.DriverState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
@@ -101,12 +102,14 @@ class RealHeyCyanDriver(
     override suspend fun connect() { throw IllegalStateException("HeyCyan requires explicit device selection; use connect(selectedAddress, mode, selectedName)") }
     suspend fun connect(selectedAddress: String, mode: HeyCyanConnectionMode, selectedName: String? = null, scenario: String = "discovery", captureId: String? = null, advertisement: com.halo.drivers.heycyan.ble.BleAdvertisement? = null) = connectionMutex.withLock {
         require(selectedAddress.isNotBlank()) { "Selected BLE address must not be blank" }
+        readJob?.cancelAndJoin()
+        readJob = null
+        stateStore.beginConnection(selectedAddress)
         connectedDeviceId = selectedAddress
         android.util.Log.i("RealHeyCyanDriver", "Connecting to ${selectedAddress.takeLast(5)} (mode: $mode)")
         captureRecorder?.abort()
         captureRecorder?.start(scenario = scenario, captureId = captureId, metadata = CaptureMetadata())
         gattClient.markScanning()
-        stateStore.updateConnection(com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.SCANNING)
         try {
             captureRecorder?.setDevice(selectedAddress, selectedName)
             advertisement?.let { captureRecorder?.recordAdvertisement(com.halo.drivers.heycyan.codec.CaptureAdvertisement(timestamp = System.currentTimeMillis(), address = it.address, name = it.name, rssi = it.rssi, serviceUuids = it.serviceUuids, manufacturerData = it.manufacturerData)) }
@@ -198,6 +201,16 @@ class RealHeyCyanDriver(
             is HeyCyanEvent.ModeChanged -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
                 ObservationUpdated(observation = Observation(modality = Modality.SYSTEM, source = Source.BLUETOOTH, payload = SystemObservationPayload("MODE_CHANGED"), sourceDeviceId = deviceId, metadata = mapOf("event" to "MODE_CHANGED", "mode" to event.mode)))
             ) }
+            is HeyCyanEvent.RecordingStateChanged -> {
+                emitDeviceEvent(event)
+                val deviceId = currentObservationDeviceId() ?: return
+                // Keep the existing SDK session confirmation contract; IDLE is
+                // semantic state after a real stop ack, never a new wire command.
+                eventBus?.publish(ObservationUpdated(observation = Observation(
+                    modality = Modality.SYSTEM, source = Source.BLUETOOTH,
+                    payload = SystemObservationPayload("MODE_CHANGED"), sourceDeviceId = deviceId,
+                    metadata = mapOf("event" to "MODE_CHANGED", "mode" to (stateStore.state.value.mode?.value ?: "IDLE")))))
+            }
             is HeyCyanEvent.MediaCountsUpdated -> { emitDeviceEvent(event); val deviceId = currentObservationDeviceId() ?: return; eventBus?.publish(
                 ObservationUpdated(
                     observation = Observation(

@@ -110,7 +110,7 @@ class AssistantToolsTest {
             assertTrue("Every assistant ability must be reachable through the actual discovery policy", executor.definitions().all { policy.mayExpose(it.name) })
             assertEquals(LocalModelToolPolicy.BOOTSTRAP, policy.allowedToolIds)
         }
-        assertEquals(3, LocalModelToolPolicy.BOOTSTRAP.size)
+        assertEquals(setOf("halo_discover_tools", "halo_use_skill", "halo_current_time", "halo_workflow_plan"), LocalModelToolPolicy.BOOTSTRAP)
         val skill = com.halo.app.di.BuiltInSkillManifestLoader(context).load().single { it.id.value == "halo.assistant" }
         assertEquals(executor.definitions().map { it.name }.toSet(), skill.tools)
         assertEquals(ReplaySafety.NEVER_REPLAY, descriptors.single { it.name == "halo_read_aloud" }.security.replaySafety)

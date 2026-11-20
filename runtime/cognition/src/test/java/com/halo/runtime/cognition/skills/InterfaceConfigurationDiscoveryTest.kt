@@ -26,7 +26,6 @@ class InterfaceConfigurationDiscoveryTest {
     @Test fun newDomainsHaveUniqueNativeOwnershipWithoutCollidingWithPhoneScreenControl() {
         val registry = DefaultSkillRegistry(MemoryStorage())
         val expected = mapOf("halo.assistant" to PersonalConfigurationToolAccess.preferences,
-            "halo.screen.layout" to PersonalConfigurationToolAccess.screenLayout,
             "halo.saved_devices" to PersonalConfigurationToolAccess.savedDevices,
             "halo.notification_settings" to PersonalConfigurationToolAccess.notificationSettings,
             "halo.voice.configuration" to PersonalConfigurationToolAccess.voice,
@@ -43,23 +42,17 @@ class InterfaceConfigurationDiscoveryTest {
         assertEquals(SkillRisk.READ_ONLY, registry.get(SkillId("halo.notebook"))!!.toolDefinitions.single { it.toolId == "halo_canvas_current" }.risk)
     }
 
-    @Test fun loadingNativeLayoutGuidanceExposesItsToolsAndDisabledOwnerCannotBeBypassed() = runTest {
+    @Test fun retiredAmbientPageCannotBeDiscoveredAsAnAction() = runTest {
         val registry = DefaultSkillRegistry(MemoryStorage())
-        val source = BundledSkillInstructionSource()
-        val executor = UseSkillToolExecutor(source, registry)
-        val result = executor.execute(ToolCall("native-layout-load", "halo_use_skill", mapOf("skillId" to "halo.screen.layout"))) as ToolExecutionResult.Success
-        PersonalConfigurationToolAccess.screenLayout.forEach { assertTrue(it, result.output.contains(it)) }
-        assertFalse(result.output.contains("halo_ui_click"))
-        val definitions = PersonalConfigurationToolAccess.screenLayout.map { ToolDefinition(it, it, "Native layout fixture") }
-        assertEquals(definitions.toSet(), registry.enabledTools(definitions).toSet())
-        registry.setEnabled(SkillId("halo.screen.layout"), false)
-        assertTrue(registry.enabledTools(definitions).isEmpty())
-        assertEquals(ToolApprovalPolicy.DENY, registry.approvalPolicyForTool("halo_screen_apply"))
+        assertNull(registry.get(SkillId("halo.screen.layout")))
+        assertNotNull(registry.skillIdForTool("halo_read_screen"))
+        assertNotNull(registry.get(SkillId("halo.everyday")))
+        val executor = UseSkillToolExecutor(BundledSkillInstructionSource(), registry)
+        assertTrue(executor.execute(ToolCall("retired", "halo_use_skill", mapOf("skillId" to "halo.screen.layout"))) !is ToolExecutionResult.Success)
     }
-
     @Test fun allConfigurationDomainsLoadDedicatedBoundedGuidance() = runTest {
         val source = BundledSkillInstructionSource()
-        listOf("halo.assistant", "halo.screen.layout", "halo.saved_devices", "halo.notification_settings", "halo.notebook",
+        listOf("halo.assistant", "halo.saved_devices", "halo.notification_settings", "halo.notebook",
             "halo.voice.configuration", "halo.speech.inventory", "halo.learning.configuration", "halo.provider.configuration", "halo.automation", "halo.study").forEach {
             assertNotNull(it, source.load(SkillId(it)))
         }

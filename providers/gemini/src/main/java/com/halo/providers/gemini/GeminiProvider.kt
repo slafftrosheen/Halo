@@ -14,6 +14,7 @@ import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiProviderException
 import com.halo.sdk.provider.imageMimeType
+import com.halo.sdk.provider.inlineMedia
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
@@ -113,6 +114,8 @@ class GeminiProvider(
     override suspend fun getCapabilities(): Set<AiCapability> = setOf(
         AiCapability.TEXT,
         AiCapability.IMAGE,
+        AiCapability.AUDIO,
+        AiCapability.VIDEO,
         AiCapability.TOOLS,
     )
 
@@ -158,7 +161,7 @@ class GeminiProvider(
             if ((0 until methods.length()).none { methods.optString(it) == "generateContent" }) return@mapNotNull null
             val modelId = item.optString("name").removePrefix("models/").trim()
             if (!modelId.startsWith("gemini-") || modelId.contains("image", true) || modelId.contains("tts", true)) return@mapNotNull null
-            AiModel(modelId, item.optString("displayName", modelId), id, setOf(AiCapability.TEXT, AiCapability.IMAGE),
+            AiModel(modelId, item.optString("displayName", modelId), id, setOf(AiCapability.TEXT, AiCapability.IMAGE, AiCapability.AUDIO, AiCapability.VIDEO),
                 item.optLong("inputTokenLimit").takeIf { it > 0L }, supportsStreaming = false, supportsTools = true,
                 capabilityEvidence = mapOf(AiCapability.IMAGE to com.halo.sdk.provider.CapabilityEvidence.HEURISTIC))
         }.distinctBy { it.id }.sortedBy { it.displayName.lowercase() }
@@ -228,26 +231,26 @@ class GeminiProvider(
     private fun buildRequestBody(request: AiRequest, context: AiContext): JSONObject {
         val toolNames = context.conversation
             .flatMap(AIMessage::toolCalls)
-            .associate { it.id to it.functionName }
+            .associateBy { it.id }
         val contents = JSONArray()
         context.conversation.filterNot { it.role == Role.SYSTEM }.forEach { message ->
             contents.put(message.toGeminiContent(toolNames))
         }
         context.screenContext?.let { screen -> contents.put(textContent("user", screen.asUntrustedPromptSection())) }
-        request.text?.takeIf { request.appendTextAsUserMessage }?.let { text ->
+        if (request.appendTextAsUserMessage) {
             val parts = JSONArray()
-            request.image?.let { image ->
+            request.inlineMedia().forEach { media ->
                 parts.put(
                     JSONObject().put(
                         "inlineData",
                         JSONObject()
-                            .put("mimeType", request.imageMimeType())
-                            .put("data", Base64.encodeToString(image, Base64.NO_WRAP)),
+                            .put("mimeType", media.mimeType)
+                            .put("data", Base64.encodeToString(media.bytes, Base64.NO_WRAP)),
                     ),
                 )
             }
-            parts.put(JSONObject().put("text", text))
-            contents.put(JSONObject().put("role", "user").put("parts", parts))
+            request.text?.takeIf { it.isNotBlank() }?.let { parts.put(JSONObject().put("text", it)) }
+            if (parts.length() > 0) contents.put(JSONObject().put("role", "user").put("parts", parts))
         }
 
         val systemText = buildList {
@@ -282,11 +285,11 @@ class GeminiProvider(
             }
     }
 
-    private fun AIMessage.toGeminiContent(toolNames: Map<String, String>): JSONObject {
+    private fun AIMessage.toGeminiContent(toolNames: Map<String, ToolCall>): JSONObject {
         if (role == Role.TOOL) {
             val callId = toolCallId?.takeIf { it.isNotBlank() }
                 ?: throw AiProviderException(AiErrorType.INVALID_REQUEST, "Gemini tool result is missing its call identity")
-            val functionName = toolNames[callId]
+            val original = toolNames[callId]
                 ?: throw AiProviderException(AiErrorType.INVALID_REQUEST, "Gemini tool result has no matching function call")
             val response = runCatching { JSONObject(content) }
                 .getOrElse { JSONObject().put("result", content) }
@@ -296,8 +299,8 @@ class GeminiProvider(
                     JSONObject().put(
                         "functionResponse",
                         JSONObject()
-                            .put("id", callId)
-                            .put("name", functionName)
+                            .apply { if (original.providerMetadata["gemini.idAbsent"] != "true") put("id", callId) }
+                            .put("name", original.functionName)
                             .put("response", response),
                     ),
                 ),
@@ -308,10 +311,10 @@ class GeminiProvider(
         if (role == Role.ASSISTANT) {
             toolCalls.forEach { call ->
                 parts.put(
-                    JSONObject().put(
+                    JSONObject().apply { call.providerMetadata["gemini.thoughtSignature"]?.let { put("thoughtSignature", it) } }.put(
                         "functionCall",
                         JSONObject()
-                            .put("id", call.id)
+                            .apply { if (call.providerMetadata["gemini.idAbsent"] != "true") put("id", call.id) }
                             .put("name", call.functionName)
                             .put("args", JSONObject(call.arguments)),
                     ),
@@ -341,14 +344,18 @@ class GeminiProvider(
         val toolCalls = mutableListOf<ToolCall>()
         for (index in 0 until parts.length()) {
             val part = parts.optJSONObject(index) ?: continue
-            part.optString("text").takeIf { it.isNotEmpty() }?.let(text::append)
+            if (!part.optBoolean("thought", false)) part.optString("text").takeIf { it.isNotEmpty() }?.let(text::append)
             part.optJSONObject("functionCall")?.let { call ->
-                val callId = call.optString("id").takeIf { it.isNotBlank() }
-                    ?: throw AiProviderException(AiErrorType.INVALID_RESPONSE, "Gemini returned a function call without an identity")
+                val wireId = call.optString("id").takeIf { it.isNotBlank() }
+                val callId = wireId ?: "halo_${java.util.UUID.randomUUID()}"
                 toolCalls += ToolCall(
                     id = callId,
                     functionName = call.getString("name"),
                     arguments = (call.optJSONObject("args") ?: JSONObject()).toMap(),
+                    providerMetadata = buildMap {
+                        part.optString("thoughtSignature").takeIf { it.isNotBlank() }?.let { put("gemini.thoughtSignature", it) }
+                        if (wireId == null) put("gemini.idAbsent", "true")
+                    },
                 )
             }
         }
@@ -367,9 +374,7 @@ class GeminiProvider(
         )
     }
 
-    private fun JSONObject.toMap(): Map<String, Any> = buildMap {
-        keys().forEach { key -> put(key, get(key)) }
-    }
+    private fun JSONObject.toMap(): Map<String, Any> = com.halo.sdk.provider.ToolArgumentJson.decode(this)
 
     private suspend fun <T> execute(request: Request, imageRequest: Boolean = false, read: (String) -> T): T {
         try {

@@ -36,18 +36,22 @@ class StudyDeviceRegressionTest {
         } finally { owners.clear(); db.close(); Dispatchers.resetMain() }
     }
 
-    @Test fun childLessonStartsLocallyWithoutGrantAndUsesCloudOnlyWithGrant() = fixture { _, study, owners, storage ->
+    @Test fun childLessonKeepsAppWideModeWithoutCreatingAPerLessonOverride() = fixture { _, study, owners, storage ->
         val home = StudyHomeViewModel(study, executionStorage = storage)
         owners.put("home", home)
-        for (cloudGranted in listOf(false, true)) {
-            home.startChildLesson("Why do seasons change?", cloudGranted)
+        for (mode in listOf("PRIVATE", "CLOUD")) {
+            storage.putString(com.halo.app.ai.PRIVACY_MODE_KEY, mode)
+            home.startChildLesson("Why do seasons change?")
+            withTimeout(5000) { home.busy.filter { !it }.first() }
+            assertNull("Lesson start failed: ${home.notice.value}", home.notice.value)
             val id = withTimeout(5000) { home.navigation.first() }
             val session = study.resume(id)!!
             assertNull(home.notice.value)
             assertEquals(StudyLearnerLevel.PRIMARY, session.learnerLevel)
             assertEquals(StudySupportStyle.GUIDED, session.supportStyle)
             assertEquals(StudyKnowledgePolicy.SOURCE_PLUS_GENERAL, session.knowledgePolicy)
-            assertEquals(if (cloudGranted) "cloud" else "phone", storage.getString("study_execution_$id"))
+            assertNull(storage.getString("study_execution_$id"))
+            assertEquals(mode, storage.getString(com.halo.app.ai.PRIVACY_MODE_KEY))
             withTimeout(5000) { home.busy.filter { !it }.first() }
         }
     }

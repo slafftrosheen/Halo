@@ -32,6 +32,7 @@ class SpeechOutputStudyNarration(
     private val eventBus: EventBus,
     private val cancelSpeech: (String) -> Unit,
     private val scope: CoroutineScope,
+    private val remoteSpeechContext: suspend (String) -> com.halo.sdk.provider.RemoteDispatchProvenance? = { null },
 ) : StudyNarrationController {
 
     override val available: Boolean = true
@@ -135,7 +136,21 @@ class SpeechOutputStudyNarration(
         publishing?.cancel()
         publishing = scope.launch {
             if (event is TtsRequested && active.get()?.transactionId != event.transactionId) return@launch
-            eventBus.publish(event)
+            val routed = if (event is TtsRequested) {
+                val session = active.get()?.takeIf { it.transactionId == event.transactionId } ?: return@launch
+                val provenance = try { remoteSpeechContext(session.sessionId) }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) {
+                    if (active.compareAndSet(session, null)) mutableEvents.emit(
+                        NarrationEvent.Failed(session.generationId, "Could not check this lesson's speech settings. Try again."))
+                    return@launch
+                }
+                if (active.get() != session) return@launch
+                event.copy(localOnly = provenance == null,
+                    remoteDataCategories = provenance?.categories?.map { it.name }?.toSet(),
+                    remoteDispatchRevision = provenance?.revision)
+            } else event
+            eventBus.publish(routed)
         }
     }
 }

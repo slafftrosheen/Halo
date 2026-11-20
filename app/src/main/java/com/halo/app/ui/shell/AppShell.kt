@@ -120,8 +120,6 @@ fun AppShell(
     onCompactChanged: (Boolean) -> Unit = {},
 ) {
     val navController = rememberNavController()
-    var screenMode by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
-    var screenFull by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     val reducedMotion by rememberReducedMotion()
     val setupStore = ManualDependencyGraph.setupProgress
     // Only the first un-dismissed launch opens setup. "Save and leave" is durable
@@ -150,7 +148,9 @@ fun AppShell(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(uiText("Starting halo…")) }
         return
     }
-    LaunchedEffect(kidsMode) { if (kidsMode) navController.navigateToPrimary("home") }
+    LaunchedEffect(kidsMode) {
+        if (kidsMode) { navController.awaitNavigationReady(); navController.navigateToPrimary("home") }
+    }
     val shellScope = rememberCoroutineScope()
     val studyContext = LocalContext.current
     val exportOwner = ManualDependencyGraph.workspaceExternalExport
@@ -193,12 +193,9 @@ fun AppShell(
             return
         }
         if (route == "screen") {
-            screenMode = true
-            screenFull = false
             navController.navigateToPrimary("home", restoreSavedState = false)
             return
         }
-        if (route == "home") { screenMode = false; screenFull = false }
         val currentBell = navController.currentDestination?.route
         if (route in setOf("activity", "notifications") &&
             (currentBell?.startsWith("activity") == true || currentBell == "notifications")) {
@@ -268,11 +265,11 @@ fun AppShell(
     val ownerLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     val navigateRequestedScreen by rememberUpdatedState(newValue = ::navigateSafely)
     LaunchedEffect(ownerLifecycle) {
-        HaloScreenRequests.collectResumed(ownerLifecycle, ManualDependencyGraph.requestedHaloScreen) {
-            navigateRequestedScreen(it)
-        }
+        HaloScreenRequests.collectResumed(ownerLifecycle, ManualDependencyGraph.requestedHaloScreen,
+            navigate = { navigateRequestedScreen(it) }, awaitReady = navController::awaitNavigationReady)
     }
     LaunchedEffect(Unit) {
+        navController.awaitNavigationReady()
         val screen = ManualDependencyGraph.assistantPreferences.get().startScreen
         val kids = ManualDependencyGraph.kidsPreferences.getEnabled()
         if (!kids && !ManualDependencyGraph.explicitHaloScreenRequested && ManualDependencyGraph.requestedHaloScreen.value == null && navController.currentDestination?.route == "home" && screen != "home") navigateSafely(screen)
@@ -358,9 +355,6 @@ fun AppShell(
             ?.let { lastWorkingRoot = it }
     }
 
-    androidx.activity.compose.BackHandler(currentRoute == "home" && screenMode && !kidsMode) {
-        if (screenFull) screenFull = false else screenMode = false
-    }
     val developerRouteBlocked = currentRoute?.let {
         com.halo.app.ui.screens.settings.isDeveloperDestination(it)
     } == true && !ManualDependencyGraph.storage.getBoolean("halo_developer_tools_enabled", false)
@@ -387,7 +381,7 @@ fun AppShell(
         hintDismissed = true
         ManualDependencyGraph.storage.putBoolean("interface4_orb_hint_seen", true)
     }
-    val contextualRoute = if (currentRoute == "home" && screenMode) "screen" else currentRoute
+    val contextualRoute = currentRoute
     val pageContextBinding = remember { com.halo.app.context.CurrentPageContextBinding(
         ManualDependencyGraph.interactionContext, ManualDependencyGraph.workspaceContext::versionFor) }
     val contextObjectId = com.halo.app.context.CurrentPageContextBinding.objectArgument(currentRoute)
@@ -453,6 +447,7 @@ fun AppShell(
         com.halo.app.ui.presence.LocalShellUtilityBand provides utilityBand,
         com.halo.app.ui.presence.LocalShellPageOwnerFilter provides pageOwnerFilter) {
     ShellTypedMessageSheet(homeViewModel, showTypedMessage && shellOrbVisible && !kidsMode) { showTypedMessage = false }
+    if (!kidsMode) com.halo.app.ui.screens.devices.HeyCyanWifiPeerDialog()
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -524,7 +519,7 @@ fun AppShell(
         kidsLoadError?.let { Text(uiText(it), Modifier.padding(16.dp)) }
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            if (contextualRoute != "screen") com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize())
+            com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize())
             SharedTransitionLayout {
             com.halo.app.ui.design.HaloLabBoundary(
                 enabled = currentRoute?.let { com.halo.app.ui.screens.settings.isDeveloperDestination(it) } == true,
@@ -582,38 +577,7 @@ fun AppShell(
                     if (kidsMode) com.halo.app.ui.screens.kids.KidsModeScreen(homeViewModel, onRequestPermissions,
                         onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") })
                     else Column(Modifier.fillMaxSize()) {
-                        if (screenMode) {
-                            val orbUi by homeViewModel.uiState.collectAsStateWithLifecycle()
-                            val orbStarting by homeViewModel.listeningRequested.collectAsStateWithLifecycle()
-                            val orbSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
-                            val screenDensity = androidx.compose.ui.platform.LocalDensity.current
-                            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides
-                                androidx.compose.ui.unit.Density(screenDensity.density, com.halo.app.screen.screenAmbientFontScale(screenDensity.fontScale, screenFull))) {
-                            com.halo.app.screen.HaloScreen(ManualDependencyGraph.screenStore, screenFull, { screenFull = it },
-                            onOpen = ::navigateSafely, onTalk = {
-                                screenMode = false; screenFull = false
-                                val current = homeViewModel.uiState.value
-                                if (!current.microphonePermissionGranted) onRequestPermissions()
-                                else if (!current.speechReady) navigateSafely("voice_settings")
-                                else homeViewModel.startListening()
-                            }, onChat = { screenMode = false; screenFull = false },
-                            orbControl = { size -> com.halo.app.ui.presence.HomeOrbControl(homeViewModel, onRequestPermissions,
-                                onOpen = { route ->
-                                    if (route == "home") { screenMode = false; screenFull = false }
-                                    navigateSafely(route)
-                                }, size = size) },
-                            orbActive = orbStarting || orbUi.inputStatus.capturing || orbUi.speechActive || orbUi.speechProcessing || orbSubmission.busy ||
-                                orbUi.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Recognizing ||
-                                orbUi.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Speaking ||
-                                orbUi.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Completed &&
-                                orbUi.sessionState !is com.halo.sdk.provider.CognitiveSessionState.Failed &&
-                                orbUi.sessionState != com.halo.sdk.provider.CognitiveSessionState.Idle,
-                            onQuickNote = { screenFull = false; homeViewModel.createNote() })
-                            }
-                        } else HomeScreen(
-                        surfaceSwitcher = { com.halo.app.screen.HomeSurfaceSwitch(false,
-                            { screenMode = it; if (!it) screenFull = false },
-                            compact = androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.5f) },
+                        HomeScreen(
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
                         onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
                         viewModel = homeViewModel,
@@ -637,20 +601,20 @@ fun AppShell(
                             entry.arguments?.getString("createKind")?.let { value -> runCatching { com.halo.app.everyday.organizer.OrganizerKind.valueOf(value) }.getOrNull() },
                             entry.arguments?.getString("occurrenceStart")?.let { value -> runCatching { java.time.Instant.parse(value) }.getOrNull() })
                     })
-                    OrganizerScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                    OrganizerScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("home") },
                         onClocks = { navigateSafely(EverydayRoutes.CLOCKS) }, onBrief = { navigateSafely(EverydayRoutes.BRIEF) },
                         onOpenRelated = { navigateSafely(it) })
                 }
                 composable("screen/clocks?zoneId={zoneId}&cityLabel={cityLabel}",arguments=listOf(navArgument("zoneId") { type=NavType.StringType;nullable=true;defaultValue=null },
                     navArgument("cityLabel") { type=NavType.StringType;nullable=true;defaultValue=null })) { entry ->
                     val model: WorldClockViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "clocks:${entry.id}", factory = EverydayViewModelFactory { WorldClockViewModel(entry.savedStateHandle) })
-                    WorldClockScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },initialZone=entry.arguments?.getString("zoneId"),initialLabel=entry.arguments?.getString("cityLabel"))
+                    WorldClockScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("home") },initialZone=entry.arguments?.getString("zoneId"),initialLabel=entry.arguments?.getString("cityLabel"))
                 }
                 composable("screen/brief?briefId={briefId}", arguments = listOf(navArgument("briefId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                     val model: EverydayBriefViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "brief:${entry.id}", factory = EverydayViewModelFactory {
                         EverydayBriefViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.arguments?.getString("briefId"), entry.savedStateHandle)
                     })
-                    EverydayBriefScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                    EverydayBriefScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("home") },
                         onSources = { navigateSafely(EverydayRoutes.SOURCES) }, onOrganizer = { navigateSafely(EverydayRoutes.ORGANIZER) },
                         onOpenFact = { model.openFact(it, ::navigateSafely) })
                 }
@@ -658,7 +622,7 @@ fun AppShell(
                     val model: SourcesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "sources:${entry.id}", factory = EverydayViewModelFactory {
                         SourcesViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.savedStateHandle)
                     })
-                    SourcesScreen(model, null, null, onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                    SourcesScreen(model, null, null, onBack = { if (!navController.popBackStack()) navigateSafely("home") },
                         onSource = { id, item -> navigateSafely(EverydayRoutes.source(id, item)) },
                         onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) })
                 }
@@ -669,7 +633,7 @@ fun AppShell(
                         SourcesViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.savedStateHandle)
                     })
                     SourcesScreen(model, entry.arguments?.getString("sourceId"), entry.arguments?.getString("itemId"),
-                        onBack = { if (!navController.popBackStack()) navigateSafely("screen") },
+                        onBack = { if (!navController.popBackStack()) navigateSafely("home") },
                         onSource = { id, item -> navigateSafely(EverydayRoutes.source(id, item)) },
                         onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) })
                 }
@@ -787,7 +751,7 @@ fun AppShell(
                                 ManualDependencyGraph.notebookDocumentRepository,
                                 ManualDependencyGraph.workspaceUseCases,
                                 ManualDependencyGraph.aiProviderRouter,
-                                { (!ManualDependencyGraph.kidsPreferences.enabled.value || ManualDependencyGraph.kidsPreferences.cloudAllowed.value) && ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+                                { ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
                                 imageService = ManualDependencyGraph.workspaceImageService,
                                 study = ManualDependencyGraph.studyUseCases,
                                 structuredResults = ManualDependencyGraph.notebookStructuredResults,
@@ -867,7 +831,7 @@ fun AppShell(
                                 memoTranscriber = ManualDependencyGraph.localMemoTranscriber,
                                 permitsAi = ManualDependencyGraph.workspaceMediaAiPolicy::permitsObject,
                                 router = ManualDependencyGraph.aiProviderRouter,
-                                allowCloudSharing = { (!ManualDependencyGraph.kidsPreferences.enabled.value || ManualDependencyGraph.kidsPreferences.cloudAllowed.value) && ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+                                allowCloudSharing = { ManualDependencyGraph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
                                 imageService = ManualDependencyGraph.workspaceImageService,
                                 assets = ManualDependencyGraph.notebookAssetRepository,
                                 notes = ManualDependencyGraph.notebookUseCases,

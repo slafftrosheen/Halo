@@ -119,6 +119,8 @@ fun SpeechRecognitionSettingsScreen(
         Spacer(Modifier.height(20.dp))
 
         var languagePicker by rememberSaveable { mutableStateOf(false) }
+        OpenRouterRecognitionSettings()
+        Spacer(Modifier.height(20.dp))
         var removeDownload by rememberSaveable { mutableStateOf<String?>(null) }
         var removeVad by rememberSaveable { mutableStateOf(false) }
         removeDownload?.let { model ->
@@ -369,7 +371,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
             }
             HaloWorkspaceToggleRow(title = uiText("Follow words"), checked = followWords, onCheckedChange = reading::setFollowWords)
             HaloWorkspaceToggleRow(title = uiText("Read new answers aloud"), checked = autoAnswers, onCheckedChange = reading::setAutoReadAnswers)
-            Text(uiText("Automatic reading uses an on-device voice. Cloud reading always asks before sending text."),
+            Text(uiText("Reading follows Local / Power mode. Local uses an on-device voice; Power uses your selected voice for content allowed to be shared."),
                 style = MaterialTheme.typography.bodySmall)
         }
         OutlinedButton(onClick = { detailedConversation = !detailedConversation },
@@ -427,6 +429,7 @@ fun VoiceSettingsScreen(viewModel: VoiceSettingsViewModel, onBack: () -> Unit,
 /** Capability names, never model identifiers, on ordinary voice settings. */
 internal fun listeningChoiceLabel(providerId: String): String = when {
     providerId == "AUTOMATIC" -> "Listening · automatic"
+    providerId == "provider.openrouter.stt" -> "OpenRouter transcription"
     providerId.contains("tiny", ignoreCase = true) -> "Listening · light"
     providerId.contains("small", ignoreCase = true) -> "Listening · accurate"
     providerId.contains("base", ignoreCase = true) -> "Listening · balanced"
@@ -436,7 +439,8 @@ internal fun listeningChoiceLabel(providerId: String): String = when {
 internal fun voiceChoiceLabel(providerId: String?): String = when {
     providerId == null || providerId == "AUTOMATIC" -> "Automatic voice"
     providerId.contains("android", ignoreCase = true) -> "Phone's voice"
-    providerId.contains("elevenlabs", ignoreCase = true) -> "Online voices"
+    providerId == "provider.openrouter.tts" -> "OpenRouter speech"
+    providerId.contains("elevenlabs", ignoreCase = true) -> "ElevenLabs"
     providerId.contains("supertonic", ignoreCase = true) -> "Natural voices"
     else -> "Downloaded voices"
 }

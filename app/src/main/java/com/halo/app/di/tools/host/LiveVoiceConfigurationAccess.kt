@@ -19,7 +19,11 @@ internal class LiveVoiceConfigurationAccess(private val storage: Storage, privat
             ui.availableLocales.map { it.tag }.distinct().take(32), extras.read(), ui.isTesting || ui.isDownloading, sourceRevision(),
             recognitionProvider = ui.selectedProviderId,
             recognitionChoices = listOf("AUTOMATIC") + com.halo.providers.sherpa.stt.SherpaSpeechModelCatalog.recognitionModels
-                .filter { ui.models[it.id] == true && it.supportsLanguage(language.languageMode.value) }.map { it.providerId },
+                .filter { ui.models[it.id] == true && it.supportsLanguage(language.languageMode.value) }.map { it.providerId } +
+                if (storage.getString(com.halo.app.ai.PRIVACY_MODE_KEY) == com.halo.app.ai.PrivacyMode.CLOUD.name &&
+                    !storage.getString(com.halo.providers.openrouter.OpenRouterRecognitionProvider.MODEL).isNullOrBlank() &&
+                    !storage.getString(com.halo.providers.openrouter.OpenRouterSpeechProvider.KEY).isNullOrBlank())
+                    listOf(com.halo.providers.openrouter.OpenRouterRecognitionProvider.ID) else emptyList(),
             synthesisProvider = model.synthesisRegistry?.selector?.ttsSelection?.value?.id,
             synthesisChoices = model.synthesisRegistry?.let { listOf("AUTOMATIC") + it.providers.map { provider -> provider.metadata.id } }.orEmpty())
     }

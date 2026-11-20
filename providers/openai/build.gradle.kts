@@ -13,4 +13,8 @@ dependencies {
     implementation(project(":sdk:runtime-sdk"))
     implementation(libs.okhttp)
     implementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.mockwebserver)
 }

@@ -230,7 +230,7 @@ class DefaultSkillRegistry(
                 tools = setOf("halo_open_settings"), risk = SkillRisk.REVERSIBLE),
             studySkill(),
             configurationSkill("halo.library", "Current Workspace Library",
-                "Use the attached Library view, organization and approved exact-selection lifecycle/context/Undo operations through native owners. Local inference only.",
+                "Use the attached Library view, organization and approved exact-selection lifecycle/context/Undo operations through native owners, with current Local/Power disclosure authority.",
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.library,
                 setOf("halo_library_view", "halo_library_organization", "halo_library_batch"), sensitive = setOf("halo_library_organize"),
                 destructive = setOf("halo_library_apply_batch")).copy(risk = SkillRisk.DESTRUCTIVE),
@@ -251,11 +251,7 @@ class DefaultSkillRegistry(
             configurationSkill("halo.everyday", "Your day, organizer and widgets",
                 "Operate canonical local organizer, world clocks, selected sources, briefs and independent widgets. Power-only external preview/refresh follows the global policy; no mode changes or Android grants.",
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.everyday,
-                setOf("halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query")),
-            configurationSkill("halo.screen.layout", "halo Screen layout",
-                "Preview and edit the native halo Screen layout, saved presets and presentation settings. Separate from cross-app screen control.",
-                com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.screenLayout,
-                setOf("halo_screen_state", "halo_screen_preview","halo_screen_card_configuration"), sensitive = setOf("halo_screen_settings")),
+                setOf("halo_day_context","halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_source_image","halo_brief_query","halo_widget_query")),
             configurationSkill("halo.saved_devices", "Saved device controls",
                 "Inspect saved local device preferences and request exact guarded device actions; pairing and physical readiness remain separate.",
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.savedDevices,
@@ -318,7 +314,7 @@ class DefaultSkillRegistry(
                 id = SkillId("halo.discovery"), name = "Tool discovery",
                 description = "Let the assistant look up additional tool schemas when needed.",
                 category = SkillCategory.INFORMATION,
-                tools = setOf("halo_discover_tools"), risk = SkillRisk.READ_ONLY, source = SkillSource.BUILT_IN
+                tools = setOf("halo_discover_tools", "halo_workflow_plan"), risk = SkillRisk.READ_ONLY, source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(
                 id = SkillId("halo.notifications"), name = "Notification digests",

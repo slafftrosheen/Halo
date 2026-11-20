@@ -26,7 +26,11 @@ class ShellOrbCatalogTest {
     @Test fun globalMenuContainsEveryUsableExactDestinationWithoutInventingObjectsOrLabs() {
         val routes = ShellOrbCatalog.destinations(false).map { it.route }
         assertEquals(routes.size, routes.distinct().size)
-        assertTrue(routes.containsAll(listOf("home", "screen", "notebook", "study", "studio", "activity", "devices", "settings")))
+        assertTrue(routes.containsAll(listOf("home", "screen/organizer", "screen/sources", "screen/brief", "screen/clocks", "notebook", "study", "studio", "activity", "devices", "settings")))
+        assertTrue(HaloScreenCatalog.screens.containsKey("mini_halo"))
+        assertFalse(routes.contains("screen"))
+        assertFalse(ShellOrbCatalog.globalDestinations(false).any { it.route == "screen" })
+        assertTrue(ShellOrbCatalog.globalDestinations(false).map { it.route }.containsAll(listOf("screen/organizer", "screen/sources", "screen/clocks", "screen/brief")))
         assertTrue(routes.all { it in HaloScreenCatalog.screens && !it.contains('{') })
         assertFalse(routes.any { com.halo.app.ui.screens.settings.isDeveloperDestination(it) })
         assertFalse(routes.contains("workspace_handoff"))

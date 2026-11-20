@@ -7,12 +7,34 @@ object ConversationSemantics {
     private val modelOnly = Regex("\\b(?:don['’]?t|do not) (?:search|use tools)\\b|answer from your model", RegexOption.IGNORE_CASE)
     private val explanation = Regex("^(?:how|why|what|who|when|where|explain|describe|tell me (?:about|how)|write|translate|summari[sz]e|give me|help me brainstorm)\\b", RegexOption.IGNORE_CASE)
     private val workspace = Regex("^(?:find|search|use|read|look up) my (?:notes?|notebook|documents?|files?|memories)\\b", RegexOption.IGNORE_CASE)
+    // Explicit requests for saved personal context need owner reads before a summary.
+    // These cues only select the tool route; they never grant access or supply action slots.
+    private val dayContext = Regex(
+        "^(?:summari[sz]e|sum\\s+up|recap|review|tell\\s+me\\s+about|what\\s+happened)\\s+" +
+            "(?:(?:my|the|this|last|past|passed|previous)\\s+){0,3}(?:day|today|yesterday|24\\s+hours)\\b|" +
+            "^(?:подведи\\s+итоги|суммируй|обобщи|расскажи)\\s+" +
+            "(?:(?:моего|мой|прошедшего|прошлый|вчерашнего|сегодняшнего|за)\\s+){0,3}(?:день|дня|сегодня|вчера|сутки)\\b|" +
+            "^(?:apkopo|rezumē|pārskati)\\s+(?:(?:manu|manas|pagājušo|aizvadīto|vakardienas|šodienas)\\s+){0,2}(?:dienu|dienas|šodienu|vakardienu)\\b|" +
+            "^(?:podsumuj|przejrzyj)\\s+(?:(?:mój|moj|miniony|wczorajszy|dzisiejszy|ostatni)\\s+){0,2}(?:dzień|dzien|wczoraj|dzisiaj)\\b",
+        RegexOption.IGNORE_CASE
+    )
+    private val savedContext = Regex(
+        "^(?:read|review|summari[sz]e|compare|analy[sz]e)\\s+(?:all\\s+)?(?:my|saved|selected|these)\\s+" +
+            "(?:sources|articles|feeds|notifications|notes|documents|files|memories)\\b|" +
+            "^(?:прочитай|обобщи|суммируй|сравни)\\s+(?:мои|сохранённые|сохраненные|выбранные)\\s+(?:источники|статьи|уведомления|заметки|документы)\\b|" +
+            "^(?:izlasi|apkopo|salīdzini)\\s+(?:manus|manas|saglabātos|atlasītos)\\s+(?:avotus|rakstus|paziņojumus|piezīmes|dokumentus)\\b|" +
+            "^(?:przeczytaj|podsumuj|porównaj)\\s+(?:moje|zapisane|wybrane)\\s+(?:źródła|artykuły|powiadomienia|notatki|dokumenty)\\b",
+        RegexOption.IGNORE_CASE
+    )
+    private fun needsSavedContext(text: String): Boolean = commandText(text).let {
+        dayContext.containsMatchIn(it) || savedContext.containsMatchIn(it)
+    }
     // Explicit domain writes still route through the normal tool authorizer when
     // the optional local intent classifier is absent. These cues supply no slots.
     private val workspaceWrite = Regex(
         "^(?:create|add|edit|update|change|rename|delete|remove|export|save|attach|duplicate|move|connect|start)\\s+" +
             // A singular count is action evidence only, never executable quantity/slots.
-            "(?:(?:one|1)\\s+(?:(?:new|local|empty|selected|existing|text|canvas|study)\\s+){0,2}" +
+            "(?:(?:(?:exactly|only)\\s+)?(?:one|1)\\s+(?:(?:new|local|empty|selected|existing|text|canvas|study)\\s+){0,2}" +
             "(?:note|document|file|card|board|canvas|study\\s+session)\\b|" +
             // "Only the selected text card" is four bounded modifiers, not a resolved selection.
             "(?:(?:a|an|the|my|this|that|new|local|empty|selected|existing|text|canvas|study|only)\\s+){0,4}" +
@@ -70,13 +92,14 @@ object ConversationSemantics {
         RegexOption.IGNORE_CASE
     )
     fun answerFromModel(text: String): Boolean = modelOnly.containsMatchIn(text.replace('\u2019', '\''))
-    fun isExplanation(text: String): Boolean = explanation.containsMatchIn(text.trim()) ||
+    fun isExplanation(text: String): Boolean = !needsSavedContext(text) && (explanation.containsMatchIn(text.trim()) ||
         multilingualExplanation.containsMatchIn(text.trim()) ||
-        Regex("^search engines?\\b", RegexOption.IGNORE_CASE).containsMatchIn(text.trim())
+        Regex("^search engines?\\b", RegexOption.IGNORE_CASE).containsMatchIn(text.trim()))
     fun actionReason(text: String): ToolActionReason? {
         if (answerFromModel(text) || isExplanation(text)) return null
         val command = commandText(text)
         return when {
+            needsSavedContext(command) -> ToolActionReason.WORKSPACE_LOOKUP
             workspaceWrite.containsMatchIn(command) -> ToolActionReason.ACTION_INTENT
             appWorkflow.containsMatchIn(command) -> ToolActionReason.SCREEN_OPERATION
             workspace.containsMatchIn(command) -> ToolActionReason.WORKSPACE_LOOKUP

@@ -27,6 +27,98 @@ import java.util.UUID
 @Config(sdk = [33], application = Application::class)
 class HeyCyanAudioPairingCoordinatorTest {
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test fun explicitlySelectedBondedDeviceUsesExactSingleDeviceApproval() = kotlinx.coroutines.test.runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        org.robolectric.Shadows.shadowOf(context as Application).grantPermissions(android.Manifest.permission.BLUETOOTH_CONNECT)
+        val adapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter()
+        val selected = adapter.getRemoteDevice("AA:BB:CC:00:11:22")
+        val unrelated = adapter.getRemoteDevice("AA:BB:CC:33:44:55")
+        org.robolectric.Shadows.shadowOf(adapter).setBondedDevices(setOf(selected, unrelated))
+        val dispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler)
+        val coordinator = HeyCyanAudioPairingCoordinator(context,
+            AndroidStorage(context, "audio-exact-${UUID.randomUUID()}"), FakeRouteMonitor(),
+            HaloDispatchers(dispatcher, dispatcher, dispatcher))
+        assertEquals(2, coordinator.bondedAudioChoices().size)
+        coordinator.requestAssociation("selected-ble", selected.address)
+        testScheduler.runCurrent()
+        val manager = context.getSystemService(android.companion.CompanionDeviceManager::class.java)
+        val request = requireNotNull(org.robolectric.Shadows.shadowOf(manager).lastAssociationRequest)
+        assertTrue("Exact single-device discovery must also search already-bonded devices", request.isSingleDevice)
+        val filter = (request.javaClass.getMethod("getDeviceFilters").invoke(request) as List<*>).single()!!
+        val matches = filter.javaClass.getMethod("matches", android.bluetooth.BluetoothDevice::class.java)
+        assertTrue(matches.invoke(filter, selected) as Boolean)
+        assertFalse(matches.invoke(filter, unrelated) as Boolean)
+        assertEquals(HeyCyanAudioPairingState.Discovering, coordinator.state.value)
+        assertFalse(coordinator.matchesEndpoint("selected-ble", BluetoothAudioEndpoint(address = selected.address,
+            name = "A2", type = BluetoothAudioEndpointType.A2DP, connected = true)))
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test fun removedBondCannotBeReplacedWithNearbyDiscoveryWithoutAnotherChoice() = kotlinx.coroutines.test.runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        org.robolectric.Shadows.shadowOf(context as Application).grantPermissions(android.Manifest.permission.BLUETOOTH_CONNECT)
+        val dispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler)
+        val coordinator = HeyCyanAudioPairingCoordinator(context,
+            AndroidStorage(context, "audio-stale-${UUID.randomUUID()}"), FakeRouteMonitor(),
+            HaloDispatchers(dispatcher, dispatcher, dispatcher))
+        coordinator.requestAssociation("selected-ble", "AA:BB:CC:00:11:22")
+        testScheduler.runCurrent()
+        assertTrue(coordinator.state.value is HeyCyanAudioPairingState.Failed)
+        val manager = context.getSystemService(android.companion.CompanionDeviceManager::class.java)
+        org.junit.Assert.assertNull(org.robolectric.Shadows.shadowOf(manager).lastAssociationRequest)
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test fun approvedCdmAddressRestoresTheExistingBondWithLowercaseMacAddress() = kotlinx.coroutines.test.runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        org.robolectric.Shadows.shadowOf(context as Application).grantPermissions(android.Manifest.permission.BLUETOOTH_CONNECT)
+        val dispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler)
+        val device = android.bluetooth.BluetoothAdapter.getDefaultAdapter().getRemoteDevice("AA:BB:CC:00:11:22")
+        org.robolectric.Shadows.shadowOf(device).setBondState(android.bluetooth.BluetoothDevice.BOND_BONDED)
+        val coordinator = HeyCyanAudioPairingCoordinator(context,
+            AndroidStorage(context, "audio-approved-${UUID.randomUUID()}"), FakeRouteMonitor(),
+            HaloDispatchers(dispatcher, dispatcher, dispatcher))
+        coordinator.requestAssociation("selected-ble")
+        testScheduler.runCurrent()
+        val manager = context.getSystemService(android.companion.CompanionDeviceManager::class.java)
+        val info = org.robolectric.shadows.AssociationInfoBuilder.newBuilder().setId(42).setUserId(0)
+            .setPackageName(context.packageName).setDeviceMacAddress("aa:bb:cc:00:11:22")
+            .setDisplayName("A2 test").build()
+        org.robolectric.Shadows.shadowOf(manager).addAssociation(info)
+        org.robolectric.Shadows.shadowOf(manager).lastAssociationCallback.onAssociationCreated(info)
+        testScheduler.runCurrent()
+        val state = coordinator.state.value as HeyCyanAudioPairingState.Associated
+        assertTrue("CDM's lowercase address must resolve the bonded Bluetooth device", state.association.bonded)
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test fun audioChooserIncludesA2AndRenamedDevicesWithoutSelectingOneAutomatically() = kotlinx.coroutines.test.runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dispatcher = kotlinx.coroutines.test.StandardTestDispatcher(testScheduler)
+        val coordinator = HeyCyanAudioPairingCoordinator(context,
+            AndroidStorage(context, "audio-chooser-${UUID.randomUUID()}"), FakeRouteMonitor(),
+            HaloDispatchers(dispatcher, dispatcher, dispatcher))
+        val manager = context.getSystemService(android.companion.CompanionDeviceManager::class.java)
+        coordinator.requestAssociation("explicitly-selected-ble-device")
+        testScheduler.runCurrent()
+        val request = requireNotNull(org.robolectric.Shadows.shadowOf(manager).lastAssociationRequest)
+        // Framework filter matching is hidden from the public compile SDK, but executes in Robolectric.
+        val filters = request.javaClass.getMethod("getDeviceFilters").invoke(request) as List<*>
+        val filter = requireNotNull(filters.single())
+        val device = android.bluetooth.BluetoothAdapter.getDefaultAdapter().getRemoteDevice("AA:BB:CC:00:11:22")
+        for (name in listOf("A2_QA", "My renamed glasses")) {
+            org.robolectric.Shadows.shadowOf(device).setName(name)
+            assertTrue("The system chooser must include $name",
+                filter.javaClass.getMethod("matches", android.bluetooth.BluetoothDevice::class.java).invoke(filter, device) as Boolean)
+        }
+        assertFalse("User must choose among the available audio endpoints", request.isSingleDevice)
+        assertEquals(HeyCyanAudioPairingState.Discovering, coordinator.state.value)
+        assertFalse(coordinator.matchesEndpoint("explicitly-selected-ble-device", BluetoothAudioEndpoint(
+            deviceId = 101, address = device.address, name = "A2_QA",
+            type = BluetoothAudioEndpointType.A2DP, connected = true)))
+    }
+
     private class FakeRouteMonitor : BluetoothAudioRouteMonitor {
         private val _routes = MutableStateFlow<List<BluetoothAudioEndpoint>>(emptyList())
         override val routes: StateFlow<List<BluetoothAudioEndpoint>> = _routes.asStateFlow()

@@ -45,7 +45,8 @@ data class CollectorSource(
 }
 
 data class ArticleFact(val id: String, val title: String, val text: String, val url: String?, val publisher: String,
-    val publishedAt: Instant?, val language: String, val categories: List<String> = emptyList())
+    val publishedAt: Instant?, val language: String, val categories: List<String> = emptyList(),
+    val images: List<ArticleImage> = emptyList(), val contentKey: String? = null, val contentStatus: String = "FEED_ONLY")
 data class WeatherDay(val date: java.time.LocalDate, val maximumC: Double?, val minimumC: Double?,
     val precipitationProbability: Int?, val weatherCode: Int?)
 data class WeatherFact(val place: WeatherPlace, val observedAt: Instant?, val temperatureC: Double?, val weatherCode: Int?,

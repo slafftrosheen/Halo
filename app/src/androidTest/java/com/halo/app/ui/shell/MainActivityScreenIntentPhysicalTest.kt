@@ -11,6 +11,7 @@ import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.halo.app.MainActivity
+import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.language.resolveUiText
 import java.util.Locale
@@ -75,7 +76,9 @@ class MainActivityScreenIntentPhysicalTest {
     )
 
     private fun awaitVoice() = awaitPage(
-        "Voice and reading hub header", By.text(translations("Voice & reading")), "voice_settings"
+        // The shell may move the page title into a collapsed utility band. The
+        // microphone card is actual page content in both shell layouts.
+        "Voice microphone check card", By.text(translations(R.string.brand_voice_try_mic)), "voice_settings"
     )
 
     private fun awaitPage(label: String, selector: BySelector, route: String) {
@@ -85,13 +88,17 @@ class MainActivityScreenIntentPhysicalTest {
         )
     }
 
-    private fun translations(english: String): Pattern {
+    private fun translations(english: String) = translations { resources -> resolveUiText(resources, english) }
+
+    private fun translations(resourceId: Int) = translations { resources -> resources.getString(resourceId) }
+
+    private fun translations(label: (android.content.res.Resources) -> String): Pattern {
         // Resolve the reviewed catalogue in all supported app locales without writing preferences.
         val labels = listOf("en", "ru", "lv", "pl").map { tag ->
             val configuration = Configuration(context.resources.configuration).apply {
                 setLocale(Locale.forLanguageTag(tag))
             }
-            resolveUiText(context.createConfigurationContext(configuration).resources, english)
+            label(context.createConfigurationContext(configuration).resources)
         }.distinct()
         return Pattern.compile(labels.joinToString("|", prefix = "^(?:", postfix = ")$") { Pattern.quote(it) })
     }

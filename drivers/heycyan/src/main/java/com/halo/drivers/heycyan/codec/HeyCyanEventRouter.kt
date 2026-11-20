@@ -1,6 +1,7 @@
 package com.halo.drivers.heycyan.codec
 
 import com.halo.drivers.heycyan.protocol.HeyCyanEvent
+import com.halo.drivers.heycyan.protocol.HeyCyanMode
 import java.util.UUID
 
 /**
@@ -35,6 +36,32 @@ class HeyCyanEventRouter(
         if (characteristicUuid == DE5BF729) {
             val decoded = structuralDecoder.decode(rawFrame)
             if (decoded.actionFamily != HeyCyanActionFamily.UNKNOWN) {
+                // Real A2 start/stop captures (HeyCyanRecordingCaptureTest),
+                // corroborated by vendor SDK guide pp9-10. 00 is a busy response;
+                // only the four observed FF acknowledgements establish these states.
+                val p = decoded.payload
+                if (decoded.actionFamily == HeyCyanActionFamily.GLASSES_CONTROL && decoded.isValidCrc &&
+                    p.size == 5 && p[0] == 0x02.toByte() && p[1] == 0x01.toByte() && p[3] == 0xff.toByte()) {
+                    val recording = when ((p[2].toInt() and 0xff) to (p[4].toInt() and 0xff)) {
+                        0x02 to 0xff -> HeyCyanEvent.RecordingStateChanged(HeyCyanMode.VIDEO, true)
+                        0x03 to 0x02 -> HeyCyanEvent.RecordingStateChanged(HeyCyanMode.VIDEO, false)
+                        0x08 to 0xff -> HeyCyanEvent.RecordingStateChanged(HeyCyanMode.AUDIO, true)
+                        0x0c to 0x08 -> HeyCyanEvent.RecordingStateChanged(HeyCyanMode.AUDIO, false)
+                        else -> null
+                    }
+                    if (recording != null) return recording
+                }
+                // Vendor SDK guide p13 and the real A2 reply in
+                // HeyCyanPendingInventoryCaptureTest: 02 04 carries unsynced counts.
+                // Invalid frames remain observable below, never proof of an empty list.
+                if (decoded.actionFamily == HeyCyanActionFamily.GLASSES_CONTROL && decoded.isValidCrc &&
+                    decoded.payload.size >= 8 && decoded.payload[0] == 0x02.toByte() &&
+                    decoded.payload[1] == 0x04.toByte()) {
+                    val counts = responseDecoder.decode(payload) as? HeyCyanResponse.GlassControl.MediaCounts
+                    if (counts != null) return HeyCyanEvent.MediaCountsUpdated(
+                        counts.images, counts.videos, counts.records,
+                        counts.images + counts.videos + counts.records, 0, 4)
+                }
                 if (decoded.actionFamily == HeyCyanActionFamily.AUDIO_STREAM) {
                     val p = decoded.payload
                     if (audioProbe != null) {

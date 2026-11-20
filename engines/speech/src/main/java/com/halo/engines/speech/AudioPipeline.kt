@@ -36,6 +36,7 @@ class AudioPipeline(
 ) {
     private val preRollBuffer = AudioBuffer(maxMillis = preRollMillis)
     private var buffer = AudioBuffer(maxMillis = 120_000)
+    private var recognitionCapture = com.halo.sdk.provider.RecognitionCaptureContext("unavailable")
     private var inputTurn: com.halo.sdk.runtime.SpeechInputTurn? = null
     private val _state = MutableStateFlow<SpeechState>(SpeechState.Idle)
     val state: StateFlow<SpeechState> = _state
@@ -149,6 +150,8 @@ class AudioPipeline(
             _state.value = SpeechState.Listening
             buffer.clear()
             preRollBuffer.clear()
+            recognitionCapture = (sttProvider as? BufferedSpeechRecognitionProvider)?.captureContext()
+                ?: com.halo.sdk.provider.RecognitionCaptureContext("unavailable")
         }
     }
 
@@ -205,6 +208,13 @@ class AudioPipeline(
 
     fun processFrame(frame: AudioFrame) {
         if (frame.samples.isEmpty()) return
+        if (_state.value == SpeechState.Idle) {
+            val next = (sttProvider as? BufferedSpeechRecognitionProvider)?.captureContext()
+            if (next != null && (next.providerId != recognitionCapture.providerId || next.revision != recognitionCapture.revision)) {
+                preRollBuffer.clear()
+                recognitionCapture = next
+            }
+        }
         if (inputTurn?.boundary == com.halo.sdk.runtime.CaptureBoundary.EXTERNAL) {
             observeSpeech(frame, vad.isSpeech(frame))
             if (_state.value == SpeechState.Listening) {
@@ -284,6 +294,7 @@ class AudioPipeline(
 
     private fun launchRecognition(segment: SpeechSegment) {
         val turn = inputTurn
+        val captureContext = recognitionCapture.context
         val capture = turn?.captureId ?: activeSpeechTransactionId
         val endpointAt = System.currentTimeMillis()
         val startedAt = captureStartedAtMs
@@ -300,7 +311,7 @@ class AudioPipeline(
                         trace = com.halo.sdk.runtime.InteractionLatencyTrace(capture, startedAt,
                             speechEndedAtMs = endpointAt)))
                 }
-                processSegment(segment, turn)
+                withContext(captureContext) { processSegment(segment, turn) }
             } finally {
                 if (bufferedRecognitionJob === currentCoroutineContext()[Job]) {
                     bufferedRecognitionJob = null

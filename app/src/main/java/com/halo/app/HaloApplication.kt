@@ -71,7 +71,7 @@ class HaloApplication :
         val kids = ManualDependencyGraph.kidsPreferences
         kids.getEnabled()
         return ManualDependencyGraph.remoteDispatchPolicy.also {
-            it.reconcileFamilyAuthority(kids.loadedState.value, kids.enabled.value, kids.cloudAllowed.value)
+            it.reconcileFamilyAuthority(kids.loadedState.value, kids.enabled.value)
         }
     }
     suspend fun awaitAutomationBootstrap() { automationBootstrap.await() }

@@ -603,6 +603,18 @@ object HaloToolDescriptors {
      * though nothing local changes.
      */
     fun webInsight(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        in com.halo.app.di.tools.host.GroundedWebSearchTools.NAMES -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
+            if (definition.name == com.halo.app.di.tools.host.GroundedWebSearchTools.SEARCH)
+                ToolSecurityPolicy(ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY)
+            else ToolSecurityPolicy.READ_ONLY,
+            keywords = setOf("search", "web", "sources", "research", "internet", "citations", "grounded"),
+            dependencies = if (definition.name == com.halo.app.di.tools.host.GroundedWebSearchTools.SEARCH)
+                setOf(ToolId(com.halo.app.di.tools.host.GroundedWebSearchTools.PREPARE)) else emptySet(),
+            requirements = setOf(ToolRequirement.Capability(CapabilityId("host.web.fetch"))),
+            execution = ToolExecutionPolicy(timeoutMs = 110_000L),
+            presentation = ToolPresentation(title = if (definition.name == com.halo.app.di.tools.host.GroundedWebSearchTools.SEARCH)
+                "Search web using OpenRouter (variable cost)" else "Prepare web search", targetArgument = "query"))
+            .copy(operability = com.halo.app.di.tools.host.GroundedWebSearchTools.operability(definition.name))
         "halo_fetch_url" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
             ToolSecurityPolicy(
                 risk = ToolRiskClass.READ_ONLY,
@@ -756,6 +768,24 @@ object HaloToolDescriptors {
         "halo_set_preferences" -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("halo", "theme", "dark", "light", "font", "start page"))
             .withAppPreferences(definition)
+        in com.halo.app.di.tools.host.OpenRouterSpeechTools.NAMES -> descriptor(definition.name, definition,
+            ToolCategory.HOST_CONTROL,
+            if (definition.name == com.halo.app.di.tools.host.OpenRouterSpeechTools.READ) readOnly(definition.name)
+            else ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("speech", "voice", "openrouter", "model"))
+            .copy(operability = com.halo.app.di.tools.host.OpenRouterSpeechTools.operability(definition.name))
+        in com.halo.app.di.tools.host.OpenRouterRecognitionTools.NAMES -> descriptor(definition.name, definition,
+            ToolCategory.HOST_CONTROL,
+            if (definition.name == com.halo.app.di.tools.host.OpenRouterRecognitionTools.READ) readOnly(definition.name)
+            else ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("transcription", "listening", "openrouter", "stt", "model"))
+            .copy(operability = com.halo.app.di.tools.host.OpenRouterRecognitionTools.operability(definition.name))
+        in com.halo.app.di.tools.host.ChatGptAccountTools.NAMES -> descriptor(definition.name, definition,
+            ToolCategory.HOST_CONTROL,
+            if (definition.name == com.halo.app.di.tools.host.ChatGptAccountTools.STATUS) readOnly(definition.name)
+            else ToolSecurityPolicy(ToolRiskClass.SENSITIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("chatgpt", "account", "subscription", "login", "disconnect"))
+            .copy(operability = com.halo.app.di.tools.host.ChatGptAccountTools.operability(definition.name))
         "halo_get_mode_profile", "halo_edit_mode_profile" -> descriptor(definition.name, definition,
             if (definition.name == "halo_get_mode_profile") ToolCategory.INFORMATION else ToolCategory.HOST_CONTROL,
             if (definition.name == "halo_get_mode_profile") readOnly(definition.name)
@@ -806,6 +836,7 @@ object HaloToolDescriptors {
         val everyday=definition.name in EverydayToolContracts.names
         val always = !query && (!screen && !everyday || definition.name == "halo_screen_settings" || definition.name == "halo_screen_remove_preset")
         val security = when {
+            definition.name == "halo_source_image" -> ToolSecurityPolicy(ToolRiskClass.READ_ONLY, ConfirmationPolicy.USER_POLICY, ReplaySafety.NEVER_REPLAY)
             query -> readOnly(definition.name)
             always -> ToolSecurityPolicy(
                 when (definition.name) {
@@ -879,6 +910,7 @@ object HaloToolDescriptors {
                 else setOf("saved device", "connection", "notification", "digest", "preferences", "voice", "learning", "routine", "provider", "study", "canvas", "review draft", "speech model"),
             requirements = setOf(ToolRequirement.Capability(contract.capabilityId)),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(
+                timeoutMs = if (definition.name == "halo_source_image" || definition.name == "halo_source_action") 180_000L else 30_000L,
                 maxOutputChars = if(everyday) 128000 else if (contract.capabilityId.value == "host.voice.configuration") 12000 else 24000),
             presentation = ToolPresentation(title = title, actionVerb = if (query) "Read" else "Apply",
                 targetArgument = when {

@@ -77,6 +77,12 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
         viewModelScope.launch(Dispatchers.IO) {
             // Configuration stays usable while large local artifacts are fingerprinted.
             reload()
+            providers.filterIsInstance<com.halo.providers.openai.ChatGptSubscriptionProvider>().forEach { provider ->
+                launch {
+                    runCatching { provider.account.load() }
+                    provider.account.state.collect { provider.configurationChanged(); reload() }
+                }
+            }
             launch { combine(providers.map { it.status }) { Unit }.collect { reload() } }
             launch { combine(router.selectedProviderId, router.selectedModelId, catalogue.state) { _, _, _ -> Unit }.collect { reload() } }
             catalogue.restoreCached()
@@ -179,9 +185,15 @@ class ProviderControlRepository(val router: AiProviderRouter, val catalogue: AiM
             }
         }
     }
+    fun accountConnectionChanged(providerId: String) {
+        invalidateProof(providerId); diagnostics.remove(providerId)
+        providers.firstOrNull { it.id == providerId }?.configurationChanged()
+        reload()
+    }
     fun removeCredential(providerId: String) = viewModelScope.launch(Dispatchers.IO) {
         configurationWrites.getOrPut(providerId) { Mutex() }.withLock {
         val provider = providers.firstOrNull { it.id == providerId }
+        if (provider is com.halo.providers.openai.ChatGptSubscriptionProvider) return@withLock
         (provider as? CredentialProvider)?.clearCredential()
         (provider as? GeminiProvider)?.clearOAuthSession()
         invalidateProof(providerId); diagnostics.remove(providerId); provider?.configurationChanged(); reload()

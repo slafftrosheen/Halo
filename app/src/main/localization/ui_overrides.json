@@ -1,5 +1,11 @@
 {
   "text": {
+    "ui_9cc6de5b4730": {
+      "en": "Photos to copy",
+      "ru": "Фото для копирования",
+      "lv": "Kopējamie foto",
+      "pl": "Zdjęcia do skopiowania"
+    },
     "ui_7028bf28db81": {
       "en": "Only unkept changes are discarded. Saved projects stay in Workspace.",
       "ru": "Будут отброшены только несохранённые изменения. Сохранённые проекты останутся в рабочем пространстве.",

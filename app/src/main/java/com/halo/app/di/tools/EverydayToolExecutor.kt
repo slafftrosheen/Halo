@@ -39,6 +39,10 @@ class EverydayToolExecutor(
     private val power: ()->Boolean = {false},
     private val ready: suspend ()->Unit = {},
     private val readState: (suspend ()->Any)? = null,
+    private val articleContent: (String?) -> ArticleContent? = { null },
+    private val inspectImage: suspend (ArticleImage, String) -> JSONObject = { _, _ -> error("Vision is not available") },
+    private val dayContext: suspend (Map<String, Any?>) -> JSONObject = { error("Day context is not available") },
+    private val localFactContent: suspend (LocalFact) -> String? = { null },
 ) : ToolExecutor {
     override fun definitions()=EverydayToolContracts.definitions
     override suspend fun execute(toolCall: ToolCall)=execute(toolCall,ToolExecutionContext())
@@ -55,7 +59,7 @@ class EverydayToolExecutor(
             val child=kids()
             val a=toolCall.arguments
             val childAction=toolCall.functionName=="halo_everyday_open" || toolCall.functionName=="halo_brief_action" && a["action"] in setOf("BUILD","READ","STOP")
-            if(child && (toolCall.functionName=="halo_widget_query" || toolCall.functionName !in EverydayToolContracts.queries && !childAction)) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
+            if(child && (toolCall.functionName in setOf("halo_widget_query", "halo_day_context") || toolCall.functionName !in EverydayToolContracts.queries && !childAction)) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
             if(toolCall.functionName !in EverydayToolContracts.queries && context.interactionId.isNullOrBlank()) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
             val disclosure=if(toolCall.functionName in EverydayToolContracts.queries || toolCall.functionName=="halo_brief_action" && a["action"] in setOf("BUILD","READ"))
                 com.halo.app.everyday.EverydayReadAuthority.capture() else null
@@ -63,7 +67,7 @@ class EverydayToolExecutor(
             val result=EverydayWriteAuthority.run(check) {
                 // Registry descriptors authorize execution and produce content-free traces. This adapter never parses chat text.
                 mutationStarted=toolCall.functionName !in EverydayToolContracts.queries && toolCall.functionName !in setOf("halo_source_preview","halo_everyday_open")
-                dispatch(toolCall.functionName,a,child)
+                dispatch(toolCall.functionName,a,child) { mutationStarted = true }
             }
             val encoded=result.toString()
             if(disclosure!=null) check(readDisclosureState()==canonical) {"Everyday disclosure authority changed"}
@@ -73,6 +77,8 @@ class EverydayToolExecutor(
         } catch(cancelled: CancellationException) { throw cancelled }
         catch(error: Exception) {
             when {
+                mutationStarted && toolCall.functionName == "halo_source_image" -> ToolExecutionResult.Failed(toolCall.id,toolCall.functionName,
+                    "Image analysis could not be confirmed or disclosed. Do not automatically repeat a potentially billed request.", completionUnknown=true,code="SOURCE_IMAGE_UNCERTAIN")
                 error is OrganizerConflict || error is CollectorConflict -> rejected(ToolRejectionKind.RESOURCE_UNAVAILABLE)
                 error is IllegalArgumentException -> rejected(ToolRejectionKind.INVALID_ARGUMENTS)
                 mutationStarted -> ToolExecutionResult.Failed(toolCall.id,toolCall.functionName,
@@ -97,10 +103,11 @@ class EverydayToolExecutor(
         if(content || child) require(value.source.selected && value.source.enabled && !value.source.muted)
         return value
     }
-    private suspend fun dispatch(name: String,a: Map<String,Any?>,child: Boolean): JSONObject {
+    private suspend fun dispatch(name: String,a: Map<String,Any?>,child: Boolean, effectStarted: () -> Unit): JSONObject {
         fun id()=a.string("id")
         fun version()=a.long("version")
         return when(name) {
+            "halo_day_context" -> dayContext(a)
             "halo_organizer_query" -> {
                 val offset=a.optionalLong("offset")?.toInt() ?: 0
                 val kinds=a.optionalString("kind")?.let {setOf(OrganizerKind.valueOf(it))} ?: OrganizerKind.entries.toSet()
@@ -206,21 +213,29 @@ class EverydayToolExecutor(
                 (a["selectedOnly"]!=true || it.source.selected) && (a["category"]==null || it.source.category.name==a["category"]) && (a["language"]==null || it.source.language==a["language"])}.take(100).map {sourceSummary(it)}))
             "halo_source_get" -> {
                 val value=source(id(),version(),child,true);val cached=value.snapshot?.takeIf {it.sourceVersion==value.source.version}
+                if ((a.optionalLong("offset") ?: 0) > 0 || (a.optionalLong("textOffset") ?: 0) > 0) require(a["contentRevision"] != null)
                 require(a["contentRevision"]==null || cached?.contentRevision==a["contentRevision"])
-                val body=when(val payload=cached?.payload) {
-                    is CollectorPayload.Articles -> CollectorPayload.Articles(if(a["articleId"]!=null) listOf(requireNotNull(payload.items.find {it.id==a["articleId"]})).map {it.copy(text=it.text.take(8000))} else payload.items.take(5).map {it.copy(text=it.text.take(1000))})
-                    is CollectorPayload.Local -> CollectorPayload.Local(payload.items.take(5).map {it.copy(summary=it.summary.take(1000))})
-                    is CollectorPayload.Warnings -> CollectorPayload.Warnings(payload.items.take(5).map {it.copy(text=it.text.take(1000))})
-                    is CollectorPayload.Calendar -> null // Calendar import is a separate explicit reviewed instrument action.
-                    else -> payload
-                }
-                sourceSummary(value).put("content",body?.let {JSONObject(CollectorCodec.encode(it))} ?: JSONObject.NULL)
-                    .put("calendarItems",(cached?.payload as? CollectorPayload.Calendar)?.preview?.records?.size ?: 0)
+                val payload = (cached?.payload as? CollectorPayload.Local)?.takeIf { a["itemId"] != null }?.let { local ->
+                    val item = requireNotNull(local.items.find { it.id == a["itemId"] })
+                    CollectorPayload.Local(local.items.map { if (it.id == item.id) it.copy(summary = localFactContent(it) ?: it.summary) else it })
+                } ?: cached?.payload
+                sourceSummary(value).put("content", SavedSourcePages.read(payload, a, articleContent))
             }
             "halo_source_preview" -> {
                 val value=preview.inspect(a.string("url"),CollectorKind.valueOf(a.string("kind")),a.string("language"))
                 JSONObject().put("validated",value.result is CollectorFetchResult.Updated).put("saved",false).put("title",value.candidate.title)
                     .put("endpoint",value.candidate.endpoint).put("result",when(val result=value.result){is CollectorFetchResult.Unavailable -> result.reason;else -> "Preview available"})
+            }
+            "halo_source_image" -> {
+                val current = source(id(), version(), child, true)
+                val snapshot = requireNotNull(current.snapshot)
+                require(snapshot.contentRevision == a.string("contentRevision"))
+                val article = requireNotNull((snapshot.payload as? CollectorPayload.Articles)?.items?.find { it.id == a.string("articleId") })
+                val images = articleContent(article.contentKey)?.images ?: article.images
+                val image = requireNotNull(images.find { it.assetKey == a.string("assetKey") })
+                effectStarted()
+                inspectImage(image, a.string("question")).put("sourceId", id()).put("version", version())
+                    .put("contentRevision", snapshot.contentRevision).put("articleId", article.id)
             }
             "halo_source_save" -> {
                 val p=a.map("source");require(a.containsKey("id")==a.containsKey("version"))

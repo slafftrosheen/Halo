@@ -23,6 +23,32 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = android.app.Application::class)
 class SavedChatToolsTest {
+    @Test fun powerHistoryAccessUsesCurrentAuthorityAndRechecksItInsideRoom() = runTest {
+        val db = database()
+        try {
+            val store = RoomConversationStore(db, backgroundScope); store.awaitReady()
+            val id = requireNotNull(store.activeConversationId()); store.append("QA question", "QA full answer")
+            store.newConversation()
+            var permitted = true
+            val tools = SavedChatTools(store, { true }, remoteAuthority = { { permitted } })
+            val call = ToolCall("read", SavedChatTools.GET, mapOf("conversationId" to id, "lifecycle" to "ACTIVE"))
+            withContext(RunToolScope(AgentRunId("power-history"), false)) {
+                val read = tools.execute(call) as ToolExecutionResult.Success
+                assertTrue(read.output.contains("QA full answer"))
+                permitted = false
+                assertTrue(tools.execute(call) is ToolExecutionResult.Rejected)
+                var checks = 0
+                val revokedDuringRead = SavedChatTools(store, { true }, remoteAuthority = { { ++checks <= 2 } })
+                assertTrue(revokedDuringRead.execute(call) is ToolExecutionResult.Rejected)
+                assertTrue(checks > 2)
+                assertTrue(store.isConversationAvailable(id))
+            }
+        } finally {
+            withContext(NonCancellable) {
+                try { backgroundScope.coroutineContext.job.cancelAndJoin() } finally { db.close() }
+            }
+        }
+    }
     private fun database() = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(),
         AppDatabase::class.java).allowMainThreadQueries().build()
 
@@ -118,7 +144,7 @@ class SavedChatToolsTest {
             val writer = store.activeConversationId()
             var permitted = true
             var opened: Pair<String, String>? = null
-            val tools = SavedChatTools(store, { permitted }) { openedId, version -> opened = openedId to version; true }
+            val tools = SavedChatTools(store, { permitted }, openDetail = { openedId, version -> opened = openedId to version; true })
             val get = ToolCall("get", SavedChatTools.GET, mapOf("conversationId" to id, "lifecycle" to "ACTIVE"))
             assertTrue(tools.execute(get) is ToolExecutionResult.Rejected)
             assertTrue(withContext(RunToolScope(AgentRunId("remote"), false)) { tools.execute(get) } is ToolExecutionResult.Rejected)

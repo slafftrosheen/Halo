@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="setup_settings_handoff">Veiciet konfigurēšanu iestatījumos, pēc tam atgriezieties vadītajā iestatīšanā, lai turpinātu no šī soļa.</string>
+    <string name="setup_services">Tiešsaistes pakalpojumi un API atslēgas</string>
+    <string name="setup_answer_model">Izvēlēties atbilžu modeli</string>
+    <string name="setup_local_models">Instalēt un pārvaldīt lokālos modeļus</string>
+    <string name="setup_speaking">Iestatīt runas izvadi un balsis</string>
+</resources>

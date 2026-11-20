@@ -14,14 +14,14 @@ class LocalMemoTranscriber(
 ) {
     suspend fun transcribe(uri: Uri, objectId: String): String {
         val selected = provider()
-        check(selected is com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider && selected.health()) {
+        check(selected is com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider && selected.metadata.local && selected.health()) {
             "Local speech model unavailable. Choose an installed model in Voice settings or write a transcript."
         }
         val decoded = decoder.decode(uri, "memo:$objectId")
         val text = buildString {
             for ((index, frame) in decoded.audio.frames.withIndex()) {
                 currentCoroutineContext().ensureActive()
-                val result = selected.recognize(AudioBuffer(listOf(frame), "memo:$objectId:$index"))
+                val result = selected.recognizeLocal(AudioBuffer(listOf(frame), "memo:$objectId:$index"))
                 if (result.text.isNotBlank()) { if (isNotEmpty()) append('\n'); append(result.text.trim()) }
                 check(length <= 12_000) { "Transcript too long. Split the recording." }
             }

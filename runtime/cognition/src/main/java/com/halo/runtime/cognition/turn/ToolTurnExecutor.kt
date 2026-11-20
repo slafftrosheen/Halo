@@ -364,7 +364,7 @@ class DefaultToolTurnExecutor(
                 val descriptor = toolRegistry?.descriptor(toolCall.functionName)
                 val allowed = descriptor?.security?.risk == com.halo.runtime.cognition.tools.ToolRiskClass.READ_ONLY &&
                     descriptor.security.confirmation == com.halo.runtime.cognition.tools.ConfirmationPolicy.NONE &&
-                    toolCall.functionName !in setOf("halo_delegate_task", "halo_research", "halo_search_conversations")
+                    toolCall.functionName !in setOf("halo_delegate_task", "halo_research", "halo_search_conversations", "halo_workflow_plan")
                 if (!allowed) {
                     toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall,
                         ToolRejectionFactory.create(ToolRejectionCode.AUTHORIZATION_DENIED,
@@ -437,6 +437,15 @@ class DefaultToolTurnExecutor(
                 continue
             }
 
+            if (runId != null && durableRun?.parentRunId == null &&
+                toolRegistry.descriptor(com.halo.runtime.cognition.tools.WorkflowPlanTool.ID) != null &&
+                toolRegistry.descriptor(toolCall.functionName)?.security?.risk != com.halo.runtime.cognition.tools.ToolRiskClass.READ_ONLY &&
+                durableRun?.steps?.none { it is AgentStep.PlanCreated } != false) {
+                toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall,
+                    ToolRejectionFactory.create(ToolRejectionCode.INVALID_ARGUMENTS,
+                        "No action was run. First call halo_workflow_plan with the ordered steps for this user request, then submit this action with a new call identity. Planning does not grant approval.")))
+                continue
+            }
             val preflight = (toolRegistry.executorFor(toolCall.functionName) as? ToolPreflightProvider)?.preflight(toolCall)
                 ?: ToolPreflightResult.Validated(toolCall)
             if (preflight is ToolPreflightResult.Rejected) {

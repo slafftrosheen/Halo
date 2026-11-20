@@ -256,13 +256,13 @@ class KidsProjectViewModel : ViewModel() {
                     "Keep it age appropriate. Preserve the child's authorship. Return only an editable draft. " +
                     "Use the language of their idea. Kind: ${state.value.kind ?: "Story"}. " +
                     "Idea: " + idea.take(600) + "\nChild's choices: " + state.value.details.take(1200)
-                val mayRemote = Graph.kidsPreferences.cloudAllowed.value && Graph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace
+                val mayRemote = Graph.powerModeEnabled() && Graph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace
                 val aiRequest = AiRequest(text = prompt, maxOutputTokens = 1200, toolUseMode = ToolUseMode.NONE)
                 val workload = AiWorkloadSpec(kind = AiWorkloadKind.QUESTION,
                     requiredCapabilities = setOf(AiCapability.TEXT), allowRemote = mayRemote, allowFallback = true)
                 val target = Graph.aiProviderRouter.resolveExecutionTarget(aiRequest, workload)
                 val result = withTimeout(90_000) { Graph.aiProviderRouter.execute(aiRequest,
-                    workload.copy(allowRemote = mayRemote && Graph.kidsPreferences.cloudAllowed.value &&
+                    workload.copy(allowRemote = mayRemote && Graph.powerModeEnabled() &&
                         Graph.storage.readRuntimeAiContextPolicy().allowCloudWorkspace), AiContext.EMPTY) }
                 val where = if (result.providerId == target.providerId && (result.resolvedModelId ?: result.modelId) == target.modelId)
                     if (target.model.executionLocation == AiExecutionLocation.ON_DEVICE) "AI on this phone" else "AI off this phone"

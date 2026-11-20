@@ -16,6 +16,15 @@ class HeyCyanDeviceStateStore(
     val state: StateFlow<HeyCyanDeviceState> =
         _state.asStateFlow()
 
+    /** Start a new explicitly selected transport without inheriting another device's telemetry. */
+    fun beginConnection(controlBleAddress: String) {
+        require(controlBleAddress.matches(Regex("[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}")))
+        _state.value = HeyCyanDeviceState(
+            connection = HeyCyanConnectionState.SCANNING,
+            transportIdentity = HeyCyanTransportIdentity(controlBleAddress),
+        )
+    }
+
     fun apply(
         event: HeyCyanEvent,
         timestamp: Long = System.currentTimeMillis(),
@@ -31,7 +40,9 @@ class HeyCyanDeviceStateStore(
 
     fun updateConnection(connection: HeyCyanConnectionState) {
         _state.update { current ->
-            current.copy(connection = connection)
+            current.copy(connection = connection, transportIdentity = current.transportIdentity.takeUnless {
+                connection == HeyCyanConnectionState.DISCONNECTED || connection == HeyCyanConnectionState.ERROR
+            })
         }
     }
 

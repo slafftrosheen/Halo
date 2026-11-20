@@ -117,8 +117,11 @@ sealed interface AgentStep {
         override val runId: AgentRunId,
         override val createdAt: Instant,
         val planId: String,
-        val summary: String
-    ) : AgentStep
+        val summary: String,
+        val steps: List<String> = emptyList(),
+    ) : AgentStep {
+        init { require(steps.size <= 12 && steps.all { it.isNotBlank() && it.length <= 180 }) }
+    }
 
     data class ClarificationRequested(
         override val id: AgentStepId,
@@ -420,4 +423,5 @@ data class ProviderToolCallRecord(
     val toolCallId: String,
     val toolName: String,
     val argumentsJson: String,
+    val providerMetadata: Map<String, String> = emptyMap(),
 )

@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(4783) {
+    buildMap(4832) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -19,6 +19,7 @@ internal val uiCatalogue: Map<String, Int> by lazy {
         putAll(uiCataloguePart13())
         putAll(uiCataloguePart14())
         putAll(uiCataloguePart15())
+        putAll(uiCataloguePart16())
         putAll(uiCatalogueAliases())
     }
 }
@@ -2885,6 +2886,7 @@ private fun uiCataloguePart9(): Map<String, Int> = mapOf(
     "Describe the change in a text field, then review the generated draft before using it." to R.string.ui_e7e66d327903,
     "A local model could not draft this change. You can edit the original text yourself." to R.string.ui_646bab811bee,
     "Automatic reading uses an on-device voice. Cloud reading always asks before sending text." to R.string.ui_d9897824ec41,
+    "Reading follows Local / Power mode. Local uses an on-device voice; Power uses your selected voice for content allowed to be shared." to R.string.ui_d14869a7c176,
     "Check the JSON syntax before using this draft." to R.string.ui_3d2905f67867,
     "Choose how much help" to R.string.ui_fbf30cdb18f7,
     "Cloud is off by default. For this app session, you can allow learning text and selected worksheets to reach configured providers. Privacy and source restrictions still apply." to R.string.ui_1e777f576a23,
@@ -3050,10 +3052,10 @@ private fun uiCataloguePart9(): Map<String, Int> = mapOf(
     "Marked done by you · not an assessment" to R.string.ui_74c3ff62a090,
     "Next exercise" to R.string.ui_ee075885c928,
     "Done with this exercise" to R.string.ui_8a7de49a2fee,
-    "No more exercises in this set. Add another page or reflect on what you learned." to R.string.ui_832f7eadd34e,
 )
 
 private fun uiCataloguePart10(): Map<String, Int> = mapOf(
+    "No more exercises in this set. Add another page or reflect on what you learned." to R.string.ui_832f7eadd34e,
     "Check the next exercise wording before starting." to R.string.ui_5292bf4d3994,
     "Original material" to R.string.ui_513286014092,
     "Preview does not use AI or upload your material. Pinch to zoom; drag to move." to R.string.ui_c6df5923e18a,
@@ -3353,10 +3355,10 @@ private fun uiCataloguePart10(): Map<String, Int> = mapOf(
     "You heard halo here" to R.string.ui_6d04ecf56e65,
     "Language changed" to R.string.ui_42cfc74a6f1b,
     "Polish" to R.string.ui_770341d6e89e,
-    "Partly translated" to R.string.ui_1889bb305d75,
 )
 
 private fun uiCataloguePart11(): Map<String, Int> = mapOf(
+    "Partly translated" to R.string.ui_1889bb305d75,
     "Polish interface is partly translated. Some screens may still appear in English." to R.string.ui_7812768f6ea5,
     "Listening and answer languages are separate. Change them in Voice & reading." to R.string.ui_ee9ba864e400,
     "Skill packages" to R.string.ui_8a4abef11f83,
@@ -3656,10 +3658,10 @@ private fun uiCataloguePart11(): Map<String, Int> = mapOf(
     "Trial recorded in History" to R.string.ui_753bcad37627,
     "Last successful result" to R.string.ui_b5fc7f5f5bf0,
     "Kept separately from the latest run." to R.string.ui_ae50714f26a5,
-    "Completed successfully. No result text was recorded." to R.string.ui_e7879d5b9838,
 )
 
 private fun uiCataloguePart12(): Map<String, Int> = mapOf(
+    "Completed successfully. No result text was recorded." to R.string.ui_e7879d5b9838,
     "This trial has not saved or turned on your automation." to R.string.ui_ec89c18da461,
     "Try it once is available on the review page before saving." to R.string.ui_5c1472cac712,
     "Try these actions now. Conditions still apply. The result stays here and in History; no notification, speech or future run is scheduled." to R.string.ui_82b081c3e6fb,
@@ -3959,10 +3961,10 @@ private fun uiCataloguePart12(): Map<String, Int> = mapOf(
     "Remove hands-free support" to R.string.ui_64f6730b2ee4,
     "Video clip" to R.string.ui_72f11335587f,
     "Picture" to R.string.ui_9a1c54f55e7c,
-    "Audio memo" to R.string.ui_73bc756b9086,
 )
 
 private fun uiCataloguePart13(): Map<String, Int> = mapOf(
+    "Audio memo" to R.string.ui_73bc756b9086,
     "Voice memo" to R.string.ui_24741c4aff7c,
     "Show archived cards" to R.string.ui_bbdf5a0b9e3d,
     "Show current cards" to R.string.ui_14474ab9a271,
@@ -4262,10 +4264,10 @@ private fun uiCataloguePart13(): Map<String, Int> = mapOf(
     "Made a plan" to R.string.ui_9e11f505d427,
     "Prepared an action" to R.string.ui_9e43e23deae9,
     "Started an action" to R.string.ui_965afdf98607,
-    "Action result" to R.string.ui_23703c2aad12,
 )
 
 private fun uiCataloguePart14(): Map<String, Int> = mapOf(
+    "Action result" to R.string.ui_23703c2aad12,
     "Could not complete an action" to R.string.ui_48be5b1bbbd2,
     "Asked you first" to R.string.ui_dcc807950ba8,
     "Received your choice" to R.string.ui_590495f7d2dd,
@@ -4565,10 +4567,10 @@ private fun uiCataloguePart14(): Map<String, Int> = mapOf(
     "Source and its local snapshot removed. Organizer items and notes are kept." to R.string.ui_a07288114728,
     "Source confirmed unchanged" to R.string.ui_15d05a0adeb6,
     "Source language · en, ru, lv or another code" to R.string.ui_ee4dddd703d3,
-    "Source name" to R.string.ui_1939968f47d1,
 )
 
 private fun uiCataloguePart15(): Map<String, Int> = mapOf(
+    "Source name" to R.string.ui_1939968f47d1,
     "Source removed" to R.string.ui_8d633cbc8148,
     "Source settings" to R.string.ui_389019cf3066,
     "Source settings saved. Selection does not fetch in Local." to R.string.ui_bdde92811926,
@@ -4822,6 +4824,57 @@ private fun uiCataloguePart15(): Map<String, Int> = mapOf(
     "Use BuddyBot’s local IP address." to R.string.ui_c6f974c44b32,
     "Active items" to R.string.ui_1ca2a9635d72,
     "Due today" to R.string.ui_19e82138c35f,
+    "OpenRouter speech" to R.string.ui_900853a64cd0,
+    "Uses your saved OpenRouter key. No ElevenLabs key is needed. Speech is charged to your OpenRouter account." to R.string.ui_38002b209fe3,
+    "Add your OpenRouter key in AI services." to R.string.ui_50db005f2acb,
+    "Could not load speech models. Check Power mode, your OpenRouter key and connection." to R.string.ui_200eaf3f0733,
+    "Load speech models" to R.string.ui_639ef5f6cbfc,
+    "Choose a speech model" to R.string.ui_69facf5bbb5e,
+    "Voice name" to R.string.ui_7405e8d2c16a,
+    "Choose a voice supported by this model. Voice names differ between models." to R.string.ui_8a19bef35cd0,
+    "Model voices and pricing" to R.string.ui_1d28e8928466,
+    "OpenRouter speech selected. Use Play test phrase to hear it." to R.string.ui_6053eaa0827d,
+    "Voice settings could not be saved. Load the models and try again." to R.string.ui_31213e78230d,
+    "Use OpenRouter speech" to R.string.ui_fc6126956559,
+    "Sign in with ChatGPT" to R.string.ui_f6de648021fd,
+    "Disconnect ChatGPT" to R.string.ui_c4e46df5702b,
+    "Sign in with ChatGPT to use eligible subscription models. OpenAI controls your account limits. This connection does not use API credits." to R.string.ui_c1e83786d445,
+    "ChatGPT account connected" to R.string.ui_e0c5adabf5df,
+    "No ChatGPT account connected" to R.string.ui_c31ad52cb4a8,
+    "Finish signing in in your browser, then return to Halo." to R.string.ui_8da49c66b493,
+    "ChatGPT connected. Fetch your models to choose an answer model." to R.string.ui_2d7a6c64a4d7,
+    "Signed in, but ChatGPT did not grant subscription access to this account." to R.string.ui_37564d40d0c4,
+    "ChatGPT sign-in stopped. You can try again." to R.string.ui_aaa4d03fa0dc,
+    "ChatGPT sign-in could not finish. Return to Halo and try again." to R.string.ui_9ae1eb8544f0,
+    "ChatGPT disconnected." to R.string.ui_b02fc80325c8,
+    "ChatGPT was removed from Halo. Remote disconnection could not be confirmed; remove Halo in ChatGPT settings." to R.string.ui_db79856cc4fb,
+    "Account settings changed or are unavailable. Try again." to R.string.ui_d1a15ca820e4,
+    "Google authorization here uses a Google Cloud project, not a Google AI subscription." to R.string.ui_620c886585bc,
+    "OpenRouter transcription" to R.string.ui_a4b440838a0a,
+    "Power mode can transcribe your speech with your saved OpenRouter key. Local mode keeps recognition on this phone. Transcription is charged to your OpenRouter account." to R.string.ui_71d79c76f07c,
+    "Could not load transcription models. Check Power mode, your OpenRouter key and connection." to R.string.ui_aba8bd11612d,
+    "Load transcription models" to R.string.ui_98a73886011d,
+    "Choose a transcription model" to R.string.ui_a473e964488d,
+    "Model details and pricing" to R.string.ui_49842efca74a,
+    "OpenRouter transcription selected. Use the microphone test to try it." to R.string.ui_47953e360f65,
+    "Listening settings could not be saved. Load the models and try again." to R.string.ui_ad4a282ce8ff,
+    "Use OpenRouter transcription" to R.string.ui_4a30481fac11,
+    "Saved article text" to R.string.ui_5bd2d15a8918,
+    "Some article content may be missing. The saved text is shown below." to R.string.ui_163f55a12563,
+    "This image has not been saved." to R.string.ui_c8134f6fb54b,
+    "Up to eight images are saved per article. Additional images may be available from the publisher." to R.string.ui_d6fb5f2c74f2,
+    "Plan ready" to R.string.ui_d7b9c873dcda,
+    "Read complete" to R.string.ui_e079d88e1cb3,
+    "Plan recorded" to R.string.ui_f29db185f450,
+    "Reviewing your day" to R.string.ui_f2fc5b74cb19,
+    "Reading source image" to R.string.ui_0389519dad69,
+    "Reading sources" to R.string.ui_d8c885f8623d,
+    "Finding available actions" to R.string.ui_a242d11b47ee,
+)
+
+private fun uiCataloguePart16(): Map<String, Int> = mapOf(
+    "Read your day" to R.string.ui_1763ec4aca04,
+    "Read saved source image" to R.string.ui_587943da5e6f,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

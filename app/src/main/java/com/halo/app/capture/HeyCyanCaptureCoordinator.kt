@@ -14,8 +14,8 @@ import com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
-import java.net.InetAddress
 import java.util.UUID
 
 data class WearableCaptureStatus(
@@ -34,22 +34,15 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
     private val hardwareThumbnailMutex = Mutex()
     private val _state = MutableStateFlow(WearableCaptureStatus())
     val state = _state.asStateFlow()
-    private val connector = HeyCyanWifiConnector(context)
-    private val wifiState = MutableStateFlow(WifiConnectionState.DISCONNECTED)
-    private val wifi = object : HeyCyanWifiConnection {
-        override val state: StateFlow<WifiConnectionState> = wifiState
-        override suspend fun connect(credentials: HeyCyanWifiCredentials): Result<Unit> {
-            wifiState.value = WifiConnectionState.CONNECTING
-            return if (connector.connect(credentials.ssid, credentials.password)) {
-                wifiState.value = WifiConnectionState.CONNECTED; Result.success(Unit)
-            } else { wifiState.value = WifiConnectionState.FAILED; Result.failure(IllegalStateException("Wi-Fi connection unavailable or permission denied")) }
-        }
-        override suspend fun disconnect() { connector.disconnect(); wifiState.value = WifiConnectionState.DISCONNECTED }
-        override suspend fun currentAddress(): InetAddress? =
-            HeyCyanIpDiscovery(connectionFactory = connector::openHttpConnection)
-                .discover(driver.deviceState.value.wifiIp)
-                ?.let(InetAddress::getByName)
-    }
+    private val wifi = HeyCyanWifiDirectConnection(context, driver.heyCyanEvents,
+        { driver.activeDeviceId.takeIf { canManageFiles() } }, scope)
+    val wifiPeerSelection = wifi.peerSelection
+    val fileWifiState = wifi.state
+    private data class BrowsedSession(val transfer: HeyCyanTransferCoordinator, val api: HeyCyanMediaApi,
+        val deviceId: String, val identity: Any, val permitted: () -> Boolean)
+    private var browsedSession: BrowsedSession? = null
+    private var browseExpiry: Job? = null
+    fun selectWifiPeer(deviceId: String, address: String) = wifi.selectPeer(deviceId, address)
     private val thumbnailQuality: Int
         get() = context.getSharedPreferences("heycyan_settings", Context.MODE_PRIVATE)
             .getInt("ai_thumbnail_quality", 3)
@@ -78,14 +71,14 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
         val operationId = UUID.randomUUID().toString()
         events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Requested", detail = "Capturing a fresh glasses thumbnail", sourceDeviceId = device))
         val result = driver.thumbnailCaptureCoordinator.capture(quality)
-        result.onSuccess { thumbnail -> if (publishForInference) publishThumbnail(operationId, device, thumbnail)
+        val delivered = deliverHeyCyanThumbnail(result) { thumbnail -> if (publishForInference) publishThumbnail(operationId, device, thumbnail)
             else if(review) com.halo.app.di.ManualDependencyGraph.contextualCapture.receive(
                 com.halo.sdk.runtime.multimodal.MediaAssetContent(thumbnail.bytes, "image/jpeg"), CaptureSource.MANAGED_WEARABLE_CAMERA,
                 "Wearable camera", operationId, device, CaptureQuality.AI_THUMBNAIL, captureTimestampMs=thumbnail.photoReadyAtMs, trigger=if(thumbnail.commandAtMs == null) "HARDWARE_TRIGGER" else "SOFTWARE_REQUEST") }
             .onFailure { error ->
                 events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Failed", detail = error.message ?: "Thumbnail capture failed", sourceDeviceId = device))
             }
-        return result
+        return delivered
     }
 
     private suspend fun receiveReadyAiThumbnail() {
@@ -98,8 +91,7 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
         val result = if (firstAttempt.isFailure && driver.activeDeviceId == device) {
             driver.thumbnailCaptureCoordinator.receivePhotoReadyThumbnail(quality = thumbnailQuality)
         } else firstAttempt
-        result
-            .onSuccess { thumbnail -> com.halo.app.di.ManualDependencyGraph.contextualCapture.receive(
+        deliverHeyCyanThumbnail(result) { thumbnail -> com.halo.app.di.ManualDependencyGraph.contextualCapture.receive(
                 com.halo.sdk.runtime.multimodal.MediaAssetContent(thumbnail.bytes, "image/jpeg"), CaptureSource.MANAGED_WEARABLE_CAMERA,
                 "Wearable camera", operationId, device, CaptureQuality.AI_THUMBNAIL, captureTimestampMs=thumbnail.photoReadyAtMs, trigger=if(thumbnail.commandAtMs == null) "HARDWARE_TRIGGER" else "SOFTWARE_REQUEST") }
             .onFailure { error ->
@@ -182,22 +174,43 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
         check(mutex.tryLock()) { "Glasses capture or transfer already running" }
         var transfer: HeyCyanTransferCoordinator? = null
         var staging: File? = null
+        var retained = false
+        var downloadAttempted = false
         fun current() = driver.activeDeviceId == device && allowed() && canManageFiles()
         try {
+            browseExpiry?.cancel(); browseExpiry = null
             val saved = com.halo.app.di.ManualDependencyGraph.deviceRegistry.getDevice(device)
             check(saved?.descriptor?.kind == com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES)
             check(current() && driver.deviceState.value.connection == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY)
             _state.value = WearableCaptureStatus(busy = true, message = "Opening device files", deviceId = device)
+            val identity = requireNotNull(driver.deviceState.value.transportIdentity)
             var api: HeyCyanMediaApi? = null
-            val coordinator = HeyCyanTransferCoordinator(driver.capabilityController,
+            val previous = browsedSession.also { browsedSession = null }
+            val reusable = previous?.takeIf { it.deviceId == device && it.identity === identity && it.permitted() &&
+                wifi.state.value == WifiConnectionState.CONNECTED }
+            if (previous != null && reusable == null) previous.transfer.closeSession().getOrThrow()
+            val inventory = FreshHeyCyanMediaInventory(driver.heyCyanEvents,
+                request = { driver.capabilityController.execute(HeyCyanOperation.GetMediaInventory).getOrThrow() },
+                deviceIsCurrent = { id -> id == device && current() &&
+                    driver.deviceState.value.connection == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY &&
+                    driver.deviceState.value.transportIdentity?.controlBleAddress == id })
+            val coordinator = reusable?.transfer ?: HeyCyanTransferCoordinator(driver.capabilityController,
                 DeviceStateWifiCredentialProvider(driver.deviceState), wifi,
                 HeyCyanMediaApiFactory { address -> DefaultHeyCyanMediaApi(address,
-                    connectionFactory = { url -> check(current()); connector.openConnection(url) }).also { api = it } },
-                driver.resourceArbiter, deviceIsCurrent = { id -> id == device && driver.activeDeviceId == device })
+                    connectionFactory = { url -> check(current()); wifi.openConnection(url) }).also { api = it } },
+                driver.resourceArbiter, deviceIsCurrent = { id -> id == device && current() },
+                pendingInventory = { id -> inventory.read(id) },
+                cleanupDeviceIsCurrent = { id -> id == device && driver.activeDeviceId == device &&
+                    driver.deviceState.value.transportIdentity === identity &&
+                    driver.deviceState.value.connection == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY })
             transfer = coordinator
-            val manifest = coordinator.synchronizeManifest(device).getOrThrow()
+            val manifest = if (reusable != null) {
+                api = reusable.api
+                // Revalidate the manifest on the same verified connection before the manager
+                // accepts old selection tokens. Do not restart the glasses' Wi-Fi between list and copy.
+                reusable.api.getMediaConfig().getOrThrow()
+            } else coordinator.synchronizeManifest(device).getOrThrow()
             check(current())
-            val activeApi = requireNotNull(api)
             // Library owns completed bytes. This operation cache is disposable and must
             // not retain a second hidden copy when users manage their Library files.
             val stageRoot = File(context.cacheDir, "device-media-transfers")
@@ -214,6 +227,8 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
                 override suspend fun download(file: com.halo.sdk.runtime.wearables.media.DeviceMediaEntry,
                     progress: (Long, Long?) -> Unit): com.halo.sdk.runtime.wearables.media.DeviceMediaDownload {
                     check(current())
+                    downloadAttempted = true
+                    val activeApi = requireNotNull(api)
                     val remote = manifest.items.single { it.id == file.id && it.filename == file.name }
                     // Explicit selection fetches current bytes even when the device reuses a filename/size.
                     StreamingMediaDownloadStrategy(activeApi).download(remote, repository) {
@@ -224,13 +239,51 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
                     return com.halo.sdk.runtime.wearables.media.DeviceMediaDownload(saved.localPath, requireNotNull(saved.sha256), saved.sizeBytes)
                 }
             })
+            if (!downloadAttempted && manifest.items.isNotEmpty() && current() && api != null &&
+                wifi.state.value == WifiConnectionState.CONNECTED) {
+                val session = BrowsedSession(coordinator, requireNotNull(api), device, identity) {
+                    current() && driver.deviceState.value.transportIdentity === identity &&
+                        driver.deviceState.value.connection == com.halo.drivers.heycyan.protocol.HeyCyanConnectionState.READY
+                }
+                browsedSession = session
+                retained = true
+                // A short, process-local selection window. Never reconnect in the background.
+                // Foreground/access loss, BLE replacement or timeout releases the actual lease.
+                browseExpiry = scope.launch {
+                    try {
+                        val expires = android.os.SystemClock.elapsedRealtime() + 60_000
+                        while (session.permitted() && wifi.state.value == WifiConnectionState.CONNECTED &&
+                            android.os.SystemClock.elapsedRealtime() < expires) delay(250)
+                    } finally {
+                        withContext(NonCancellable) { mutex.withLock {
+                            if (browsedSession === session) {
+                                browsedSession = null
+                                session.transfer.closeSession()
+                            }
+                        } }
+                    }
+                }
+            }
             return result
+        } catch (error: Exception) {
+            if (error !is CancellationException) Log.w("HaloMedia", "Device file session failed", error)
+            retained = false
+            browseExpiry?.cancel(); browseExpiry = null
+            throw error
         } finally {
             try { withContext(NonCancellable) {
-                try { withTimeout(8_000) { transfer?.closeSession()?.getOrThrow() } } finally { wifi.disconnect() }
+                if (!retained) {
+                    // Also release an idle browse if validation failed before it could be reused.
+                    val pending = browsedSession.also { browsedSession = null }
+                    try { withTimeout(8_000) {
+                        pending?.transfer?.closeSession()?.getOrThrow()
+                        transfer?.closeSession()?.getOrThrow()
+                    } } finally { wifi.disconnect() }
+                }
             } } finally {
                 try { withContext(NonCancellable + Dispatchers.IO) { staging?.deleteRecursively() } }
-                finally { _state.value = _state.value.copy(busy = false, message = "Device file session closed"); mutex.unlock() }
+                finally { _state.value = _state.value.copy(busy = false,
+                    message = if (retained) "Wi-Fi ready for file selection" else "Device file session closed"); mutex.unlock() }
             }
         }
     }

@@ -709,7 +709,7 @@ fun HomeScreen(
             if (executingToolId != null || uiState.longTaskProgress != null) TextButton(onClick = { showTaskDetails = !showTaskDetails }) {
                 Text(androidx.compose.ui.res.stringResource(if (showTaskDetails) com.halo.app.R.string.home_hide_task_details else com.halo.app.R.string.home_task_details))
             }
-            if (showTaskDetails) executingToolId?.let { id ->
+            executingToolId?.let { id ->
                 if (homeFxTool(id) != null) HomeToolExecutionFx(id, viewModel::cancelSession)
                 else if (homeShouldShowUnmappedPhoneAction(id))
                     HomeUnmappedPhoneAction(viewModel::cancelSession)
@@ -718,7 +718,12 @@ fun HomeScreen(
             // action. No steps are inferred from a text request or tool name.
             val showActivePlan = homeShouldPromoteActivePlan(
                 uiState.sessionState, uiState.longTaskProgress != null)
-            if (showTaskDetails && showActivePlan) uiState.longTaskProgress?.let { plan ->
+            if ((showActivePlan || showTaskDetails) && uiState.workflowSteps.isNotEmpty()) {
+                Text(uiText("Plan"), style = MaterialTheme.typography.titleMedium)
+                uiState.workflowSummary?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                uiState.workflowSteps.forEachIndexed { index, step -> Text("${index + 1}. $step", style = MaterialTheme.typography.bodyMedium) }
+            }
+            if (showActivePlan) uiState.longTaskProgress?.let { plan ->
                 HomeTaskProgress(plan)
             }
             HomeToolResultFx(uiState.toolReceipt, uiState.conversationId, isActiveSession,

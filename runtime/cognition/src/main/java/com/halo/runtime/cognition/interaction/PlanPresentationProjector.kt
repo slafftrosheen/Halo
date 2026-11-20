@@ -74,8 +74,8 @@ object PlanPresentationProjector {
         for (step in steps) {
             when (step) {
                 is AgentStep.PlanCreated -> items += PresentationDirectiveItem(
-                    text = step.summary.take(300),
-                    state = PresentationStepState.COMPLETED,
+                    text = "Plan recorded: ${step.summary}".take(300),
+                    state = PresentationStepState.PENDING,
                 )
                 is AgentStep.ToolInvocationPrepared -> items += PresentationDirectiveItem(
                     text = "${step.toolId}: prepared",

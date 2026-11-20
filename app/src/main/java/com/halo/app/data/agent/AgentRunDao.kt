@@ -10,6 +10,8 @@ data class AgentRunWithSteps(
 
 @Dao
 interface AgentRunDao {
+    @Query("SELECT * FROM agent_runs WHERE parentRunId IS NULL AND state IN ('COMPLETED','FAILED','CANCELLED','INTERRUPTED') AND updatedAt >= :from AND updatedAt < :until ORDER BY updatedAt, id LIMIT :limit")
+    suspend fun dayCompletedRoots(from: Long, until: Long, limit: Int): List<AgentRunEntity>
     @Query("SELECT * FROM agent_runs WHERE parentRunId IS NULL ORDER BY updatedAt DESC, id LIMIT :limit")
     suspend fun recentRoots(limit: Int): List<AgentRunEntity>
     @Transaction

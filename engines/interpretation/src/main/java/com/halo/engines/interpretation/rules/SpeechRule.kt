@@ -66,6 +66,14 @@ class SpeechRule(
             return RuleMatch(confidence = 0.99f, intent = intent, consumedTokens = consumedTokens,
                 diagnostics = "Resolved native command slots")
         }
+        // An explicit request for saved personal material cannot be answered from
+        // model knowledge alone, even if the optional classifier calls it a summary.
+        if (com.halo.cognition.language.ConversationSemantics.actionReason(transcript) ==
+            com.halo.cognition.language.ToolActionReason.WORKSPACE_LOOKUP) {
+            return RuleMatch(confidence = 0.95f,
+                intent = com.halo.cognition.language.ToolActionIntent(com.halo.cognition.language.ToolActionReason.WORKSPACE_LOOKUP),
+                consumedTokens = consumedTokens, diagnostics = "Saved context requires owner reads")
+        }
         // Native controls with resolved slots are above this boundary.
         // For everything else, the tiny on-device model may distinguish
         // an actual request to act from discussion of an action. It never

@@ -34,7 +34,8 @@ internal object CollectorCodec {
         when (payload) {
             is CollectorPayload.Articles -> { put("type", "articles"); put("items", array(payload.items.map { item -> JSONObject()
                 .put("id", item.id).put("title", item.title).put("text", item.text).put("url", item.url).put("publisher", item.publisher)
-                .put("published", item.publishedAt?.toEpochMilli()).put("language", item.language).put("categories", JSONArray(item.categories)) })) }
+                .put("published", item.publishedAt?.toEpochMilli()).put("language", item.language).put("categories", JSONArray(item.categories))
+                .put("images", JSONArray(item.images.map(ArticleContentStore::imageJson))).put("contentKey", item.contentKey).put("contentStatus", item.contentStatus) })) }
             is CollectorPayload.Warnings -> { put("type", "warnings"); put("items", array(payload.items.map { item -> JSONObject()
                 .put("id", item.id).put("title", item.title).put("text", item.text).put("url", item.url).put("publisher", item.publisher)
                 .put("area", item.area).put("severity", item.severity).put("onset", item.onset?.toEpochMilli()).put("expires", item.expires?.toEpochMilli()) })) }
@@ -58,7 +59,9 @@ internal object CollectorCodec {
         when (json.getString("type")) {
             "articles" -> CollectorPayload.Articles(json.getJSONArray("items").rows().map { item -> ArticleFact(item.getString("id"), item.getString("title"),
                 item.getString("text"), item.text("url"), item.getString("publisher"), item.instant("published"), item.getString("language"),
-                item.getJSONArray("categories").let { categories -> require(categories.length() <= 20); (0 until categories.length()).map(categories::getString) }) })
+                item.getJSONArray("categories").let { categories -> require(categories.length() <= 20); (0 until categories.length()).map(categories::getString) },
+                item.optJSONArray("images")?.rows(ArticleExtractor.MAX_IMAGES)?.map(ArticleContentStore::image).orEmpty(),
+                item.text("contentKey"), item.optString("contentStatus", "FEED_ONLY")) })
             "warnings" -> CollectorPayload.Warnings(json.getJSONArray("items").rows().map { item -> WarningFact(item.getString("id"), item.getString("title"),
                 item.getString("text"), item.text("area"), item.text("severity"), item.instant("onset"), item.instant("expires"), item.text("url"), item.getString("publisher")) })
             "local" -> CollectorPayload.Local(json.getJSONArray("items").rows().map { item -> LocalFact(item.getString("id"), item.getString("kind"),

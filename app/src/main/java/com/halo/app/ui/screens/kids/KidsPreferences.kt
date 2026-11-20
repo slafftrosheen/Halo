@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** Kids mode plus a parent-verified, process-local sharing grant; canonical provider/source policies still apply. */
+/** Family presentation and adult-action authority. Processing follows the app-wide mode. */
 class KidsPreferences(context: Context) {
     private val context = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -22,9 +22,6 @@ class KidsPreferences(context: Context) {
     val enabled = mutable.asStateFlow()
     private val preReading = MutableStateFlow(false)
     val preReader = preReading.asStateFlow()
-    private val cloud = MutableStateFlow(false)
-    val cloudAllowed = cloud.asStateFlow()
-    fun setCloudAllowedForSession(value: Boolean) { cloud.value = value }
     private fun disk() = context.getSharedPreferences("halo_kids_ui", Context.MODE_PRIVATE)
     private val loaded = scope.async {
         try { mutable.value = disk().getBoolean("enabled", false); preReading.value = disk().getBoolean("pre_reader", false) }
@@ -57,7 +54,6 @@ class KidsPreferences(context: Context) {
                 check(disk().edit().putBoolean("enabled", value).commit()) { "Could not save Kids mode" }
                 mutable.value = value
                 error.value = null
-                if (!value) cloud.value = false
             } finally { changing.set(false) }
         }
     }

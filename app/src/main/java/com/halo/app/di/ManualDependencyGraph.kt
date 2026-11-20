@@ -173,7 +173,13 @@ object ManualDependencyGraph {
         ).map { kind -> com.halo.app.everyday.collectors.PublicHttpCollector(kind, remoteDispatchPolicy) })
     }
     private val collectorCoordinatorOwner: Lazy<com.halo.app.everyday.collectors.CollectorCoordinator> = lazy {
-        com.halo.app.everyday.collectors.CollectorCoordinator(collectorRepository, collectorRegistry, remoteDispatchPolicy)
+        com.halo.app.everyday.collectors.CollectorCoordinator(collectorRepository, collectorRegistry, remoteDispatchPolicy,
+            enrich = articleContentCollector::enrich)
+    }
+    val articleContentStore by lazy { com.halo.app.everyday.collectors.ArticleContentStore(java.io.File(applicationContext.filesDir, "source-content")) }
+    private val articleContentCollector by lazy {
+        com.halo.app.everyday.collectors.ArticleContentCollector(collectorRepository, articleContentStore,
+            com.halo.app.everyday.collectors.ArticleDownloader(remoteDispatchPolicy)::fetch)
     }
     val collectorCoordinator: com.halo.app.everyday.collectors.CollectorCoordinator get() = collectorCoordinatorOwner.value
     val collectorBootstrap by lazy { com.halo.app.everyday.collectors.android.CollectorBootstrap(applicationContext, collectorRepository) }
@@ -198,8 +204,10 @@ object ManualDependencyGraph {
         com.halo.app.everyday.briefing.BriefLocalAuthority(applicationContext, appDatabase, storage,
             ::currentTimelineEvents, { briefAttention().items.map { it.id }.toSet() })
     }
-    private suspend fun everydayDisclosureState(): Any = com.halo.app.data.everyday.EverydayDisclosureSnapshot.capture(
-        appDatabase,storage.getString("kids_project_library_v1"))
+    private suspend fun everydayDisclosureState(): Any = Triple(com.halo.app.data.everyday.EverydayDisclosureSnapshot.capture(
+        appDatabase,storage.getString("kids_project_library_v1")), notificationPolicies.changes.value, notificationBridge.isAccessGranted())
+    val dayContext by lazy { com.halo.app.everyday.briefing.AndroidDayContext(appDatabase, collectorRepository, organizerUseCases,
+        notificationRepository, notificationBridge::isAccessGranted, { notificationPolicies.changes.value }).reader }
     val briefService: com.halo.app.everyday.briefing.EverydayBriefService by lazy {
         com.halo.app.everyday.briefing.EverydayBriefService(briefRepository, collectorRepository, organizerRepository,
             attention = { briefAttention() }, audience = {
@@ -269,15 +277,14 @@ object ManualDependencyGraph {
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
     val studyLessonStore by lazy { com.halo.app.ui.screens.study.StudyLessonStore(storage) }
     val privacyModes by lazy { com.halo.app.ai.PrivacyModeStore(securedStorage).apply {
-        remoteAllowed = { kidsPreferences.let { it.loadedState.value && (!it.enabled.value || it.cloudAllowed.value) } }
+        remoteAllowed = { kidsPreferences.loadedState.value }
         configuredProviders = { configuredRemoteProviderIds() }
     } }
     val remoteDispatchPolicy by lazy { privacyModes.also { policy ->
         val kids = kidsPreferences
         infra.scope.launch {
-            kotlinx.coroutines.flow.combine(kids.loadedState, kids.enabled, kids.cloudAllowed) { ready, enabled, cloud ->
-                Triple(ready, enabled, cloud)
-            }.collect { (ready, enabled, cloud) -> policy.reconcileFamilyAuthority(ready, enabled, cloud) }
+            kotlinx.coroutines.flow.combine(kids.loadedState, kids.enabled) { ready, enabled -> ready to enabled }
+                .collect { (ready, enabled) -> policy.reconcileFamilyAuthority(ready, enabled) }
         }
     } }
     private fun configuredRemoteProviderIds(): Set<String> = buildSet {
@@ -293,6 +300,8 @@ object ManualDependencyGraph {
                 !storage.getString("opencode_companion_endpoint").isNullOrBlank()) add(provider.id)
         }
         if (!storage.getString("elevenlabs_api_key").isNullOrBlank()) add("provider.elevenlabs.tts")
+        if (!storage.getString("openrouter_api_key").isNullOrBlank()) add("provider.openrouter.tts")
+        if (!storage.getString("openrouter_api_key").isNullOrBlank()) add("provider.openrouter.stt")
         // These are shipped transport owners. Their own account/server grants still apply.
         add("web.public"); add("mcp.configured"); add("google.mail")
     }
@@ -301,10 +310,12 @@ object ManualDependencyGraph {
         return providerGraph.providers.aiProviders.filter { it.id in configured }.map { it.displayName } +
             if ("provider.elevenlabs.tts" in configured) listOf("ElevenLabs") else emptyList()
     }
+    fun powerModeEnabled(): Boolean = privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD &&
+        privacyModes.sharingAcknowledged && kidsPreferences.loadedState.value
     fun setPrivacyMode(mode: com.halo.app.ai.PrivacyMode) {
         if (mode == com.halo.app.ai.PrivacyMode.CLOUD) {
-            check(kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value)) {
-                "A grown-up must allow Power mode in Kids settings."
+            check(kidsPreferences.loadedState.value) {
+                "Family settings are still loading."
             }
         }
         privacyModes.set(mode, recoverPrivate = { reloadProcessingOwners() }) {
@@ -319,8 +330,8 @@ object ManualDependencyGraph {
         if (mode == com.halo.app.ai.PrivacyMode.PRIVATE) speechSynthesisRegistry.stopCurrent()
     }
     fun enableFullPowerAfterDisclosure() {
-        check(kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value)) {
-            "A grown-up must allow Power mode in Kids settings."
+        check(kidsPreferences.loadedState.value) {
+            "Family settings are still loading."
         }
         privacyModes.acknowledgeSharing()
         setPrivacyMode(com.halo.app.ai.PrivacyMode.CLOUD)
@@ -347,10 +358,10 @@ object ManualDependencyGraph {
         providerGraph.reloadPersistedSpeechSettings()
     }
     val workspaceImageService by lazy { com.halo.app.ai.WorkspaceImageService(aiProviderRouter, storage,
-        allowImages = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) },
+        allowImages = { kidsPreferences.loadedState.value },
         allowReference = { id -> workspaceMediaAiPolicy.permitsObject(id, false) }, privacyModes = privacyModes.mode) }
     val groundedWebSearchService by lazy { com.halo.app.online.GroundedWebSearchService(storage, aiProviderRouter,
-        allowOnline = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) },
+        allowOnline = { kidsPreferences.loadedState.value },
         client = com.halo.app.online.OpenRouterOnlineClient(remoteClient("openrouter", com.halo.sdk.provider.RemoteOperation.WEB,
             setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT), metadataOnlyForGet = true)),
         privacyModes = privacyModes.mode) }
@@ -401,24 +412,67 @@ object ManualDependencyGraph {
             speechSynthesisRegistry.selector.ttsSelection.map { it.id }, infra.scope, applicationContext, storage)
     }
 
+    val openRouterSpeechControl by lazy {
+        com.halo.app.ai.OpenRouterSpeechControl(
+            speechSynthesisRegistry.providers.filterIsInstance<com.halo.providers.openrouter.OpenRouterSpeechProvider>().single(),
+            privacyModes, { kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+            { mode, profile, revision -> saveModeProfile(mode, profile, revision) })
+    }
+    val openRouterRecognitionControl by lazy {
+        com.halo.app.ai.OpenRouterRecognitionControl(
+            (providers.speechRecognition as ReloadableSpeechRecognitionProvider).externalProviders
+                .filterIsInstance<com.halo.providers.openrouter.OpenRouterRecognitionProvider>().single(),
+            privacyModes, { kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+            { mode, profile, revision -> saveModeProfile(mode, profile, revision) })
+    }
+    val chatGptLogin by lazy {
+        val account = providerGraph.providers.aiProviders.filterIsInstance<com.halo.providers.openai.ChatGptSubscriptionProvider>().single().account
+        com.halo.app.ai.ChatGptBrowserLogin(applicationContext, account, infra.scope,
+            allowed = {
+                kidsPreferences.loadedState.value && !kidsPreferences.enabled.value &&
+                    applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true &&
+                    (attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND ||
+                        com.halo.host.android.assistant.AssistantRuntimeStateStore.state.value.sessionVisible)
+            },
+            onlineAllowed = { powerModeEnabled() },
+            authorization = kotlinx.coroutines.flow.combine(privacyModes.mode, kidsPreferences.loadedState, kidsPreferences.enabled) { mode, loaded, kids ->
+                mode == com.halo.app.ai.PrivacyMode.CLOUD && loaded && !kids
+            }, changed = {
+                privacyModes.invalidateAuthority()
+                providerControlRepository.accountConnectionChanged(com.halo.providers.openai.ChatGptSubscriptionProvider.ID)
+            })
+    }
+
     val studyNarration by lazy {
         com.halo.app.study.SpeechOutputStudyNarration(
             eventBus = eventBus,
             cancelSpeech = { transactionId -> haloSpeechOutputCoordinator.cancelScopedTransaction(transactionId) },
             scope = infra.scope,
+            remoteSpeechContext = { sessionId ->
+                val session = studyRepository.getSession(sessionId)
+                val history = studyLessonStore.load(sessionId)
+                val origins = session?.sourceObjectIds.orEmpty() + history.flatMap { it.sourceObjectIds.orEmpty() }
+                val permitted = session != null && powerModeEnabled() &&
+                    (session.sourceObjectIds.isEmpty() || history.none { it.sourceObjectIds == null }) &&
+                    origins.distinct().all { id ->
+                        val item = appDatabase.notebookDao().getWorkspaceObject(id)
+                        item?.lifecycle == "ACTIVE" && ((item.type == "NOTE" && !workspaceMediaAiPolicy.hasExplicitAccess(id)) ||
+                            workspaceMediaAiPolicy.permitsObject(id, false))
+                    }
+                if (permitted) com.halo.sdk.provider.RemoteDispatchProvenance(buildSet {
+                    add(com.halo.sdk.provider.RemoteDataCategory.TEXT)
+                    if (origins.isNotEmpty()) add(com.halo.sdk.provider.RemoteDataCategory.WORKSPACE)
+                }, privacyModes.revision) else null
+            },
         )
     }
 
     val studyTutorGateway by lazy {
         com.halo.app.study.AiRouterTutorGateway(
             router = aiProviderRouter,
-            allowCloudSharing = { (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) && storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
-            allowChildCloudSharing = { !kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value },
-            sessionAllowsRemote = { session ->
-                if (session.learnerLevel != com.halo.sdk.runtime.study.StudyLearnerLevel.ADULT)
-                    kidsPreferences.cloudAllowed.value
-                else storage.getString("study_execution_${session.id}") == "cloud"
-            },
+            allowCloudSharing = { storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+            allowChildCloudSharing = { powerModeEnabled() },
+            sessionAllowsRemote = { powerModeEnabled() },
             permitsText = { id, local ->
                 val item = appDatabase.notebookDao().getWorkspaceObject(id)
                 item?.lifecycle == "ACTIVE" && ((item.type == "NOTE" && !workspaceMediaAiPolicy.hasExplicitAccess(id)) || workspaceMediaAiPolicy.permitsObject(id, local))
@@ -1147,6 +1201,19 @@ object ManualDependencyGraph {
         // Device insight, clipboard, checksum and bounded web reading are host executors
         // that only need Android APIs (plus, for checksums, the workspace file grants the
         // user already gave Halo).
+        fun remoteWorkspaceAuthority(conversation: Boolean = false): (() -> Boolean)? {
+            val modeRevision = privacyModes.revision
+            val familyRevision = kidsPreferences.presentationRevision()
+            val policy = storage.readRuntimeAiContextPolicy()
+            val permit = {
+                foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value &&
+                    kidsPreferences.presentationRevision() == familyRevision && privacyModes.revision == modeRevision &&
+                    privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
+                    storage.readRuntimeAiContextPolicy() == policy && policy.allowCloudWorkspace &&
+                    (!conversation || policy.includeConversation)
+            }
+            return permit.takeIf { it() }
+        }
         val hostExecutor = com.halo.app.di.tools.HostTools(
             applicationContext,
             foreground,
@@ -1156,7 +1223,7 @@ object ManualDependencyGraph {
                         startAndroidSpeaker()
                         eventBus.publish(com.halo.sdk.runtime.TtsRequested(text = text, transactionId = id,
                             target = com.halo.sdk.runtime.SpeechOutputTarget.Phone,
-                            localOnly = true))
+                            localOnly = !powerModeEnabled()))
                     }, stopReading = { haloSpeechOutputCoordinator.stop("Read-aloud stop tool") }, isForeground = foreground,
                     palettes = palettePreferences, visual = com.halo.app.ui.theme.VisualPreferences.get(applicationContext),
                     languages = appLanguagePreferences,
@@ -1189,10 +1256,16 @@ object ManualDependencyGraph {
                     elapsedMs=com.halo.app.everyday.organizer.android.OrganizerAndroidClock::elapsedMs,
                     bootId={com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext)},
                     power={privacyModes.mode.value==com.halo.app.ai.PrivacyMode.CLOUD},
-                    ready={(applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap();collectorBootstrap.ensureInitialized()},readState=::everydayDisclosureState),
-                com.halo.app.di.tools.ScreenToolExecutor(screenStore) {
-                    foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
-                },
+                    ready={(applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap();collectorBootstrap.ensureInitialized()},readState=::everydayDisclosureState,
+                    articleContent = articleContentStore::read,
+                    inspectImage = com.halo.app.everyday.collectors.SourceImageReader(articleContentStore, aiProviderRouter) {
+                        privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD
+                    }::read, dayContext = dayContext::read, localFactContent = { fact ->
+                        if (fact.kind == "NOTE") requireNotNull(appDatabase.notebookDocumentDao().getDocument(fact.id)).let { note ->
+                            check(note.lifecycle == "ACTIVE" && "${note.updatedAt}:${note.revision}" == fact.revision)
+                            note.body
+                        } else null
+                    }),
                 com.halo.app.di.tools.SavedDeviceToolExecutor(devicesViewModel.savedDeviceActions,
                     canConfigure = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
                 com.halo.app.di.tools.NotificationSettingsToolExecutor(digestDeliverySettings, notificationRepository,
@@ -1210,11 +1283,12 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.LocalModelRoleTools(providerControlRepository.localRoleTools) {
                     foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
                 },
-                com.halo.app.di.tools.host.NotebookLibraryTools(notebookLibrarySession),
-                com.halo.app.di.tools.host.NotebookOrganizationTools(notebookLibrarySession),
-                com.halo.app.di.tools.host.NotebookBatchTools(notebookLibrarySession),
+                com.halo.app.di.tools.host.NotebookLibraryTools(notebookLibrarySession) { remoteWorkspaceAuthority() },
+                com.halo.app.di.tools.host.NotebookOrganizationTools(notebookLibrarySession) { remoteWorkspaceAuthority() },
+                com.halo.app.di.tools.host.NotebookBatchTools(notebookLibrarySession) { remoteWorkspaceAuthority() },
                 com.halo.app.di.tools.host.SavedChatTools(conversationStore,
                     canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
+                    remoteAuthority = { remoteWorkspaceAuthority(conversation = true) },
                     openDetail = { id, version ->
                         if (foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value)
                             homeViewModel.presentSavedConversation(id, version) else false
@@ -1256,6 +1330,12 @@ object ManualDependencyGraph {
                         privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
                             policy.allowCloudScreenContext && policy.allowCloudWorkspace
                     }),
+                com.halo.app.di.tools.host.OpenRouterSpeechTools({ openRouterSpeechControl },
+                    allowed = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
+                com.halo.app.di.tools.host.OpenRouterRecognitionTools({ openRouterRecognitionControl },
+                    allowed = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
+                com.halo.app.di.tools.host.ChatGptAccountTools({ chatGptLogin },
+                    allowed = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
                 com.halo.app.di.tools.host.DeviceMediaTools({ hostGraph.captureCoordinator?.files },
                     canAccess = { foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value },
                     remoteReadAllowed = {
@@ -1299,6 +1379,7 @@ object ManualDependencyGraph {
                     dynamicExtractor = dynamicPageExtractor,
                     privacyModes = privacyModes.mode,
                 ),
+                com.halo.app.di.tools.host.GroundedWebSearchTools { groundedWebSearchService },
                 FollowUpTools(followUpRepository),
             ),
             preferSemanticRoute = { pkg, label ->
@@ -1313,6 +1394,7 @@ object ManualDependencyGraph {
         // agent loop can never widen its own exposure.
         val useSkillExecutor: com.halo.runtime.cognition.tools.UseSkillToolExecutor =
             com.halo.runtime.cognition.tools.UseSkillToolExecutor(skillInstructionSource, { skillRegistry })
+        val workflowPlanExecutor = com.halo.runtime.cognition.tools.WorkflowPlanTool(agentRunStore, agentRunCoordinator)
         com.halo.runtime.cognition.tools.ToolRegistry(
             listOf(
                 currentTimeExecutor,
@@ -1331,6 +1413,7 @@ object ManualDependencyGraph {
                 procedureExecutor,
                 presentationExecutor,
                 useSkillExecutor,
+                workflowPlanExecutor,
                 // Discovery meta-tool is internal: it expands schemas without widening authorization.
                 toolDiscoveryExecutor,
             ),
@@ -1365,7 +1448,7 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ROUTINE to routineCreationExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.PROCEDURE to procedureExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.PRESENTATION to presentationExecutor,
-            ) + longTaskExecutor.descriptors() + listOf(
+            ) + longTaskExecutor.descriptors() + listOf(com.halo.runtime.cognition.tools.WorkflowPlanTool.descriptor(),
                 com.halo.app.di.tools.HaloToolDescriptors.discoveryMeta(
                     com.halo.runtime.cognition.tools.ToolDiscoveryService.discoveryToolDefinition()
                 ),
@@ -1933,7 +2016,7 @@ object ManualDependencyGraph {
                 it.descriptor.providerId == aiProviderRouter.selectedProviderId.value } },
             answerModelAvailable = { providerControlRepository.roleTarget(com.halo.sdk.provider.AiModelRole.CHAT)?.eligible == true },
             privacyMode = { privacyModes.mode.value },
-            familyAllowsOnline = { kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) },
+            familyAllowsOnline = { kidsPreferences.loadedState.value },
             webAvailability = groundedWebSearchService::availability,
             researchEnabled = { storage.getBoolean("policy_long_task_delegation", true) },
             speechReady = { speechRecognitionAvailability.value }, attachmentsAvailable = { true },
@@ -2201,9 +2284,7 @@ object ManualDependencyGraph {
         com.halo.app.ai.SpeechSynthesisRegistry(providers.ttsProviders,
             providers.speechSelector ?: com.halo.app.ai.DefaultSpeechProviderSelector(com.halo.app.ai.SpeechSelectionRepository(storage)), storage,
             allowLocalFallback = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.PRIVATE || privacyModes.profile(com.halo.app.ai.PrivacyMode.CLOUD).localFallback },
-            allowCloudSpeech = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacyModes.sharingAcknowledged &&
-                com.halo.app.ai.OnlineFeature.SPEECH in privacyModes.profile(com.halo.app.ai.PrivacyMode.CLOUD).onlineFeatures &&
-                kidsPreferences.loadedState.value && (!kidsPreferences.enabled.value || kidsPreferences.cloudAllowed.value) })
+            allowCloudSpeech = { powerModeEnabled() })
     }
 
     val localRolePackInstaller by lazy {

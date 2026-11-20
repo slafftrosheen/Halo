@@ -1,0 +1,11 @@
+<resources>
+    <string name="a2_wifi_ready">Wi-Fi is ready. Select files to copy now. The connection closes automatically after a minute or when you leave Halo.</string>
+    <string name="a2_wifi_disabled">Turn on Wi-Fi to copy files from the glasses, then try again. Internet access is not needed.</string>
+    <string name="a2_wifi_settings">Open Wi-Fi settings</string>
+    <string name="a2_audio_choose">Choose glasses audio</string>
+    <string name="a2_audio_choose_help">Choose the glasses already paired in Android. Android will ask you to approve Halo’s access.</string>
+    <string name="a2_audio_discover">Find a new audio device</string>
+    <string name="a2_wifi_choose">Choose the glasses’ Wi-Fi device</string>
+    <string name="a2_wifi_choose_help">Keep the glasses nearby and select them as soon as they appear. Approve Android’s connection prompt. If the connection stalls, cancel and try again. Files stay on this phone.</string>
+    <string name="a2_wifi_searching">Looking for Wi-Fi devices…</string>
+</resources>

@@ -37,6 +37,7 @@ data class LocalModelToolPolicy(
     companion object {
         /** Always available to a local model: discovery, skill loading, clock. */
         val BOOTSTRAP: Set<String> = setOf(
+            WorkflowPlanTool.ID,
             "halo_discover_tools",
             "halo_use_skill",
             "halo_current_time",
@@ -83,7 +84,7 @@ data class LocalModelToolPolicy(
         )
 
         /**
-         * Bootstrap stays three schemas wide. Phone actions are activatable rather
+         * Bootstrap includes discovery, time and the visible workflow plan. Phone actions are activatable rather
          * than always-exposed: a 4096-token model should spend its prompt on the
          * user's words, then discover exactly the one or two actions it needs.
          */

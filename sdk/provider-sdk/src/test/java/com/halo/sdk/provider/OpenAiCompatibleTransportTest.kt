@@ -15,6 +15,53 @@ import org.junit.Test
  * free-model evidence, auth-failure fallback, and error mapping.
  */
 class OpenAiCompatibleTransportTest {
+    @Test fun `chat and responses decode nested tool arguments into runtime values`() = runTest {
+        val args = """{"steps":["Create","Read"],"record":{"title":"QA","tags":["one","two"]}}"""
+        for (protocol in listOf(AiWireProtocol.OPENAI_CHAT_COMPLETIONS, AiWireProtocol.OPENAI_RESPONSES)) {
+            val quoted = org.json.JSONObject.quote(args)
+            val body = if (protocol == AiWireProtocol.OPENAI_RESPONSES)
+                """{"status":"completed","output":[{"type":"function_call","call_id":"qa-call","name":"qa_nested","arguments":$quoted}]}"""
+            else """{"choices":[{"message":{"content":"","tool_calls":[{"id":"qa-call","function":{"name":"qa_nested","arguments":$quoted}}]},"finish_reason":"tool_calls"}]}"""
+            server.enqueue(MockResponse().setBody(body))
+            val call = transport.withProtocol(protocol).generate(AiRequest(text = "QA"), AiContext.EMPTY,
+                "fixture", null, null, null, true).toolCalls.single()
+            assertEquals(listOf("Create", "Read"), call.arguments["steps"])
+            assertEquals(mapOf("title" to "QA", "tags" to listOf("one", "two")), call.arguments["record"])
+        }
+    }
+
+    @Test fun `documented tool support fills missing metadata but never overrides denial or invents models`() = runTest {
+        server.enqueue(MockResponse().setBody("""{"data":[{"id":"openai/gpt-oss-120b"},{"id":"openai/gpt-oss-20b","supported_parameters":[]},{"id":"unknown"}]}"""))
+        val models = transport.fetchRemoteModelList(null, null, true, RemoteProviderPresets.documentedToolModels(RemoteProviderIds.GROQ), emptySet(), false)
+        assertEquals(3, models.size)
+        assertTrue(models.single { it.id == "openai/gpt-oss-120b" }.supportsTools)
+        assertTrue(models.filter { it.id != "openai/gpt-oss-120b" }.none { it.supportsTools })
+    }
+    @Test fun `responses preserves image only requests and function continuation wire types`() = runTest {
+        server.enqueue(MockResponse().setBody("""{"status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"done"}]}]}"""))
+        val history = listOf(AIMessage(Role.ASSISTANT, "", listOf(ToolCall("call-1", "halo_note", mapOf("title" to "QA")))),
+            AIMessage(Role.TOOL, "saved", toolCallId = "call-1"))
+        transport.withProtocol(AiWireProtocol.OPENAI_RESPONSES).generate(
+            AiRequest(image = byteArrayOf(1, 2), mimeTypes = listOf("image/png")), AiContext(conversation = history),
+            "vision", null, null, null, true)
+        val input = org.json.JSONObject(server.takeRequest().body.readUtf8()).getJSONArray("input")
+        assertEquals("function_call", input.getJSONObject(1).getString("type"))
+        assertEquals("call-1", input.getJSONObject(1).getString("call_id"))
+        assertEquals("function_call_output", input.getJSONObject(2).getString("type"))
+        assertEquals("saved", input.getJSONObject(2).getString("output"))
+        val part = input.getJSONObject(3).getJSONArray("content").getJSONObject(0)
+        assertEquals("input_image", part.getString("type"))
+        assertEquals("data:image/png;base64,AQI=", part.getString("image_url"))
+    }
+
+    @Test fun `catalog uses exact wire id and top level authoritative capabilities`() = runTest {
+        server.enqueue(MockResponse().setBody("""{"data":[{"id":"vision-v1","owner":{"id":"vendor"},"input_modalities":["text","image"],"supported_parameters":["tools"]}]}"""))
+        val model = transport.fetchRemoteModelList(null, null, true, emptyList(), emptySet(), false).single()
+        assertEquals("vision-v1", model.id)
+        assertTrue(model.supportsTools)
+        assertTrue(AiCapability.IMAGE in model.inputCapabilities)
+        assertEquals(CapabilityEvidence.AUTHORITATIVE_METADATA, model.capabilityEvidence[AiCapability.IMAGE])
+    }
     @Test fun `chat stream emits one final response with requested and resolved models`() = runTest {
         server.enqueue(MockResponse().setBody("data: {\"model\":\"resolved\",\"choices\":[{\"delta\":{\"content\":\"HALO\"}}]}\n\ndata: [DONE]\n\n"))
         val events = transport.stream(AiRequest(text = "HALO", modelId = "selected"), AiContext.EMPTY,

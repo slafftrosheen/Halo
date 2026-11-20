@@ -83,6 +83,8 @@ data class HomeUiState(
     val runtimeWaitingCount: Int = 0,
     val runtimeWaitingState: com.halo.runtime.cognition.agent.AgentRunState? = null,
     val longTaskProgress: com.halo.runtime.cognition.interaction.StructuredPresentation? = null,
+    val workflowSummary: String? = null,
+    val workflowSteps: List<String> = emptyList(),
     val longTaskStatus: String? = null,
     val researchResult: Boolean = false,
     /** Journal-backed receipt belonging to the current conversation, if any. */
@@ -444,7 +446,9 @@ class HomeViewModel(
             it is com.halo.runtime.cognition.agent.AgentStep.ToolInvocationPrepared && it.toolId in setOf("halo_research", "halo_delegate_task")
         } == true
         val phoneWorkflow = root?.let { com.halo.runtime.cognition.ui.UiWorkflowProjector.from(it) }
-        val longTask = root?.takeIf { children.isNotEmpty() || phoneWorkflow != null }
+        val longTask = root?.takeIf { children.isNotEmpty() || phoneWorkflow != null || it.steps.any { step ->
+            step is com.halo.runtime.cognition.agent.AgentStep.PlanCreated || step is com.halo.runtime.cognition.agent.AgentStep.ToolInvocationPrepared } }
+        val workflowPlan = root?.steps?.filterIsInstance<com.halo.runtime.cognition.agent.AgentStep.PlanCreated>()?.lastOrNull { it.steps.isNotEmpty() }
         val presented = HomeResponseProjector.project(
             activeConversationId,
             sessionState,
@@ -517,7 +521,9 @@ class HomeViewModel(
                 runtimeWaitingState = taskSummary.primaryWaitingRun?.state.takeIf { durableStatus != null },
                 researchResult = research && turns.lastOrNull()?.metadata?.get("runId") == root?.id?.value,
                 longTaskProgress = longTask?.let { homeTaskProgress(it.steps) },
-                longTaskStatus = phoneWorkflow?.let { "${it.state.name.lowercase().replace('_', ' ')} · ${it.preview?.description.orEmpty()} · ${it.actionCount} actions · ${it.scrollCount} scrolls" } ?: longTask?.let { "${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED }} / ${children.size} tasks complete · ${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.FAILED }} failed" },
+                workflowSummary = workflowPlan?.summary,
+                workflowSteps = workflowPlan?.steps.orEmpty(),
+                longTaskStatus = phoneWorkflow?.let { "${it.state.name.lowercase().replace('_', ' ')} · ${it.preview?.description.orEmpty()} · ${it.actionCount} actions · ${it.scrollCount} scrolls" } ?: longTask?.takeIf { children.isNotEmpty() }?.let { "${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.COMPLETED }} / ${children.size} tasks complete · ${children.count { child -> child.state == com.halo.runtime.cognition.agent.AgentRunState.FAILED }} failed" },
                 rejectionNotice = rejectionNotice?.takeIf { it.conversationId == null || it.conversationId == activeConversationId },
                 toolReceipt = homeLatestToolReceipt(
                     runs, activeConversationId, continuity.value.runId?.value,

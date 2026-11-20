@@ -26,7 +26,6 @@ import com.halo.app.audio.association.WearableAudioAssociationRepository
 import com.halo.sdk.runtime.HaloDispatchers
 import com.halo.sdk.runtime.Storage
 import com.halo.sdk.runtime.productionHaloDispatchers
-import java.util.regex.Pattern
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -39,6 +38,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+
+data class BondedAudioChoice(val address: String, val name: String)
 
 sealed interface HeyCyanAudioPairingState {
     data object Unknown : HeyCyanAudioPairingState
@@ -161,7 +162,20 @@ class HeyCyanAudioPairingCoordinator(
         }
     }
 
-    fun requestAssociation(wearableDeviceId: String) {
+    @SuppressLint("MissingPermission")
+    fun bondedAudioChoices(): List<BondedAudioChoice> {
+        if (!hasConnectPermission()) return emptyList()
+        return runCatching { bluetoothAdapter?.bondedDevices.orEmpty().map { device ->
+            BondedAudioChoice(device.address, deviceNameOrNull(device).orEmpty().ifBlank { device.address })
+        }.sortedBy { it.name } }.getOrDefault(emptyList())
+    }
+
+    fun requestAssociation(wearableDeviceId: String, selectedAudioAddress: String? = null) {
+        val exactAddress = selectedAudioAddress?.uppercase(java.util.Locale.ROOT)
+        if (exactAddress != null && bondedAudioChoices().none { sameAddress(it.address, exactAddress) }) {
+            fail("The selected audio device is no longer paired in Android")
+            return
+        }
         activeWearableId = wearableDeviceId
         val currentState = _state.value
 
@@ -177,12 +191,14 @@ class HeyCyanAudioPairingCoordinator(
             is HeyCyanAudioPairingState.AudioConnected -> {
                 scope.launch {
                     val currentAssoc = association
-                    if (currentAssoc != null && associationStillExists(currentAssoc)) {
+                    if (currentAssoc != null && currentAssoc.wearableDeviceId == wearableDeviceId &&
+                        (exactAddress == null || sameAddress(currentAssoc.bluetoothAddress, exactAddress)) &&
+                        associationStillExists(currentAssoc)) {
                         logState("ASSOCIATED", reason = "Existing valid association refreshed", source = "request")
                         reconcileRoute(routeMonitor.routes.value, "request")
                         return@launch
                     }
-                    startCdmAssociation(wearableDeviceId)
+                    startCdmAssociation(wearableDeviceId, exactAddress)
                 }
                 return
             }
@@ -192,7 +208,7 @@ class HeyCyanAudioPairingCoordinator(
         scope.launch {
             // Check if Android already has a matching system association
             val saved = repository.read(wearableDeviceId)
-            val matchingSystemAssoc = findMatchingSystemAssociation(saved?.bluetoothAddress)
+            val matchingSystemAssoc = findMatchingSystemAssociation(exactAddress ?: saved?.bluetoothAddress)
             if (matchingSystemAssoc != null) {
                 val address = matchingSystemAssoc.second ?: saved?.bluetoothAddress
                 val assocId = matchingSystemAssoc.first
@@ -210,19 +226,20 @@ class HeyCyanAudioPairingCoordinator(
                 return@launch
             }
 
-            startCdmAssociation(wearableDeviceId)
+            startCdmAssociation(wearableDeviceId, exactAddress)
         }
     }
 
-    private fun startCdmAssociation(wearableDeviceId: String) {
+    private fun startCdmAssociation(wearableDeviceId: String, exactAddress: String? = null) {
         logState("DISCOVERING", source = "request")
         _state.value = HeyCyanAudioPairingState.Discovering
-        val filter = BluetoothDeviceFilter.Builder()
-            .setNamePattern(Pattern.compile("(?i).*(HeyCyan|BW[-_ ]?AG1).*"))
-            .build()
+        // Classic audio names can differ from BLE and may be renamed in Android.
+        // Let the user select the exact endpoint in CDM; a brand-name filter hid COLMI A2.
+        val filter = BluetoothDeviceFilter.Builder().apply { exactAddress?.let { setAddress(it) } }.build()
         val request = AssociationRequest.Builder()
             .addDeviceFilter(filter)
-            .setSingleDevice(false)
+            .setSingleDevice(exactAddress != null)
+            .apply { if (Build.VERSION.SDK_INT >= 34) setForceConfirmation(true) }
             .build()
         companionManager.associate(request, object : CompanionDeviceManager.Callback() {
             override fun onAssociationPending(intentSender: IntentSender) {
@@ -313,7 +330,7 @@ class HeyCyanAudioPairingCoordinator(
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private suspend fun acceptAssociation(info: AssociationInfo, source: String) {
         val wearableId = activeWearableId ?: return
-        val address = info.deviceMacAddress?.toString()
+        val address = info.deviceMacAddress?.toString()?.uppercase(java.util.Locale.ROOT)
         val device = address?.let(::remoteDeviceOrNull)
         val newAssoc = WearableAudioAssociation(
             wearableDeviceId = wearableId,
@@ -422,9 +439,6 @@ class HeyCyanAudioPairingCoordinator(
             if (myAssocs.isEmpty()) return null
             val match = myAssocs.firstOrNull { info ->
                 bluetoothAddress != null && sameAddress(info.deviceMacAddress?.toString(), bluetoothAddress)
-            } ?: myAssocs.firstOrNull { info ->
-                val name = info.displayName?.toString().orEmpty()
-                name.contains("HeyCyan", ignoreCase = true) || name.contains("BW-AG1", ignoreCase = true) || name.contains("BW_AG1", ignoreCase = true)
             }
             if (match != null) return Pair(match.id, match.deviceMacAddress?.toString() ?: bluetoothAddress)
         } else {
@@ -489,7 +503,7 @@ class HeyCyanAudioPairingCoordinator(
 
     @SuppressLint("MissingPermission")
     private fun remoteDeviceOrNull(address: String): BluetoothDevice? =
-        runCatching { bluetoothAdapter?.getRemoteDevice(address) }.getOrNull()
+        runCatching { bluetoothAdapter?.getRemoteDevice(address.uppercase(java.util.Locale.ROOT)) }.getOrNull()
 
     private fun hasConnectPermission(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
         appContext.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED

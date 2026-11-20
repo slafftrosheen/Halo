@@ -85,8 +85,13 @@ fun AiRequest.validateAgainst(capabilities: Set<AiCapability>) {
 data class ToolCall(
     val id: String,
     val functionName: String,
-    val arguments: Map<String, Any>
-)
+    val arguments: Map<String, Any>,
+    /** Opaque provider continuation data. Never tool arguments, authority or user-facing output. */
+    val providerMetadata: Map<String, String> = emptyMap(),
+) {
+    init { require(providerMetadata.size <= 8 && providerMetadata.entries.sumOf { it.key.length + it.value.length } <= 131072) }
+    override fun toString() = "ToolCall(id=$id, functionName=$functionName, arguments=$arguments, providerMetadataKeys=${providerMetadata.keys})"
+}
 
 data class AiGenerationMetrics(
     val startedAtMs: Long,

@@ -5,7 +5,7 @@ import com.halo.app.ui.components.VoiceFieldCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Child speech is always private and waits for the previous microphone owner to release. */
+/** Uses the app-wide voice mode after the previous microphone owner releases. */
 internal suspend fun readKidsText(id: String, text: String, language: String? = null): Boolean {
     if (text.isBlank()) return false
     VoiceFieldCancellation.stop()
@@ -13,6 +13,6 @@ internal suspend fun readKidsText(id: String, text: String, language: String? = 
     val released = withTimeoutOrNull(3000) { VoiceFieldCancellation.activeFields.first { it.isEmpty() }; true } == true
     if (!released || ticket != VoiceFieldCancellation.epoch.value) return false
     Graph.readAloud.start(id, text, Graph.speechSynthesisRegistry.selector.ttsSelection.value.id,
-        cloudApproved = false, language = language)
+        cloudApproved = Graph.powerModeEnabled(), language = language)
     return true
 }

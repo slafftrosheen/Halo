@@ -19,6 +19,45 @@ import java.math.BigDecimal
 /** Hermetic admission cases using the real mode profile owner and a non-network fixture provider. */
 @RunWith(RobolectricTestRunner::class)
 class OnlineAdmissionTest {
+    @Test fun assistantSearchUsesCanonicalOwnerReturnsCitationsAndCannotReplay() = runTest {
+        val f = Fixture()
+        val tools = com.halo.app.di.tools.host.GroundedWebSearchTools { f.search }
+        val definitions = tools.definitions()
+        val descriptors = definitions.map { com.halo.app.di.tools.HaloToolDescriptors.webInsight(it)!! }
+        assertTrue(com.halo.runtime.cognition.tools.ToolOperabilityReview.inspect(listOf(
+            com.halo.runtime.cognition.tools.ToolFeatureOperability("web", definitions.map { it.name }.toSet())), descriptors).isEmpty())
+        assertEquals(com.halo.runtime.cognition.tools.ConfirmationPolicy.ALWAYS, descriptors.last().security.confirmation)
+        assertEquals(com.halo.runtime.cognition.tools.ReplaySafety.NEVER_REPLAY, descriptors.last().security.replaySafety)
+        val args = mapOf<String, Any>("query" to "synthetic question", "language" to "pl")
+        val prepared = tools.execute(ToolCall("prepare", "halo_web_search_prepare", args)) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+        assertEquals(0, f.calls)
+        val version = org.json.JSONObject(prepared.output).getString("sourceVersion")
+        val call = ToolCall("search", "halo_web_search", args + ("sourceVersion" to version))
+        val result = tools.execute(call) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+        val body = org.json.JSONObject(result.output)
+        assertEquals("https://example.org/report", body.getJSONArray("sources").getJSONObject(0).getString("url"))
+        val receipt = OnlineOperationLedger(f.storage).snapshot().records.single()
+        assertEquals(receipt.id, body.getString("searchId")); assertEquals("COMPLETED", receipt.state)
+        assertTrue(tools.execute(call) is com.halo.runtime.cognition.tools.ToolExecutionResult.Rejected)
+        assertEquals(1, f.calls)
+        f.modes.set(PrivacyMode.PRIVATE)
+        assertTrue(tools.execute(ToolCall("local", "halo_web_search_prepare", args)) is com.halo.runtime.cognition.tools.ToolExecutionResult.Rejected)
+        assertEquals(1, f.calls)
+    }
+
+    @Test fun assistantSearchRejectsFabricatedVersionsAndReportsUncertainMissingSources() = runTest {
+        val f = Fixture("""{"choices":[{"finish_reason":"stop","message":{"content":"uncited"}}]}""")
+        val tools = com.halo.app.di.tools.host.GroundedWebSearchTools { f.search }
+        val args = mapOf<String, Any>("query" to "synthetic", "language" to "en")
+        assertTrue(tools.execute(ToolCall("fake", "halo_web_search", args + ("sourceVersion" to java.util.UUID.randomUUID().toString()))) is com.halo.runtime.cognition.tools.ToolExecutionResult.Rejected)
+        assertEquals(0, f.calls)
+        val prepared = tools.execute(ToolCall("prepare", "halo_web_search_prepare", args)) as com.halo.runtime.cognition.tools.ToolExecutionResult.Success
+        val version = org.json.JSONObject(prepared.output).getString("sourceVersion")
+        val result = tools.execute(ToolCall("search", "halo_web_search", args + ("sourceVersion" to version))) as com.halo.runtime.cognition.tools.ToolExecutionResult.Failed
+        assertTrue(result.completionUnknown)
+        assertEquals("UNCERTAIN", OnlineOperationLedger(f.storage).snapshot().records.single().state)
+        assertEquals(1, f.calls)
+    }
     @Test fun referenceRequiredModelCannotPrepareTextOnlyGeneration() = runTest {
         val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage, privacyModes=f.modes.mode)
         val choice = f.choice.copy(model = f.choice.model.copy(requiresReference = true))

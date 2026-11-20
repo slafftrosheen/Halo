@@ -8,6 +8,20 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class HomeResponseProjectionTest {
+    @Test fun automaticSpeechRetainsOriginalCategoriesAndRevisionAndRejectsUnknownMetadata() {
+        val metadata = mapOf("speechRemoteCategories" to "TEXT,WORKSPACE", "speechRemoteRevision" to "17")
+        for (state in listOf(CognitiveSessionState.Idle, CognitiveSessionState.Completed(AiResponse("reply", providerId = "fixture")))) {
+            val reply = HomeResponseProjector.project("active", state, null, listOf(committed.copy(metadata = metadata)))
+            assertEquals(17L, reply?.remoteSpeechProvenance?.revision)
+            assertEquals(setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT, com.halo.sdk.provider.RemoteDataCategory.WORKSPACE),
+                reply?.remoteSpeechProvenance?.categories)
+        }
+        val unknown = HomeResponseProjector.project("active", CognitiveSessionState.Idle, null,
+            listOf(committed.copy(metadata = metadata + ("speechRemoteCategories" to "FUTURE_PRIVATE"))))
+        assertNull(unknown?.remoteSpeechProvenance)
+        assertNull(project(CognitiveSessionState.Idle)?.remoteSpeechProvenance)
+    }
+
     @Test fun incompleteResponseKeepsExactIdentityAndDoesNotMoveConversations() {
         val failed = CognitiveSessionState.Failed("Transport interrupted", "Partial answer", "active", "i", "r")
         val result = project(failed)

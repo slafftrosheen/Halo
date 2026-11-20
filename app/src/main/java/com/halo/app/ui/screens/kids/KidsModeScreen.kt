@@ -45,7 +45,7 @@ import kotlinx.coroutines.launch
 /** One learning workspace, backed by the real Study and canonical Home/tool pipelines. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable fun KidsModeScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpenCanvas: ((String) -> Unit)? = null) {
-    CompositionLocalProvider(com.halo.app.ui.components.LocalPrivateSpeech provides true) {
+    CompositionLocalProvider(com.halo.app.ui.components.LocalPrivateSpeech provides false) {
         KidsBrandTheme { KidsModeContent(home, onMicrophone, onOpenCanvas) }
     }
 }
@@ -56,7 +56,8 @@ import kotlinx.coroutines.launch
     val hosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val project: KidsProjectViewModel = viewModel()
     val projectState by project.state.collectAsStateWithLifecycle()
-    val cloudGrant by ManualDependencyGraph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
+    val appMode by ManualDependencyGraph.privacyModes.mode.collectAsStateWithLifecycle()
+    val cloudGrant = appMode == com.halo.app.ai.PrivacyMode.CLOUD && ManualDependencyGraph.privacyModes.sharingAcknowledged
     val listState = rememberLazyListState()
     var voiceSheet by rememberSaveable { mutableStateOf(false) }
     var helpSheet by rememberSaveable { mutableStateOf(false) }
@@ -341,7 +342,7 @@ import kotlinx.coroutines.launch
                     if (lesson == null) {
                         KidsLearningStart(topic, { topic = it }, busy || intakeBusy, {
                             allowStartedLesson = true
-                            starter.startChildLesson(topic, cloudGranted = cloudGrant)
+                            starter.startChildLesson(topic)
                         })
                         TextButton(onClick = { sourcesExpanded = !sourcesExpanded }, modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Homework or my notes")) }
                         if (sourcesExpanded) KidsLearningSources(starter, onBusyChanged = { intakeBusy = it })
@@ -418,13 +419,7 @@ import kotlinx.coroutines.launch
             Text(uiText("First tap reads a choice; tap it again to choose. TalkBack keeps its own controls."),
                 style = MaterialTheme.typography.bodyMedium)
             optionSaveNotice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
-            val cloudAllowed by ManualDependencyGraph.kidsPreferences.cloudAllowed.collectAsStateWithLifecycle()
-            Text(uiText("Cloud is off by default. For this app session, you can allow learning and creation text, selected photos and documents to reach configured providers. Privacy and source restrictions still apply."),
-                style = MaterialTheme.typography.bodyMedium)
-            OutlinedButton(onClick = { ManualDependencyGraph.kidsPreferences.setCloudAllowedForSession(!cloudAllowed) },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                Text(uiText(if (cloudAllowed) "Turn off cloud for Kids" else "Allow cloud for this Kids session"))
-            }
+            com.halo.app.ui.components.PrivacyModeControl(detail = true)
             Text(uiText("An adult should help with these settings."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)

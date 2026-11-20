@@ -3,7 +3,7 @@ package com.halo.app.ui.shell
 /** Exact internal destinations; never accepts arbitrary route strings or object IDs. */
 object HaloScreenCatalog {
     val screens = linkedMapOf(
-        "home" to "Home", "screen" to "Screen", "mini_halo" to "Mini Halo", "activity" to "Activity", "notebook" to "Workspace",
+        "home" to "Home", "mini_halo" to "Mini Halo", "activity" to "Activity", "notebook" to "Workspace",
         "screen/organizer" to "Organizer", "screen/clocks" to "World clocks", "screen/brief" to "Your day in Halo", "screen/sources" to "Sources",
         "workspace_handoff" to "Continue with this item", "studio" to "HaloStudio", "file_tools" to "HaloNotes", "canvases" to "HaloCanvas", "devices" to "Devices", "settings" to "Settings", "study" to "HaloStudy",
         "ai_settings" to "Intelligence", "voice_settings" to "Voice",

@@ -19,6 +19,30 @@ import java.time.Instant
 
 @RunWith(RobolectricTestRunner::class)
 class AgentRunRepositoryTest {
+    @Test fun providerContinuationMetadataSurvivesRoomReopenWithoutBecomingArguments() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "provider-continuation-fixture.db"
+        context.deleteDatabase(name)
+        fun open() = Room.databaseBuilder(context, AppDatabase::class.java, name).allowMainThreadQueries().build()
+        var db = open()
+        try {
+            val at = Instant.now(); val id = AgentRunId("signed-fixture")
+            val store = RoomAgentRunRepository(db)
+            store.create(AgentRun(id, InteractionId("fixture"), "synthetic", AgentRunState.WAITING_FOR_APPROVAL, createdAt = at, updatedAt = at))
+            val metadata = mapOf("gemini.thoughtSignature" to "opaque-fixture", "gemini.idAbsent" to "true")
+            store.appendStep(AgentStep.PlanCreated(AgentStepId("plan"), id, at, "plan", "Create and check the note", listOf("Create the note", "Read it back")))
+            store.appendStep(AgentStep.ProviderTurnCompleted(AgentStepId("response"), id, at, ProviderTurnId("turn"), "",
+                listOf(ProviderToolCallRecord("call", "halo_note", "{\"title\":\"QA\"}", metadata)), "tool_calls"))
+            db.close(); db = open()
+            val run = RoomAgentRunRepository(db).get(id)!!
+            assertEquals(listOf("Create the note", "Read it back"), run.steps.filterIsInstance<AgentStep.PlanCreated>().single().steps)
+            val call = run.steps.filterIsInstance<AgentStep.ProviderTurnCompleted>().single().toolCalls.single()
+            assertEquals(metadata, call.providerMetadata)
+            assertFalse(call.argumentsJson.contains("opaque-fixture"))
+            val restored = com.halo.runtime.cognition.agent.recovery.AgentContinuationAssembler.fromJournal(run).messages.last()
+            assertEquals(metadata, restored.providerMetadata)
+        } finally { db.close(); context.deleteDatabase(name) }
+    }
     @Test fun modelToolProvenanceSurvivesRoomReopenAndHistoricalMissingStaysUnknown() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val name = "mode47-provenance-fixture.db"

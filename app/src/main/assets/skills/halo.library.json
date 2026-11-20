@@ -1,7 +1,7 @@
 {
   "id": "halo.library",
   "name": "Current Workspace Library",
-  "description": "Use the attached Library view, organization and approved exact-selection lifecycle/context/Undo operations through native owners. Local inference only.",
+  "description": "Use the attached Library view, organization and approved exact-selection lifecycle/context/Undo operations through native owners, with current Local/Power disclosure authority.",
   "schemaVersion": 2,
   "category": "WORKSPACE",
   "risk": "DESTRUCTIVE",

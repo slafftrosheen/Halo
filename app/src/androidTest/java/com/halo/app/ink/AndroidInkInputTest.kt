@@ -159,7 +159,10 @@ class AndroidInkInputTest {
         send(f, MotionEvent.ACTION_DOWN, 100, p, source = InputDevice.SOURCE_MOUSE, buttons = MotionEvent.BUTTON_PRIMARY)
         send(f, MotionEvent.ACTION_UP, 110, p, source = InputDevice.SOURCE_MOUSE)
         val stroke = f.editor.document.strokes.single()
-        assertEquals(InkTool.MOUSE, stroke.tool); assertNull(stroke.points.single().pressure)
+        assertEquals(InkTool.MOUSE, stroke.tool)
+        assertEquals(1, f.commits)
+        assertTrue(stroke.points.isNotEmpty())
+        stroke.points.forEach { assertNull(it.pressure) }
     }
     @Test fun missingPointerChangedToolOrInvalidCoordinatesCancelPendingInk() {
         val p = Pointer(0, MotionEvent.TOOL_TYPE_STYLUS, 100f, 100f)

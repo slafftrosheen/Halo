@@ -352,7 +352,7 @@ open class MainActivity : ComponentActivity() {
             }
             return
         }
-        val screen = intent?.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN) ?: return
+        val screen = intent?.getStringExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN)?.let { if (it == "screen") "home" else it } ?: return
         widgetEntries.cancelPending()
         intent.removeExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN)
         if (screen in com.halo.app.ui.shell.HaloScreenCatalog.screens) {

@@ -110,7 +110,8 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                     Text(uiText(providerOutcomeLabel(diagnostic.outcome)), style = MaterialTheme.typography.bodySmall)
                 }
                 Text(uiText("Reply tests apply to this provider, not every model. Saving configuration clears previous checks."), style = MaterialTheme.typography.bodySmall)
-                Text(uiText(if (row.descriptor.fields.none { it.kind == ProviderFieldKind.SECRET }) "No credential required" else if (row.credentialConfigured) "Credential configured" else "No stored credential"))
+                if (providerId != com.halo.providers.openai.ChatGptSubscriptionProvider.ID)
+                    Text(uiText(if (row.descriptor.fields.none { it.kind == ProviderFieldKind.SECRET }) "No credential required" else if (row.credentialConfigured) "Credential configured" else "No stored credential"))
                 providerKeyPage(providerId)?.let { url -> TextButton(onClick = {
                     context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
                 }) { Text(uiText("Get API key")) } }
@@ -123,7 +124,8 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                 }
 
             }
-            items(row.descriptor.fields, key = { it.id }) { field ->
+            if (providerId == com.halo.providers.openai.ChatGptSubscriptionProvider.ID) item { ChatGptAccountSettings() }
+            items(row.descriptor.fields.filterNot { it.id == "chatgpt_account" }, key = { it.id }) { field ->
                 val oauth = values["gemini_auth_mode"] == "OAUTH"
                 val customNoAuth = values["custom_openai_compatible_auth_mode"] == "NONE"
                 when(field.kind) {
@@ -141,13 +143,14 @@ fun ProviderDetailScreen(control: ProviderControlRepository, providerId: String,
                         field.options.forEach { option -> TextButton(enabled = !saving, onClick = { values = values + (field.id to option); secret = "" }) { Text(uiText(providerOptionLabel(option)) + if (values[field.id] == option) " · " + uiText("Selected") else "") } }
                     }
                     ProviderFieldKind.OAUTH_ACTION -> if (oauth) {
+                        Text(uiText("Google authorization here uses a Google Cloud project, not a Google AI subscription."))
                         com.halo.app.ui.components.HaloActionButton(onClick = { authorize() }) { Text(uiText("Authorize with Google")) }
                         TextButton(onClick = { control.disconnectGeminiOAuth() }) { Text(uiText("Disconnect Google OAuth")) }
                     }
                 }
             }
             item {
-                if (row.descriptor.fields.isNotEmpty()) {
+                if (row.descriptor.fields.isNotEmpty() && providerId != com.halo.providers.openai.ChatGptSubscriptionProvider.ID) {
                     HaloFocusAction(uiText(if (saving) "Saving…" else "Save securely"), HaloGlyph.MODEL, !saving, onClick = {
                         if (saving) return@HaloFocusAction
                         saving = true

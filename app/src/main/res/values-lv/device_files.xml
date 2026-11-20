@@ -26,9 +26,9 @@
     <string name="device_files_next">Nākamā</string>
     <string name="device_files_import">Kopēt atlasītos (%1$d) uz Bibliotēku</string>
     <string name="device_files_limits">Atlasiet līdz 16 failiem vienā pārsūtīšanā, katru līdz 256 MiB.</string>
-    <string name="device_files_empty">Brilles neziņo par failiem.</string>
+    <string name="device_files_empty">Nav jaunu failu kopēšanai. Iepriekš importētie faili ir Bibliotēkā.</string>
     <string name="device_files_saved">Saņemtie faili · turpināt Halo</string>
     <string name="device_files_in_trash">Šī kopija jau ir Atkritnē. Ja nepieciešams, atjaunojiet to Bibliotēkā.</string>
     <string name="device_files_original">Oriģinālie dati saglabāti. Šim formātam var būt vajadzīga cita lietotne; atskaņošana nav pārbaudīta.</string>
-    <string name="device_files_local_only">Kopijas paliek tālrunī, līdz izvēlaties tās izmantot vai kopīgot. Bibliotēkas darbības attiecas uz kopiju. Oriģināli brillēs tiek saglabāti.</string>
+    <string name="device_files_local_only">Kopijas paliek tālrunī, līdz izvēlaties tās kopīgot. Bibliotēkas darbības ietekmē tikai kopiju. Pēc pārsūtīšanas brilles var vairs nepiedāvāt failus, tāpēc saglabājiet vajadzīgās kopijas.</string>
 </resources>

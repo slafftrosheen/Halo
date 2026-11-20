@@ -143,7 +143,7 @@ class OpenRouterProvider(
     }
 
     override suspend fun getCapabilities(): Set<AiCapability> = setOf(
-        AiCapability.TEXT, AiCapability.IMAGE, AiCapability.STREAMING, AiCapability.TOOLS
+        AiCapability.TEXT, AiCapability.IMAGE, AiCapability.AUDIO, AiCapability.VIDEO, AiCapability.STREAMING, AiCapability.TOOLS
     )
 
     override suspend fun listImageModels(): List<AiImageModel> = withContext(Dispatchers.IO) {
@@ -646,20 +646,36 @@ class OpenRouterProvider(
                 put("content", screen.asUntrustedPromptSection())
             })
         }
-        request.text?.takeIf { request.appendTextAsUserMessage }?.let { text ->
-            val content: Any = if (request.image != null) {
-                JSONArray().apply {
-                    put(JSONObject().apply { put("type", "text"); put("text", text) })
-                    put(JSONObject().apply {
-                        put("type", "image_url")
-                        put("image_url", JSONObject().apply {
-                            val mimeType = request.imageMimeType()
-                            put("url", "data:$mimeType;base64,${android.util.Base64.encodeToString(request.image, android.util.Base64.NO_WRAP)}")
-                        })
-                    })
+        if (request.appendTextAsUserMessage) {
+            val parts = JSONArray()
+            request.text?.takeIf { it.isNotBlank() }?.let { parts.put(JSONObject().put("type", "text").put("text", it)) }
+            request.inlineMedia().forEach { media ->
+                val encoded = android.util.Base64.encodeToString(media.bytes, android.util.Base64.NO_WRAP)
+                val part = when (media.capability) {
+                    AiCapability.IMAGE -> JSONObject().put("type", "image_url").put("image_url",
+                        JSONObject().put("url", "data:${media.mimeType};base64,$encoded"))
+                    AiCapability.AUDIO -> {
+                        val format = when (media.mimeType) {
+                            "audio/wav", "audio/x-wav" -> "wav"
+                            "audio/mpeg", "audio/mp3" -> "mp3"
+                            "audio/mp4", "audio/x-m4a", "audio/m4a" -> "m4a"
+                            "audio/ogg" -> "ogg"
+                            "audio/flac", "audio/x-flac" -> "flac"
+                            "audio/webm" -> "webm"
+                            else -> throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "OpenRouter requires encoded WAV, MP3, M4A, OGG, FLAC or WebM audio")
+                        }
+                        JSONObject().put("type", "input_audio").put("input_audio", JSONObject().put("format", format).put("data", encoded))
+                    }
+                    AiCapability.VIDEO -> {
+                        if (media.mimeType !in setOf("video/mp4", "video/mpeg", "video/quicktime", "video/webm"))
+                            throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY, "OpenRouter requires MP4, MPEG, MOV or WebM video")
+                        JSONObject().put("type", "video_url").put("video_url", JSONObject().put("url", "data:${media.mimeType};base64,$encoded"))
+                    }
+                    else -> error("Unexpected inline media")
                 }
-            } else text
-            messages.put(JSONObject().apply { put("role", "user"); put("content", content) })
+                parts.put(part)
+            }
+            if (parts.length() > 0) messages.put(JSONObject().put("role", "user").put("content", parts))
         }
         return JSONObject().apply {
             put("model", model)
@@ -762,14 +778,7 @@ class OpenRouterProvider(
 
     private fun parseArguments(json: String): Map<String, Any> = try {
         if (json.length > OpenRouterTransportBounds.TOOL_ARGUMENT_CHARS) OpenRouterTransportBounds.exceeded()
-        val obj = JSONObject(json)
-        buildMap {
-            val keys = obj.keys()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                put(key, obj.get(key))
-            }
-        }
+        ToolArgumentJson.decode(json)
     } catch (error: Exception) {
         throw AiProviderException(AiErrorType.INVALID_RESPONSE, "OpenRouter returned invalid tool arguments", error)
     }

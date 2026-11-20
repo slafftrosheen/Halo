@@ -405,14 +405,15 @@ class DevicesViewModel(
 
     fun mediaCoordinator() = captures()
     fun restoreAudioAssociation(deviceId: String) = audioPairingCoordinator?.restore(deviceId)
-    fun connectAudio(deviceId: String) {
+    fun bondedAudioChoices() = audioPairingCoordinator?.bondedAudioChoices().orEmpty()
+    fun connectAudio(deviceId: String, selectedAudioAddress: String? = null) {
         viewModelScope.launch {
             if (!ownsReadyGlasses(deviceId)) return@launch
             val driver = heyCyanDriverProvider()
             val enabled = driver?.capabilityController
                 ?.execute(com.halo.sdk.runtime.embodiment.heycyan.HeyCyanOperation.EnableClassicBluetooth)
                 ?.isSuccess == true
-            if (enabled) audioPairingCoordinator?.requestAssociation(deviceId)
+            if (enabled) audioPairingCoordinator?.requestAssociation(deviceId, selectedAudioAddress)
             else audioPairingCoordinator?.fail("Could not enable the glasses audio radio")
         }
     }

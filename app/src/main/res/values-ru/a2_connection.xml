@@ -1,0 +1,11 @@
+<resources>
+    <string name="a2_wifi_ready">Wi-Fi готов. Выберите файлы для копирования. Соединение закроется через минуту или при выходе из Halo.</string>
+    <string name="a2_wifi_disabled">Включите Wi-Fi для копирования файлов с очков и повторите попытку. Интернет не нужен.</string>
+    <string name="a2_wifi_settings">Открыть настройки Wi-Fi</string>
+    <string name="a2_audio_choose">Выберите звук очков</string>
+    <string name="a2_audio_choose_help">Выберите очки, уже сопряжённые в Android. Android попросит разрешить доступ для Halo.</string>
+    <string name="a2_audio_discover">Найти новое аудиоустройство</string>
+    <string name="a2_wifi_choose">Выберите Wi-Fi устройство очков</string>
+    <string name="a2_wifi_choose_help">Держите очки рядом и выберите их, как только они появятся. Подтвердите подключение в Android. Если подключение зависло, отмените его и повторите попытку. Файлы останутся на телефоне.</string>
+    <string name="a2_wifi_searching">Поиск Wi-Fi устройств…</string>
+</resources>

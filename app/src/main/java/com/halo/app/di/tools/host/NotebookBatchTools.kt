@@ -13,10 +13,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** Typed adapter for the exact same suspend owner used by Library's selection toolbar and Undo. */
-class NotebookBatchTools(private val session: NotebookLibrarySession) : ToolExecutor {
+class NotebookBatchTools(private val session: NotebookLibrarySession,
+    private val remoteAuthority: () -> (() -> Boolean)? = { null }) : ToolExecutor {
     override fun definitions() = listOf(
         ToolDefinition(READ, READ,
-            "Prepare an exact selected Library batch (CONTEXT, COLLECTION, ARCHIVE, TRASH, RESTORE), or UNDO_TRASH for only the last batch's successfully trashed identities. Requires the fresh settled foreground Library snapshot. Returns per-object canonical versions and a one-use batch token; returns no titles/body and makes no content attachment or lifecycle change. COLLECTION requires an existing collectionId. Undo targets are independent of current selection. Local foreground grown-up inference only.",
+            "Prepare an exact selected Library batch (CONTEXT, COLLECTION, ARCHIVE, TRASH, RESTORE), or UNDO_TRASH for only the last batch's successfully trashed identities. Requires the fresh settled foreground Library snapshot. Returns per-object canonical versions and a one-use batch token; returns no titles/body and makes no content attachment or lifecycle change. COLLECTION requires an existing collectionId. Undo targets are independent of current selection. Unlocked foreground grown-up access with current Local/Power disclosure authority.",
             schema(mapOf("expectedSnapshot" to token, "operation" to operation, "collectionId" to id), listOf("expectedSnapshot", "operation"))),
         ToolDefinition(WRITE, WRITE,
             "After explicit current user authority and runtime approval, execute exactly the operation in a freshly prepared one-use halo_library_batch token. Operates only on that selection or exact last-Trash Undo set, never whatever is selected later. Uses canonical versions, lifecycle, saved-chat writer guards and existing context/membership owners. CONTEXT is explicit source selection and retains all existing context budget and sharing protections; it grants no remote disclosure. Partial unchanged and unconfirmed outcomes are separate from successful IDs. Any unconfirmed outcome requires fresh readback and a new user decision; never replay. No permanent purge.",
@@ -27,7 +28,9 @@ class NotebookBatchTools(private val session: NotebookLibrarySession) : ToolExec
     override suspend fun execute(toolCall: ToolCall) = execute(toolCall, ToolExecutionContext())
     override suspend fun execute(toolCall: ToolCall, context: ToolExecutionContext): ToolExecutionResult {
         if (toolCall.functionName !in NAMES) return reject(toolCall, ToolRejectionKind.TOOL_UNKNOWN)
-        if (currentCoroutineContext()[RunToolScope]?.targetIsLocal != true) return reject(toolCall, ToolRejectionKind.PERMISSION_REQUIRED)
+        val scope = currentCoroutineContext()[RunToolScope]
+        val admit = if (scope?.targetIsLocal == true) ({ true }) else if (scope != null) remoteAuthority() else null
+        if (admit == null || !admit()) return reject(toolCall, ToolRejectionKind.PERMISSION_REQUIRED)
         if (toolCall.functionName == WRITE && (!context.directUserAuthority || context.interactionId.isNullOrBlank()))
             return reject(toolCall, ToolRejectionKind.PERMISSION_REQUIRED)
         val args = toolCall.arguments
@@ -46,6 +49,7 @@ class NotebookBatchTools(private val session: NotebookLibrarySession) : ToolExec
         val batch = if (toolCall.functionName == WRITE) (args["expectedBatch"] as? String)?.takeIf { it.length in 1..100 }
             ?: return reject(toolCall, ToolRejectionKind.INVALID_ARGUMENTS) else null
         return withContext(Dispatchers.Main.immediate) {
+            if (!admit()) return@withContext reject(toolCall)
             if (toolCall.functionName == READ) {
                 try {
                     val prepared = session.prepareBatch(snapshot, action, collectionId, undo) ?: return@withContext reject(toolCall)
@@ -56,14 +60,15 @@ class NotebookBatchTools(private val session: NotebookLibrarySession) : ToolExec
                         .put("objects", JSONArray().apply { prepared.admission.sources.forEach {
                             put(JSONObject().put("objectId", it.objectId).put("version", it.version).put("lifecycle", it.lifecycle.name))
                         } }).put("contentReturned", false).put("applied", false)
+                    if (!admit()) return@withContext reject(toolCall)
                     ToolExecutionResult.Success(toolCall.id, READ, output.toString(), ActionTruth.ACKNOWLEDGED)
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { reject(toolCall) }
             } else {
                 val disclosure = session.readbackLease() ?: return@withContext reject(toolCall)
                 try {
-                    val result = session.applyBatch(snapshot, requireNotNull(batch), action, undo) ?: return@withContext reject(toolCall)
-                    if (!session.canReadback(disclosure)) return@withContext uncertain(toolCall)
+                    val result = session.applyBatch(snapshot, requireNotNull(batch), action, undo, admit) ?: return@withContext reject(toolCall)
+                    if (!session.canReadback(disclosure) || !admit()) return@withContext uncertain(toolCall)
                     val output = JSONObject().put("schemaVersion", 1).put("operation", rawOperation)
                         .put("succeededIds", JSONArray(result.succeeded.toList())).put("unchangedIds", JSONArray(result.failed.toList()))
                         .put("unconfirmedIds", JSONArray(result.unknown.toList())).put("undoAvailable", result.undoAvailable)
@@ -120,9 +125,9 @@ class NotebookBatchTools(private val session: NotebookLibrarySession) : ToolExec
                 "unconfirmedIds" to mapOf("type" to "array"), "undoAvailable" to mapOf("type" to "boolean"),
                 "state" to mapOf("type" to "string", "enum" to listOf("APPLIED", "PARTIAL", "PARTIAL_UNCONFIRMED"))),
                 "required" to listOf("schemaVersion", "operation")),
-            limitations = setOf("Only the same resumed, settled, unlocked grown-up local Library and exact selection revision.",
+            limitations = setOf("Only the same resumed, settled, unlocked grown-up Library and exact selection revision.",
                 "One-use source admission, direct authority and ALWAYS approval; NEVER_REPLAY, including after partial/unknown outcomes.",
                 "Saved-chat lifecycle refuses the active writer. Undo contains only exact successfully committed last-Trash versions.",
-                "No titles/body, permanent purge, remote disclosure or context-policy grant. Source and collection checks stay with existing Room owners."))
+                "No titles/body, permanent purge or context-policy grant; Power requires existing Workspace sharing. Source and collection checks stay with existing Room owners."))
     }
 }

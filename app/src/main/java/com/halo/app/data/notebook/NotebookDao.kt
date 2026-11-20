@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotebookDao {
+    @Query("SELECT w.id, w.type, w.title, w.updatedAt, n.revision AS noteRevision FROM workspace_objects w LEFT JOIN notes n ON n.objectId = w.id WHERE w.lifecycle = 'ACTIVE' AND w.updatedAt >= :from AND w.updatedAt < :until ORDER BY w.updatedAt, w.id LIMIT :limit")
+    suspend fun dayObjects(from: Long, until: Long, limit: Int): List<DayWorkspaceRow>
     @Query("SELECT w.* FROM workspace_objects w WHERE w.type = 'NOTE' AND w.lifecycle = 'ACTIVE' ORDER BY w.updatedAt DESC, w.id LIMIT :limit")
     suspend fun recentNoteObjects(limit: Int): List<WorkspaceObjectEntity>
     @Query("""SELECT w.id, w.type, w.title, COALESCE(n.body, m.content, t.userText || ' ' || t.assistantText, w.title) AS snippet
@@ -194,6 +196,8 @@ interface NotebookDao {
     suspend fun permanentlyDeleteTrashed(id: String): Int
 
 }
+
+data class DayWorkspaceRow(val id: String, val type: String, val title: String, val updatedAt: Long, val noteRevision: Int?)
 
 data class WorkspaceSearchRow(
     val id: String,

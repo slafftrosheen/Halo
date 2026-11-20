@@ -24,8 +24,12 @@ data class CollectorRequestEntity(@PrimaryKey val token: String, val sourceId: S
 @Entity(tableName = "collector_endpoint_state")
 data class CollectorEndpointEntity(@PrimaryKey val id: String, val attemptedAt: Long, val blockedUntil: Long?, val failures: Int)
 
+data class CollectorAuthorityRow(val id: String, val version: Long, val contentRevision: String?)
+
 @Dao
 interface CollectorDao {
+    @Query("SELECT s.id, s.version, c.contentRevision FROM collector_sources s LEFT JOIN collector_snapshots c ON c.sourceId=s.id ORDER BY s.id")
+    suspend fun authorityRows(): List<CollectorAuthorityRow>
     @Query("DELETE FROM collector_sources") suspend fun clearSources()
     @Query("DELETE FROM collector_requests") suspend fun clearRequests()
     @Query("DELETE FROM collector_endpoint_state") suspend fun clearEndpointBudgets()

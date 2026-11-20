@@ -21,6 +21,8 @@ interface CollectorRepository {
     suspend fun recoverInterrupted(now: Instant)
     suspend fun reserve(id: String, expectedVersion: Long, now: Instant, manual: Boolean): CollectorAdmission
     suspend fun reservePreview(sourceId: String, now: Instant): Boolean
+    /** Additional public page/image request, charged to the active feed reservation. Default denies. */
+    suspend fun reserveContent(reservation: CollectorReservation, now: Instant): Boolean = false
     suspend fun finishPreview(sourceId: String, startedAt: Instant, now: Instant, result: CollectorFetchResult)
     suspend fun finish(reservation: CollectorReservation, snapshot: CollectorSnapshot?, attempt: CollectorAttempt): Boolean
     suspend fun recordAttempt(id: String, expectedVersion: Long, attempt: CollectorAttempt): Boolean

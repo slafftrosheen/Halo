@@ -71,6 +71,11 @@ sealed interface HeyCyanEvent {
         val mode: Int
     ) : HeyCyanEvent
 
+    /** A captured start/stop acknowledgement, not a guessed wire mode value. */
+    data class RecordingStateChanged(val mode: HeyCyanMode, val recording: Boolean) : HeyCyanEvent {
+        init { require(mode == HeyCyanMode.VIDEO || mode == HeyCyanMode.AUDIO) }
+    }
+
     data class WiFiHotspotReady(
         val ssid: String,
         val password: String

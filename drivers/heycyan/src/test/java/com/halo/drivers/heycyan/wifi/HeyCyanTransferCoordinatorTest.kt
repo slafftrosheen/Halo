@@ -91,6 +91,66 @@ class HeyCyanTransferCoordinatorTest {
         assertTrue(state is HeyCyanTransferState.Failed)
     }
 
+    @Test fun freshZeroInventoryAvoidsWifiAndHttpAndReleasesOwnership() = runTest {
+        val arbiter = com.halo.drivers.heycyan.arbiter.HeyCyanResourceArbiter()
+        var queries = 0
+        val guarded = HeyCyanTransferCoordinator(controller, credentialProvider,
+            object : HeyCyanWifiConnection by wifiConnection {
+                override suspend fun prepare(deviceId: String) { error("Empty inventory must not start Wi-Fi") }
+            }, HeyCyanMediaApiFactory { error("Empty inventory must not open HTTP") }, arbiter,
+            pendingInventory = { queries++; com.halo.drivers.heycyan.protocol.MediaCounts(0, 0, 0, 4) })
+        val manifest = guarded.synchronizeManifest("chosen").getOrThrow()
+        assertTrue(manifest.items.isEmpty())
+        assertEquals("chosen", manifest.deviceId)
+        assertEquals(1, queries)
+        assertTrue(guarded.state.value is HeyCyanTransferState.Ready)
+        guarded.closeSession().getOrThrow()
+        assertTrue(arbiter.activeLeases().isEmpty())
+        assertTrue(fakeExecutor.executedCommands.isEmpty())
+    }
+
+    @Test fun unknownPositiveOrWrongTypeInventoryStillUsesHttp() = runTest {
+        stateStore.apply(com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("ssid", "secret"))
+        for (counts in listOf(null, com.halo.drivers.heycyan.protocol.MediaCounts(0, 1, 0, 4),
+                com.halo.drivers.heycyan.protocol.MediaCounts(0, 0, 0, 1))) {
+            val guarded = HeyCyanTransferCoordinator(controller, credentialProvider, wifiConnection,
+                HeyCyanMediaApiFactory { fakeApi }, pendingInventory = { counts })
+            assertEquals(1, guarded.synchronizeManifest("chosen").getOrThrow().items.size)
+            guarded.closeSession().getOrThrow()
+        }
+    }
+
+    @Test fun inventoryFromChangedSelectionCannotReturnEmpty() = runTest {
+        var current = true
+        val guarded = HeyCyanTransferCoordinator(controller, credentialProvider, wifiConnection,
+            HeyCyanMediaApiFactory { fakeApi }, deviceIsCurrent = { current },
+            pendingInventory = { current = false; com.halo.drivers.heycyan.protocol.MediaCounts(0, 0, 0, 4) })
+        assertTrue(guarded.synchronizeManifest("chosen").isFailure)
+        assertTrue(fakeExecutor.executedCommands.isEmpty())
+    }
+
+    @Test fun directTransferDiscoversBeforeBleAndDoesNotWaitForHotspotCredentials() = runTest {
+        var prepared = false
+        val direct = object : HeyCyanWifiConnection by wifiConnection {
+            override val requiresCredentials = false
+            override suspend fun prepare(deviceId: String) {
+                assertTrue("Discovery must precede the transfer-mode command", fakeExecutor.executedCommands.isEmpty())
+                prepared = true
+            }
+            override suspend fun connectDirect(deviceId: String): Result<Unit> {
+                assertTrue(prepared)
+                assertEquals(HeyCyanCommand.EnterWifiTransferMode, fakeExecutor.executedCommands.first())
+                return Result.success(Unit)
+            }
+        }
+        val directCoordinator = HeyCyanTransferCoordinator(controller, credentialProvider, direct,
+            HeyCyanMediaApiFactory { fakeApi })
+        val result = directCoordinator.synchronizeManifest("selected-device")
+        assertTrue("Wi-Fi Direct must reach the manifest without a hotspot credential event", result.isSuccess)
+        assertTrue(directCoordinator.state.value is HeyCyanTransferState.Ready)
+        directCoordinator.closeSession()
+    }
+
     @Test
     fun transferEntersTransferModeBeforeWifi() = runTest {
         // Set Wi-Fi credentials in device state
@@ -172,6 +232,13 @@ class HeyCyanTransferCoordinatorTest {
         assertEquals(HeyCyanTransferState.Idle, coordinator.state.value)
     }
 
+    @Test fun successfulSessionReleasesItsWifiConnectionOnClose() = runTest {
+        stateStore.apply(com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass"))
+        coordinator.synchronizeManifest("device").getOrThrow()
+        coordinator.closeSession().getOrThrow()
+        assertEquals(WifiConnectionState.DISCONNECTED, wifiConnection.state.value)
+    }
+
     @Test
     fun downloadPreservesOriginalRecordingBytes() = runTest {
         stateStore.apply(
@@ -199,6 +266,24 @@ class HeyCyanTransferCoordinatorTest {
             tempFile.delete()
         }
     }
+    @Test fun losingForegroundAccessStillClosesTheExactOwnedConnection() = runTest {
+        stateStore.apply(com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass"))
+        var foreground = true
+        var sameConnection = true
+        val guarded = HeyCyanTransferCoordinator(controller, credentialProvider, wifiConnection,
+            HeyCyanMediaApiFactory { fakeApi }, deviceIsCurrent = { foreground && sameConnection },
+            cleanupDeviceIsCurrent = { sameConnection })
+        guarded.synchronizeManifest("device").getOrThrow()
+        foreground = false
+        guarded.closeSession().getOrThrow()
+        assertEquals(1, fakeExecutor.executedCommands.count { it == HeyCyanCommand.ExitWifiTransferMode })
+        foreground = true
+        guarded.synchronizeManifest("device").getOrThrow()
+        sameConnection = false
+        guarded.closeSession().getOrThrow()
+        assertEquals(1, fakeExecutor.executedCommands.count { it == HeyCyanCommand.ExitWifiTransferMode })
+    }
+
     @Test fun ownedSessionClosesOnceAndCannotExitANewSelectedDevice() = runTest {
         stateStore.apply(com.halo.drivers.heycyan.protocol.HeyCyanEvent.WiFiHotspotReady("TestSSID", "TestPass"))
         coordinator.synchronizeManifest("device").getOrThrow()

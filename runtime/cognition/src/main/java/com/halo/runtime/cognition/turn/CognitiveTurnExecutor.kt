@@ -91,6 +91,8 @@ class CognitiveTurnExecutor(
         val guard = runId?.let { runGuards?.guardFor(it, interactionId, workload = workload,
             local = target.provider.isLocal && target.model.executionLocation == AiExecutionLocation.ON_DEVICE,
             hasImage = request.image?.isNotEmpty() == true && durable?.parentRunId == null && kind == AgentRunKind.INTERACTIVE) }
+        if (durable?.parentRunId == null && kind == AgentRunKind.INTERACTIVE && target.model.executionLocation == AiExecutionLocation.REMOTE &&
+            durable?.steps?.any { it is AgentStep.PlanCreated && it.steps.size >= 2 } == true) guard?.enablePlannedWorkflow()
         suspend fun stopped(stop: RunGuardDecision.Stop): ProviderTurnResult {
             agentRunCoordinator?.recordStep(guard!!.toJournalStep(stop))
             return ProviderTurnResult.Response(AiResponse(text = RunGuardMessages.userMessage(stop),
@@ -302,7 +304,7 @@ class CognitiveTurnExecutor(
             val outcome = if (pendingResponse != null) ProviderTurnResult.Response(AiResponse(
                 text = pendingResponse.assistantText, providerId = currentTarget.providerId, modelId = currentTarget.modelId,
                 toolCalls = pendingResponse.toolCalls.map { call -> com.halo.sdk.provider.ToolCall(call.toolCallId, call.toolName,
-                    ToolArgumentCanonicalizer.parseToArgumentsMap(call.argumentsJson).mapValues { it.value ?: "" }) }), currentTarget)
+                    ToolArgumentCanonicalizer.parseToArgumentsMap(call.argumentsJson).mapValues { it.value ?: "" }, call.providerMetadata) }), currentTarget)
             else executeProvider(
                 target = prepared.target,
                 request = currentRequest,
@@ -346,7 +348,7 @@ class CognitiveTurnExecutor(
                         turnId = turnId,
                         assistantText = initialResponse.text,
                         toolCalls = initialResponse.toolCalls.map {
-                            ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(com.halo.runtime.cognition.tools.journalToolArguments(it)))
+                            ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(com.halo.runtime.cognition.tools.journalToolArguments(it)), it.providerMetadata)
                         },
                         finishReason = initialResponse.finishReason ?: "stop", payloadRefId = initialResponse.payloadRefId
                     )
@@ -491,7 +493,13 @@ class CognitiveTurnExecutor(
                         )
                     }
                 }
-                if (round > limits.maxToolRounds) {
+                val plannedCloudWorkflow = currentTarget.model.executionLocation == AiExecutionLocation.REMOTE &&
+                    durableRunId?.let { agentRunStore?.get(it) }?.let { run -> run.parentRunId == null &&
+                        (run.steps.filterIsInstance<AgentStep.RunPrepared>().lastOrNull()?.kind ?: AgentRunKind.INTERACTIVE) == AgentRunKind.INTERACTIVE &&
+                        run.steps.any { it is AgentStep.PlanCreated && it.steps.size >= 2 } } == true
+                val roundLimit = if (plannedCloudWorkflow && limits == ToolLoopLimits.DEFAULT)
+                    com.halo.runtime.cognition.agent.AgentRunLimits.PLANNED_WORKFLOW.maxToolRounds else limits.maxToolRounds
+                if (round > roundLimit) {
                     trace(
                         "AGENT_COMPLETED",
                         listOf(
@@ -502,7 +510,7 @@ class CognitiveTurnExecutor(
                     )
                     response = response.copy(
                         text = response.text.ifBlank {
-                            "I stopped after ${limits.maxToolRounds} tool steps to avoid going in circles. " +
+                            "I stopped after $roundLimit tool steps to avoid going in circles. " +
                                 "Here is what I have so far."
                         },
                         toolCalls = emptyList(),
@@ -777,7 +785,7 @@ class CognitiveTurnExecutor(
                                     turnId = roundTurnId,
                                     assistantText = response.text,
                                     toolCalls = response.toolCalls.map {
-                                        ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(com.halo.runtime.cognition.tools.journalToolArguments(it)))
+                                        ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(com.halo.runtime.cognition.tools.journalToolArguments(it)), it.providerMetadata)
                                     },
                                     finishReason = response.finishReason ?: "stop", payloadRefId = response.payloadRefId
                                 )
@@ -886,7 +894,7 @@ class CognitiveTurnExecutor(
                     turnId = roundTurnId,
                     assistantText = response.text,
                     toolCalls = response.toolCalls.map {
-                        ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(com.halo.runtime.cognition.tools.journalToolArguments(it)))
+                        ProviderToolCallRecord(it.id, it.functionName, ToolArgumentCanonicalizer.canonicalize(com.halo.runtime.cognition.tools.journalToolArguments(it)), it.providerMetadata)
                     },
                     finishReason = response.finishReason ?: "stop", payloadRefId = response.payloadRefId
                 )
@@ -925,7 +933,7 @@ class CognitiveTurnExecutor(
     }
 
     private suspend fun hasConfirmedAction(runId: AgentRunId?): Boolean {
-        val technical = setOf("halo_discover_tools", "halo_use_skill", "halo_present", "halo_read_payload", "halo_delegate", "halo_think")
+        val technical = setOf("halo_workflow_plan", "halo_discover_tools", "halo_use_skill", "halo_present", "halo_read_payload", "halo_delegate", "halo_think")
         return runId?.let { agentRunStore?.get(it)?.steps }?.any { step -> when(step) {
             is AgentStep.ToolOutcomeRecorded -> step.success && step.actionTruth == com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED && step.toolId !in technical
             is AgentStep.ToolCompleted -> step.success && step.actionTruth == com.halo.runtime.cognition.agent.ActionTruth.CONFIRMED && step.toolId !in technical

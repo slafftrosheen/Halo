@@ -48,15 +48,35 @@ class EverydayToolExecutorTest {
     private val briefService=EverydayBriefService(briefs,sources,organizer,{com.halo.app.daily.DailyAssistantSnapshot()},
         {if(child) BriefAudience.KIDS else BriefAudience.EVERYDAY},{emptySet()},{true},clock,{ZoneOffset.UTC})
     private var opened: EverydayTarget?=null
-    private fun executorFor(records: OrganizerUseCases=useCases,sourceReader: CollectorRepository=sources,onAdmission: ()->Unit = {})=EverydayToolExecutor(records,RoomWorldClockRepository(db,clock),OfflineCityCatalogue {error("Not needed")},sourceReader,
+    private fun executorFor(records: OrganizerUseCases=useCases,sourceReader: CollectorRepository=sources,
+        imageReader: suspend (ArticleImage,String)->JSONObject = {_,_->error("Not configured")},onAdmission: ()->Unit = {})=EverydayToolExecutor(records,RoomWorldClockRepository(db,clock),OfflineCityCatalogue {error("Not needed")},sourceReader,
         CollectorCoordinator(sources,registry,policy,clock),CollectorPreview(sources,registry,policy,clock),briefs,briefService,{}, {},
         {id,version -> sources.clearSnapshot(id,version)}, {_,_ -> JSONObject()}, {opened=it;true}, {allowed},{child},
-        {val family=child;onAdmission();{check(allowed && child==family)}},{1000},{"boot"},clock,readState={EverydayDisclosureSnapshot.capture(db)})
+        {val family=child;onAdmission();{check(allowed && child==family)}},{1000},{"boot"},clock,readState={EverydayDisclosureSnapshot.capture(db)},inspectImage=imageReader)
     private val executor=executorFor()
     @After fun close() {db.close();app.deleteDatabase(dbName)}
     private suspend fun call(name: String,args: Map<String,Any> = emptyMap(),interaction: String?="synthetic")=
         executor.execute(ToolCall("synthetic",name,args),ToolExecutionContext(interactionId=interaction))
     private fun json(value: ToolExecutionResult)=JSONObject((value as ToolExecutionResult.Success).output)
+    @Test fun sourceImageUsesExactSavedIdentityAndDoesNotReplayAnUndisclosedInference()=runBlocking {
+        val source=sources.save(CollectorSource("qa-images","QA images","QA",CollectorKind.FEED,SourceCategory.CUSTOM,"en",
+            "https://example.org/feed",selected=true),null)
+        val reservation=(sources.reserve(source.id,source.version,now,true) as CollectorAdmission.Accepted).reservation
+        val key="a".repeat(64)
+        val image=ArticleImage("https://example.org/photo.png",assetKey=key,mimeType="image/png")
+        val payload=CollectorPayload.Articles(listOf(ArticleFact("one","QA","Text","https://example.org/story","QA",now,"en",images=listOf(image))))
+        assertTrue(sources.finish(reservation,CollectorSnapshot(source.id,source.version,payload,"rev-1",now,now,now.plusSeconds(3600)),
+            CollectorAttempt(source.id,now,CollectorAttemptState.CURRENT)))
+        var calls=0;var revoke=false
+        val reader=executorFor(imageReader={saved,_->assertEquals(image,saved);calls++;if(revoke) allowed=false;JSONObject().put("analysis","A blue kite")})
+        val args=mapOf<String,Any>("id" to source.id,"version" to source.version,"contentRevision" to "rev-1","articleId" to "one","assetKey" to key,"question" to "What is shown?")
+        assertTrue(reader.execute(ToolCall("stale","halo_source_image",args+("contentRevision" to "stale"))) is ToolExecutionResult.Rejected)
+        assertEquals(0,calls)
+        assertTrue(reader.execute(ToolCall("read","halo_source_image",args)) is ToolExecutionResult.Success)
+        revoke=true
+        val uncertain=reader.execute(ToolCall("revoke","halo_source_image",args)) as ToolExecutionResult.Failed
+        assertTrue(uncertain.completionUnknown);assertEquals(2,calls)
+    }
     @Test fun typedCreateMoveCompleteTrashUndoUseTheSameCanonicalRecordAndRejectStaleVersions()=runBlocking {
         val created=json(call("halo_organizer_create",mapOf("record" to mapOf("kind" to "TASK","title" to "Local plan"))))
         val id=created.getJSONObject("record").getString("id")
@@ -164,7 +184,10 @@ class EverydayToolExecutorTest {
             assertNotNull(definition.name,descriptor!!.operability)
             assertTrue(definition.name,definition.name in WorkspaceToolAccess.readTools)
             if(definition.name !in EverydayToolContracts.queries) assertEquals(ReplaySafety.NEVER_REPLAY,descriptor.security.replaySafety)
-            else assertEquals(ConfirmationPolicy.NONE,descriptor.security.confirmation)
+            else if (definition.name == "halo_source_image") {
+                assertEquals(ConfirmationPolicy.USER_POLICY, descriptor.security.confirmation)
+                assertEquals(ReplaySafety.NEVER_REPLAY, descriptor.security.replaySafety)
+            } else assertEquals(ConfirmationPolicy.NONE,descriptor.security.confirmation)
         }
     }
 }

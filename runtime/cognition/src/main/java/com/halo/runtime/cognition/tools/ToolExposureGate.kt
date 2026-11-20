@@ -71,9 +71,7 @@ class DefaultToolExposureGate(
 
         // 3. Cloud privacy checks
         if (!context.isLocalTarget) {
-            // These new owner adapters deliberately have no remote-disclosure path.
-            // Do not advertise them to a remote model and rely on execution rejection.
-            if (toolName in PersonalConfigurationToolAccess.library + PersonalConfigurationToolAccess.savedChats)
+            if (toolName in PersonalConfigurationToolAccess.savedChats && !context.policy.includeConversation)
                 return ToolExposureDecision.Deny(ToolExposureDenyReason.POLICY_DENIED)
             // Screen tool output contains third-party UI text and accessible controls.
             // Never expose it to remote inference unless the user explicitly enabled

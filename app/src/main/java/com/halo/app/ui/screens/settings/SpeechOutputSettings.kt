@@ -160,6 +160,9 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
                 }
             }
         }
+        registry.providers.filterIsInstance<com.halo.providers.openrouter.OpenRouterSpeechProvider>().firstOrNull()?.let {
+            OpenRouterSpeechSettings(it)
+        }
         HaloSettingsSection(uiText("Test audio output")) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(uiText("One-time test using your selected speech voice. Your saved routing is kept."), style = MaterialTheme.typography.bodySmall)

@@ -1,0 +1,11 @@
+<resources>
+    <string name="a2_wifi_ready">Wi-Fi jest gotowe. Wybierz pliki do skopiowania. Połączenie zamknie się po minucie lub po opuszczeniu Halo.</string>
+    <string name="a2_wifi_disabled">Włącz Wi-Fi, aby skopiować pliki z okularów, i spróbuj ponownie. Internet nie jest potrzebny.</string>
+    <string name="a2_wifi_settings">Otwórz ustawienia Wi-Fi</string>
+    <string name="a2_audio_choose">Wybierz dźwięk okularów</string>
+    <string name="a2_audio_choose_help">Wybierz okulary już sparowane w Androidzie. Android poprosi o zgodę na dostęp aplikacji Halo.</string>
+    <string name="a2_audio_discover">Znajdź nowe urządzenie audio</string>
+    <string name="a2_wifi_choose">Wybierz urządzenie Wi-Fi okularów</string>
+    <string name="a2_wifi_choose_help">Trzymaj okulary w pobliżu i wybierz je, gdy tylko się pojawią. Zatwierdź połączenie w Androidzie. Jeśli połączenie utknie, anuluj je i spróbuj ponownie. Pliki pozostaną w telefonie.</string>
+    <string name="a2_wifi_searching">Wyszukiwanie urządzeń Wi-Fi…</string>
+</resources>

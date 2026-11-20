@@ -17,12 +17,12 @@ class ParentControlledAiRouter(
             profiles.profile(PrivacyMode.CLOUD).localFallback))
     private fun requireRemote() {
         if (!remoteAllowed()) throw AiProviderException(AiErrorType.UNSUPPORTED_CAPABILITY,
-            "Cloud processing is off. Use the Local / Power mode control beside the halo Orb, or choose an on-device model. Kids sessions also need grown-up approval.")
+            "Cloud processing is off. Use the Local / Power mode control beside the halo Orb, or choose an on-device model.")
     }
     private suspend fun <T> resolveWithGuidance(block: suspend () -> T): T = try { block() }
         catch (failure: AiProviderException) {
             if (!remoteAllowed()) throw AiProviderException(failure.type,
-                "${failure.message}. Cloud processing is off. Use the Local / Power mode control beside the halo Orb, or choose an on-device model. Kids sessions also need grown-up approval.",
+                "${failure.message}. Cloud processing is off. Use the Local / Power mode control beside the halo Orb, or choose an on-device model.",
                 failure.details, cause = failure)
             throw failure
         }

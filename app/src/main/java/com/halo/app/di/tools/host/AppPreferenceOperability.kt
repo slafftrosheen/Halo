@@ -23,7 +23,7 @@ object AppPreferenceOperability {
                     "sttProvider" to mapOf("type" to listOf("string", "null"), "maxLength" to 200),
                     "ttsProvider" to mapOf("type" to listOf("string", "null"), "maxLength" to 200),
                     "booleans" to mapOf("type" to "object", "properties" to
-                        (com.halo.app.ai.profileBooleanKeys - "active_ai_selection_migrated_v1").associateWith { mapOf("type" to "boolean") },
+                        ModeProfileTools.contextKeys.associateWith { mapOf("type" to "boolean") },
                         "additionalProperties" to false),
                     "onlineFeatures" to mapOf("type" to "array", "maxItems" to com.halo.app.ai.OnlineFeature.entries.size,
                         "items" to mapOf("type" to "string", "enum" to com.halo.app.ai.OnlineFeature.entries.map { it.name })),

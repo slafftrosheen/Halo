@@ -90,7 +90,8 @@ class HeyCyanCapabilityController(
         }
         if (operation == HeyCyanOperation.StopVideo &&
             currentState.mode != HeyCyanMode.VIDEO &&
-            currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.IDLE
+            currentState.videoRecordingState == com.halo.drivers.heycyan.protocol.VideoRecordingState.IDLE &&
+            videoLease == null
         ) {
             return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan is not currently recording video."), now)
         }
@@ -103,7 +104,7 @@ class HeyCyanCapabilityController(
         if (operation == HeyCyanOperation.StartRecording && currentState.mode == HeyCyanMode.AUDIO) {
             return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan is already recording audio."), now)
         }
-        if (operation == HeyCyanOperation.StopRecording && currentState.mode != HeyCyanMode.AUDIO) {
+        if (operation == HeyCyanOperation.StopRecording && currentState.mode != HeyCyanMode.AUDIO && audioLease == null) {
             return failure(operation, HeyCyanOperationFailure.DeviceRejected("HeyCyan is not currently recording audio."), now)
         }
 

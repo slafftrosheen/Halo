@@ -2834,6 +2834,7 @@
     <string name="ui_e7e66d327903" formatted="false">"Apraksti izmaiņu teksta laukā un pirms izmantošanas pārbaudi izveidoto melnrakstu."</string>
     <string name="ui_646bab811bee" formatted="false">"Vietējais modelis nevarēja sagatavot izmaiņu. Sākotnējo tekstu vari rediģēt pats."</string>
     <string name="ui_d9897824ec41" formatted="false">"Automātiskā lasīšana izmanto balsi ierīcē. Pirms teksta nosūtīšanas mākoņa balsij vienmēr tiek prasīta piekrišana."</string>
+    <string name="ui_d14869a7c176" formatted="false">"Lasīšana seko Local / Power režīmam. Local izmanto balsi ierīcē; Power izmanto izvēlēto balsi saturam, kuru atļauts kopīgot."</string>
     <string name="ui_3d2905f67867" formatted="false">"Pirms melnraksta izmantošanas pārbaudi JSON sintaksi."</string>
     <string name="ui_fbf30cdb18f7" formatted="false">"Izvēlies, cik daudz palīdzības vajag"</string>
     <string name="ui_1e777f576a23" formatted="false">"Pēc noklusējuma mākonis ir izslēgts. Šai lietotnes sesijai vari atļaut mācību tekstu un izvēlēto uzdevumu nosūtīšanu iestatītajiem pakalpojumu sniedzējiem. Privātuma un avotu ierobežojumi joprojām ir spēkā."</string>
@@ -3451,7 +3452,7 @@
     <string name="ui_da43136d860c" formatted="false">"Skaņa tiek pārbaudīta atsevišķi zemāk."</string>
     <string name="ui_5ea99146a82f" formatted="false">"Pievienojiet brilles, lai uzņemtu foto vai sāktu ierakstu."</string>
     <string name="ui_5ccbf937ca92" formatted="false">"Uzvilktas"</string>
-    <string name="ui_9cc6de5b4730" formatted="false">"Foto brillēs"</string>
+    <string name="ui_9cc6de5b4730" formatted="false">"Kopējamie foto"</string>
     <string name="ui_251112909570" formatted="false">"Brillēm jāpievērš uzmanība. Nokopējiet foto un pēc tam pievienojiet brilles vēlreiz."</string>
     <string name="ui_66a16b299e6f" formatted="false">"Foto pieprasīts"</string>
     <string name="ui_8a51882778d9" formatted="false">"Pārskatiet jauno foto, pirms izvēlaties, ko halo drīkst izmantot. Uzņemot foto, tas netiek nosūtīts MI pakalpojumam."</string>
@@ -4753,4 +4754,52 @@
     <string name="ui_c6f974c44b32" formatted="false">"Izmantojiet BuddyBot vietējo IP adresi."</string>
     <string name="ui_1ca2a9635d72" formatted="false">"Aktīvie vienumi"</string>
     <string name="ui_19e82138c35f" formatted="false">"Termiņš šodien"</string>
+    <string name="ui_900853a64cd0" formatted="false">"OpenRouter balss"</string>
+    <string name="ui_38002b209fe3" formatted="false">"Izmanto saglabāto OpenRouter atslēgu. ElevenLabs atslēga nav vajadzīga. Maksa par runu tiek ieturēta no OpenRouter konta."</string>
+    <string name="ui_50db005f2acb" formatted="false">"Pievienojiet OpenRouter atslēgu sadaļā «MI pakalpojumi»."</string>
+    <string name="ui_200eaf3f0733" formatted="false">"Neizdevās ielādēt balss modeļus. Pārbaudiet Power režīmu, OpenRouter atslēgu un savienojumu."</string>
+    <string name="ui_639ef5f6cbfc" formatted="false">"Ielādēt balss modeļus"</string>
+    <string name="ui_69facf5bbb5e" formatted="false">"Izvēlēties balss modeli"</string>
+    <string name="ui_7405e8d2c16a" formatted="false">"Balss nosaukums"</string>
+    <string name="ui_8a19bef35cd0" formatted="false">"Izvēlieties šī modeļa atbalstītu balsi. Balss nosaukumi dažādiem modeļiem atšķiras."</string>
+    <string name="ui_1d28e8928466" formatted="false">"Modeļa balsis un cenas"</string>
+    <string name="ui_6053eaa0827d" formatted="false">"Izvēlēta OpenRouter balss. Nospiediet «Atskaņot pārbaudes frāzi», lai to dzirdētu."</string>
+    <string name="ui_31213e78230d" formatted="false">"Neizdevās saglabāt balss iestatījumus. Ielādējiet modeļus un mēģiniet vēlreiz."</string>
+    <string name="ui_fc6126956559" formatted="false">"Izmantot OpenRouter balsi"</string>
+    <string name="ui_f6de648021fd" formatted="false">"Pierakstīties ar ChatGPT"</string>
+    <string name="ui_c4e46df5702b" formatted="false">"Atvienot ChatGPT"</string>
+    <string name="ui_c1e83786d445" formatted="false">"Pierakstieties ar ChatGPT, lai izmantotu abonementam pieejamos modeļus. Konta limitus nosaka OpenAI. Šis savienojums neizmanto API kredītus."</string>
+    <string name="ui_e0c5adabf5df" formatted="false">"ChatGPT konts pievienots"</string>
+    <string name="ui_c31ad52cb4a8" formatted="false">"Nav pievienota ChatGPT konta"</string>
+    <string name="ui_8da49c66b493" formatted="false">"Pabeidziet pierakstīšanos pārlūkā un atgriezieties halo."</string>
+    <string name="ui_2d7a6c64a4d7" formatted="false">"ChatGPT ir pievienots. Ielādējiet savu modeļu sarakstu un izvēlieties atbilžu modeli."</string>
+    <string name="ui_37564d40d0c4" formatted="false">"Pierakstīšanās izdevās, taču ChatGPT šim kontam nepiešķīra piekļuvi abonementam."</string>
+    <string name="ui_aaa4d03fa0dc" formatted="false">"Pierakstīšanās ChatGPT apturēta. Varat mēģināt vēlreiz."</string>
+    <string name="ui_9ae1eb8544f0" formatted="false">"Neizdevās pabeigt pierakstīšanos ChatGPT. Atgriezieties halo un mēģiniet vēlreiz."</string>
+    <string name="ui_b02fc80325c8" formatted="false">"ChatGPT atvienots."</string>
+    <string name="ui_db79856cc4fb" formatted="false">"ChatGPT ir noņemts no halo. Attālo atvienošanu neizdevās apstiprināt; noņemiet halo ChatGPT iestatījumos."</string>
+    <string name="ui_d1a15ca820e4" formatted="false">"Konta iestatījumi ir mainījušies vai nav pieejami. Mēģiniet vēlreiz."</string>
+    <string name="ui_620c886585bc" formatted="false">"Google autorizācija šeit izmanto Google Cloud projektu, nevis Google AI abonementu."</string>
+    <string name="ui_a4b440838a0a" formatted="false">"OpenRouter runas atpazīšana"</string>
+    <string name="ui_71d79c76f07c" formatted="false">"Power režīmā runu var atpazīt ar saglabāto OpenRouter atslēgu. Local režīmā atpazīšana notiek tālrunī. Maksa tiek ieturēta no OpenRouter konta."</string>
+    <string name="ui_aba8bd11612d" formatted="false">"Neizdevās ielādēt runas atpazīšanas modeļus. Pārbaudiet Power režīmu, OpenRouter atslēgu un savienojumu."</string>
+    <string name="ui_98a73886011d" formatted="false">"Ielādēt runas atpazīšanas modeļus"</string>
+    <string name="ui_a473e964488d" formatted="false">"Izvēlieties runas atpazīšanas modeli"</string>
+    <string name="ui_49842efca74a" formatted="false">"Modeļa informācija un cenas"</string>
+    <string name="ui_47953e360f65" formatted="false">"Izvēlēta OpenRouter runas atpazīšana. Izmēģiniet to mikrofona pārbaudē."</string>
+    <string name="ui_ad4a282ce8ff" formatted="false">"Neizdevās saglabāt klausīšanās iestatījumus. Ielādējiet modeļus un mēģiniet vēlreiz."</string>
+    <string name="ui_4a30481fac11" formatted="false">"Izmantot OpenRouter runas atpazīšanu"</string>
+    <string name="ui_5bd2d15a8918" formatted="false">"Saglabātais raksta teksts"</string>
+    <string name="ui_163f55a12563" formatted="false">"Daļa raksta satura var nebūt pieejama. Tālāk redzams saglabātais teksts."</string>
+    <string name="ui_c8134f6fb54b" formatted="false">"Šis attēls nav saglabāts."</string>
+    <string name="ui_d6fb5f2c74f2" formatted="false">"Katram rakstam tiek saglabāti līdz astoņiem attēliem. Citi attēli var būt pieejami izdevēja vietnē."</string>
+    <string name="ui_d7b9c873dcda" formatted="false">"Plāns ir gatavs"</string>
+    <string name="ui_e079d88e1cb3" formatted="false">"Lasīšana pabeigta"</string>
+    <string name="ui_f29db185f450" formatted="false">"Plāns saglabāts"</string>
+    <string name="ui_f2fc5b74cb19" formatted="false">"Jūsu dienas pārskatīšana"</string>
+    <string name="ui_0389519dad69" formatted="false">"Avota attēla lasīšana"</string>
+    <string name="ui_d8c885f8623d" formatted="false">"Avotu lasīšana"</string>
+    <string name="ui_a242d11b47ee" formatted="false">"Pieejamo darbību meklēšana"</string>
+    <string name="ui_1763ec4aca04" formatted="false">"Dienas pārskats"</string>
+    <string name="ui_587943da5e6f" formatted="false">"Lasīt saglabāto avota attēlu"</string>
 </resources>

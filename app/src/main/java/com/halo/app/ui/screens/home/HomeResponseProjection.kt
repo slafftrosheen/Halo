@@ -25,6 +25,7 @@ data class PresentedAssistantResponse(
      * schema version) means Home simply renders prose.
      */
     val structured: StructuredPresentation? = null,
+    val remoteSpeechProvenance: com.halo.sdk.provider.RemoteDispatchProvenance? = null,
 )
 
 /** Pure projection of Home's answer from transient session state and durable conversation truth. */
@@ -43,6 +44,12 @@ object HomeResponseProjector {
         // Restored once, from the committed turn, so a card survives process death without a second
         // surface store. Nothing transient (loading, progress animation) is ever persisted.
         val committedStructured = committed?.let { PresentationMetadata.decode(it.metadata) }
+        val committedSpeech = committed?.let { turn -> runCatching {
+            val categories = requireNotNull(turn.metadata["speechRemoteCategories"]).also { require(it.length <= 4096) }
+                .split(',').map { com.halo.sdk.provider.RemoteDataCategory.valueOf(it) }.toSet()
+            val revision = requireNotNull(turn.metadata["speechRemoteRevision"]).toLong()
+            com.halo.sdk.provider.RemoteDispatchProvenance(categories, revision)
+        }.getOrNull() }
         val state = sessionState.takeIf { allowTransientSession } ?: CognitiveSessionState.Idle
         // Approval/capability handoffs deliberately have no committed conversation
         // turn yet. They must not be hidden behind the *previous* saved answer.
@@ -75,7 +82,7 @@ object HomeResponseProjector {
                     interactionId = committed.metadata["interactionId"], requestId = committed.metadata["requestId"],
                     text = committed.assistantText, source = ResponsePresentationSource.COMMITTED_CONVERSATION,
                     providerId = committed.metadata["providerId"]?.takeIf(String::isNotBlank),
-                    structured = committedStructured)
+                    structured = committedStructured, remoteSpeechProvenance = committedSpeech)
                 PresentedAssistantResponse(
                     conversationId = activeConversationId,
                     text = text,
@@ -94,6 +101,7 @@ object HomeResponseProjector {
                 source = ResponsePresentationSource.COMMITTED_CONVERSATION,
                 providerId = turn.metadata["providerId"]?.takeIf(String::isNotBlank),
                 structured = committedStructured,
+                remoteSpeechProvenance = committedSpeech,
             )
         } ?: publishedResponse?.takeIf {
             it.conversationId == activeConversationId && it.text.isNotBlank()

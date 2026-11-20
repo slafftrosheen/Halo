@@ -1,6 +1,6 @@
 # COLMI A2 — HeyCyan integration and HIL qualification
 
-Status: **implementation in progress / physical validation NOT RUN**. Updated 2026-11-09 for [#66](https://github.com/slafftrosheen/Halo/issues/66). This replaces the prior BW-AG1 Pro device as Halo's primary available HeyCyan test target. The BW-AG1 Pro is **not available for physical test** and must not gate this task.
+Status: **partial physical validation**. Updated 2026-11-16 for [#66](https://github.com/slafftrosheen/Halo/issues/66). Selected A2 READY, live battery and local AI thumbnail/repeated hardware-photo review passed after fixes. Exact Android audio association and audible Halo TTS pass, including the user's hearing confirmation; association restored after a normal glasses restart and APK replacement. Fresh JPEG import/display, bounded video/audio recording, four-clip Wi-Fi transfer and post-copy empty refresh now pass. The two videos decode directly; the two raw Opus recordings decode after QA-only container wrapping. Physical source retention, generic raw-audio playback and broader recovery/lifecycle qualification remain open. See [the transfer and retention evidence](../testing/A2-MEDIA-REFRESH-2026-11-13.md) and [current HIL matrix](WEARABLE_HIL_MATRIX.md). This replaces the prior BW-AG1 Pro device as Halo's primary available HeyCyan test target. The BW-AG1 Pro is **not available for physical test** and must not gate this task.
 
 ## Source versus device evidence
 
@@ -24,14 +24,14 @@ Status: **implementation in progress / physical validation NOT RUN**. Updated 20
 - The GATT client validates the vendor service, exact write + notify characteristics, required properties, notify CCCD and completion of descriptor writes prior to `DriverState.Ready`. This stops foreign GATT devices from being accepted merely because Android connected.
 - Runtime capability publishing requires **SessionState.READY**, not an intermediate CONNECTED/HANDSHAKE state.
 
-## COLMI A2 physical HIL matrix — ALL NOT RUN until real-device receipts
+## COLMI A2 physical HIL checklist — result of each item lives in the current HIL matrix
 
 1. **Discovery, without HeyCyan app active:** power on A2; capture advertisements over at least 25 seconds, including subsequent scan responses; store observed BLE name(s), UUIDs, RSSI, firmware/OS version, no identifier in shared logs. A2 may have separate Classic and BLE identities.
 2. **Pairing/READY:** tap selected A2 explicitly; capture GATT generation, services, exact command/notify/CCCD, actual READY or specific failure. Keep unrelated Bluetooth accessories present to prove target isolation.
 3. **Battery/version/storage:** request safe reads; record exact response bytes, UUID, timestamp, acknowledgment mapping. Check cancellation and stale notifications cannot satisfy later commands.
 4. **Camera:** manual photo, then AI thumbnail; save one consented sample locally and inspect decoded dimensions/content. Avoid sending imagery to a cloud model in Private mode.
 5. **Video/audio:** start/stop recording with visible indicators; confirm actual device response/state and file inventory. Do not claim success from GATT write only.
-6. **Wi-Fi transfer:** P2P discovery + BLE transfer request `02 01 04`, wait for glasses-reported IP, HTTP `/files/media.config`, download JPG/MP4/OPUS, verify media integrity, duplicate sync, cancellation, retry, no use of phone's `192.168.49.1` as glasses IP. Preserve the phone's normal internet route.
+6. **Wi-Fi transfer:** P2P discovery + existing BLE transfer request `02 01 04 01`, wait for glasses-reported IP, HTTP `/files/media.config`, download JPG/MP4/OPUS, verify media integrity, duplicate sync, cancellation, retry, no use of phone's group-owner address as glasses IP. Preserve the phone's normal internet route. The four-byte payload matches the installed official app's P2P branch; see the transport evidence rather than copying the older reference app's three-byte request.
 7. **Audio route:** explicit BLE-to-Classic association, live mic/STT, TTS on glasses (exact endpoint), route loss and recovery; never fall back silently to unrelated headset.
 8. **Lifecycle:** BLE off/on, glasses off/on, home/background/foreground, process death, denied permission, another paired audio device, vendor HeyCyan app running concurrently, Wi-Fi/VPN.
 9. **Failure evidence:** protocol mismatch must remain unpaired, a delayed first BLE notify must not be mistaken for total failure, repeated GATT failures must use bounded teardown/backoff.

@@ -15,6 +15,13 @@ import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class HomeTaskProgressTest {
+    @Test fun acknowledgedReadsAreCompleteButDoNotConfirmWrites() {
+        val read = homeTaskProgress(listOf(completed(ActionTruth.ACKNOWLEDGED, toolId = "halo_source_get"))).root as PresentationNode.Checklist
+        assertEquals("Reading sources · Read complete", read.items.single().text)
+        assertEquals(PresentationStepState.COMPLETED, read.items.single().state)
+        val write = homeTaskProgress(listOf(completed(ActionTruth.ACKNOWLEDGED, toolId = "halo_organizer_create"))).root as PresentationNode.Checklist
+        assertEquals(PresentationStepState.SKIPPED, write.items.single().state)
+    }
     private fun completed(truth: ActionTruth, success: Boolean = true, toolId: String = "private_tool_name") = AgentStep.ToolCompleted(
         AgentStepId("receipt"), AgentRunId("run"), Instant.EPOCH, "call", toolId,
         "private result", success, truth)

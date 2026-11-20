@@ -25,32 +25,26 @@ import java.math.BigDecimal
 @Config(sdk = [33], application = Application::class)
 class StudioAiProvenanceTest {
     @Test fun deferredReviewKeepsScreenMemoryAndOriginalRevisionAtActualGeneration() = runBlocking {
-        exercise(blocked = false)
+        exercise()
     }
     @Test fun staleOrBarredOriginsCannotReachGenerationOrReceiveFreshAuthority() = runBlocking {
-        exercise(blocked = true)
+        exercise(revokeBeforeReview = true)
     }
-    private suspend fun exercise(blocked: Boolean) {
+    @Test fun authorityRevokedAfterReviewCannotReachGeneration() = runBlocking {
+        exercise(revokeBeforeSpend = true)
+    }
+    private suspend fun exercise(revokeBeforeReview: Boolean = false, revokeBeforeSpend: Boolean = false) {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-        val origin = RemoteDispatchProvenance(setOf(RemoteDataCategory.SCREEN, RemoteDataCategory.MEMORIES), 17)
-        val acquisitions = java.util.Collections.synchronizedList(mutableListOf<Pair<RemoteDispatchRequest, Long>>())
-        val policy = object : RemoteDispatchPolicy {
-            override val revision = 18L // The proposal must not inherit this newer revision.
-            override fun acquire(request: RemoteDispatchRequest, expectedRevision: Long, recordActivity: Boolean, cancel: () -> Unit): RemoteDispatchLease {
-                acquisitions += request to expectedRevision
-                if (blocked) throw RemoteDispatchBlocked()
-                return object : RemoteDispatchLease {
-                    override fun requireCurrent() = Unit
-                    override fun finish(outcome: RemoteDispatchOutcome, providerReportedCostUsd: String?) = Unit
-                }
-            }
+        val modes = PrivacyModeStore(MemoryStorage()).apply {
+            remoteAllowed = { true }
+            configuredProviders = { setOf("fixture") }
+            acknowledgeSharing()
+            set(PrivacyMode.CLOUD)
         }
-        val storage = MemoryStorage(policy)
-        PrivacyModeStore(storage).apply { acknowledgeSharing(); set(PrivacyMode.CLOUD) }
-        storage.putBoolean(KEY_CLOUD_WORKSPACE, true)
-        storage.putBoolean(KEY_CLOUD_IMAGES, true)
+        val storage = modes.storage
+        val origin = RemoteDispatchProvenance(setOf(RemoteDataCategory.SCREEN, RemoteDataCategory.MEMORIES), modes.revision)
         val bitmap = Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888)
         val bytes = try { ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray() } finally { bitmap.recycle() }
         var generated: RemoteDispatchProvenance? = null
@@ -71,26 +65,29 @@ class StudioAiProvenanceTest {
             override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
         }
         try {
-            val studio = WorkspaceImageStudio(scope, WorkspaceImageService(Router(provider), storage, allowReference = { true }),
+            val studio = WorkspaceImageStudio(scope, WorkspaceImageService(Router(provider), storage,
+                allowReference = { true }, privacyModes = modes.mode),
                 NotebookAssetRepository(context, database), save = { _, _ -> fail("No result") })
             studio.prepareReference(bytes, "image/png", "project", "Project", origin)
-            withTimeout(5000) { studio.state.first { !it.loading && it.selected != null } }
+            val ready = withTimeout(5000) { studio.state.first { !it.loading } }
+            assertFalse(ready.referenceUnavailable)
+            assertNotNull(ready.error, ready.selected)
+            if (revokeBeforeReview) modes.invalidateAuthority()
             studio.prompt("Derived proposal")
             studio.generate()
             withTimeout(5000) { studio.state.first { !it.busy } }
-            assertTrue(acquisitions.isNotEmpty())
-            acquisitions.forEach { (request, revision) ->
-                assertEquals(17L, revision)
-                assertTrue(request.categories.containsAll(origin.categories))
-            }
             assertEquals(0, calls)
-            if (!blocked) {
+            if (!revokeBeforeReview) {
                 assertNotNull(studio.state.value.spendPreview)
+                if (revokeBeforeSpend) modes.invalidateAuthority()
                 studio.confirmSpend(BigDecimal("0.10"))
                 withTimeout(5000) { studio.state.first { !it.busy } }
-                assertEquals(1, calls)
-                assertEquals(origin, generated)
-            } else assertNull(studio.state.value.spendPreview)
+                assertEquals(if (revokeBeforeSpend) 0 else 1, calls)
+                assertEquals(if (revokeBeforeSpend) null else origin, generated)
+            } else {
+                assertNull(studio.state.value.spendPreview)
+                assertNotNull(studio.state.value.error)
+            }
             studio.discardDraft()
             assertNull(studio.state.value.referenceBytes)
             assertEquals("", studio.state.value.prompt)
@@ -109,8 +106,7 @@ class StudioAiProvenanceTest {
         override fun start() = Unit
         override fun stop() = Unit
     }
-    private class MemoryStorage(private val policy: RemoteDispatchPolicy) : Storage, RemoteDispatchPolicySource {
-        override val remoteDispatchPolicy get() = policy
+    private class MemoryStorage : Storage {
         private val values = java.util.concurrent.ConcurrentHashMap<String, Any>()
         override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue
         override fun putString(key: String, value: String?) { if (value == null) values.remove(key) else values[key] = value }

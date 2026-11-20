@@ -13,7 +13,7 @@ import com.halo.sdk.provider.AiFailureDetails
 import com.halo.sdk.provider.AiInferenceProvider
 import com.halo.sdk.provider.AiModel
 import com.halo.sdk.provider.AiProviderException
-import com.halo.sdk.provider.imageMimeType
+import com.halo.sdk.provider.inlineMedia
 import com.halo.sdk.provider.AiRequest
 import com.halo.sdk.provider.AiResponse
 import com.halo.sdk.provider.AiStreamEvent
@@ -232,20 +232,16 @@ class OpenAiProvider(
         context.screenContext?.let { screen ->
             messages.put(JSONObject().put("role", "user").put("content", screen.asUntrustedPromptSection()))
         }
-        request.text?.takeIf { request.appendTextAsUserMessage }?.let { text ->
-            val content: Any = request.image?.let { image ->
-                JSONArray()
-                    .put(JSONObject().put("type", "text").put("text", text))
-                    .put(
-                        JSONObject().put("type", "image_url").put(
-                            "image_url",
-                            JSONObject().put(
-                                "url",
-                                "data:${request.imageMimeType()};base64,${Base64.encodeToString(image, Base64.NO_WRAP)}",
-                            ),
-                        ),
-                    )
-            } ?: text
+        val media = request.inlineMedia()
+        if (media.any { it.capability != AiCapability.IMAGE }) throw AiProviderException(
+            AiErrorType.UNSUPPORTED_CAPABILITY, "This OpenAI adapter requires text or images; use a configured speech provider for audio.")
+        val text = request.text?.takeIf { request.appendTextAsUserMessage }
+        if (text != null || media.isNotEmpty()) {
+            val content: Any = if (media.isEmpty()) text.orEmpty() else JSONArray().apply {
+                text?.takeIf { it.isNotBlank() }?.let { put(JSONObject().put("type", "text").put("text", it)) }
+                media.forEach { image -> put(JSONObject().put("type", "image_url").put("image_url",
+                    JSONObject().put("url", "data:${image.mimeType};base64,${Base64.encodeToString(image.bytes, Base64.NO_WRAP)}"))) }
+            }
             messages.put(JSONObject().put("role", "user").put("content", content))
         }
         return JSONObject()
@@ -305,9 +301,7 @@ class OpenAiProvider(
                 ToolCall(
                     id = call.getString("id"),
                     functionName = function.getString("name"),
-                    arguments = buildMap {
-                        arguments.keys().forEach { key -> put(key, arguments.get(key)) }
-                    },
+                    arguments = com.halo.sdk.provider.ToolArgumentJson.decode(arguments),
                 ),
             )
         }

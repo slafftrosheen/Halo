@@ -24,6 +24,72 @@ import java.util.concurrent.TimeUnit
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = Application::class)
 class DirectProviderContractTest {
+    @Test fun nestedToolArgumentsReachRuntimeAsListsAndMapsAcrossProviders() = runBlocking {
+        val args = """{"steps":["Create","Read"],"record":{"title":"QA","tags":["one","two"]}}"""
+        for (kind in listOf("openai", "anthropic", "gemini", "openrouter", "zen")) {
+            val body = when (kind) {
+                "anthropic" -> """{"content":[{"type":"tool_use","id":"qa-call","name":"qa_nested","input":$args}],"stop_reason":"tool_use"}"""
+                "gemini" -> """{"candidates":[{"content":{"parts":[{"functionCall":{"name":"qa_nested","args":$args}}]},"finishReason":"STOP"}]}"""
+                else -> """{"choices":[{"message":{"content":"","tool_calls":[{"id":"qa-call","function":{"name":"qa_nested","arguments":${org.json.JSONObject.quote(args)}}}]},"finish_reason":"tool_calls"}]}"""
+            }
+            Fixture(kind, 200, body).use { f ->
+                val call = f.provider.generate(AiRequest(text = "QA", modelId = "fixture"), AiContext.EMPTY).toolCalls.single()
+                assertEquals(kind, listOf("Create", "Read"), call.arguments["steps"])
+                assertEquals(kind, mapOf("title" to "QA", "tags" to listOf("one", "two")), call.arguments["record"])
+            }
+        }
+    }
+
+    @Test fun directVisionAdaptersAcceptImageOnlyAndDoNotResendMediaOnContinuation() = runBlocking {
+        for (kind in listOf("openai", "anthropic")) Fixture(kind, 200, generationBody(kind)).use { f ->
+            f.provider.generate(AiRequest(image = byteArrayOf(1, 2), mimeTypes = listOf("image/png"), modelId = "fixture"), AiContext.EMPTY)
+            val initial = org.json.JSONObject(f.server.takeRequest().body.readUtf8()).getJSONArray("messages")
+            val image = initial.getJSONObject(initial.length() - 1).getJSONArray("content").getJSONObject(0)
+            assertEquals(if (kind == "openai") "image_url" else "image", image.getString("type"))
+            if (kind == "openai") assertEquals("data:image/png;base64,AQI=", image.getJSONObject("image_url").getString("url"))
+            else assertEquals("image/png", image.getJSONObject("source").getString("media_type"))
+            f.provider.generate(AiRequest(text = "must not resend", image = byteArrayOf(1, 2), modelId = "fixture",
+                appendTextAsUserMessage = false), AiContext(conversation = listOf(AIMessage(Role.USER, "prior"))))
+            val continued = org.json.JSONObject(f.server.takeRequest().body.readUtf8()).getJSONArray("messages")
+            assertEquals("prior", continued.getJSONObject(continued.length() - 1).getString("content"))
+            assertFalse(continued.toString().contains("base64"))
+            val rejected = runCatching { f.provider.generate(AiRequest(audio = byteArrayOf(1),
+                mimeTypes = listOf("audio/wav"), modelId = "fixture"), AiContext.EMPTY) }.exceptionOrNull()
+            assertEquals(AiErrorType.UNSUPPORTED_CAPABILITY, (rejected as AiProviderException).type)
+            assertEquals(2, f.server.requestCount)
+        }
+    }
+    @Test fun geminiAcceptsEncodedAudioAndVideoAndPreservesSignedFunctionContinuations() = runBlocking {
+        val response = """{"candidates":[{"content":{"parts":[{"thought":true,"text":"not a user answer"},{"thoughtSignature":"opaque-fixture","functionCall":{"name":"halo_note","args":{"title":"QA"}}}]},"finishReason":"STOP"}]}"""
+        Fixture("gemini", 200, response).use { f ->
+            val tool = ToolDefinition("halo_note", "halo_note", "Save a fixture note", mapOf("type" to "object"))
+            val answer = f.provider.generate(AiRequest(audio = byteArrayOf(1), video = byteArrayOf(2),
+                mimeTypes = listOf("audio/wav", "video/mp4"), modelId = "gemini-fixture"), AiContext(availableTools = listOf(tool)))
+            assertEquals("", answer.text)
+            val call = answer.toolCalls.single()
+            assertEquals("opaque-fixture", call.providerMetadata["gemini.thoughtSignature"])
+            assertFalse(call.toString().contains("opaque-fixture"))
+            val initial = org.json.JSONObject(f.server.takeRequest().body.readUtf8()).getJSONArray("contents").getJSONObject(0).getJSONArray("parts")
+            assertEquals("audio/wav", initial.getJSONObject(0).getJSONObject("inlineData").getString("mimeType"))
+            assertEquals("video/mp4", initial.getJSONObject(1).getJSONObject("inlineData").getString("mimeType"))
+            f.provider.generate(AiRequest(modelId = "gemini-fixture", appendTextAsUserMessage = false), AiContext(conversation = listOf(
+                AIMessage(Role.ASSISTANT, "", listOf(call)), AIMessage(Role.TOOL, "saved", toolCallId = call.id)), availableTools = listOf(tool)))
+            val next = org.json.JSONObject(f.server.takeRequest().body.readUtf8()).getJSONArray("contents")
+            val modelPart = next.getJSONObject(0).getJSONArray("parts").getJSONObject(0)
+            assertEquals("opaque-fixture", modelPart.getString("thoughtSignature"))
+            assertFalse(modelPart.getJSONObject("functionCall").has("id"))
+            assertFalse(next.getJSONObject(1).getJSONArray("parts").getJSONObject(0).getJSONObject("functionResponse").has("id"))
+        }
+    }
+
+    @Test fun compatibleCatalogKeepsTheConfiguredProviderIdentity() = runBlocking {
+        Fixture("zen", 200, """{"data":[{"id":"fixture","owner":{"id":"upstream"},"supported_parameters":["tools"]}]}""").use { f ->
+            val model = f.provider.listModels().single()
+            assertEquals("fixture", model.id)
+            assertEquals(f.provider.id, model.providerId)
+            assertTrue(model.supportsTools)
+        }
+    }
     private class MemoryStorage : Storage {
         val values = mutableMapOf<String, Any>()
         override fun getString(key: String, defaultValue: String?) = values[key] as? String ?: defaultValue

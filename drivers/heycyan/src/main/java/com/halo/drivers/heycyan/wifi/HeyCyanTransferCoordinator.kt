@@ -20,9 +20,9 @@ import java.net.InetAddress
  *
  * Sequence:
  * 1. Acquires WIFI_TRANSFER resource from [HeyCyanResourceArbiter].
- * 2. Obtain Wi-Fi credentials from device state via [HeyCyanWifiCredentialProvider].
+ * 2. Prepare the selected Wi-Fi transport (start discovery for Wi-Fi Direct).
  * 3. Send BLE command to put glasses into transfer mode ([HeyCyanOperation.EnterWifiTransferMode]).
- * 4. Connect to glasses Wi-Fi hotspot ([HeyCyanWifiConnection.connect]).
+ * 4. Connect the selected peer, or obtain credentials and join the hotspot strategy.
  * 5. Resolve device IP / create [HeyCyanMediaApi].
  * 6. Fetch media manifest ([HeyCyanMediaApi.getMediaConfig]).
  * 7. Allow downloading individual media files without changing their original bytes.
@@ -35,6 +35,10 @@ class HeyCyanTransferCoordinator(
     private val mediaApiFactory: HeyCyanMediaApiFactory,
     private val resourceArbiter: HeyCyanResourceArbiter? = null,
     private val deviceIsCurrent: (String) -> Boolean = { true },
+    private val pendingInventory: suspend (String) -> com.halo.drivers.heycyan.protocol.MediaCounts? = { null },
+    // Cleanup of an already-owned session may outlive foreground permission. The host
+    // must still prove the exact original BLE connection; never exit a replacement device.
+    private val cleanupDeviceIsCurrent: (String) -> Boolean = deviceIsCurrent,
 ) {
     private val _state = MutableStateFlow<HeyCyanTransferState>(HeyCyanTransferState.Idle)
     val state: StateFlow<HeyCyanTransferState> = _state.asStateFlow()
@@ -82,6 +86,20 @@ class HeyCyanTransferCoordinator(
         activeLease = lease
         activeDevice = deviceId
 
+        // The vendor inventory describes unsynced files, not all stored originals.
+        // A2 closes HTTP without a manifest when none remain. Only a fresh, exact
+        // device reply can bypass Wi-Fi; missing inventory retains the normal path.
+        val pending = pendingInventory(deviceId)
+        check(deviceIsCurrent(deviceId)) { "Selected glasses changed" }
+        if (pending?.mediaType == 4 && pending.photos == 0 && pending.videos == 0 && pending.audio == 0) {
+            val empty = HeyCyanMediaManifest(deviceId, null, emptyList())
+            _state.value = HeyCyanTransferState.Ready(empty)
+            return Result.success(empty)
+        }
+
+        _state.value = HeyCyanTransferState.ConnectingP2p
+        wifiConnection.prepare(deviceId)
+        check(deviceIsCurrent(deviceId)) { "Selected glasses changed" }
         // Own cleanup even when the enter command times out after dispatch.
         entered = true
         // 1. Put glasses into transfer mode via BLE FIRST
@@ -94,11 +112,12 @@ class HeyCyanTransferCoordinator(
 
         // 2. Obtain credentials (await credentials from device state observation)
         _state.value = HeyCyanTransferState.WaitingForTransferSignal
-        val creds = credentialsProvider.await(deviceId, timeoutMs = 30_000L)
-            ?: run {
+        val creds = if (wifiConnection.requiresCredentials) {
+            credentialsProvider.await(deviceId, timeoutMs = 30_000L) ?: run {
                 _state.value = HeyCyanTransferState.Failed("Wi-Fi transfer credentials unavailable")
                 return Result.failure(IllegalStateException("Awaiting Wi-Fi transfer credentials"))
             }
+        } else null
 
         check(deviceIsCurrent(deviceId)) { "Selected glasses changed" }
         // 3. Connect Wi-Fi
@@ -107,7 +126,9 @@ class HeyCyanTransferCoordinator(
         repeat(MAX_STARTUP_ATTEMPTS) { attempt ->
             if (connected) return@repeat
             _state.value = HeyCyanTransferState.ConnectingP2p
-            val attemptResult = wifiConnection.connect(creds)
+            check(deviceIsCurrent(deviceId)) { "Selected glasses changed" }
+            val attemptResult = if (wifiConnection.requiresCredentials) wifiConnection.connect(requireNotNull(creds))
+                else wifiConnection.connectDirect(deviceId)
             if (attemptResult.isSuccess) {
                 connected = true
             } else {
@@ -121,6 +142,7 @@ class HeyCyanTransferCoordinator(
             return failTransfer("Wi-Fi connection failed", err, failure)
         }
         _state.value = HeyCyanTransferState.NetworkAvailable
+        check(deviceIsCurrent(deviceId)) { "Selected glasses changed" }
 
         // 4. Discover endpoint / create API
         _state.value = HeyCyanTransferState.WaitingForDeviceIp
@@ -134,6 +156,7 @@ class HeyCyanTransferCoordinator(
             return failTransfer("Device IP address unavailable", error, HeyCyanTransferFailure.DeviceAddressUnavailable)
         }
 
+        check(deviceIsCurrent(deviceId)) { "Selected glasses changed" }
         val api = mediaApiFactory.create(resolvedAddress)
         activeApi = api
 
@@ -149,6 +172,7 @@ class HeyCyanTransferCoordinator(
             }
         }
         manifestResult.getOrNull()?.let { manifest ->
+            check(deviceIsCurrent(deviceId)) { "Selected glasses changed" }
             _state.value = HeyCyanTransferState.Ready(manifest)
             return Result.success(manifest)
         }
@@ -190,12 +214,13 @@ class HeyCyanTransferCoordinator(
     suspend fun closeSession(): Result<Unit> = kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
         _state.value = HeyCyanTransferState.Restoring
         val result = try {
-            if (entered && activeDevice?.let(deviceIsCurrent) == true)
+            if (entered && activeDevice?.let(cleanupDeviceIsCurrent) == true)
                 kotlinx.coroutines.withTimeout(5_000) { commandController.execute(HeyCyanOperation.ExitWifiTransferMode) }
             else Result.success(Unit)
         } catch (error: Exception) { Result.failure(error) }
         finally {
             activeLease?.release(); activeLease = null; activeApi = null; activeDevice = null; entered = false
+            wifiConnection.disconnect()
         }
         _state.value = if (result.isSuccess) HeyCyanTransferState.Idle else
             HeyCyanTransferState.Failed("Failed to restore HeyCyan after transfer", result.exceptionOrNull())

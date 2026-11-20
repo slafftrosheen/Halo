@@ -173,7 +173,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                     }))
                 "ContextUsed"
             }
-            is AgentStep.PlanCreated -> { payload.put("planId", step.planId).put("summary", step.summary); "PlanCreated" }
+            is AgentStep.PlanCreated -> { payload.put("planId", step.planId).put("summary", step.summary).put("steps", JSONArray(step.steps)); "PlanCreated" }
             is AgentStep.ClarificationRequested -> { payload.put("question", step.question).put("field", step.field); "ClarificationRequested" }
             is AgentStep.ApprovalRequested -> { payload.put("action", step.action).put("risk", step.risk); "ApprovalRequested" }
             is AgentStep.ToolRequested -> { payload.put("toolCallId", step.toolCallId).put("toolId", step.toolId).put("argumentsJson", step.argumentsJson); "ToolRequested" }
@@ -202,7 +202,7 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 val calls = JSONArray()
                 step.toolCalls.forEach { call ->
                     calls.put(JSONObject().put("toolCallId", call.toolCallId)
-                        .put("toolName", call.toolName).put("argumentsJson", call.argumentsJson))
+                        .put("toolName", call.toolName).put("argumentsJson", call.argumentsJson).put("providerMetadata", JSONObject(call.providerMetadata)))
                 }
                 payload.put("turnId", step.turnId.value).put("assistantText", step.assistantText)
                     .put("toolCalls", calls).put("finishReason", step.finishReason).put("payloadRefId", step.payloadRefId)
@@ -394,7 +394,8 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                         com.halo.runtime.cognition.context.ContextReference.WorkspaceObject(objectId, version, anchor)
                     })
             }
-            "PlanCreated" -> AgentStep.PlanCreated(step, run, at, p.getString("planId"), p.getString("summary"))
+            "PlanCreated" -> AgentStep.PlanCreated(step, run, at, p.getString("planId"), p.getString("summary"),
+                p.optJSONArray("steps")?.let { values -> require(values.length() <= 12); (0 until values.length()).map(values::getString) }.orEmpty())
             "ClarificationRequested" -> AgentStep.ClarificationRequested(step, run, at, p.getString("question"), p.getString("field"))
             "ApprovalRequested" -> AgentStep.ApprovalRequested(step, run, at, p.getString("action"), p.getString("risk"))
             "ToolRequested" -> AgentStep.ToolRequested(step, run, at, call, tool, p.optString("argumentsJson", p.optJSONObject("args")?.toString() ?: "{}"))
@@ -424,7 +425,10 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
                 for (i in 0 until array.length()) {
                     val item = array.getJSONObject(i)
                     calls += ProviderToolCallRecord(item.getString("toolCallId"), item.getString("toolName"),
-                        item.optString("argumentsJson", "{}"))
+                        item.optString("argumentsJson", "{}"), item.optJSONObject("providerMetadata")?.let { metadata ->
+                            require(metadata.length() <= 8 && metadata.toString().length <= 131200)
+                            metadata.keys().asSequence().associateWith { metadata.getString(it) }
+                        }.orEmpty())
                 }
                 AgentStep.ProviderTurnCompleted(step, run, at, ProviderTurnId(p.getString("turnId")),
                     p.optString("assistantText"), calls, p.optString("finishReason", "unknown"), p.optString("payloadRefId").takeIf { it.isNotBlank() && it != "null" })

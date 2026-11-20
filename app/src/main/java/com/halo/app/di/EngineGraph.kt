@@ -113,7 +113,7 @@ class EngineGraph(
                 ManualDependencyGraph.privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD &&
                 ManualDependencyGraph.privacyModes.sharingAcknowledged && com.halo.app.ai.OnlineFeature.IMAGES in
                     ManualDependencyGraph.privacyModes.profile(com.halo.app.ai.PrivacyMode.CLOUD).onlineFeatures &&
-                ManualDependencyGraph.kidsPreferences.let { it.loadedState.value && (!it.enabled.value || it.cloudAllowed.value) } },
+                ManualDependencyGraph.kidsPreferences.loadedState.value },
             providerRegistry = providerGraph.providers.aiRegistry,
             storage = ManualDependencyGraph.storage,
             eventBus = infra.eventBus,
@@ -127,9 +127,9 @@ class EngineGraph(
             profiles = privacy,
             remoteAllowed = { privacy.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacy.sharingAcknowledged &&
                 com.halo.app.ai.OnlineFeature.INFERENCE in privacy.profile(com.halo.app.ai.PrivacyMode.CLOUD).onlineFeatures &&
-                kids.loadedState.value && (!kids.enabled.value || kids.cloudAllowed.value) },
-            policyChanges = kotlinx.coroutines.flow.combine(kids.loadedState, kids.enabled, kids.cloudAllowed, privacy.mode) { ready, enabled, cloud, mode ->
-                mode == com.halo.app.ai.PrivacyMode.CLOUD && ready && (!enabled || cloud)
+                kids.loadedState.value },
+            policyChanges = kotlinx.coroutines.flow.combine(kids.loadedState, privacy.mode) { ready, mode ->
+                mode == com.halo.app.ai.PrivacyMode.CLOUD && ready
             })
     }
     val aiEngine by lazy { AIEngine(aiProviderRouter, ManualDependencyGraph.storage) }
