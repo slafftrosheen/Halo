@@ -70,6 +70,7 @@ fun Modifier.haloStateAura(light: HaloLight, accent: Color, attention: Color, er
 
 /** Both edges climb from the bottom on invocation, then breathe without rotation. */
 fun Modifier.haloAssistantEdge(active: Boolean, attention: Boolean, accent: Color, apricot: Color): Modifier = composed {
+    if (!com.halo.app.ui.theme.rememberVisualPreferences().edgeLight) return@composed this
     val guideLight = com.halo.app.ui.theme.rememberVisualPreferences().guideLight
     val reduced = rememberHaloReducedMotion()
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()

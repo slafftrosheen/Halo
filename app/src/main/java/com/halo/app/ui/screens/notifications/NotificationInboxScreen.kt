@@ -169,7 +169,8 @@ fun NotificationInboxScreen(model: NotificationInboxViewModel, onBack: () -> Uni
                             section.sources.joinToString(". ")
                     }
                 com.halo.app.ui.components.HaloReadAloud(
-                    spokenSummary.joinToString(". "), label = uiText("Read aloud"))
+                    spokenSummary.joinToString(". "), label = uiText("Read aloud"),
+                    category = com.halo.sdk.provider.RemoteDataCategory.RECENT_EVENTS)
             }
             items(summary.sections) { section ->
                 Column {

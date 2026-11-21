@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android" android:propertyName="scaleX"
+    android:valueFrom="0.96" android:valueTo="1.05" android:valueType="floatType"
+    android:duration="2000" android:repeatCount="infinite" android:repeatMode="reverse"
+    android:interpolator="@android:anim/accelerate_decelerate_interpolator" />

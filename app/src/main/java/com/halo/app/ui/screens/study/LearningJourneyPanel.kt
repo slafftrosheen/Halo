@@ -13,13 +13,14 @@ import com.halo.app.ui.components.VoiceFieldKind
 /** One state owner and one set of actions, with larger child targets. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, kids: Boolean = false, nextAction: LearningNextAction = LearningNextAction.NONE) {
+internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, kids: Boolean = false,
+    nextAction: LearningNextAction = LearningNextAction.NONE, autoReadPrompt: Boolean = kids) {
     val journey = state.journey
     val question = uiText("What do you already know?")
     val context = androidx.compose.ui.platform.LocalContext.current
     val accessibility = context.getSystemService(android.content.Context.ACCESSIBILITY_SERVICE) as? android.view.accessibility.AccessibilityManager
-    LaunchedEffect(kids, state.session?.id, journey.stage) {
-        if (kids && state.session != null && journey.stage == LearningStage.DISCOVER &&
+    LaunchedEffect(autoReadPrompt, state.session?.id, journey.stage) {
+        if (autoReadPrompt && state.session != null && journey.stage == LearningStage.DISCOVER &&
             accessibility?.isTouchExplorationEnabled != true) model.readLearningPrompt(question)
     }
     DisposableEffect(accessibility, model) {
@@ -65,8 +66,16 @@ internal fun LearningJourneyPanel(state: StudyUiState, model: StudyViewModel, ki
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("I know a lot", "A little", "Not yet").forEach { label ->
                     val answer = uiText(label)
-                    OutlinedButton(onClick = { model.discoverPriorKnowledge(answer) },
-                        enabled = ready, modifier = Modifier.heightIn(min = target)) { Text(answer) }
+                    val select = { model.discoverPriorKnowledge(answer); Unit }
+                    val spoken = if (kids) com.halo.app.ui.screens.kids.rememberKidsSpokenChoice(answer, onChoose = select) else null
+                    OutlinedButton(onClick = spoken?.onClick ?: select,
+                        enabled = ready, modifier = Modifier.heightIn(min = target)) {
+                        if (spoken?.heard == true) {
+                            com.halo.app.ui.icons.HaloIcon(com.halo.app.ui.icons.HaloGlyph.SPEAK, null, Modifier.size(20.dp))
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text(answer)
+                    }
                 }
             }
             if (state.draft.isNotBlank()) com.halo.app.ui.components.HaloActionButton(onClick = { model.discoverPriorKnowledge(state.draft) },

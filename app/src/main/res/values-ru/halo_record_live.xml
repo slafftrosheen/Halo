@@ -1,0 +1,13 @@
+<resources>
+    <string name="halo_record_display_choose">Субтитры в очках</string>
+    <string name="halo_record_display_about">Выберите подключённый экран для показа субтитров.</string>
+    <string name="halo_record_display_empty">Подключите очки, которые Android распознаёт как внешний экран. Подключения Bluetooth для звука недостаточно для показа субтитров.</string>
+    <string name="halo_record_display_in_use">На экране показана другая карточка. Закройте её в разделе «Устройства», чтобы включить субтитры.</string>
+    <string name="halo_record_display_confirm_title">Показывать субтитры на экране %1$s?</string>
+    <string name="halo_record_display_confirm_body">Пользователи этого экрана могут увидеть слова из записи. Halo отправляет субтитры только пока запись открыта. Убедитесь, что все участники разговора согласны.</string>
+    <string name="halo_record_display_sending">Субтитры отправляются на экран %1$s</string>
+    <string name="halo_record_display_stop">Выключить субтитры на экране</string>
+    <string name="halo_record_display_waiting">HaloRecord · Ожидание речи</string>
+    <string name="halo_record_display_start">Показывать субтитры</string>
+    <string name="halo_record_display_cancel">Отмена</string>
+</resources>

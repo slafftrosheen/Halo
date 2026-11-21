@@ -42,7 +42,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
-enum class NotebookSort(val label: String) { UPDATED("Recently updated"), CREATED("Newest first"), TITLE("Title A-Z") }
+enum class NotebookSort(val label: String) {
+    UPDATED("Recently updated"), CREATED("Newest first"), TITLE("Title A-Z"), TOOL("By tool")
+}
 enum class NotebookBatchAction { CONTEXT, COLLECTION, ARCHIVE, TRASH, RESTORE }
 
 /** Only decodable, currently pending, non-secret MEMORY proposals count.
@@ -283,6 +285,8 @@ class NotebookViewModel(
                 NotebookSort.UPDATED -> state.items.sortedByDescending { it.objectRef.updatedAt }
                 NotebookSort.CREATED -> state.items.sortedByDescending { it.objectRef.createdAt }
                 NotebookSort.TITLE -> state.items.sortedWith(compareBy<NotebookWorkspaceItem> { it.objectRef.title.lowercase() }.thenBy { it.objectRef.id.value })
+                NotebookSort.TOOL -> state.items.sortedWith(compareBy<NotebookWorkspaceItem> { it.objectRef.type.name }
+                    .thenByDescending { it.objectRef.updatedAt }.thenBy { it.objectRef.id.value })
             }
             state.copy(items = sorted, sort = order)
         }
@@ -293,7 +297,12 @@ class NotebookViewModel(
                     entry.title.contains(word,true) || entry.detail.contains(word,true) || entry.code.contains(word,true)
                 }
             }
-            state.copy(everyday=when(state.sort) {NotebookSort.TITLE -> rows.sortedBy {it.title.lowercase()};else -> rows.sortedByDescending {it.updatedAt}},everydayError=domain.second)
+            state.copy(everyday = when (state.sort) {
+                NotebookSort.TITLE -> rows.sortedBy { it.title.lowercase() }
+                NotebookSort.TOOL -> rows.sortedWith(compareBy<com.halo.app.everyday.presentation.EverydayLibraryEntry> { it.kind }
+                    .thenByDescending { it.updatedAt })
+                else -> rows.sortedByDescending { it.updatedAt }
+            }, everydayError = domain.second)
         }
         .flowOn(kotlinx.coroutines.Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotebookUiState())

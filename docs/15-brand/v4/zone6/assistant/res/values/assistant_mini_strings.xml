@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English; lowercase "halo" (replaces "Mini Halo", "Ask Halo", "Open Halo", "Talk to Halo"). -->
+<resources>
+<string name="mini_title">mini halo</string>
+<string name="mini_ready">A quick question · private</string>
+<string name="mini_answered">Answered · on this phone</string>
+<string name="mini_ask">Ask halo…</string>
+<string name="mini_followup">Ask a follow-up…</string>
+<string name="mini_open">Open halo</string>
+<string name="mini_continue">Continue in halo</string>
+<string name="mini_review">Review</string>
+<string name="mini_needs_review">Needs your review</string>
+<string name="mini_review_detail">Nothing is sent until you look.</string>
+<string name="assist_in_app">In %1$s</string>
+<string name="assist_screen_included">Screen included</string>
+<string name="assist_app_asking">%1$s is asking · nothing sent yet</string>
+<string name="assist_pick_hint">Say the number or tap.</string>
+<string name="assist_problem_kept">Your question is kept. On-phone answers still work.</string>
+<string name="assist_try_on_phone">Try on this phone</string>
+<string name="bubble_needs_you">halo needs you</string>
+<string name="bubble_listening">halo is listening</string>
+<string name="bubble_working">halo is working</string>
+</resources>

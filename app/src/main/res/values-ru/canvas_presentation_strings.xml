@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="canvas_presentation_board">Доска</string>
+    <string name="canvas_presentation_list">Список</string>
+    <string name="canvas_presentation_show_board">Показать доску</string>
+    <string name="canvas_presentation_show_list">Доска списком</string>
+    <string name="canvas_presentation_linked_to">Связано с %1$s</string>
+    <string name="canvas_presentation_linked_from">Входящая связь от %1$s</string>
+    <string name="canvas_presentation_card_changed">Карточка изменилась. Закройте и откройте её снова.</string>
+</resources>

@@ -54,6 +54,7 @@ class HaloSpeechOutputCoordinator(
         release
     },
     private val defaultLanguage: () -> String? = { null },
+    private val allowOutput: () -> Boolean = { true },
 ) {
     val session = HaloAudioSessionCoordinator(
         requireNotNull(resourceLeaseManager) {
@@ -100,7 +101,7 @@ class HaloSpeechOutputCoordinator(
     @Synchronized fun testOutput(target: SpeechOutputTarget, label: String,
         phrase: String = "This is Halo. Your audio output test is playing.",
         language: String = "en", previewProviderId: String? = null,
-        previewModelId: String? = null, previewVoiceId: String? = null) {
+        previewModelId: String? = null, previewVoiceId: String? = null): String {
         stop("Audio test requested")
         val id = java.util.UUID.randomUUID().toString()
         mutableOutputTest.value = SpeechOutputTestState(id, label, outcome = "Preparing")
@@ -108,6 +109,7 @@ class HaloSpeechOutputCoordinator(
             language = language, target = target, fallback = SpeechOutputFallback.DISALLOW_PHONE),
             previewProviderId = previewProviderId ?: synthesisRegistry?.selector?.ttsSelection?.value?.id,
             previewIdentity = ExplicitSpeechPreview(previewModelId,previewVoiceId))
+        return id
     }
     fun stopOutputTest() {
         if (activeTransactionId == mutableOutputTest.value.transactionId) stop("Audio test stopped")
@@ -165,7 +167,13 @@ class HaloSpeechOutputCoordinator(
     @Synchronized private fun prepareStream(event: StreamingSpeechPrepared) {
         if (isStopped(event.requestId) || !claimReceipt(streamPreparationReceipts, event.requestId)) return
         stop("New response")
-        streaming = StreamingVoiceResponse(event).also { streamLog("OPEN", it) }
+        val cloudVoice = synthesisRegistry?.let { registry ->
+            val selected = registry.selector.ttsSelection.value.id
+            registry.providers.any { it.metadata.id == selected && !it.metadata.local }
+        } == true
+        // Hosted synthesis gets the committed reply, including paragraph breaks,
+        // in place of a series of provisional sentence calls.
+        if (!cloudVoice) streaming = StreamingVoiceResponse(event).also { streamLog("OPEN", it) }
     }
     @Synchronized private fun acceptToken(event: CognitiveTokenReceived) {
         val response = streaming?.takeIf { it.prepared.requestId == event.requestId &&
@@ -287,6 +295,11 @@ class HaloSpeechOutputCoordinator(
     @Synchronized private fun speak(event: TtsRequested, previewProviderId: String? = null,
         streamResponse: StreamingVoiceResponse? = null,
         previewIdentity: ExplicitSpeechPreview? = null) {
+        if (!allowOutput()) {
+            scope.launch { eventBus.publish(TtsCancelled(transactionId = event.transactionId, target = event.target,
+                interactionId = event.interactionId)) }
+            return
+        }
         if (event.text.isBlank()) {
             scope.launch { eventBus.publish(TtsFailed(transactionId = event.transactionId, target = event.target, reason = "Speech text is empty", interactionId = event.interactionId)) }
             return
@@ -479,9 +492,9 @@ class HaloSpeechOutputCoordinator(
                     if (event.readAloudInSegments && streamResponse == null) {
                         // Long documents keep the same pinned native model, audio focus
                         // and verified AudioTrack. Only one PCM segment is prefetched.
-                        for (chunk in SpeechReadingSegments.chunks(sanitized)) {
+                        for (section in com.halo.sdk.provider.SpeechParagraphs.sections(sanitized)) {
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
-                            emit(request.copy(text=chunk, onPlaybackRange=null))
+                            emit(request.copy(text = section.text, onPlaybackRange = null))
                         }
                     } else {
                         var chunk: String? = sanitized
@@ -510,7 +523,7 @@ class HaloSpeechOutputCoordinator(
                     is RoutedPlaybackResult.Completed -> { routed.evidence?.let { evidence=it } }
                     RoutedPlaybackResult.Cancelled -> throw CancellationException("Speech playback cancelled")
                     RoutedPlaybackResult.RouteLost -> error("ROUTE_LOST")
-                    is RoutedPlaybackResult.Failed -> error(routed.reason)
+                    is RoutedPlaybackResult.Failed -> throw (routed.cause ?: IllegalStateException(routed.reason))
                 }
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 val result = com.halo.sdk.provider.SpeechResult(0, true)
@@ -562,7 +575,19 @@ class HaloSpeechOutputCoordinator(
                 }
                 rememberStopped(event.transactionId)
                 session.failed(event.transactionId, HaloAudioFailure.PLAYBACK_FAILED)
-                Log.e("HaloAudio", "TTS execution failed transaction=${event.transactionId} errorType=${e.javaClass.simpleName}")
+                val providerError = e as? com.halo.sdk.provider.SpeechProviderException
+                val reason = when {
+                    e is com.halo.sdk.provider.RemoteDispatchBlocked -> "Online speech is blocked by your current mode settings."
+                    providerError?.code == com.halo.sdk.provider.SpeechErrorCode.NOT_CONFIGURED -> "Choose an online speech model and voice and check the provider key."
+                    providerError?.code == com.halo.sdk.provider.SpeechErrorCode.AUTHENTICATION_FAILED -> "The speech provider rejected this account or key. Check it in AI services."
+                    providerError?.code == com.halo.sdk.provider.SpeechErrorCode.RATE_LIMITED -> "The speech provider is rate limiting requests. Try again later."
+                    providerError?.code == com.halo.sdk.provider.SpeechErrorCode.NETWORK_ERROR -> "Could not reach the speech provider."
+                    providerError?.code == com.halo.sdk.provider.SpeechErrorCode.INVALID_AUDIO_RESPONSE -> "The speech provider returned unsupported audio."
+                    providerError?.code == com.halo.sdk.provider.SpeechErrorCode.SYNTHESIS_FAILED -> "The speech provider could not generate audio. Check the selected voice and account credits."
+                    else -> null
+                }
+                if (reason != null) finishTest(event.transactionId, reason)
+                Log.e("HaloAudio", "TTS execution failed transaction=${event.transactionId} errorType=${e.javaClass.simpleName} providerCode=${providerError?.code}")
                 publishTerminal(
                     TtsFailed(
                         transactionId = event.transactionId,

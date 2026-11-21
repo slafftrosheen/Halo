@@ -1,0 +1,8 @@
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="240dp" android:minHeight="58dp"
+    android:minResizeWidth="120dp" android:minResizeHeight="56dp"
+    android:targetCellWidth="4" android:targetCellHeight="1" android:updatePeriodMillis="0"
+    android:initialLayout="@layout/halo_toolkit_preview_your_things" android:previewLayout="@layout/halo_toolkit_preview_your_things"
+    android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen|not_keyguard"
+    android:configure="com.halo.app.nativeactions.EverydayWidgetConfigurationActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional" android:description="@string/widget_toolkit_description" />

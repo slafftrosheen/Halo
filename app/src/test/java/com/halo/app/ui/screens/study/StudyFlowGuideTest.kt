@@ -9,6 +9,18 @@ import org.junit.Test
 
 /** The visible learning path follows learner work rather than treating hints as scores. */
 class StudyFlowGuideTest {
+    @Test fun oneLearnPathProjectsPersistedStagesAndKeepsHelpOptional() {
+        assertEquals(LearnPathStep.CHOOSE, learnPathStep(LearningStage.START))
+        listOf(LearningStage.DISCOVER, LearningStage.EXPLAIN, LearningStage.EXPLORE).forEach { stage ->
+            assertEquals(LearnPathStep.LOOK, learnPathStep(stage))
+        }
+        assertEquals(LearnPathStep.TRY, learnPathStep(LearningStage.PRACTICE))
+        assertEquals(LearnPathStep.HELP, learnPathStep(LearningStage.PRACTICE, helpActive = true))
+        assertEquals(LearnPathStep.KEEP, learnPathStep(LearningStage.REFLECT))
+        assertEquals(LearnPathStep.KEEP, learnPathStep(LearningStage.CONTINUE))
+        assertEquals(LearnPathStep.KEEP, learnPathStep(LearningStage.PRACTICE, helpActive = true, finished = true))
+    }
+
     @Test fun finishedLearningPathDoesNotClaimItIsStillReviewing() {
         assertEquals("Review", studyPathFinalLabel(StudyLearningPhase.REVIEW))
         assertEquals("Complete", studyPathFinalLabel(StudyLearningPhase.COMPLETE))

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo Zone 6 · pack 7.0 · boards 22–26. Lowercase "halo" and "mini halo". -->
+<resources>
+    <string name="z6_sheet_format">Format</string>
+    <string name="z6_sheet_insert">Insert</string>
+    <string name="z6_sheet_insert_sub">Adds at the cursor</string>
+    <string name="z6_sheet_insert_draft">Draft with halo</string>
+    <string name="z6_sheet_insert_draft_note">“Draft with halo” writes a suggestion you can keep or throw away — it never replaces your text.</string>
+    <string name="z6_sheet_layers">Layers</string>
+    <string name="z6_sheet_layers_add">Add layer</string>
+    <string name="z6_sheet_layers_reorder">Reorder</string>
+    <string name="z6_sheet_more">More</string>
+    <string name="z6_sheet_delete">Delete…</string>
+    <string name="z6_connect_mode">Connect mode</string>
+    <string name="z6_connect_hint">Tap a card to connect it to “%1$s”</string>
+    <string name="z6_connect_label_title">Name the link</string>
+    <string name="z6_connect_label_none">No label</string>
+    <string name="z6_connect_label_own">Your own</string>
+    <string name="z6_help_title">Help &amp; check-up</string>
+    <string name="z6_help_sub">See that halo works — and get help in plain words.</string>
+    <string name="z6_help_all_ok">Everything works</string>
+    <string name="z6_help_checked">Checked %1$s · %2$d of %3$d</string>
+    <string name="z6_help_check_now">Check now</string>
+    <string name="z6_help_checking">Checking halo…</string>
+    <string name="z6_help_checking_sub">About 20 seconds · nothing is sent anywhere</string>
+    <string name="z6_help_needs_look">%1$d thing needs a look</string>
+    <string name="z6_help_share_report">Share a check-up report</string>
+    <string name="z6_help_share_report_note">no chats included</string>
+    <string name="z6_empty_library_t">Nothing here yet</string>
+    <string name="z6_empty_library_p">Notes, images, lessons and boards you make will live here.</string>
+    <string name="z6_empty_activity_t">All clear</string>
+    <string name="z6_empty_activity_p">Nothing is waiting for you and nothing is running. When halo does something for you, you’ll see it — and the proof — here.</string>
+    <string name="z6_empty_memory_t">halo doesn’t remember anything yet</string>
+    <string name="z6_empty_memory_p">When something seems worth keeping, halo will ask first. Nothing is saved without your OK.</string>
+    <string name="z6_empty_sources_t">No sources yet</string>
+    <string name="z6_empty_sources_p">Widgets stay empty rather than guess. Add a news feed or a weather city and they fill in.</string>
+    <string name="z6_offline_line">No internet · halo answers on this phone</string>
+    <string name="z6_offline_stale">From %1$s · may be out of date</string>
+    <string name="z6_offline_when_online">Refresh when online</string>
+    <string name="z6_loading_slow">Still loading — this is taking longer than usual.</string>
+    <string name="z6_brain_getting_ready">Getting the brain ready</string>
+    <string name="z6_brain_progress">%1$s of %2$s · keep halo open</string>
+    <string name="z6_account_title">Use your ChatGPT plan</string>
+    <string name="z6_account_none">No account connected</string>
+    <string name="z6_account_connected">Connected · %1$s</string>
+    <string name="z6_account_access_ok">Subscription access granted</string>
+    <string name="z6_account_no_access">Signed in, but subscription access wasn’t granted to this account. You can choose another way for halo to answer.</string>
+    <string name="z6_account_fetch_models">Fetch models</string>
+    <string name="z6_voices_online_title">Online voices</string>
+    <string name="z6_voices_from_list">Models and voices come from your key’s live list — halo never guesses a voice.</string>
+    <string name="z6_voices_play_test">Play test phrase</string>
+    <string name="z6_article_saved">Saved article text</string>
+    <string name="z6_article_partial">Some article content may be missing. The saved text is shown below.</string>
+    <string name="z6_article_image_missing">This image has not been saved.</string>
+</resources>

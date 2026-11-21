@@ -1,0 +1,11 @@
+<!-- Add inside <application>. The service runs in the app process so it can read HaloAmbientState. -->
+<service
+    android:name="com.halo.app.wallpaper.HaloLiveWallpaperService"
+    android:exported="true"
+    android:label="@string/alive_wallpaper_name"
+    android:permission="android.permission.BIND_WALLPAPER">
+    <intent-filter>
+        <action android:name="android.service.wallpaper.WallpaperService" />
+    </intent-filter>
+    <meta-data android:name="android.service.wallpaper" android:resource="@xml/halo_wallpaper" />
+</service>

@@ -12,6 +12,10 @@ import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.mini.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /** Launches reviewed Halo flows; broadcasts never execute tools. */
 class HaloNativeWidget : AppWidgetProvider() {
@@ -28,8 +32,15 @@ class HaloNativeWidget : AppWidgetProvider() {
     override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, options: Bundle) {
         manager.updateAppWidget(id, views(context, options))
     }
+    override fun onDisabled(context: Context) = stopLearningWatch()
+
     companion object {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        private data class LearningFrame(val id: String, val completed: Int)
+        @Volatile private var learning: LearningFrame? = null
+        private var learningWatch: Job? = null
+        private var listeningWatch: Job? = null
+        @Volatile private var listening = false
         fun refreshAsync(context: Context) {
             runCatching { EverydayWidgetUpdates.enqueue(context.applicationContext) }
                 .onFailure { android.util.Log.w("HaloWidget","Everyday widget refresh needs retry",it) }
@@ -41,10 +52,88 @@ class HaloNativeWidget : AppWidgetProvider() {
                 val ids = manager.getAppWidgetIds(ComponentName(context, HaloNativeWidget::class.java))
                 if (ids.isEmpty()) return
                 ManualDependencyGraph.init(context)
-                ids.forEach { manager.updateAppWidget(it, views(context, manager.getAppWidgetOptions(it))) }
+                startLearningWatch(context.applicationContext)
+                repaint(context)
             }.onFailure { android.util.Log.w("HaloWidget", "Could not update Halo widgets", it) }
         }
-        internal fun views(context: Context, options: Bundle, label: (String) -> String = { context.nativeUi(it) }): RemoteViews {
+
+        private fun startLearningWatch(context: Context) = synchronized(this) {
+            if (listeningWatch?.isActive != true) listeningWatch = scope.launch {
+                com.halo.app.wallpaper.HaloWallpaperActivity.state
+                    .map { it == com.halo.app.wallpaper.HaloAmbient.LISTENING }.distinctUntilChanged().collect { active ->
+                        if (listening != active) {
+                            listening = active
+                            runCatching { repaint(context) }
+                        }
+                    }
+            }
+            if (learningWatch?.isActive == true) return@synchronized
+            learningWatch = scope.launch {
+                val graph = ManualDependencyGraph
+                combine(graph.studyRepository.observeActiveSessions(), graph.studyLessonStore.widgetJourneyRevision,
+                    graph.kidsPreferences.enabled, graph.kidsPreferences.loadedState) { sessions, _, kids, ready ->
+                    if (!ready || kids) return@combine null
+                    val active = sessions.maxByOrNull { it.updatedAtEpochMs }
+                    if (active == null) {
+                        val last = learning?.id?.let { graph.studyRepository.getSession(it) }
+                        if (last?.lifecycle == com.halo.sdk.runtime.study.StudySessionLifecycle.COMPLETED)
+                            LearningFrame(last.id, 5) else null
+                    } else {
+                        val stage = graph.studyLessonStore.loadJourney(active.id)?.stage
+                            ?: com.halo.app.ui.screens.study.LearningStage.START
+                        val count = if (stage == com.halo.app.ui.screens.study.LearningStage.CONTINUE) 5
+                            else com.halo.app.ui.screens.study.learnPathStep(stage).ordinal
+                        LearningFrame(active.id, count)
+                    }
+                }.distinctUntilChanged().collect { current ->
+                    val previous = learning
+                    learning = current
+                    val from = if (current != null && previous != null && previous.id == current.id && previous.completed < current.completed)
+                        previous.completed else null
+                    runCatching { repaint(context, from) }.onFailure {
+                        android.util.Log.w("HaloWidget", "Could not show Study widget progress", it)
+                    }
+                }
+            }
+        }
+
+        private fun stopLearningWatch() = synchronized(this) {
+            learningWatch?.cancel()
+            learningWatch = null
+            listeningWatch?.cancel()
+            listeningWatch = null
+            listening = false
+            learning = null
+        }
+
+        private fun repaint(context: Context, studyMotionFrom: Int? = null) {
+            val manager = AppWidgetManager.getInstance(context)
+            manager.getAppWidgetIds(ComponentName(context, HaloNativeWidget::class.java)).forEach { id ->
+                manager.updateAppWidget(id, renderViews(context, manager.getAppWidgetOptions(id), studyMotionFrom) { context.nativeUi(it) })
+            }
+        }
+
+        private fun studyRing(size: Int, completed: Int, colour: Int, muted: Int): android.graphics.Bitmap {
+            val bitmap = android.graphics.Bitmap.createBitmap(size.coerceAtLeast(1), size.coerceAtLeast(1), android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bitmap)
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = size * 0.09f
+                strokeCap = android.graphics.Paint.Cap.ROUND
+            }
+            val ring = android.graphics.RectF(size * .15f, size * .15f, size * .85f, size * .85f)
+            repeat(5) { index ->
+                paint.color = if (index < completed) colour else muted
+                canvas.drawArc(ring, -86f + index * 72f, 57f, false, paint)
+            }
+            return bitmap
+        }
+
+        internal fun views(context: Context, options: Bundle, label: (String) -> String = { context.nativeUi(it) }): RemoteViews =
+            renderViews(context, options, null, label)
+
+        private fun renderViews(context: Context, options: Bundle, studyMotionFrom: Int?, label: (String) -> String): RemoteViews {
+            if (com.halo.app.privacy.HaloPauseOwner.get(context).isPaused()) return haloPausedWidget(context, null)
             // Modern launchers supply actual portrait/landscape sizes. Render each
             // independently instead of combining unrelated minimum dimensions.
             if (android.os.Build.VERSION.SDK_INT >= 31) {
@@ -53,7 +142,7 @@ class HaloNativeWidget : AppWidgetProvider() {
                     .orEmpty().filter { it.width.isFinite() && it.height.isFinite() && it.width > 0 && it.height > 0 }
                     .distinct().take(16)
                 if (sizes.isNotEmpty()) return RemoteViews(sizes.associateWith { size ->
-                    viewsForSize(context, size.width.toInt(), size.height.toInt(), label)
+                    viewsForSize(context, size.width.toInt(), size.height.toInt(), studyMotionFrom, label)
                 })
             }
             val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 180).coerceAtLeast(120)
@@ -61,9 +150,9 @@ class HaloNativeWidget : AppWidgetProvider() {
             val maxWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, width)
             val maxHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, height)
             return if (maxWidth > width || maxHeight > height) RemoteViews(
-                viewsForSize(context, maxWidth, height, label),
-                viewsForSize(context, width, maxHeight, label),
-            ) else viewsForSize(context, width, height, label)
+                viewsForSize(context, maxWidth, height, studyMotionFrom, label),
+                viewsForSize(context, width, maxHeight, studyMotionFrom, label),
+            ) else viewsForSize(context, width, height, studyMotionFrom, label)
         }
 
         private fun widgetIcon(context: Context, resource: Int, tint: Int, size: Int): android.graphics.Bitmap {
@@ -75,7 +164,7 @@ class HaloNativeWidget : AppWidgetProvider() {
             return bitmap
         }
 
-        private fun viewsForSize(context: Context, requestedWidth: Int, requestedHeight: Int, label: (String) -> String): RemoteViews {
+        private fun viewsForSize(context: Context, requestedWidth: Int, requestedHeight: Int, studyMotionFrom: Int?, label: (String) -> String): RemoteViews {
             val width = requestedWidth.coerceAtLeast(72)
             val height = requestedHeight.coerceAtLeast(72)
             val narrow = width < 240 || context.resources.configuration.fontScale >= 1.2f
@@ -86,7 +175,20 @@ class HaloNativeWidget : AppWidgetProvider() {
                 setImageViewBitmap(R.id.halo_widget_background, nearbyBackground((width*density).toInt(), (height*density).toInt(), density, scheme.surfaceContainerLow.toArgb()))
                 setImageViewBitmap(R.id.halo_widget_orb, nearbyOrb(context, (48*density).toInt()))
                 setContentDescription(R.id.halo_widget_orb, label("Open Mini Halo"))
-                setOnClickPendingIntent(R.id.halo_widget_orb, MiniHaloEntry.pending(context, 8000))
+                val animated = EverydayWidgetMotion.level(context, kids = ManualDependencyGraph.kidsPreferences.enabled.value) ==
+                    com.halo.app.ui.theme.HaloLookMotion.FULL
+                val askAction = MiniHaloEntry.pending(context, 8000)
+                setOnClickPendingIntent(R.id.halo_widget_orb, askAction)
+                setViewVisibility(R.id.halo_widget_orb, if (animated) android.view.View.GONE else android.view.View.VISIBLE)
+                val animatedListening = animated && listening
+                setViewVisibility(R.id.halo_widget_orb_motion, if (animated && !animatedListening) android.view.View.VISIBLE else android.view.View.GONE)
+                setViewVisibility(R.id.halo_widget_orb_listening, if (animatedListening) android.view.View.VISIBLE else android.view.View.GONE)
+                setOnClickPendingIntent(R.id.halo_widget_orb_container, if (animated) askAction else null)
+                setContentDescription(R.id.halo_widget_orb_container, if (animated) label("Open Mini Halo") else null)
+                if (animated && android.os.Build.VERSION.SDK_INT >= 31) {
+                    setColorStateList(if (animatedListening) R.id.halo_widget_orb_listening else R.id.halo_widget_orb_motion, "setIndeterminateTintList",
+                        android.content.res.ColorStateList.valueOf(scheme.primary.toArgb()))
+                }
                 listOf(R.id.halo_widget_title to "halo", R.id.halo_widget_talk to "Talk", R.id.halo_widget_open to "Open Halo").forEach { (id,key) ->
                     setTextViewText(id, label(key)); setTextColor(id, if (id == R.id.halo_widget_talk) scheme.onPrimaryContainer.toArgb() else scheme.onSurface.toArgb())
                 }
@@ -121,8 +223,31 @@ class HaloNativeWidget : AppWidgetProvider() {
                     Triple(R.id.halo_widget_capture_icon, R.drawable.halo_ic_camera, if (android.os.Build.VERSION.SDK_INT >= 31) scheme.primary else scheme.onPrimaryContainer)).forEach { (id, icon, tint) ->
                     setImageViewBitmap(id, widgetIcon(context, icon, tint.toArgb(), (24*density).toInt()))
                 }
-                if (wide) setImageViewBitmap(R.id.halo_widget_study_icon,
-                    widgetIcon(context, R.drawable.halo_ic_study, (if (android.os.Build.VERSION.SDK_INT >= 31) scheme.primary else scheme.onPrimaryContainer).toArgb(), (24*density).toInt()))
+                if (wide) {
+                    val iconTint = (if (android.os.Build.VERSION.SDK_INT >= 31) scheme.primary else scheme.onPrimaryContainer).toArgb()
+                    val sizePx = (24 * density).toInt()
+                    val kids = ManualDependencyGraph.kidsPreferences.enabled.value
+                    val progress = if (kids) null else learning
+                    val latest = if (progress != null) studyRing(sizePx, progress.completed,
+                        iconTint, scheme.outlineVariant.toArgb()) else widgetIcon(context, R.drawable.halo_ic_study, iconTint, sizePx)
+                    val level = EverydayWidgetMotion.level(context, kids = kids)
+                    val transition = studyMotionFrom != null && progress != null
+                    val full = transition && level == com.halo.app.ui.theme.HaloLookMotion.FULL
+                    val gentle = transition && level == com.halo.app.ui.theme.HaloLookMotion.GENTLE
+                    setViewVisibility(R.id.halo_widget_study_icon, if (full || gentle) android.view.View.GONE else android.view.View.VISIBLE)
+                    setViewVisibility(R.id.halo_widget_study_motion, if (full) android.view.View.VISIBLE else android.view.View.GONE)
+                    setViewVisibility(R.id.halo_widget_study_gentle_motion, if (gentle) android.view.View.VISIBLE else android.view.View.GONE)
+                    setImageViewBitmap(R.id.halo_widget_study_icon, latest)
+                    if ((full || gentle) && studyMotionFrom != null) {
+                        val old = if (full) R.id.halo_widget_study_old else R.id.halo_widget_study_gentle_old
+                        val next = if (full) R.id.halo_widget_study_new else R.id.halo_widget_study_gentle_new
+                        val flipper = if (full) R.id.halo_widget_study_motion else R.id.halo_widget_study_gentle_motion
+                        setImageViewBitmap(old, studyRing(sizePx, studyMotionFrom, iconTint, scheme.outlineVariant.toArgb()))
+                        setImageViewBitmap(next, latest)
+                        setDisplayedChild(flipper, 0)
+                        setDisplayedChild(flipper, 1)
+                    }
+                }
                 // Keep complete labels and 48dp targets; short or enlarged widgets hide
                 // secondary actions rather than clipping them below the launcher bounds.
                 val textPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {

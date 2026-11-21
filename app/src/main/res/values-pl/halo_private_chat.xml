@@ -1,0 +1,17 @@
+<resources>
+    <string name="private_chat_title">Prywatny czat</string>
+    <string name="private_chat_status">Prywatnie</string>
+    <string name="private_chat_origin">Prywatny czat · nic się nie zapisuje</string>
+    <string name="private_chat_help">Halo odpowiada na tym telefonie, korzystając tylko z tego, co tutaj wpiszesz lub podyktujesz. Czat znika po jego zamknięciu lub wyjściu z aplikacji.</string>
+    <string name="private_chat_question">Twoje pytanie</string>
+    <string name="private_chat_ask">Zapytaj prywatnie</string>
+    <string name="private_chat_close">Zamknij</string>
+    <string name="private_chat_dictate">Dyktuj</string>
+    <string name="private_chat_finish_dictation">Zakończ dyktowanie</string>
+    <string name="private_chat_listening">Słucham na tym telefonie…</string>
+    <string name="private_chat_transcribing">Zamieniam mowę na tekst…</string>
+    <string name="private_chat_answering">Odpowiadam na tym telefonie…</string>
+    <string name="private_chat_mic_permission">Zezwól na dostęp do mikrofonu, by podyktować pytanie, lub je wpisz.</string>
+    <string name="private_chat_dictation_error">Dyktowanie na tym telefonie jest niedostępne lub mowa była niewyraźna. Spróbuj ponownie albo wpisz pytanie.</string>
+    <string name="private_chat_model_error">Potrzebny jest gotowy model na tym telefonie. Sprawdź ustawienia modelu i spróbuj ponownie.</string>
+</resources>

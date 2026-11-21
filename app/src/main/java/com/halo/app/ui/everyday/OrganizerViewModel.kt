@@ -9,11 +9,13 @@ import com.halo.app.data.notebook.*
 import com.halo.app.data.workspace.WorkspaceQuery
 import com.halo.app.data.workspace.WorkspaceFile
 import com.halo.app.di.ManualDependencyGraph as Graph
+import com.halo.app.everyday.briefing.BriefSettings
 import com.halo.app.everyday.organizer.*
 import com.halo.app.everyday.organizer.android.OrganizerAndroidClock
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.*
+import java.time.temporal.TemporalAdjusters
 
 data class OrganizerLinkChoice(val id: String,val title: String,val kind: String)
 
@@ -24,6 +26,8 @@ data class OrganizerPageState(
     val subtasks: List<OrganizerRecord> = emptyList(),
     val calendarEvents: List<OrganizerRecord> = emptyList(),
     val agenda: List<OrganizerOccurrence> = emptyList(), val conflicts: Set<String> = emptySet(),
+    val weekCounts: Map<LocalDate, Int> = emptyMap(), val agendaDate: LocalDate? = null,
+    val plannerBriefSettings: BriefSettings? = null,
     val receipts: List<DeliveryReceipt> = emptyList(), val notes: List<WorkspaceObject> = emptyList(),
     val overrides: List<OccurrenceOverride> = emptyList(), val selected: OrganizerRecord? = null,
     val missing: Boolean = false, val error: String? = null, val notice: String? = null,
@@ -52,7 +56,14 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
     fun query(value: String) { saved["organizer.query"] = value.take(200) }
     fun day(value: LocalDate) { saved["organizer.day"] = value.toString() }
     fun kind(value: String) { require(value in OrganizerKind.entries.map { it.name } + listOf("AGENDA", "TRASH")); saved["organizer.kind"] = value }
-    fun open(id: String?) { selectedId = id; saved["organizer.selected"] = id; selectedOriginal=null;saved.remove<String>("organizer.occurrence");saved["organizer.occurrenceCleared"]=true;refreshes.tryEmit(Unit) }
+    fun open(id: String?, occurrence: Instant? = null) {
+        selectedId = id
+        selectedOriginal = occurrence.takeIf { id != null }
+        saved["organizer.selected"] = id
+        saved["organizer.occurrence"] = selectedOriginal?.toString()
+        saved["organizer.occurrenceCleared"] = selectedOriginal == null
+        refreshes.tryEmit(Unit)
+    }
     fun retry() { observe() }
     private fun observe() {
         observing?.cancel()
@@ -71,25 +82,41 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
     }
     private suspend fun refresh() {
         val kids = Graph.kidsPreferences.getEnabled()
-        val sharing = if (kids) Graph.briefRepository.settings().childRecordIds else emptySet()
+        val briefSettings = Graph.briefRepository.settings()
+        val sharing = if (kids) briefSettings.childRecordIds else emptySet()
         val rows = Graph.organizerRepository.records(includeDeleted = !kids).filter { !kids || it.id in sharing }
         val current = selectedId?.let { id -> rows.find { it.id == id && it.deletedAt == null } }
         val zone = ZoneId.systemDefault(); val date = LocalDate.parse(day.value)
         val from = date.atStartOfDay(zone).toInstant(); val until = date.plusDays(1).atStartOfDay(zone).toInstant()
+        val week = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val weekDays = List(7) { week.plusDays(it.toLong()) }
+        val weekStart = week.atStartOfDay(zone).toInstant()
+        val weekEnd = week.plusWeeks(1).atStartOfDay(zone).toInstant()
         val active = rows.filter { it.deletedAt == null }
         val exceptions = active.filter { it.time != null }.associate { it.id to Graph.organizerRepository.overrides(it.id) }
         selectedOriginal?.let { saved["organizer.occurrence"]=it.toString() }
         val selectedOccurrence=if(current != null && selectedOriginal != null) OrganizerRecurrence.exact(current,exceptions[current.id].orEmpty(),selectedOriginal!!,zone) else null
         val words = query.value.lowercase(java.util.Locale.ROOT).split(Regex("\\s+")).filter(String::isNotBlank)
         fun matches(row: OrganizerRecord) = words.all { it in "${row.title}\n${row.details}\n${row.location}".lowercase(java.util.Locale.ROOT) }
-        val allAgenda = withContext(Dispatchers.Default) {
+        val weekAgenda = withContext(Dispatchers.Default) {
             val occurrences = mutableListOf<OrganizerOccurrence>()
             active.forEach { record ->
                 ensureActive()
-                occurrences += OrganizerRecurrence.between(record, exceptions[record.id].orEmpty(), from, until, zone)
-                require(occurrences.size <= 10000)
+                val visibleCompletedTask = record.kind == OrganizerKind.TASK && record.status == OrganizerStatus.COMPLETED && record.repeat == null
+                val scheduled = if (visibleCompletedTask) record.copy(status = OrganizerStatus.ACTIVE) else record
+                val entries = OrganizerRecurrence.between(scheduled, exceptions[record.id].orEmpty(), weekStart, weekEnd, zone)
+                occurrences += if (visibleCompletedTask) entries.map { it.copy(record = record, completed = true) } else entries
+                require(occurrences.size <= 70_000)
             }
             occurrences.sortedBy { it.start }
+        }
+        fun onDay(row: OrganizerOccurrence, start: Instant, end: Instant) =
+            row.start < end && (row.end?.let { it > start } ?: (row.start >= start))
+        val allAgenda = weekAgenda.filter { onDay(it, from, until) }
+        val weekCounts = weekDays.associateWith { tile ->
+            val start = tile.atStartOfDay(zone).toInstant()
+            val end = tile.plusDays(1).atStartOfDay(zone).toInstant()
+            weekAgenda.count { !it.completed && onDay(it, start, end) }
         }
         val receipts = current?.let { Graph.organizerRepository.receipts(it.id) }.orEmpty()
         val notes = if (kids) emptyList() else Graph.workspaceRepository.observe(WorkspaceQuery(types = setOf(WorkspaceObjectType.NOTE))).first()
@@ -107,7 +134,9 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
             calendarEvents = if (kids) emptyList() else active.filter { it.kind == OrganizerKind.EVENT },
             subtasks = current?.let { parent -> active.filter { it.parentId == parent.id } }.orEmpty(),
             trash = if (kids) emptyList() else rows.filter { it.deletedAt != null && matches(it) },
-            agenda = allAgenda.filter { matches(it.record) }, conflicts = OrganizerRecurrence.conflicts(allAgenda).keys,
+            agenda = allAgenda.filter { matches(it.record) }, agendaDate = date, weekCounts = weekCounts,
+            plannerBriefSettings = briefSettings.takeUnless { kids },
+            conflicts = OrganizerRecurrence.conflicts(allAgenda.filterNot { it.completed }).keys,
             receipts = receipts, selected = current, missing = selectedId != null && current == null,
             selectedOccurrence=selectedOccurrence,occurrenceMissing=current != null && selectedOriginal != null && selectedOccurrence==null,
             overrides = current?.let { exceptions[it.id] }.orEmpty(), notes = notes,
@@ -142,16 +171,30 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
             finally { mutable.update { it.copy(busy = false, loading = false) } }
         }
     }
-    fun new(kind: OrganizerKind, parentId: String? = null, sourceTitle: String? = null, sourceUrl: String? = null, sourceLabel: String? = null) {
+    fun new(kind: OrganizerKind, parentId: String? = null, sourceTitle: String? = null, sourceUrl: String? = null,
+        sourceLabel: String? = null, sourceTime: java.time.LocalTime? = null) {
         if (state.value.kids || state.value.busy) return
         val now = Instant.ofEpochMilli(System.currentTimeMillis())
-        val start = LocalDateTime.now().plusHours(1).withSecond(0).withNano(0)
+        val localNow = LocalDateTime.now()
+        val scannedStart = sourceTime?.let { time -> localNow.toLocalDate().atTime(time) }
+        val start = if (scannedStart == null) localNow.plusHours(1).withSecond(0).withNano(0)
+            else if (scannedStart > localNow) scannedStart else scannedStart.plusDays(1)
         val record = OrganizerRecord(java.util.UUID.randomUUID().toString(), kind, "New item", time =
             if (kind in setOf(OrganizerKind.TIMER, OrganizerKind.TASK)) null else OrganizerTime(start,
                 if (kind == OrganizerKind.EVENT) start.plusHours(1) else null, ZoneId.systemDefault().id),
             timer = if (kind == OrganizerKind.TIMER) TimerState(300_000, 300_000) else null,
             parentId = parentId, sourceUrl = sourceUrl, sourceLabel = sourceLabel, createdAt = now)
-        draft(OrganizerDraft(record, true, title = sourceTitle.orEmpty()))
+        draft(OrganizerDraft(record, true, title = sourceTitle.orEmpty(),
+            spokenReview = sourceTime != null, spokenDateGuess = sourceTime != null))
+    }
+    internal fun previewSpokenReminder(candidate: PlannerReminderCandidate) {
+        if (state.value.kids || state.value.busy || state.value.draft != null) return
+        val record = OrganizerRecord(java.util.UUID.randomUUID().toString(), OrganizerKind.REMINDER,
+            candidate.title.ifBlank { "New item" }, time = OrganizerTime(candidate.start, null, ZoneId.systemDefault().id),
+            repeat = candidate.weekday?.let { RepeatRule(RepeatFrequency.WEEKLY, 1, setOf(it)) },
+            notifyBeforeMinutes = candidate.lead, createdAt = Instant.now())
+        draft(OrganizerDraft(record, true, title = candidate.title, spokenReview = true,
+            spokenTimeGuess = candidate.timeGuess, spokenDateGuess = candidate.dateGuess))
     }
     fun edit(record: OrganizerRecord, occurrence: OrganizerOccurrence? = null) = work {
         val base = Graph.organizerUseCases.requireCurrent(record.id, record.version)

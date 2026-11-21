@@ -1,0 +1,11 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/halo_everyday_widget_background" android:orientation="vertical"
+    android:paddingHorizontal="12dp" android:paddingVertical="8dp" android:gravity="center_vertical">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:fontFamily="@font/sora_variable" android:textSize="12sp" android:maxLines="1"
+        android:textColor="@color/everyday_widget_metadata" android:text="@string/widget_toolkit_scan" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:fontFamily="@font/sora_variable" android:textSize="17sp" android:maxLines="1"
+        android:textColor="@color/everyday_widget_text" android:text="@string/widget_toolkit_scan_preview" />
+</LinearLayout>

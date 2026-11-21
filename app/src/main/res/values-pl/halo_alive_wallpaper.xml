@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_wallpaper_name">Animowana tapeta halo</string>
+    <string name="alive_wallpaper_description">Sześć ruchomych wzorów pasujących do Twojego motywu.</string>
+    <string name="alive_wallpaper_title">Tapeta · %1$s</string>
+    <string name="alive_wallpaper_see_at">Zobacz o danej porze</string>
+    <string name="alive_wallpaper_now">Teraz</string>
+    <string name="alive_wallpaper_morning">Rano</string>
+    <string name="alive_wallpaper_day">W dzień</string>
+    <string name="alive_wallpaper_evening">Wieczór</string>
+    <string name="alive_wallpaper_night">Noc</string>
+    <string name="alive_wallpaper_in_app">Pokaż w halo</string>
+    <string name="alive_wallpaper_react">Reaguje na halo</string>
+    <string name="alive_wallpaper_calm">Spokojniej w nocy</string>
+    <string name="alive_wallpaper_restore">Przywróć poprzednie ustawienia</string>
+    <string name="alive_wallpaper_set_android">Otwórz podgląd tapety Androida</string>
+    <string name="alive_wallpaper_drift">Płynące halo</string>
+    <string name="alive_wallpaper_aurora">Zorza</string>
+    <string name="alive_wallpaper_tide">Przypływ</string>
+    <string name="alive_wallpaper_arc">Łuk dnia</string>
+    <string name="alive_wallpaper_constellation">Konstelacja</string>
+    <string name="alive_wallpaper_paper">Papier</string>
+</resources>

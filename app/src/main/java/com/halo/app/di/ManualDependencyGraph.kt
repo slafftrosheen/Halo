@@ -98,7 +98,11 @@ object ManualDependencyGraph {
         RuntimeStartupTrace.measure("graph.init") { applicationContext = context.applicationContext }
     }
 
-    val infra by lazy { RuntimeStartupTrace.measure("graph.infra") { InfrastructureGraph() } }
+    internal val haloPause get() = com.halo.app.privacy.HaloPauseOwner.get(applicationContext)
+    internal fun isHaloPaused() = ::applicationContext.isInitialized && haloPause.isPaused()
+    val infra by lazy { RuntimeStartupTrace.measure("graph.infra") {
+        InfrastructureGraph(allowWork = { !haloPause.isPaused() })
+    } }
     val storageLayout by lazy { haloStorageLayout(applicationContext) }
     val secretStore by lazy { com.halo.app.security.AndroidKeystoreSecretStore(storageLayout) }
     private val preferenceStorage by lazy { com.halo.host.android.AndroidStorage(applicationContext) }
@@ -169,12 +173,13 @@ object ManualDependencyGraph {
             }).adapters()
         com.halo.app.everyday.collectors.CollectorRegistry(local + listOf(
             com.halo.app.everyday.collectors.CollectorKind.FEED, com.halo.app.everyday.collectors.CollectorKind.WEATHER,
-            com.halo.app.everyday.collectors.CollectorKind.ALERTS, com.halo.app.everyday.collectors.CollectorKind.PUBLIC_CALENDAR
+            com.halo.app.everyday.collectors.CollectorKind.ALERTS, com.halo.app.everyday.collectors.CollectorKind.PUBLIC_CALENDAR,
+            com.halo.app.everyday.collectors.CollectorKind.AIR_QUALITY
         ).map { kind -> com.halo.app.everyday.collectors.PublicHttpCollector(kind, remoteDispatchPolicy) })
     }
     private val collectorCoordinatorOwner: Lazy<com.halo.app.everyday.collectors.CollectorCoordinator> = lazy {
         com.halo.app.everyday.collectors.CollectorCoordinator(collectorRepository, collectorRegistry, remoteDispatchPolicy,
-            enrich = articleContentCollector::enrich)
+            enrich = articleContentCollector::enrich, allowRefresh = { !haloPause.isPaused() })
     }
     val articleContentStore by lazy { com.halo.app.everyday.collectors.ArticleContentStore(java.io.File(applicationContext.filesDir, "source-content")) }
     private val articleContentCollector by lazy {
@@ -279,6 +284,7 @@ object ManualDependencyGraph {
     val privacyModes by lazy { com.halo.app.ai.PrivacyModeStore(securedStorage).apply {
         remoteAllowed = { kidsPreferences.loadedState.value }
         configuredProviders = { configuredRemoteProviderIds() }
+        allowDispatch = { !haloPause.isPaused() }
     } }
     val remoteDispatchPolicy by lazy { privacyModes.also { policy ->
         val kids = kidsPreferences
@@ -613,7 +619,8 @@ object ManualDependencyGraph {
         RoomContinuationWatchRepository(appDatabase.continuationWatchDao())
     }
     val continuationWatchRuntime by lazy {
-        ContinuationWatchRuntime(automationRuntime.registry, followUpRepository, attentionController, agentRunCoordinator)
+        ContinuationWatchRuntime(automationRuntime.registry, followUpRepository, attentionController, agentRunCoordinator,
+            allowMatch = { !haloPause.isPaused() })
     }
     val workspaceRepository by lazy { RoomWorkspaceRepository(appDatabase.notebookDao()) }
     val workspaceFileVersions by lazy { com.halo.app.data.workspace.WorkspaceFileVersions(workspaceFileRepository, workspaceRepository) }
@@ -670,7 +677,7 @@ object ManualDependencyGraph {
     val reflectionCoordinator by lazy { com.halo.app.learning.ReflectionCoordinator(appDatabase,agentRunStore,personalLearning,::learningPreferences,
         routineExecutor.environmentSnapshot, { attentionContextProvider.snapshot().let { it.activeInteraction || it.activeSpeechSession } },agentRunCoordinator.activeRuns,
         com.halo.app.learning.LocalReflectionModel(aiProviderRouter,infra.resourceLeaseManager) { attentionContextProvider.snapshot().let { it.activeInteraction || it.activeSpeechSession } },
-        learnedProcedureStore, { toolRegistry.descriptor(it) }, { eventBus.publish(it) }, { episodes ->
+        learnedProcedureStore, { toolRegistry.descriptor(it) }, { eventBus.publish(it) }, pause = haloPause, capabilityPatterns = { episodes ->
             // Registry evidence and fingerprinted artifact references are prerequisites, never source-class existence.
             val packs=kotlinx.coroutines.withTimeoutOrNull(2_000) { com.halo.app.capture.inspectMultimodal(aiProviderRouter).packs }.orEmpty()
             val rejected=episodes.take(30).mapNotNull { it.runId?.let { id -> agentRunStore.get(com.halo.runtime.cognition.agent.AgentRunId(id)) } }
@@ -847,11 +854,11 @@ object ManualDependencyGraph {
     val runResumptionCoordinator: com.halo.runtime.cognition.interaction.RunResumptionCoordinator by lazy {
         com.halo.runtime.cognition.interaction.DefaultRunResumptionCoordinator(
             agentRunStore = agentRunStore,
-            resume = { runId -> cognitiveSession.resume(runId) },
+            resume = { runId -> if (!isHaloPaused()) cognitiveSession.resume(runId) },
         )
     }
     val interactionResponseHandler: com.halo.runtime.cognition.interaction.InteractionResponseHandler by lazy {
-        com.halo.runtime.cognition.interaction.DefaultInteractionResponseHandler(
+        val handler = com.halo.runtime.cognition.interaction.DefaultInteractionResponseHandler(
             surfaceStore = interactionSurfaceStore,
             runStore = agentRunStore,
             resumeRun = { runId -> runResumptionCoordinator.requestResume(runId) },
@@ -875,6 +882,21 @@ object ManualDependencyGraph {
                 }
             },
         )
+        object : com.halo.runtime.cognition.interaction.InteractionResponseHandler {
+            override suspend fun respond(response: com.halo.runtime.cognition.interaction.InteractionResponse) =
+                whileResponding { handler.respond(response) }
+
+            override suspend fun respond(submission: com.halo.runtime.cognition.interaction.InteractionResponseSubmission) =
+                whileResponding { handler.respond(submission) }
+
+            private suspend fun whileResponding(
+                action: suspend () -> com.halo.runtime.cognition.interaction.InteractionResponseResult,
+            ): com.halo.runtime.cognition.interaction.InteractionResponseResult = try {
+                haloPause.whileActive(action)
+            } catch (_: com.halo.app.privacy.HaloPausedCancellation) {
+                com.halo.runtime.cognition.interaction.InteractionResponseResult.Rejected("Halo is paused")
+            }
+        }
     }
     val devicePresenceRepository by lazy { com.halo.runtime.cognition.device.InMemoryDevicePresenceRepository() }
     val devicePresenceBridge by lazy { com.halo.app.embodiment.DevicePresenceBridge(devicePresenceRepository, deviceRegistry, deviceSessionManager, infra.scope) }
@@ -922,7 +944,7 @@ object ManualDependencyGraph {
                 availableProviders = aiProviderRouter.getAllProviders().filter { it.status.value.state == com.halo.sdk.provider.ProviderStatus.State.READY }.map { it.id }.toSet(),
                 userMode = attentionContextProvider.snapshot().userMode, screenInteractive = power.isInteractive,
                 thermalLimited = android.os.Build.VERSION.SDK_INT >= 29 && power.currentThermalStatus >= android.os.PowerManager.THERMAL_STATUS_SEVERE)
-        }, attention = attentionController, currentlyAllowed = { tool ->
+        }, attention = attentionController, pause = haloPause, currentlyAllowed = { tool ->
             val skill = when (tool) {
                 com.halo.app.notification.NotificationDigestTool.ID -> "halo.notifications"
                 com.halo.app.automation.RoutineMessageTool.ID -> "halo.automation"
@@ -1238,6 +1260,23 @@ object ManualDependencyGraph {
                     }) {
                         foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
                     }),
+                com.halo.app.di.tools.host.AlbumFindTools {
+                    foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
+                com.halo.app.di.tools.host.HaloRecordControls {
+                    foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
+                com.halo.app.di.tools.host.FollowMeTools(followMePreferences) {
+                    check(foregroundUnlocked() && !isHaloPaused())
+                    com.halo.app.ui.toolkit.requireAdultToolkit(applicationContext)
+                },
+                com.halo.app.di.tools.host.HaloPauseTools(haloPause) {
+                    check(foregroundUnlocked())
+                    com.halo.app.ui.toolkit.requireAdultToolkit(applicationContext)
+                },
+                com.halo.app.di.tools.host.FocusTools(applicationContext) {
+                    foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
                 com.halo.app.di.tools.EverydayToolExecutor(organizerUseCases,worldClocks,offlineCities,collectorRepository,collectorCoordinator,collectorPreview,
                     briefRepository,briefService,readBrief={briefReadAloud.read(it)},stopReading={briefReadAloud.stop()},
                     clearSource={id,version -> collectorRepository.clearSnapshot(id,version)},
@@ -1757,9 +1796,24 @@ object ManualDependencyGraph {
             { aiProviderRouter.getAllProviders().filterIsInstance<com.halo.providers.litert.LiteRtLocalProvider>().firstOrNull() }, healthTracker = localInferenceRuntimeHealthTracker)
     }
     val localBenchmarkProfileRecorder by lazy { com.halo.app.data.models.LocalBenchmarkProfileRecorder(modelRuntimeProfileRepository, localInferenceProfileSource, deviceRuntimeIdentity) }
+    val followMePreferences by lazy { com.halo.app.continuity.FollowMePreferences(applicationContext) }
     val wearEndpointBridge by lazy {
         com.halo.app.wear.AndroidWearEndpointBridge(applicationContext, interactionSurfaceStore, interactionResponseHandler, infra.scope,
-            enabled = { voiceExperienceSettings.state.value.wearNearbyInteraction }, events = eventBus)
+            enabled = { voiceExperienceSettings.state.value.wearNearbyInteraction }, events = eventBus,
+            follow = followMePreferences.state, continuity = { interactionContinuity.state },
+            audienceAllowed = {
+                kidsPreferences.loadedState.value && !kidsPreferences.enabled.value &&
+                    applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked == false &&
+                    !com.halo.app.privacy.HaloPauseOwner.get(applicationContext).isPaused()
+            },
+            canPresentReply = { id ->
+                // Ordinary chat replies may follow. Tool receipts and approval-driven results stay with the phone review.
+                id == null || agentRunStore.get(id)?.steps?.none { step ->
+                    step is com.halo.runtime.cognition.agent.AgentStep.ToolDispatched ||
+                        step is com.halo.runtime.cognition.agent.AgentStep.ToolInvocationPrepared ||
+                        (step as? com.halo.runtime.cognition.agent.AgentStep.InputRequested)?.input is com.halo.runtime.cognition.agent.AgentInputRequest.Approval
+                } == true
+            })
     }
     val audioAccessoryRegistry by lazy { com.halo.app.audio.AndroidAudioAccessoryRegistry(applicationContext) }
     val nativeDeviceStatusActions by lazy {
@@ -1801,6 +1855,11 @@ object ManualDependencyGraph {
         com.halo.runtime.cognition.continuity.InteractionContinuityCoordinator(agentRunStore, agentRunCoordinator,
             isReady = { continuityEndpoints.ready(it) }, events = eventBus,
             playbackActive = { id -> haloSpeechOutputCoordinator.playbackActive.value && haloSpeechOutputCoordinator.session.affinity.value?.interactionId == id },
+            nextPresentation = { origin ->
+                if (origin == com.halo.runtime.cognition.continuity.InteractionEndpoint.Phone && followMePreferences.state.value.enabled)
+                    wearEndpointBridge.foregroundEndpoint()
+                else null
+            },
             applyAudioHandoff = { id, delivery ->
                 val audio = haloSpeechOutputCoordinator.session
                 if (audio.affinity.value?.interactionId != id) {
@@ -2123,7 +2182,7 @@ object ManualDependencyGraph {
     val speechDiagnosticRunner by lazy {
         val root = com.halo.app.storage.haloStorageLayout(applicationContext).speechModels
         com.halo.app.speech.diagnostics.SpeechDiagnosticRunner(
-            capture = { duration, finish -> hostGraph.audioPerceptionEngine.captureDiagnosticAudio(duration, finish) },
+            capture = { duration, finish -> haloPause.whileActive { hostGraph.audioPerceptionEngine.captureDiagnosticAudio(duration, finish) } },
             selected = providers.speechRecognition as com.halo.sdk.provider.BufferedSpeechRecognitionProvider,
             estimator = hostGraph.speechActivityEstimator,
             factory = { target ->
@@ -2321,6 +2380,7 @@ object ManualDependencyGraph {
             resourceLeaseManager = infra.resourceLeaseManager,
             defaultLanguage = { appLanguagePreferences.language.value.tag },
             voiceSettings = { voiceExperienceSettings.state.value },
+            allowOutput = { !isHaloPaused() },
             cancelGeneration = { cognitiveSession.cancel() },
         )
     }
@@ -2328,6 +2388,7 @@ object ManualDependencyGraph {
     fun canCaptureDuringReply(transactionId: String): Boolean = com.halo.app.audio.speechReplyCaptureSafe(
         haloSpeechOutputCoordinator.session.state.value, transactionId, hostGraph.phoneAudioSource.echoCancellationActive)
     fun startAndroidSpeaker() {
+        if (isHaloPaused()) return
         scopedSpeechMediaControls
         speechOutputCoordinatorDelegate.value.start()
     }

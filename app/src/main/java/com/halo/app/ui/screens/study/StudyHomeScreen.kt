@@ -112,18 +112,20 @@ fun StudyHomeScreen(
             onDismiss = { picker = false },
         )
     }
-    val startNewLesson: () -> Unit = {
-                        model.resetDraft()
-                        topic = ""
-                        assignment = ""
-                        language = ""
-                        strongest = ""
-                        level = StudyLearnerLevel.ADULT
-                        style = StudySupportStyle.GUIDED
-                        policy = StudyKnowledgePolicy.SOURCE_ONLY
-                        setupStep = 0
-                        newLesson = true
+    fun startLessonSetup(firstStep: Int) {
+        model.resetDraft()
+        topic = ""
+        assignment = ""
+        language = ""
+        strongest = ""
+        level = StudyLearnerLevel.ADULT
+        style = StudySupportStyle.GUIDED
+        policy = StudyKnowledgePolicy.SOURCE_ONLY
+        setupStep = firstStep
+        newLesson = true
     }
+    val startNewLesson: () -> Unit = { startLessonSetup(0) }
+    val startWithMaterial: () -> Unit = { startLessonSetup(1) }
     val hasLearningInput = topic.isNotBlank() || selected.isNotEmpty()
     val setupActive = newLesson
     val setupLabels = listOf("Goal", "Material", "Style", "Options")
@@ -174,7 +176,10 @@ fun StudyHomeScreen(
             else -> null
         })
     BindShellPageActions(pageOwner, buildList {
-        if (!setupActive) add(ShellPageAction("page.study.new", "New lesson", HaloGlyph.QUESTION, !busy) { startNewLesson() })
+        if (!setupActive) {
+            add(ShellPageAction("page.study.new", "Learn a topic", HaloGlyph.QUESTION, !busy) { startNewLesson() })
+            add(ShellPageAction("page.study.homework", "My homework or notes", HaloGlyph.FILE, !busy) { startWithMaterial() })
+        }
         if (setupActive) add(ShellPageAction("page.study.next", if (setupStep < 3) "Continue" else "Start lesson", HaloGlyph.NEXT, canContinueSetup, continueSetup))
         if (setupActive && setupStep == 1) add(ShellPageAction("page.study.material", "Material", HaloGlyph.FILE, !busy) { picker = true })
         if (setupActive && setupStep == 3) add(ShellPageAction("page.study.options", "Age, language & learning options", HaloGlyph.SETTINGS,
@@ -236,15 +241,12 @@ fun StudyHomeScreen(
                 if (reads.selectionRestoreFailed) TextButton(onClick = startNewLesson, enabled = !busy) { Text(uiText("New lesson")) }
                 else TextButton(onClick = model::retryReads, enabled = !busy) { Text(uiText("Retry")) }
             }
-            if (sessions.isEmpty() && !setupActive && reads.libraryReady) item(key = "empty") {
-                StudyEmptyHome(startNewLesson)
-            }
             if (due.isNotEmpty() && !newLesson) item(key = "review_due") {
                 if (dueBySession.size == 1) {
                     StudyReviewEntry(due.size, enabled = !busy,
                         onStart = { onReview(due.first().sessionId) })
                 } else {
-                    Text(uiText("Ready to remember"), style = MaterialTheme.typography.titleMedium)
+                    Text(uiText("Keep practising"), style = MaterialTheme.typography.titleMedium)
                     Text(uiText("Choose a lesson to review"), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     val groups = if (showAllDue) dueBySession.entries.toList() else dueBySession.entries.take(3)
@@ -263,6 +265,10 @@ fun StudyHomeScreen(
                 }
             }
 
+            if (!setupActive && reads.libraryReady) item(key = "choose-lesson") {
+                StudyChooseLesson(!busy, onTopic = startNewLesson, onMaterial = startWithMaterial)
+            }
+
             if (sessions.isNotEmpty() && !newLesson) {
                 item(key = "resume_title") {
                     Text(uiText("Pick up where you left off").uppercase(),
@@ -276,8 +282,7 @@ fun StudyHomeScreen(
                     StudyResumeCard(
                         title = session.goal?.takeIf { it.isNotBlank() } ?: uiText("Study from a note"),
                         subtitle = summary?.learningStage?.let { stage ->
-                            uiText("Step %1\$d of %2\$d · %3\$s", stage.ordinal + 1,
-                                LearningStage.entries.size, uiText(stage.displayLabel()))
+                            learnPathLabel(stage, finished = session.lifecycle == StudySessionLifecycle.COMPLETED)
                         } ?: uiText("Continue learning"),
                         onContinue = { onResume(session.id) },
                     )
@@ -291,16 +296,6 @@ fun StudyHomeScreen(
             }
 
             item(key = "new_lesson_entry") {
-                if (sessions.isNotEmpty() && !newLesson) FilledTonalButton(
-                    onClick = startNewLesson,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Icon(painterResource(R.drawable.halo_ic_add), null, Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(uiText("Start a new lesson"))
-                }
                 if (setupActive) Column(
                     Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {

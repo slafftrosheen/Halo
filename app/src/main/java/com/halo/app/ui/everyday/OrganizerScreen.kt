@@ -25,6 +25,11 @@ import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.presence.*
 import com.halo.app.ui.zone5.*
 import com.halo.app.ui.screens.notebook.ToolZoneHeader
+import com.halo.app.ui.zone6.Choose
+import com.halo.app.ui.zone6.rememberZone6PageSetting
+import com.halo.app.ui.theme.HaloViewMode
+import com.halo.app.ui.theme.rememberVisualPreferences
+import com.halo.app.ui.toolkit.HaloPlannerHandoff
 import kotlinx.coroutines.*
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -44,6 +49,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
     val zone = ZoneId.systemDefault()
+    val selectedDay = LocalDate.parse(day)
     val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
     val boot = remember(context) { OrganizerAndroidClock.bootId(context) }
     val now by produceState(Instant.now(), lifecycle, kind, state.selected?.timer?.startedAt) {
@@ -69,19 +75,47 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     var exportVersions by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
     var dayInput by rememberSaveable(day) { mutableStateOf(day) }
     var adding by rememberSaveable { mutableStateOf(false) }
+    var speaking by rememberSaveable { mutableStateOf(false) }
+    val layout = rememberZone6PageSetting("planner.view")
+    val defaultLayout = if (rememberVisualPreferences().viewMode == HaloViewMode.EASY) "easy" else "week"
+    var layoutDraft by rememberSaveable { mutableStateOf<String?>(null) }
+    val effectiveLayout = layout.value ?: defaultLayout
+    val easy = (layoutDraft ?: effectiveLayout) == "easy"
+    val today = now.atZone(zone).toLocalDate()
+    val agendaDay = if (easy) today else selectedDay
+    val activeAgenda = state.agenda.takeIf { state.agendaDate == agendaDay }.orEmpty()
     var deleting by remember { mutableStateOf<OrganizerRecord?>(null) }
     var purging by remember { mutableStateOf<OrganizerRecord?>(null) }
     var occurrence by remember { mutableStateOf<OrganizerOccurrence?>(null) }
     val canShow = familyReady && familyEnabled == state.kids
     val current = state.selected.takeIf { canShow }
-    LaunchedEffect(kids) { if (kids) { adding = false; deleting = null; purging = null; occurrence = null } }
+    LaunchedEffect(kids) { if (kids) { adding = false; speaking = false; layoutDraft = null; deleting = null; purging = null; occurrence = null } }
+    LaunchedEffect(effectiveLayout, today) {
+        if (effectiveLayout == "easy") {
+            model.day(today)
+            model.kind("AGENDA")
+            model.query("")
+        }
+    }
+    val pendingHandoff by HaloPlannerHandoff.pending.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingHandoff, kids, state.loading, state.busy, state.draft) {
+        val handoff = pendingHandoff ?: return@LaunchedEffect
+        if (!kids && !state.loading && !state.busy && state.draft == null) {
+            val draft = HaloPlannerHandoff.take(handoff) ?: return@LaunchedEffect
+            model.new(OrganizerKind.REMINDER, sourceTitle = draft.title, sourceLabel = draft.source, sourceTime = draft.time)
+        }
+    }
     val owner = ShellPageOwner("everyday_organizer", objectId = current?.id,
-        sourceIdentity = "${current?.id}:${current?.version}:$kind:$day:${state.busy}:${state.draft != null}:$kids",
-        helpDescription = uiText("Keep your plan on this phone. Saved items, delivery permissions and actual notification outcomes are shown separately."),
-        guidanceBlocked = state.loading || state.busy || state.draft != null,
+        sourceIdentity = "${current?.id}:${current?.version}:$kind:$day:${state.busy}:${state.draft != null}:$kids:$easy",
+        helpDescription = uiText("Choose a day to see its plan. Add by talking, then check the time and repeats before you save."),
+        guidanceBlocked = state.loading || state.busy || state.draft != null || speaking || layoutDraft != null,
         defaultDisabledActionReason = uiText(if (kids) "A parent manages the saved plan." else "Wait for the current action to finish."))
     BindShellPageActions(owner, listOf(
         ShellPageAction("page.organizer.add", uiText("Add item"), HaloGlyph.CALENDAR, !kids && !state.busy) { adding = true },
+        ShellPageAction("page.organizer.speak", uiText("Add by talking"), HaloGlyph.LISTEN, !kids && !state.busy) { speaking = true },
+        ShellPageAction("page.organizer.appearance", uiText("Planner view"), HaloGlyph.APPEARANCE, !kids && !state.busy) {
+            layoutDraft = effectiveLayout
+        },
         ShellPageAction("page.organizer.edit", uiText(if (current?.repeat != null) "Edit entire series" else "Edit item"), HaloGlyph.NOTE,
             current != null && !kids && !state.busy) { current?.let { model.edit(it) } },
         ShellPageAction("page.organizer.undo", uiText("Undo removal"), HaloGlyph.PREVIOUS, state.undoId != null && !kids && !state.busy) { model.undo() },
@@ -95,12 +129,13 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
         },
     ))
     if (LocalShellHaloOrb.current) BindShellUtilityBand(owner) {
-        ToolZoneHeader(uiText("Organizer"), { if (current != null || state.missing) model.open(null) else onBack() })
+        ToolZoneHeader(uiText("Planner"), { if (current != null || state.missing) model.open(null) else onBack() })
     }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
-            Zone5PageHeading(uiText("Organizer"), uiText(if (kids) "The plan shared with you." else "Your calendar, tasks and time, saved on this phone."))
+            Zone5PageHeading(uiText(if (easy && current == null) "Today" else "Planner"),
+                uiText(if (kids) "The plan shared with you." else "Your plans, on this phone."))
             if (!LocalShellHaloOrb.current) TextButton({ if (current != null || state.missing) model.open(null) else onBack() }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Back")) }
         }
         if (state.loading || state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
@@ -110,7 +145,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
             Text(uiText("%1\$d events added; %2\$d existing event IDs kept.", result.added.size, result.alreadyPresent.size))
         } }
         if (state.undoId != null && !kids) item { TextButton(model::undo, enabled = !state.busy) { Text(uiText("Undo removal")) } }
-        if (state.missing) item { Text(uiText("This item is no longer available here. It may have been removed or its sharing changed.")); TextButton({ model.open(null) }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Open organizer")) } }
+        if (state.missing) item { Text(uiText("This item is no longer available here. It may have been removed or its sharing changed.")); TextButton({ model.open(null) }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Open Planner")) } }
         if (current != null && canShow) {
             if(state.occurrenceMissing) item { EverydayMessage("This occurrence changed or was cancelled. The series details are shown below.",true) }
             state.selectedOccurrence?.let { selected -> item {
@@ -221,6 +256,19 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
             }
         } else if (!state.missing && canShow) {
             item {
+                if (!easy) PlannerWeek(selectedDay, today, state.weekCounts, locale, model::day)
+                if (easy || kind in setOf("AGENDA", "EVENT")) {
+                    val readRows = activeAgenda.filter { easy || kind == "AGENDA" || it.record.kind == OrganizerKind.EVENT }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (!kids) FilledTonalButton({ speaking = true }, enabled = !state.busy,
+                            modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Add by talking")) }
+                        PlannerReadDay(agendaDay, readRows, locale, zone, !state.loading && state.agendaDate == agendaDay)
+                    }
+                }
+                if (!kids) TextButton({ layoutDraft = effectiveLayout }, enabled = !state.busy,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText(if (easy) "Easy view settings" else "Planner view")) }
+            }
+            if (!easy) item {
                 OutlinedTextField(query, model::query, label = { Text(uiText("Search your plan")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     (listOf("AGENDA" to "Agenda") + OrganizerKind.entries.map { it.name to organizerKindLabel(it) } + if (kids) emptyList() else listOf("TRASH" to "Trash")).forEach { (key, label) ->
@@ -236,27 +284,42 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                     }
                 }
             }
-            if (kind in setOf("AGENDA", "EVENT")) {
-                val rows = state.agenda.filter { kind == "AGENDA" || it.record.kind == OrganizerKind.EVENT }
-                if (!state.loading && rows.isEmpty()) item { Text(uiText("Nothing planned for this day. Add an item or choose another date.")) }
+            if (easy || kind in setOf("AGENDA", "EVENT")) {
+                val rows = activeAgenda.filter { easy || kind == "AGENDA" || it.record.kind == OrganizerKind.EVENT }
+                if (!easy) item {
+                    Text(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale).format(agendaDay),
+                        style = MaterialTheme.typography.titleMedium)
+                }
+                if (!state.loading && state.agendaDate == agendaDay && rows.isEmpty()) item {
+                    Text(uiText(if (easy || kids) "Nothing planned for this day." else "Nothing planned for this day. Add an item or choose another date."))
+                }
                 items(rows, key = { it.key }) { row ->
-                    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(row.record.title, style = MaterialTheme.typography.titleMedium)
-                            Text(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).withZone(zone).format(row.start))
-                            if (row.key in state.conflicts) Text(uiText("Overlaps another event"), color = MaterialTheme.colorScheme.error)
-                            if (row.completed) Text(uiText("Completed"))
-                            FlowRow {
-                                TextButton({ model.open(row.record.id) }, Modifier.heightIn(min = if (kids) 56.dp else 48.dp)) { Text(uiText("Open item")) }
-                                if (!kids && row.record.repeat != null) TextButton({ occurrence = row }, enabled = !state.busy) { Text(uiText("This occurrence")) }
-                                if (!kids && row.record.kind == OrganizerKind.TASK) TextButton({ model.complete(row.record, row.takeIf { it.record.repeat != null }) }, enabled = !state.busy) { Text(uiText(if (row.completed) "Reopen task" else "Complete task")) }
+                    val recurring = row.takeIf { it.record.repeat != null }
+                    PlannerAgendaRow(row, plannerTime(row, locale, zone), plannerDeparture(row, locale, zone),
+                        row.key in state.conflicts, easy, !kids && !state.busy,
+                        onOpen = { model.open(row.record.id, recurring?.originalStart) },
+                        onToggle = { model.complete(row.record, recurring) }, onOccurrence = { occurrence = row })
+                }
+                val nudging = state.plannerBriefSettings?.let { it.proactive && !it.quiet(now.atZone(zone).toLocalTime()) } == true
+                if (!easy && kind == "AGENDA" && query.isBlank() && !state.loading && nudging &&
+                    agendaDay == today && state.agendaDate == today && rows.isNotEmpty()) {
+                    val end = today.atTime(20, 0).atZone(zone).toInstant()
+                    val start = maxOf(now, today.atTime(9, 0).atZone(zone).toInstant())
+                    plannerFreeTime(rows, start, end)?.let { gap ->
+                        item {
+                            val time = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).withZone(zone)
+                            Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(uiText("Free time"), style = MaterialTheme.typography.titleSmall)
+                                    Text(uiText("%1\$s to %2\$s is open.", time.format(gap.first), time.format(gap.second)))
+                                }
                             }
                         }
                     }
                 }
                 val undated = state.records.filter { it.kind == OrganizerKind.TASK && it.time == null && it.status == OrganizerStatus.ACTIVE }
-                if (kind == "AGENDA" && undated.isNotEmpty()) item { Text(uiText("Tasks without a due date"), style = MaterialTheme.typography.titleMedium) }
-                if (kind == "AGENDA") items(undated, key = { "undated:${it.id}" }) { row -> OrganizerListRow(row, now, boot, { model.open(row.id) }) }
+                if (!easy && kind == "AGENDA" && undated.isNotEmpty()) item { Text(uiText("Tasks without a due date"), style = MaterialTheme.typography.titleMedium) }
+                if (!easy && kind == "AGENDA") items(undated, key = { "undated:${it.id}" }) { row -> OrganizerListRow(row, now, boot, { model.open(row.id) }) }
             } else {
                 val rows = if (kind == "TRASH" && !kids) state.trash else state.records.filter { it.kind.name == kind }
                 if (!state.loading && rows.isEmpty()) item { Text(uiText(if (kind == "TRASH") "Trash is empty." else "No matching items. Add your first item or change the search.")) }
@@ -271,6 +334,14 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                 }
             }
         }
+    }
+    layoutDraft?.takeIf { !kids }?.let { preview ->
+        layout.Choose(defaultLayout, uiText("Make Planner yours"), listOf("week" to uiText("Week view"), "easy" to uiText("Easy view · today only")),
+            preview, { layoutDraft = it }, { layoutDraft = null })
+    }
+    if (speaking && !kids) PlannerSpeakSheet(agendaDay, onDismiss = { speaking = false }) {
+        speaking = false
+        model.previewSpokenReminder(it)
     }
     if (adding && !kids) EverydaySheet({ adding = false }) {
         Column(Modifier.fillMaxWidth().padding(24.dp)) {

@@ -125,8 +125,12 @@ class HaloVoiceInteractionSession(
         show(null, 0)
     }
 
-    private fun nativePrompt(caller: String, prompt: android.app.VoiceInteractor.Prompt?): String =
-        "${caller.take(150)}: ${prompt?.visualPrompt?.toString()?.take(500) ?: "Choose an option"}"
+    private fun nativePrompt(caller: String, prompt: android.app.VoiceInteractor.Prompt?): String {
+        val app = runCatching {
+            context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(caller, 0)).toString()
+        }.getOrDefault("App request")
+        return "$app: " + (prompt?.visualPrompt?.toString()?.take(500) ?: "Choose an option")
+    }
 
     override fun onCancelRequest(request: Request) {
         if (nativeChoice?.request === request) nativeChoice = null
@@ -184,7 +188,9 @@ class HaloVoiceInteractionSession(
                     AppearanceMode.DARK -> true
                 }
                 val preferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()
-                HaloTheme(darkTheme = darkTheme, fontScale = preferences.fontScale) {
+                val palettes by ManualDependencyGraph.palettePreferences.state.collectAsStateWithLifecycle()
+                HaloTheme(darkTheme = darkTheme, fontScale = preferences.fontScale,
+                    palette = if (darkTheme) palettes.dark else palettes.light) {
                     /*
                      * RUNTIME-019: the overlay observes the shared interaction
                      * projection and can render the active input surface inline;
@@ -195,26 +201,6 @@ class HaloVoiceInteractionSession(
                             factory = com.halo.app.interaction.InteractionSurfaceViewModelFactory(),
                         )
                     val interactionState2 by interactionViewModel.state.collectAsStateWithLifecycle()
-                    nativeChoice?.let { choice ->
-                        androidx.compose.material3.AlertDialog(
-                            onDismissRequest = { clearNativeChoice() },
-                            title = { androidx.compose.material3.Text(uiText("Voice request")) },
-                            text = { androidx.compose.material3.Text(choice.prompt) },
-                            confirmButton = {
-                                androidx.compose.foundation.layout.Column {
-                                    choice.options.forEach { (label, respond) ->
-                                        androidx.compose.material3.TextButton(onClick = {
-                                            nativeChoice = null
-                                            respond()
-                                        }) { androidx.compose.material3.Text(label) }
-                                    }
-                                }
-                            },
-                            dismissButton = { androidx.compose.material3.TextButton(onClick = { clearNativeChoice() }) {
-                                androidx.compose.material3.Text(uiText("Cancel"))
-                            } },
-                        )
-                    }
                     val appContext by ManualDependencyGraph.appFunctionCapabilityIndex.state.collectAsState()
                     var currentAppLabel by androidx.compose.runtime.remember(appContext.currentPackage) { mutableStateOf<String?>(null) }
                     androidx.compose.runtime.LaunchedEffect(appContext.currentPackage) {
@@ -223,7 +209,21 @@ class HaloVoiceInteractionSession(
                         } }
                     }
                     AssistantSurface(
-                        currentApp = currentAppLabel,
+                        currentApp = currentAppLabel.takeIf { nativeChoice == null },
+                        nativePrompt = nativeChoice?.let { choice ->
+                            com.halo.app.assistant.ui.AssistantIslandPrompt(
+                                choice.prompt, choice.options.map { it.first }, choice.request is ConfirmationRequest,
+                                onChoose = { index ->
+                                    if (nativeChoice === choice && choice.request.isActive) {
+                                        choice.options.getOrNull(index)?.second?.let { respond ->
+                                            nativeChoice = null
+                                            respond()
+                                        }
+                                    }
+                                },
+                                onDismiss = ::clearNativeChoice,
+                            )
+                        },
                         interactionState = interactionState,
                         screenContextAttached = screenContextAttached,
                         interactionSurface = interactionState2.primary
@@ -245,6 +245,7 @@ class HaloVoiceInteractionSession(
                             context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { launchIntent ->
                                 context.startActivity(launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                             }
+                            clearNativeChoice()
                             hide()
                         }
                     )

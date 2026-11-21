@@ -8,13 +8,23 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-enum class EverydayCardKind { CLOCK, CLOCK_WEATHER, UPCOMING, AGENDA, TASKS, REMINDERS, ALARMS_TIMERS, WEATHER, HEADLINES, BRIEF, DEVICE, QUICK_ACTIONS, DASHBOARD }
+enum class EverydayCardKind { CLOCK, CLOCK_WEATHER, UPCOMING, AGENDA, TASKS, REMINDERS, ALARMS_TIMERS, WEATHER, HEADLINES, BRIEF, DEVICE, QUICK_ACTIONS, DASHBOARD,
+    SCAN, RECORD, QUICK_NOTE, TRANSLATE, AIR_POLLEN, PLANNER_WEEK, FOCUS, LITTLE_HABITS,
+    NEXT_RIDE, OUR_HOME, LEARN, KIDS_SKY, YOUR_THINGS, LOCK_NEXT_EVENT, LOCK_RAIN, SMART_STACK
+}
 
 /** Presentation configuration only. No source bodies, executable routes, permissions or model prompts. */
+enum class EverydayWidgetSize(val widthDp: Int, val heightDp: Int, val rowLimit: Int) {
+    SMALL(160, 150, 1), WIDE(280, 170, 2), TALL(200, 284, 3);
+}
+
 data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = null, val cityLabel: String = "",
     val sourceId: String? = null, val recordId: String? = null, val priority: TaskPriority? = null,
     val limit: Int = 3, val hidePrivate: Boolean = true, val theme: String = "INHERIT",
-    val sections: List<EverydayCardKind> = listOf(EverydayCardKind.TASKS,EverydayCardKind.UPCOMING,EverydayCardKind.WEATHER),val headlineSourceId: String? = null) {
+    val sections: List<EverydayCardKind> = listOf(EverydayCardKind.TASKS,EverydayCardKind.UPCOMING,EverydayCardKind.WEATHER),val headlineSourceId: String? = null,
+    val widgetSize: EverydayWidgetSize? = null, val widgetMotion: Boolean = true, val widgetMatchLook: Boolean = true,
+    val widgetStyle: EverydayWidgetStyle = EverydayWidgetStyle.GLASS,
+    val widgetShows: EverydayWidgetShows = EverydayWidgetShows.DEFAULT) {
     init {
         zoneId?.let(ZoneId::of)
         require(cityLabel.length <= 120 && limit in 1..5 && theme in setOf("INHERIT", "LIGHT", "DARK"))
@@ -30,15 +40,24 @@ data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = 
         put("limit", limit.toString()); put("hidePrivate", hidePrivate.toString()); put("theme", theme)
         put("sections",sections.joinToString(",") { it.name })
         headlineSourceId?.let { put("headlineSourceId",it) }
+        widgetSize?.let { put("widgetSize", it.name) }
+        if (!widgetMotion) put("widgetMotion", "false")
+        if (!widgetMatchLook) put("widgetMatchLook", "false")
+        if (widgetStyle != EverydayWidgetStyle.GLASS) put("widgetStyle", widgetStyle.name)
+        if (widgetShows != EverydayWidgetShows.DEFAULT) put("widgetShows", widgetShows.name)
     }
     companion object {
         fun from(fields: Map<String, String>, fallback: EverydayCardKind): EverydayCardConfig {
-            require(fields.keys.all { it in setOf("kind", "zoneId", "cityLabel", "sourceId", "recordId", "priority", "limit", "hidePrivate", "theme", "sections", "headlineSourceId") })
+            require(fields.keys.all { it in setOf("kind", "zoneId", "cityLabel", "sourceId", "recordId", "priority", "limit", "hidePrivate", "theme", "sections", "headlineSourceId", "widgetSize", "widgetMotion", "widgetMatchLook", "widgetStyle", "widgetShows") })
             return EverydayCardConfig(fields["kind"]?.let(EverydayCardKind::valueOf) ?: fallback,
                 fields["zoneId"], fields["cityLabel"].orEmpty(), fields["sourceId"], fields["recordId"],
                 fields["priority"]?.let(TaskPriority::valueOf), fields["limit"]?.toInt() ?: 3,
                 fields["hidePrivate"]?.toBooleanStrict() ?: true, fields["theme"] ?: "INHERIT",
-                fields["sections"]?.split(",")?.map(EverydayCardKind::valueOf) ?: listOf(EverydayCardKind.TASKS,EverydayCardKind.UPCOMING,EverydayCardKind.WEATHER),fields["headlineSourceId"])
+                fields["sections"]?.split(",")?.map(EverydayCardKind::valueOf) ?: listOf(EverydayCardKind.TASKS,EverydayCardKind.UPCOMING,EverydayCardKind.WEATHER),fields["headlineSourceId"],
+                fields["widgetSize"]?.let(EverydayWidgetSize::valueOf),
+                fields["widgetMotion"]?.toBooleanStrict() ?: true, fields["widgetMatchLook"]?.toBooleanStrict() ?: true,
+                fields["widgetStyle"]?.let(EverydayWidgetStyle::valueOf) ?: EverydayWidgetStyle.GLASS,
+                fields["widgetShows"]?.let(EverydayWidgetShows::valueOf) ?: EverydayWidgetShows.DEFAULT)
         }
     }
 }
@@ -54,6 +73,7 @@ sealed interface EverydayTarget {
     data class Source(val id: String, val version: Long, val revision: String?, val articleId: String? = null) : EverydayTarget
     data class Brief(val id: String) : EverydayTarget
     data class Create(val kind: OrganizerKind) : EverydayTarget
+    data class WidgetTool(val tool: EverydayWidgetTool) : EverydayTarget
 }
 
 data class EverydayCardRow(val title: String, val detail: String = "", val target: EverydayTarget? = null, val personal: Boolean = false,
@@ -66,7 +86,10 @@ data class EverydaySnapshot(val now: Instant, val zone: ZoneId, val records: Lis
     val occurrences: List<OrganizerOccurrence>, val sources: List<CollectorState>, val briefs: List<EverydayBrief>,
     val clocks: List<WorldClockRecord> = emptyList(), val receipts: List<DeliveryReceipt> = emptyList(),
     val kids: Boolean = false, val sharedRecordIds: Set<String> = emptySet(), val power: Boolean = false,
-    val batteryPercent: Int? = null, val charging: Boolean = false, val authorityStamp: String = "", val familyRevision: Long = 0, val modeRevision: Long = 0)
+    val batteryPercent: Int? = null, val charging: Boolean = false, val authorityStamp: String = "", val familyRevision: Long = 0, val modeRevision: Long = 0,
+    val widgetLearning: WidgetLearning? = null, val widgetFocus: WidgetFocus? = null,
+    val widgetHabits: List<List<Boolean>> = emptyList(), val widgetHabitNow: Boolean = false,
+    val widgetChildAttempts: Int = 0, val widgetHomeCount: Int = 0, val widgetHomeDone: Int = 0, val widgetRecording: Boolean = false)
 
 /** Shared deterministic read-only faces for Screen and launcher hosts. This never fetches or runs a model. */
 object EverydayCards {
@@ -76,13 +99,15 @@ object EverydayCards {
         "weather" to EverydayCardKind.WEATHER, "headlines" to EverydayCardKind.HEADLINES, "briefing" to EverydayCardKind.BRIEF,
         "everyday_dashboard" to EverydayCardKind.DASHBOARD, "quick_actions" to EverydayCardKind.QUICK_ACTIONS)
     val launcherKinds = listOf(EverydayCardKind.CLOCK, EverydayCardKind.CLOCK_WEATHER, EverydayCardKind.UPCOMING,
-        EverydayCardKind.TASKS, EverydayCardKind.BRIEF, EverydayCardKind.HEADLINES, EverydayCardKind.ALARMS_TIMERS, EverydayCardKind.DASHBOARD)
+        EverydayCardKind.TASKS, EverydayCardKind.BRIEF, EverydayCardKind.HEADLINES, EverydayCardKind.ALARMS_TIMERS, EverydayCardKind.DASHBOARD) +
+        EverydayToolkitWidgets.launcherKinds
     fun title(kind: EverydayCardKind): String = when (kind) {
         EverydayCardKind.CLOCK -> "Clock & date"; EverydayCardKind.CLOCK_WEATHER -> "Clock and weather"
         EverydayCardKind.UPCOMING -> "Upcoming event"; EverydayCardKind.AGENDA -> "Agenda"; EverydayCardKind.TASKS -> "Tasks and reminders"
         EverydayCardKind.REMINDERS -> "Reminders"; EverydayCardKind.ALARMS_TIMERS -> "Alarms and timers"; EverydayCardKind.WEATHER -> "Weather"
         EverydayCardKind.HEADLINES -> "Headlines"; EverydayCardKind.BRIEF -> "Your day in Halo"; EverydayCardKind.DEVICE -> "This phone"
         EverydayCardKind.QUICK_ACTIONS -> "Quick actions"; EverydayCardKind.DASHBOARD -> "Everyday dashboard"
+        else -> EverydayToolkitWidgets.title(kind)
     }
 
     fun project(config: EverydayCardConfig, input: EverydaySnapshot, locale: Locale, externalHost: Boolean = false,
@@ -107,7 +132,7 @@ object EverydayCards {
             }
         fun face(value: String, rows: List<EverydayCardRow>, target: EverydayTarget, personal: Boolean = false,
             status: String = text("On this phone"), at: Instant? = null, attribution: String? = null) = EverydayCardFace(heading, value,
-                rows.take(config.limit).map { if (it.personal && privateHidden) it.copy(title = text("Private item"), detail = "") else it },
+                rows.take(if (config.widgetShows == EverydayWidgetShows.NEXT_ONLY) 1 else config.limit).map { if (it.personal && privateHidden) it.copy(title = text("Private item"), detail = "") else it },
                 status, target, personal, at, attribution)
         fun selectedOccurrence(record: OrganizerRecord)=input.occurrences.filter { it.record.id==record.id && !it.completed }.minByOrNull { it.start }
         fun recordRows(rows: List<OrganizerRecord>) = rows.map { r ->
@@ -160,16 +185,30 @@ object EverydayCards {
                     stale=weather.stale,lastRefreshFailed=weather.lastRefreshFailed)
             }
             EverydayCardKind.UPCOMING, EverydayCardKind.AGENDA -> {
-                val upcoming = occurrences.filter { it.record.kind == OrganizerKind.EVENT && (config.recordId == null || config.recordId == it.record.id) }.sortedBy { it.start }
+                val today = input.now.atZone(zone).toLocalDate()
+                val upcoming = occurrences.filter { it.record.kind == OrganizerKind.EVENT &&
+                    (config.recordId == null || config.recordId == it.record.id) &&
+                    EverydayToolkitWidgets.shows(config, it.start.atZone(zone).toLocalDate(), today, locale) }.sortedBy { it.start }
                 val rows = upcoming.map { EverydayCardRow(it.record.title, stamp(it.start), EverydayTarget.Record(it.record.id, it.record.version,it.originalStart), true) }
-                face(if (upcoming.isEmpty()) text("No upcoming events in the next seven days") else "${upcoming.size} · ${text("Events")}", rows,
-                    rows.firstOrNull()?.target ?: EverydayTarget.Organizer, true,status=text("Next seven days"))
+                face(if (upcoming.isEmpty()) text(if (config.widgetShows == EverydayWidgetShows.DEFAULT)
+                    "No upcoming events in the next seven days" else "No upcoming events") else "${upcoming.size} · ${text("Events")}", rows,
+                    rows.firstOrNull()?.target ?: EverydayTarget.Organizer, true,status=text(when (config.widgetShows) {
+                        EverydayWidgetShows.TODAY -> "Today"
+                        EverydayWidgetShows.THIS_WEEK -> "This week"
+                        EverydayWidgetShows.NEXT_ONLY -> "Next only"
+                        else -> "Next seven days"
+                    }))
             }
             EverydayCardKind.TASKS, EverydayCardKind.REMINDERS -> {
                 val kinds = if (config.kind == EverydayCardKind.REMINDERS) setOf(OrganizerKind.REMINDER) else setOf(OrganizerKind.TASK, OrganizerKind.REMINDER)
-                val rows = records.filter { it.kind in kinds && it.status == OrganizerStatus.ACTIVE && (config.priority == null || it.priority == config.priority) &&
-                    (config.recordId == null || it.id == config.recordId) }.sortedWith(compareByDescending<OrganizerRecord> { it.priority.ordinal }.thenBy { it.time?.instant(input.zone) ?: Instant.MAX }.thenBy { it.id })
                 val today=input.now.atZone(input.zone).toLocalDate()
+                val rows = records.filter { it.kind in kinds && it.status == OrganizerStatus.ACTIVE &&
+                    (config.widgetShows !in setOf(EverydayWidgetShows.TODAY, EverydayWidgetShows.THIS_WEEK) ||
+                        (if (it.repeat == null) it.time?.instant(input.zone) else selectedOccurrence(it)?.start)?.let { at ->
+                            EverydayToolkitWidgets.shows(config, at.atZone(input.zone).toLocalDate(), today, locale)
+                        } == true) &&
+                    (config.priority == null || it.priority == config.priority) &&
+                    (config.recordId == null || it.id == config.recordId) }.sortedWith(compareByDescending<OrganizerRecord> { it.priority.ordinal }.thenBy { it.time?.instant(input.zone) ?: Instant.MAX }.thenBy { it.id })
                 // Count eligible occurrences, not only the oldest unfinished date of each series.
                 val deadlines=rows.flatMap { record -> if(record.repeat==null) listOfNotNull(record.time?.instant(input.zone))
                     else input.occurrences.filter { it.record.id==record.id && !it.completed }.distinctBy { it.originalStart }.map { it.start } }
@@ -233,6 +272,7 @@ object EverydayCards {
                         publisher=child.attribution,savedAt=child.observedAt,stale=child.stale) },
                     EverydayTarget.Organizer, status = mode)
             }
+            else -> EverydayToolkitWidgets.project(config, input, locale, text)
         }
     }
 }

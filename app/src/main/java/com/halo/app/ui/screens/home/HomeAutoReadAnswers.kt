@@ -8,20 +8,24 @@ import java.util.UUID
 
 /** Observe newly committed answers, never replay a restored answer; the app-wide mode governs speech. */
 @Composable
-internal fun HomeAutoReadAnswers(state: HomeUiState, text: String, active: Boolean) {
+internal fun HomeAutoReadAnswers(state: HomeUiState, text: String, active: Boolean, submission: TextSubmissionState) {
     val reader = remember { Graph.readAloud }
     val enabled by reader.autoReadAnswers.collectAsStateWithLifecycle()
-    val id = state.presentedIdentity?.turnId
+    val reply = state.presentedIdentity?.takeIf { it.source == ResponsePresentationSource.COMMITTED_CONVERSATION }
+    val id = reply?.turnId
+    val completedSubmission = submission.phase == TextSubmissionPhase.COMPLETED &&
+        reply != null && submission.conversationId == reply.conversationId &&
+        submission.interactionId != null && submission.interactionId == reply.interactionId
     val tracker = remember { HomeAutoReadTracker() }
-    LaunchedEffect(state.conversationId, id, active, text, state.sessionState) {
-        if (!tracker.observe(state.conversationId, id, active, text.isNotBlank(),
-                state.sessionState is com.halo.sdk.provider.CognitiveSessionState.Failed)) return@LaunchedEffect
+    LaunchedEffect(state.conversationId, id, active, text, state.sessionState, submission.busy, completedSubmission) {
+        if (!tracker.observe(state.conversationId, id, active || submission.busy, text.isNotBlank(),
+                state.sessionState is com.halo.sdk.provider.CognitiveSessionState.Failed, completedSubmission)) return@LaunchedEffect
         if (!enabled || VoiceFieldCancellation.activeFields.value.isNotEmpty()) return@LaunchedEffect
         val registry = Graph.speechSynthesisRegistry
         val provider = registry.selector.ttsSelection.value.id
         VoiceFieldCancellation.stop()
-        val provenance = state.presentedIdentity?.remoteSpeechProvenance
-        reader.start(UUID.randomUUID().toString(), text, provider,
+        val provenance = reply?.remoteSpeechProvenance
+        reader.start(UUID.randomUUID().toString(), reply?.text ?: return@LaunchedEffect, provider,
             Graph.powerModeEnabled() && provenance != null, null, remoteProvenance = provenance)
     }
 }
@@ -33,7 +37,7 @@ internal class HomeAutoReadTracker {
     private var armed = false
 
     fun observe(conversationId: String?, turnId: String?, active: Boolean, hasText: Boolean,
-        failed: Boolean = false): Boolean {
+        failed: Boolean = false, completedSubmission: Boolean = false): Boolean {
         if (conversationId != conversation) {
             conversation = conversationId
             observed = turnId
@@ -43,7 +47,7 @@ internal class HomeAutoReadTracker {
         if (active) { armed = true; return false }
         if (turnId == null || !hasText) return false
         if (turnId == observed) return false // Room may commit after the session becomes idle.
-        val read = armed && turnId != observed
+        val read = armed || completedSubmission
         observed = turnId
         armed = false
         return read

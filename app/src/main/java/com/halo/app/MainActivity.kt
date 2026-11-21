@@ -176,8 +176,11 @@ open class MainActivity : ComponentActivity() {
 
                 val assistantPreferences by ManualDependencyGraph.assistantPreferences.state.collectAsState()
                 val palettes by ManualDependencyGraph.palettePreferences.state.collectAsState()
-                HaloTheme(darkTheme = darkTheme, fontScale = assistantPreferences.fontScale,
-                    palette = if (darkTheme) palettes.dark else palettes.light) {
+                val lookPreview by com.halo.app.ui.theme.HaloLookPreview.state.collectAsState()
+                androidx.compose.runtime.CompositionLocalProvider(
+                    com.halo.app.ui.theme.LocalHaloVisualOverride provides lookPreview?.visual) {
+                HaloTheme(darkTheme = lookPreview?.dark ?: darkTheme, fontScale = assistantPreferences.fontScale,
+                    palette = lookPreview?.palette ?: if (darkTheme) palettes.dark else palettes.light) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         shape = if (compactWindow) MaterialTheme.shapes.large else androidx.compose.ui.graphics.RectangleShape,
@@ -288,6 +291,7 @@ open class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                }
                 }
             }
         }

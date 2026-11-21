@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English only; keys ready for -lv / -ru / -pl. -->
+<resources>
+<string name="everyday_widget_ask">Ask halo about this</string>
+<string name="everyday_widget_updated">Updated %1$s</string>
+<string name="everyday_widget_updated_sources">Updated %1$s · from %2$d sources</string>
+<string name="everyday_widget_old">Updated %1$s · showing saved information</string>
+<string name="everyday_widget_unreachable">Updated %1$s · can’t reach the source</string>
+<string name="everyday_widget_check_source">Check source</string>
+<string name="everyday_widget_choose_source">Choose a source</string>
+<string name="everyday_widget_no_source_weather">No weather source yet</string>
+<string name="everyday_widget_no_source_news">No news sources yet</string>
+<string name="everyday_widget_never_guess">halo never guesses — choose where this comes from.</string>
+<string name="everyday_widget_ask_draft">About my %1$s widget: </string>
+</resources>

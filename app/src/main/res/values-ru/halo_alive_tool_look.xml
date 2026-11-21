@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_tool_edit_page">Настроить эту страницу</string>
+    <string name="alive_tool_restore">Вернуть как было</string>
+    <string name="alive_tool_save_failed">Не удалось сохранить оформление. Попробуйте ещё раз.</string>
+    <string name="alive_studio_look">Ваша студия</string>
+    <string name="alive_studio_artboard">Холст</string>
+    <string name="alive_studio_plain">Без разметки</string>
+    <string name="alive_studio_dots">Точки</string>
+    <string name="alive_studio_grid">Сетка</string>
+    <string name="alive_studio_favourites">Избранное на панели</string>
+    <string name="alive_studio_favourites_limit">Выберите до четырёх.</string>
+    <string name="alive_studio_left">Панель для левой руки</string>
+    <string name="alive_studio_snap">Возвращать масштаб к размеру холста</string>
+    <string name="alive_studio_names">Называть инструменты во время рисования</string>
+    <string name="alive_studio_words">Текст</string>
+    <string name="alive_studio_picture">Картинка</string>
+    <string name="alive_canvas_look">Ваши доски</string>
+    <string name="alive_canvas_colors">Цвета карточек</string>
+    <string name="alive_canvas_by_kind">По типу</string>
+    <string name="alive_canvas_by_me">Как я выберу</string>
+    <string name="alive_canvas_one">Один цвет</string>
+    <string name="alive_canvas_links">Связи</string>
+    <string name="alive_canvas_curved">Изогнутые</string>
+    <string name="alive_canvas_straight">Прямые</string>
+    <string name="alive_canvas_dotted">Пунктир</string>
+    <string name="alive_canvas_snap">Привязывать карточки к сетке</string>
+    <string name="alive_canvas_list">Открывать списком</string>
+    <string name="alive_canvas_one_color">Цвет доски</string>
+    <string name="alive_canvas_card_color">Цвет выбранной карточки</string>
+    <string name="alive_canvas_mint">Мятный</string>
+    <string name="alive_canvas_lilac">Сиреневый</string>
+    <string name="alive_canvas_pink">Розовый</string>
+    <string name="alive_canvas_apricot">Персиковый</string>
+    <string name="alive_canvas_neutral">Нейтральный</string>
+    <string name="alive_mini_look">Ваш mini halo</string>
+    <string name="alive_mini_size">Размер пузырька</string>
+    <string name="alive_mini_small">Маленький</string>
+    <string name="alive_mini_medium">Средний</string>
+    <string name="alive_mini_large">Большой</string>
+    <string name="alive_mini_side">Край экрана</string>
+    <string name="alive_mini_left">Слева</string>
+    <string name="alive_mini_right">Справа</string>
+    <string name="alive_mini_hide">Скрывать в полноэкранных приложениях</string>
+    <string name="alive_mini_hide_restricted">Чтобы распознавать игры и видео, Android требует доступ к статистике приложений.</string>
+    <string name="alive_mini_usage">Открыть доступ к статистике</string>
+</resources>

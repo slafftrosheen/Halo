@@ -140,7 +140,8 @@ class EverydayToolExecutor(
                 val p=a.map("record");val kind=OrganizerKind.valueOf(p.string("kind"))
                 val value=organizer.create(kind,p.string("title"),p.optionalString("details").orEmpty(),p.optionalMap("time")?.let(::time),p.optionalMap("repeat")?.let(::repeat),
                     p.optionalString("priority")?.let(TaskPriority::valueOf) ?: TaskPriority.NORMAL,p.optionalString("parentId"),p.optionalLong("notifyBeforeMinutes")?.toInt(),
-                    p.optionalLong("timerDurationMs"),links(p),p.optionalString("sourceUrl"),p.optionalString("sourceLabel"),p.optionalString("location").orEmpty())
+                    p.optionalLong("timerDurationMs"),links(p),p.optionalString("sourceUrl"),p.optionalString("sourceLabel"),
+                    p.optionalString("location").orEmpty(),p.optionalLong("leaveBeforeMinutes")?.toInt())
                 saved(value)
             }
             "halo_organizer_edit" -> {
@@ -152,6 +153,7 @@ class EverydayToolExecutor(
                     parentId=field("parentId",value.parentId){p.string("parentId")},notifyBeforeMinutes=field("notifyBeforeMinutes",value.notifyBeforeMinutes){p.long("notifyBeforeMinutes").toInt()},
                     sourceUrl=field("sourceUrl",value.sourceUrl){p.string("sourceUrl")},sourceLabel=field("sourceLabel",value.sourceLabel){p.string("sourceLabel")},
                     priority=p.optionalString("priority")?.let(TaskPriority::valueOf) ?: value.priority,location=p.optionalString("location") ?: value.location,
+                    leaveBeforeMinutes=field("leaveBeforeMinutes",value.leaveBeforeMinutes){p.long("leaveBeforeMinutes").toInt()},
                     links=if("links" in p) links(p) else value.links)
                 saved(organizer.repository.save(next,value.version,a["resetOccurrences"]==true))
             }
@@ -241,13 +243,19 @@ class EverydayToolExecutor(
                 val p=a.map("source");require(a.containsKey("id")==a.containsKey("version"))
                 val old=a.optionalString("id")?.let {source(it,version(),false).source}
                 val kind=p.optionalString("kind")?.let(CollectorKind::valueOf) ?: requireNotNull(old).kind
-                require(kind in setOf(CollectorKind.FEED,CollectorKind.ALERTS,CollectorKind.PUBLIC_CALENDAR,CollectorKind.WEATHER) || old!=null && "kind" !in p)
+                require(kind.usesCityCoordinates || kind in setOf(CollectorKind.FEED,CollectorKind.ALERTS,CollectorKind.PUBLIC_CALENDAR) || old!=null && "kind" !in p)
                 val place=p.optionalMap("place")?.let {WeatherPlace(it.string("name"),(it["latitude"] as Number).toDouble(),(it["longitude"] as Number).toDouble(),it.string("zoneId"))} ?: old?.place
-                val endpoint=if(kind==CollectorKind.WEATHER) OpenMeteoParser.endpoint(requireNotNull(place)) else p.optionalString("endpoint") ?: old?.endpoint
+                val endpoint = when (kind) {
+                    CollectorKind.WEATHER -> OpenMeteoParser.endpoint(requireNotNull(place))
+                    CollectorKind.AIR_QUALITY -> OpenMeteoAirQuality.endpoint(requireNotNull(place))
+                    else -> p.optionalString("endpoint") ?: old?.endpoint
+                }
                 endpoint?.let(CollectorUrlPolicy::validate)
                 val next=CollectorSource(old?.id ?: "custom:${UUID.randomUUID()}",p.optionalString("title") ?: requireNotNull(old).title,
                     p.optionalString("publisher") ?: old?.publisher ?: "User-selected source",kind,p.optionalString("category")?.let(SourceCategory::valueOf) ?: old?.category ?: SourceCategory.CUSTOM,
-                    p.optionalString("language") ?: old?.language ?: "en",endpoint,old?.attributionUrl,p["selected"] as? Boolean ?: old?.selected ?: false,
+                    p.optionalString("language") ?: old?.language ?: "en",endpoint,
+                    if (kind == CollectorKind.AIR_QUALITY) OpenMeteoAirQuality.ATTRIBUTION_URL else old?.attributionUrl,
+                    p["selected"] as? Boolean ?: old?.selected ?: false,
                     p["enabled"] as? Boolean ?: old?.enabled ?: true,p["muted"] as? Boolean ?: old?.muted ?: false,p.optionalLong("refreshMinutes")?.toInt() ?: old?.refreshMinutes ?: 60,
                     place,p["childApproved"] as? Boolean ?: old?.childApproved ?: false,old?.version ?: 1)
                 val saved=sources.save(next,old?.version)

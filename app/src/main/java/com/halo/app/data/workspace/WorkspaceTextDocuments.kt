@@ -106,6 +106,8 @@ class WorkspaceTextDocuments(private val context: Context, private val database:
         val table = WorkspaceCsv.parse(current.text)
         val changed = when (command) {
             is WorkspaceCsvCommand.SetCell -> table.set(command.row, command.column, command.value)
+            is WorkspaceCsvCommand.SortRows -> table.sortRows(command.column, command.header, command.descending)
+            is WorkspaceCsvCommand.AddRow -> table.insertRow(table.rows.size)
             is WorkspaceCsvCommand.InsertRow -> table.insertRow(command.index)
             is WorkspaceCsvCommand.DeleteRow -> table.deleteRow(command.index)
             is WorkspaceCsvCommand.InsertColumn -> table.insertColumn(command.index)
@@ -183,6 +185,8 @@ class WorkspaceTextDocuments(private val context: Context, private val database:
 
 sealed interface WorkspaceCsvCommand {
     data class SetCell(val row: Int, val column: Int, val value: String) : WorkspaceCsvCommand
+    data object AddRow : WorkspaceCsvCommand
+    data class SortRows(val column: Int, val header: Boolean, val descending: Boolean) : WorkspaceCsvCommand
     data class InsertRow(val index: Int) : WorkspaceCsvCommand
     data class DeleteRow(val index: Int) : WorkspaceCsvCommand
     data class InsertColumn(val index: Int) : WorkspaceCsvCommand

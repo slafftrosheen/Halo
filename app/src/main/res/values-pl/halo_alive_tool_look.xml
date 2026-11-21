@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_tool_edit_page">Dostosuj tę stronę</string>
+    <string name="alive_tool_restore">Przywróć poprzedni wygląd</string>
+    <string name="alive_tool_save_failed">Nie udało się zapisać wyglądu. Spróbuj ponownie.</string>
+    <string name="alive_studio_look">Twoje studio</string>
+    <string name="alive_studio_artboard">Obszar roboczy</string>
+    <string name="alive_studio_plain">Bez linii</string>
+    <string name="alive_studio_dots">Kropki</string>
+    <string name="alive_studio_grid">Siatka</string>
+    <string name="alive_studio_favourites">Ulubione na pasku</string>
+    <string name="alive_studio_favourites_limit">Wybierz do czterech.</string>
+    <string name="alive_studio_left">Układ dla leworęcznych</string>
+    <string name="alive_studio_snap">Przyciągaj powiększenie do rozmiaru obszaru</string>
+    <string name="alive_studio_names">Nazywaj narzędzia podczas rysowania</string>
+    <string name="alive_studio_words">Słowa</string>
+    <string name="alive_studio_picture">Obraz</string>
+    <string name="alive_canvas_look">Twoje tablice</string>
+    <string name="alive_canvas_colors">Kolory kart</string>
+    <string name="alive_canvas_by_kind">Według typu</string>
+    <string name="alive_canvas_by_me">Moje kolory</string>
+    <string name="alive_canvas_one">Jeden kolor</string>
+    <string name="alive_canvas_links">Połączenia</string>
+    <string name="alive_canvas_curved">Zaokrąglone</string>
+    <string name="alive_canvas_straight">Proste</string>
+    <string name="alive_canvas_dotted">Kropkowane</string>
+    <string name="alive_canvas_snap">Przyciągaj karty do siatki</string>
+    <string name="alive_canvas_list">Otwieraj jako listę</string>
+    <string name="alive_canvas_one_color">Kolor tablicy</string>
+    <string name="alive_canvas_card_color">Kolor wybranej karty</string>
+    <string name="alive_canvas_mint">Miętowy</string>
+    <string name="alive_canvas_lilac">Liliowy</string>
+    <string name="alive_canvas_pink">Różowy</string>
+    <string name="alive_canvas_apricot">Brzoskwiniowy</string>
+    <string name="alive_canvas_neutral">Neutralny</string>
+    <string name="alive_mini_look">Twój mini halo</string>
+    <string name="alive_mini_size">Rozmiar bąbelka</string>
+    <string name="alive_mini_small">Mały</string>
+    <string name="alive_mini_medium">Średni</string>
+    <string name="alive_mini_large">Duży</string>
+    <string name="alive_mini_side">Krawędź ekranu</string>
+    <string name="alive_mini_left">Lewa</string>
+    <string name="alive_mini_right">Prawa</string>
+    <string name="alive_mini_hide">Ukrywaj w aplikacjach pełnoekranowych</string>
+    <string name="alive_mini_hide_restricted">Android wymaga dostępu do statystyk użycia, aby rozpoznawać gry i aplikacje wideo.</string>
+    <string name="alive_mini_usage">Otwórz dostęp do statystyk</string>
+</resources>

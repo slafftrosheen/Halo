@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_widget_title">Dodaj widżet</string>
+    <string name="alive_widget_size">Rozmiar</string>
+    <string name="alive_widget_auto">Automatycznie</string>
+    <string name="alive_widget_small">Mały</string>
+    <string name="alive_widget_wide">Szeroki</string>
+    <string name="alive_widget_tall">Wysoki</string>
+    <string name="alive_widget_size_explanation">To zmienia ilość wyświetlanej treści. Rzeczywisty rozmiar ustala program uruchamiający.</string>
+    <string name="alive_widget_motion">Animacje widżetu</string>
+    <string name="alive_widget_match">Dopasuj do mojego stylu</string>
+    <string name="alive_widget_pin_requested">Potwierdź umieszczenie na ekranie głównym.</string>
+    <string name="alive_widget_pin_unavailable">Dodaj Halo z menu widżetów programu uruchamiającego.</string>
+    <string name="alive_widget_installed">Twoje widżety</string>
+    <string name="alive_widget_preview_error">Nie udało się wczytać podglądu widżetu.</string>
+</resources>

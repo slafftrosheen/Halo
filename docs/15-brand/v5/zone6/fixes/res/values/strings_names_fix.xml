@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo 7.4 · lowercase names. Replace these keys in ui/mini (MiniHaloScreen) and assistant strings.
+     The brand is always "halo", lowercase, also at the start of a sentence. -->
+<resources>
+    <string name="mini_halo_title">mini halo</string>
+    <string name="mini_halo_ask_hint">ask halo</string>
+    <string name="mini_halo_open_app">open halo</string>
+    <string name="assistant_open_halo">open halo</string>
+    <string name="assistant_talk_to_halo">talk to halo</string>
+    <string name="floating_halo_label">mini halo</string>
+    <string name="floating_halo_dismiss">Hide mini halo</string>
+</resources>

@@ -3,6 +3,8 @@ package com.halo.app.ui.screens.devices
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
+import com.halo.app.ui.zone6.editZone6PageOnHold
+import com.halo.app.ui.zone6.rememberZone6PageSetting
 
 import com.halo.app.language.uiText
 import com.halo.app.R
@@ -548,14 +550,32 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val visibleAccessories = accessories.filterNot { com.halo.app.di.ManualDependencyGraph.heyCyanAudioPairingCoordinator.matchesAudioFacet(it) }
     val wear by com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.endpoints.collectAsStateWithLifecycle()
     var phoneDetails by rememberSaveable { mutableStateOf(false) }
+    var pairingGuide by rememberSaveable { mutableStateOf(false) }
+    var editDevices by rememberSaveable { mutableStateOf(false) }
+    var editDeviceId by rememberSaveable { mutableStateOf<String?>(null) }
+    var appearancePreview by remember { mutableStateOf<Pair<String, DeviceAppearance>?>(null) }
+    val openDeviceAppearance = { editDevices = true; editDeviceId = null }
+    val deviceEditLabel = stringResource(R.string.page_layout_edit)
+    if (pairingGuide) DevicePairingGuide(onFind = {
+        pairingGuide = false
+        viewModel.navigateTo("discovery")
+    }, onDismiss = { pairingGuide = false })
+    if (editDevices) DeviceAppearanceSheet(uiState.devices, editDeviceId,
+        onSelect = { editDeviceId = it },
+        onPreview = { id, appearance -> appearancePreview = appearance?.let { id to it } },
+        onDismiss = { editDevices = false; editDeviceId = null; appearancePreview = null })
     val phoneAbilities = groupPhoneCapabilities(uiState.hostCapabilities)
     val reportedPhoneAbilities = phoneAbilities.count { it.hasAvailableCapability }
     val noDevices = uiState.devices.isEmpty() && visibleAccessories.isEmpty() && wear.isEmpty()
     BindShellPageActions(ShellPageOwner("devices", helpDescription = stringResource(R.string.zone5_help_devices),
         disabledActionReasons = mapOf("page.devices.audio" to stringResource(R.string.action_no_audio))), listOf(
         ShellPageAction("page.devices.phone", "This phone", HaloGlyph.PHONE) { phoneDetails = true },
+        ShellPageAction("page.devices.follow_me", stringResource(R.string.follow_me_title), HaloGlyph.DEVICE) {
+            viewModel.navigateTo("follow_me")
+        },
+        ShellPageAction("page.devices.layout", deviceEditLabel, HaloGlyph.SETTINGS, uiState.devices.isNotEmpty(), openDeviceAppearance),
         ShellPageAction("page.devices.audio", "Test audio output", HaloGlyph.SPEAK, visibleAccessories.isNotEmpty()) { onTestAudio() },
-        ShellPageAction("page.devices.add", "Add device", HaloGlyph.ADD_DEVICE) { viewModel.navigateTo("discovery") },
+        ShellPageAction("page.devices.add", "Add device", HaloGlyph.ADD_DEVICE) { pairingGuide = true },
     ))
     if (phoneDetails) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { phoneDetails = false }) {
         Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
@@ -595,14 +615,15 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     LazyColumn(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground()),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         item {
-            if (shellHosted) com.halo.app.ui.zone5.Zone5PageHeading(uiText("Devices"))
+            if (shellHosted) com.halo.app.ui.zone5.Zone5PageHeading(uiText("Devices"),
+                modifier = if (uiState.devices.isEmpty()) Modifier else Modifier.editZone6PageOnHold(openDeviceAppearance))
             else
             HaloScreenHeader(uiText("Devices"), trailing = {
                 DevicesOverflowMenu(visibleAccessories.isNotEmpty(), { phoneDetails = true }, onTestAudio)
                 if (!noDevices) {
                     androidx.compose.material3.IconButton(
                         modifier = Modifier.size(48.dp),
-                        onClick = { viewModel.navigateTo("discovery") },
+                        onClick = { pairingGuide = true },
                     ) {
                         HaloIcon(HaloGlyph.ADD_DEVICE,
                             contentDescription = uiText("Add device"),
@@ -611,9 +632,13 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 }
             })
         }
+        item {
+            androidx.compose.material3.OutlinedButton({ viewModel.navigateTo("follow_me") },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(stringResource(R.string.follow_me_title)) }
+        }
         if (noDevices) item {
             HaloEmptyState(uiText("No saved devices"), uiText("halo works on this phone. Add supported glasses when you want their controls. Headphones are connected through Android Bluetooth settings."),
-                HaloGlyph.ADD_DEVICE, action = HaloHeaderAction(uiText("Add device")) { viewModel.navigateTo("discovery") })
+                HaloGlyph.ADD_DEVICE, action = HaloHeaderAction(uiText("Add device")) { pairingGuide = true })
         }
         item { CrossDeviceInkPanel(com.halo.app.di.ManualDependencyGraph.crossDeviceInk) }
         item { ExternalDisplayPanel(com.halo.app.di.ManualDependencyGraph.externalDisplayPresenter) }
@@ -624,8 +649,11 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
                 Text(uiText(section.label), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
             }
             items(group, key = { it.id }) { device ->
+                val appearance = appearancePreview?.takeIf { it.first == device.id }?.second
+                    ?: deviceAppearance(rememberZone6PageSetting(deviceAppearanceKey(device.id)).value)
                 DeviceCard(
-                    device = device,
+                    device = device.copy(name = appearance.label.ifBlank { device.name }),
+                    appearanceIcon = appearance.icon,
                     onClick = { viewModel.navigateTo("device/${device.id}") },
                     reconnect = reconnectStates[device.id] ?: DeviceReconnectState.IDLE,
                     onRetry = { viewModel.retrySavedDevice(device.id) },
@@ -683,6 +711,7 @@ private fun DeviceCard(
     onClick: () -> Unit,
     reconnect: DeviceReconnectState = DeviceReconnectState.IDLE,
     onRetry: () -> Unit = {},
+    appearanceIcon: HaloGlyph? = null,
 ) {
     val statusLabel = deviceConnectionLabel(
         deviceListGroup(device.sessionState),
@@ -722,7 +751,7 @@ private fun DeviceCard(
                         else androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.size(if (device.isConnected) 56.dp else 48.dp)
                 ) {
-                    val glyph = when (device.kind) {
+                    val glyph = appearanceIcon ?: when (device.kind) {
                         DeviceKind.HEYCYAN_GLASSES -> HaloGlyph.GLASSES
                         DeviceKind.BUDDYBOT -> HaloGlyph.ROBOT
                         else -> HaloGlyph.DEVICE

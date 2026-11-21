@@ -28,6 +28,7 @@ class HaloRecognitionService : RecognitionService() {
 
     override fun onStartListening(recognizerIntent: Intent?, listener: Callback) {
         AssistantRuntimeStateStore.recognitionRequested(recognizerIntent?.action)
+        if (ManualDependencyGraph.isHaloPaused()) { listener.error(SpeechRecognizer.ERROR_RECOGNIZER_BUSY); return }
         if (active != null) { listener.error(SpeechRecognizer.ERROR_RECOGNIZER_BUSY); return }
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             listener.error(SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS); return
@@ -64,6 +65,8 @@ class HaloRecognitionService : RecognitionService() {
                     putStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION, arrayListOf(recognized.text))
                     recognized.confidence?.let { putFloatArray(SpeechRecognizer.CONFIDENCE_SCORES, floatArrayOf(it)) }
                 })
+            } catch (_: com.halo.app.privacy.HaloPausedCancellation) {
+                fail(request, SpeechRecognizer.ERROR_RECOGNIZER_BUSY)
             } catch (cancelled: CancellationException) { throw cancelled }
               catch (_: SecurityException) { fail(request, SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) }
               catch (error: Exception) {

@@ -44,6 +44,17 @@ class SmallIntentSpeechRuleTest {
         assertEquals(ToolActionIntent(ToolActionReason.SCREEN_OPERATION), match?.intent)
     }
 
+    @Test fun explicitHaloToolRequestsKeepTheirActionRoute() = runBlocking {
+        val rule = SpeechRule { ModelIntentDecision.ANSWER }
+        listOf("Use the Halo current time tool and tell me what it returns", "Please call halo_current_time").forEach { prompt ->
+            val match = rule.match(context(prompt))
+            assertEquals(ToolActionIntent(ToolActionReason.EXPLICIT_TOOL_REQUEST), match?.intent)
+            assertTrue(match?.entities.orEmpty().isEmpty())
+        }
+        assertEquals(QuestionIntent, rule.match(context("Explain the Halo current time tool"))?.intent)
+        assertEquals(QuestionIntent, rule.match(context("Do not use tools. Answer from your model"))?.intent)
+    }
+
     @Test fun uncertainClassificationAsksUserRatherThanCallingATool() = runBlocking {
         val rule = SpeechRule { ModelIntentDecision.UNCERTAIN }
         val match = rule.match(context("Open a completely unknown thing"))

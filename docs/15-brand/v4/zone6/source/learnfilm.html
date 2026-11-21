@@ -1,0 +1,79 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="m.css"><link rel="stylesheet" href="r.css"><link rel="stylesheet" href="r2.css"><link rel="stylesheet" href="r3.css"><link rel="stylesheet" href="r4.css"><script src="icons.js"></script><script src="z6.js"></script><script src="m.js"></script><script src="r.js"></script><script src="r2.js"></script><script src="r3.js"></script><script src="r4.js"></script>
+<style>body{width:1600px;height:1000px;overflow:hidden;background:radial-gradient(60% 60% at 50% 0%,rgba(12,242,186,.08),transparent),#04021f}
+.stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 90px}
+.slot{width:390px;height:844px;position:relative;transform:scale(.98)}
+.slot .phone{position:absolute;inset:0}
+.mid{width:520px;text-align:center}.mid .k{font:700 15px Atk;letter-spacing:.16em;color:var(--mint);text-transform:uppercase}
+.mid h2{font:600 46px/1.1 Sora;letter-spacing:-.02em;margin:14px 0 10px;min-height:52px}.mid p{font-size:20px;line-height:1.5;color:var(--t2);min-height:90px}
+.trk{display:flex;gap:8px;margin:34px auto 0;width:470px}.trk div{flex:1;font:600 14px Atk;color:var(--t3)}.trk i{display:block;height:6px;border-radius:3px;background:rgba(250,250,244,.12);margin-bottom:8px;transition:background .5s}
+.trk .on{color:var(--mint)}.trk .on i,.trk .dn i{background:var(--mint)}
+.lbl2{position:absolute;top:-34px;left:0;right:0;text-align:center;font:600 16px Atk;color:var(--t2)}
+.enter .work>*{animation:wIn .6s cubic-bezier(.34,1.56,.64,1) both}
+.enter .work>*:nth-child(2){animation-delay:.05s}.enter .work>*:nth-child(3){animation-delay:.1s}.enter .work>*:nth-child(4){animation-delay:.15s}.enter .work>*:nth-child(5){animation-delay:.2s}.enter .work>*:nth-child(n+6){animation-delay:.25s}
+@keyframes wIn{from{opacity:0;transform:translateY(26px) scale(.97)}to{opacity:1;transform:none}}
+.bloom{position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(12,242,186,.45);pointer-events:none;z-index:30;animation:bl .9s cubic-bezier(.2,0,0,1) forwards}
+.kid .bloom{background:rgba(255,159,107,.45)}
+@keyframes bl{from{transform:translate(-50%,-50%) scale(.2);opacity:.9}to{transform:translate(-50%,-50%) scale(9);opacity:0}}
+.tap{position:absolute;width:56px;height:56px;border-radius:50%;border:3px solid rgba(255,255,255,.9);background:rgba(255,255,255,.25);z-index:40;transform:translate(-50%,-50%);animation:tp .7s ease-out forwards;pointer-events:none}
+@keyframes tp{0%{transform:translate(-50%,-50%) scale(.6);opacity:1}100%{transform:translate(-50%,-50%) scale(1.4);opacity:0}}
+.pring circle{transition:stroke-dasharray .9s cubic-bezier(.34,1.56,.64,1)}
+.rung{transition:all .45s cubic-bezier(.34,1.56,.64,1)}.rung.pre{opacity:.25;transform:translateX(18px)}
+.apples i{transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .3s}.apples i.pop{transform:scale(1.25)}
+.stone{transition:all .5s cubic-bezier(.34,1.56,.64,1)}
+.kara span{transition:background .25s,color .25s}
+.flip{animation:fl .8s cubic-bezier(.2,0,0,1) both;transform-origin:left center}@keyframes fl{from{transform:perspective(900px) rotateY(-70deg);opacity:0}to{transform:none;opacity:1}}
+.card3{transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
+</style></head><body><div class="stage"><div class="slot" id="L"><div class="lbl2">Study · Size 3 · Full</div></div>
+<div class="mid"><div class="k">halo · Learn · one path for any age</div><h2 id="h"></h2><p id="p"></p><div class="trk" id="trk">${''}</div></div>
+<div class="slot" id="R"><div class="lbl2">Kids · Size 1 · Pictures</div></div></div>
+<script>
+const T=['Choose','Look','Try','Help','Keep'];document.getElementById('trk').innerHTML=T.map(t=>`<div><i></i>${t}</div>`).join('');
+const K={kid:1};const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function put(id,work,o){const s=document.getElementById(id);const l=s.querySelector('.lbl2').outerHTML;s.innerHTML=l+ph(work,o);const p=s.querySelector('.phone');p.classList.add('enter');
+ s.querySelectorAll('.pring').forEach(r=>{const c=r.querySelectorAll('circle')[1];const t=c.getAttribute('stroke-dasharray');r.dataset.t=t;c.setAttribute('stroke-dasharray','0.01 999');});return p}
+function fillRings(id){document.querySelectorAll('#'+id+' .pring').forEach(r=>{r.querySelectorAll('circle')[1].setAttribute('stroke-dasharray',r.dataset.t)})}
+function setRing(id,f,l){const r=document.querySelector('#'+id+' .pring');if(!r)return;const C=2*Math.PI*20,gap=C*.125;r.querySelectorAll('circle')[1].setAttribute('stroke-dasharray',`${(C-gap)*f} ${C}`);r.querySelector('b').textContent=l}
+function at(id,sel,cls){const s=document.getElementById(id);const e=s.querySelector(sel);if(!e)return;const a=s.getBoundingClientRect(),b=e.getBoundingClientRect();const d=document.createElement('div');d.className=cls;d.style.left=(b.left-a.left+b.width/2)/.98+'px';d.style.top=(b.top-a.top+b.height/2)/.98+'px';s.querySelector('.phone').appendChild(d);setTimeout(()=>d.remove(),1000)}
+function cap(i,h,p){document.getElementById('h').textContent=h;document.getElementById('p').textContent=p;[...document.querySelectorAll('#trk div')].forEach((d,k)=>{d.className=k<i?'dn':k==i?'on':''})}
+async function run(){
+ cap(0,'Choose','Due practice first. Kids get three big doors — tap once to hear, again to go.');
+ put('L',S4.start,{place:{icon:'study',t:'Study',s:'6 cards due · 1 lesson open'},acts:[['practise','Practise now',1],['history','My lessons']],nav:'work'});
+ put('R',S4.kHome,Object.assign({place:{icon:'home',t:'Hi Mila',s:'3 things to do'},acts:[['speaker','Hear',1],['guide_me','Help']],nav:'home'},K));
+ await sleep(1600);at('R','.kc:nth-of-type(2)','tap');await sleep(500);at('R','.kc:nth-of-type(2)','tap');await sleep(300);at('R','.kc:nth-of-type(2)','bloom');
+ at('L','.door:nth-of-type(3)','tap');await sleep(400);at('L','.door:nth-of-type(3)','bloom');await sleep(1600);
+ cap(1,'Look','One idea at your size. Words light up as halo reads; the path shows where you are.');
+ put('L',S4.listen,{place:{icon:'read_mode',t:'Fractions',s:'Look · reading aloud'},acts:[['pause','Pause',1],['heading','Read myself']],nav:'work',cap:'Pause'});
+ put('R',S4.kPath,Object.assign({place:{icon:'study',t:'Counting',s:'Stone 2 of 4'},acts:[['study','Go!',1],['speaker','Hear']],nav:'learn'},K));
+ const words='A fraction tells you how many equal parts you have out of the whole.'.split(' ');
+ const kr=document.querySelector('#L .kara');for(let i=0;i<words.length;i++){kr.innerHTML=words.map((w,k)=>`<span class="${k<i?'':k==i?'now':'r'}">${w}</span>`).join(' ').replace(/class=""/g,'');if(i==4){document.querySelector('#R .stone.c').classList.remove('c');}await sleep(330)}
+ document.querySelector('#R .stone:nth-of-type(2)').classList.add('c');at('R','.stone:nth-of-type(2)','bloom');await sleep(900);
+ cap(2,'Try','Your thinking first: type, talk or tap. Kids hear a choice with one tap and choose with the second.');
+ put('L',S4.try.replace(/I think <b>⅔<\/b> is bigger because ⅔ = 16⁄24 and ⅝ = 15⁄24/,'<span id="ty"></span>'),{place:{icon:'study',t:'Your answer',s:'Try · type, talk or photo'},acts:[['guide_me','Help'],['check','Check',1]],nav:'work',cap:'Talk'});
+ put('R',S4.kTry.replace(/data-n="[0-9]*"/g,'data-n=""').replace('class="hear"','').replace('listening…','tap to hear'),Object.assign({place:{icon:'study',t:'How many apples?',s:'Count, then choose'},acts:[['guide_me','Help me'],['speaker','Hear',1]],nav:'learn',cap:'Say it'},K));
+ await sleep(300);fillRings('L');const txt='I think ⅔ is bigger because ⅔ = 16⁄24 and ⅝ = 14⁄24';const ty=document.getElementById('ty');const ap=[...document.querySelectorAll('#R .apples i')];
+ for(let i=0;i<txt.length;i++){ty.textContent=txt.slice(0,i+1);if(i%10==0&&ap[i/10|0]){const a=ap[i/10|0];a.dataset.n=(i/10|0)+1;a.classList.add('pop');setTimeout(()=>a.classList.remove('pop'),350)}await sleep(48)}
+ const po=document.querySelectorAll('#R .picopt div');po[1].classList.add('hear');po[1].querySelector('small').textContent='“five”';at('R','.picopt div:nth-child(2)','tap');await sleep(800);
+ at('L','.act.p','bloom');await sleep(500);
+ cap(3,'Help','Help is a ladder you climb yourself. For kids, help means doing it together — never just the answer.');
+ put('L',S4.almost,{place:{icon:'study',t:'Almost',s:'One number slipped'},acts:[['heading','Fix it',1],['guide_me','Help'],['explain','Why?']],nav:'work'});
+ put('R',S4.kHelp,Object.assign({place:{icon:'guide_me',t:'Let’s count together',s:'Help'},acts:[['undo','Back'],['speaker','Say again',1]],nav:'learn'},K));
+ await sleep(300);fillRings('L');const ka=[...document.querySelectorAll('#R .apples i')];ka.forEach(a=>a.classList.add('dim'));for(const a of ka){await sleep(380);a.classList.remove('dim');a.classList.add('pop');setTimeout(()=>a.classList.remove('pop'),350)}
+ await sleep(500);
+ put('L',S4.help,{place:{icon:'guide_me',t:'Help · level 2 of 3',s:'Help me think'},acts:[['study','Try again',1],['guide_me','More help']],nav:'work'});
+ fillRings('L');const rg=[...document.querySelectorAll('#L .rung')];rg.forEach(r=>r.classList.add('pre'));for(const r of rg){await sleep(420);r.classList.remove('pre')}await sleep(1300);
+ cap(4,'Keep','Right answers close the ring. Keep each card yourself; kids hear specific, true praise.');
+ put('L',S4.right,{place:{icon:'check',t:'You got it',s:ok('Exercise 2 done')},acts:[['check','Keep 1 card',1],['study','Next exercise']],nav:'work'});
+ put('R',S4.kRight,Object.assign({place:{icon:'check',t:'Yes — 5!',s:'You did it'},acts:[['study','Next',1],['read_mode','Hear again']],nav:'learn'},K));
+ setRing('L',.6,'3/5');await sleep(200);document.querySelector('#L .pring circle:nth-child(2)')&&0;setRing('L',1,'✓');at('L','.pring','bloom');at('R','.saved .ck','bloom');await sleep(1500);
+ const kk=document.querySelector('#L .drafts .k i:not(.on)');at('L','.drafts .dc:nth-child(2) .k i','tap');document.querySelectorAll('#L .drafts .dc')[1].querySelector('.k i').classList.add('on');await sleep(1600);
+ cap(4,'Make, then later','Kids make a story in three picture questions. Study comes back as practice at the right time.');
+ put('L',S4.practice,{place:{icon:'practise',t:'Practice',s:'Card 3 of 6'},acts:[['retry','Flip'],['check','Next',1]],nav:'work'});
+ put('R',S4.kIdea,Object.assign({place:{icon:'draw',t:'My idea',s:'Talk or write'},acts:[['heading','Write it myself'],['check','That’s it!',1]],nav:'home',cap:'Talk'},K));
+ await sleep(1500);put('R',S4.kMore,Object.assign({place:{icon:'draw',t:'More about it',s:'Question 1 of 3'},acts:[['undo','Back'],['check','Next',1]],nav:'home'},K));
+ const c3=document.querySelector('#L .card3');c3.style.transform='rotateY(180deg) scale(.96)';await sleep(350);c3.style.transform='none';await sleep(1200);at('L','.rate span.on','bloom');
+ at('R','.kchips div.on','tap');await sleep(900);
+ put('R',S4.kRead,Object.assign({place:{icon:'read_mode',t:'Fox and the Moon',s:'Page 2 of 5'},acts:[['undo','Back'],['play','Next page',1]],nav:'home',cap:'Pause'},K));document.querySelector('#R .story').classList.add('flip');await sleep(2200);
+ put('R',S4.kSaved,Object.assign({place:{icon:'check',t:'Saved',s:'In My projects'},acts:[['read_mode','Read again',1],['draw','Make another']],nav:'home',badge:0},K));at('R','.saved .ck','bloom');
+ cap(5,'One path, any age','Choose · Look · Try · Help · Keep — the same steps, the same dock, three sizes.');await sleep(2600);window.done=1}
+window.onload=()=>setTimeout(run,600);
+</script></body></html>

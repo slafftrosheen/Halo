@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wear_phone_unavailable">Tuvumā nav pieejams tālrunis ar Halo</string>
+    <string name="wear_expired">Darbības laiks ir beidzies</string>
+    <string name="wear_connected">Halo · Savienots ar tālruni</string>
+    <string name="wear_no_interaction">Nav gaidošu darbību</string>
+    <string name="wear_yes">Jā</string>
+    <string name="wear_no">Nē</string>
+    <string name="wear_review_on_phone">Pārskatiet šo apstiprinājumu tālrunī.</string>
+    <string name="wear_open_on_phone">Atvērt tālrunī</string>
+</resources>

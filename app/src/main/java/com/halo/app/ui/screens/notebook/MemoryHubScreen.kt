@@ -35,6 +35,9 @@ import com.halo.app.data.memory.MemoryKind
 import com.halo.app.ui.workspace.*
 import com.halo.runtime.cognition.memory.MemoryConflictKind
 import com.halo.runtime.cognition.memory.MemoryLimits
+import com.halo.app.ui.zone6.Choose
+import com.halo.app.ui.zone6.rememberZone6PageSetting
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -63,7 +66,22 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
             showRemember = false
         }
     }
-    var section by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialSection.takeIf { it in listOf("Memories", "Suggestions", "Learning history") } ?: "Memories") }
+    val easy = com.halo.app.ui.theme.rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
+    val layout = rememberZone6PageSetting("memory.presentation")
+    val initialLayout = if (easy) "simple" else "details"
+    var draftLayout by remember { mutableStateOf<String?>(null) }
+    val presentation = draftLayout ?: layout.value ?: initialLayout
+    val simple = presentation == "simple"
+    val editPresentation = { draftLayout = presentation }
+    val editLabel = stringResource(R.string.page_layout_edit)
+    if (draftLayout != null) layout.Choose(initialLayout, stringResource(R.string.page_memory_layout), listOf(
+        "simple" to stringResource(R.string.page_memory_simple), "details" to stringResource(R.string.page_memory_details),
+        ), presentation, { draftLayout = it }, { draftLayout = null })
+    val suggestionIntro = rememberZone6PageSetting("memory.suggestions.intro")
+    val scope = rememberCoroutineScope()
+    var section by rememberSaveable(initialCandidate?.content, initialSection) {
+        mutableStateOf(initialSection.takeIf { it in listOf("Memories", "Suggestions", "Learning history") } ?: "Memories")
+    }
     var editor by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate != null) }
     var draft by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate?.content.orEmpty()) }
     var kind by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate?.kind ?: MemoryKind.FACT) }
@@ -85,6 +103,7 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
             section == "Memories" && search.isBlank()) com.halo.app.ui.presence.ShellNextStep("memory-add.v1", "page.memory.add",
                 stringResource(R.string.zone5_guide_memory)) else null)
     com.halo.app.ui.presence.BindShellPageActions(pageOwner, listOf(
+        com.halo.app.ui.presence.ShellPageAction("page.memory.layout", editLabel, HaloGlyph.SETTINGS, !busy, editPresentation),
         com.halo.app.ui.presence.ShellPageAction("page.memory.add", "Remember something", HaloGlyph.MEMORY, !busy) { editor = true },
         com.halo.app.ui.presence.ShellPageAction("page.memory.settings", "Learning settings", HaloGlyph.SETTINGS, !busy, onSettings),
         com.halo.app.ui.presence.ShellPageAction("page.memory.view-memories", "Memories", HaloGlyph.MEMORY, !busy) { section = "Memories" },
@@ -114,7 +133,10 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         else if (!headingBeforeTabs) item { Zone5InstrumentHeading(uiText("Memory"), "tool_memory", state = uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size)) }
         item {
             Row(Modifier.fillMaxWidth()) { Text(uiText("Use memory in conversations"), Modifier.weight(1f)); Switch(useMemory, viewModel::useMemory) }
-            TextButton({ showUsage = !showUsage }) { Text(stringResource(R.string.zone5_memory_usage_details)) }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton({ showUsage = !showUsage }) { Text(stringResource(R.string.zone5_memory_usage_details)) }
+                TextButton(editPresentation, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(editLabel) }
+            }
             if (showUsage) {
             Text(uiText(if (useMemory) "Halo may retrieve relevant saved memories that fit the current scope and context budget." else
                 "Saved memories stay here, but Halo will not use them automatically in conversations."), style = MaterialTheme.typography.bodySmall)
@@ -147,24 +169,42 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                     }
                     if (!shellOwnsOrb) HaloFocusAction(uiText("Remember something"), HaloGlyph.MEMORY, !busy, { editor = true }, active = state.items.isEmpty())
                 }
-                if (state.loading) item { CircularProgressIndicator() }
-                else if (state.error == null && state.items.isEmpty()) item { Text(uiText(if (search.isBlank()) "Nothing remembered here yet. Add something to remember, or review Suggestions." else "No memories match. Try another word or change the filters.")) }
+                if (state.loading) item { com.halo.app.ui.zone6.Zone6DelayedLoading(true) }
+                else if (state.error == null && state.items.isEmpty()) item {
+                    if (search.isBlank() && state.count == 0) com.halo.app.ui.zone6.Zone6RingEmptyState(
+                        stringResource(R.string.z6_empty_memory_t), stringResource(R.string.z6_empty_memory_p), HaloGlyph.MEMORY,
+                        if (busy) emptyList() else listOf(com.halo.app.ui.zone6.Zone6Start(uiText("Remember something"), HaloGlyph.MEMORY) { editor = true }),
+                    ) else Text(uiText("No memories match. Try another word or change the filters."))
+                }
                 items(state.items, key = { it.record.id }) { item ->
                     HaloWorkspaceCard {
-                        Text(uiText(item.kindLabel), style = MaterialTheme.typography.labelMedium)
+                        if (!simple) Text(uiText(item.kindLabel), style = MaterialTheme.typography.labelMedium)
                         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
-                        com.halo.app.ui.components.HaloReadAloud(item.record.content)
-                        Text(uiText(item.originLabel), style = MaterialTheme.typography.bodySmall)
-                        Text(uiText(item.confirmationLabel) + " · " + uiText(item.scopeLabel), style = MaterialTheme.typography.labelSmall)
+                        com.halo.app.ui.components.HaloReadAloud(item.record.content, category = com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
+                        if (!simple) {
+                            Text(uiText(item.originLabel), style = MaterialTheme.typography.bodySmall)
+                            Text(uiText(item.confirmationLabel) + " · " + uiText(item.scopeLabel), style = MaterialTheme.typography.labelSmall)
+                        }
                         if (item.stale) Text(uiText("Needs review · This memory may be outdated."))
-                        if (item.record.usageCount > 0) Text(item.usageSummary, style = MaterialTheme.typography.bodySmall)
-                        TextButton({ onOpenMemory(item.record.id) }) { Text(uiText("Details · Correct · Forget")) }
+                        if (!simple && item.record.usageCount > 0) Text(item.usageSummary, style = MaterialTheme.typography.bodySmall)
+                        TextButton({ onOpenMemory(item.record.id) }, modifier = Modifier.heightIn(min = if (easy) 64.dp else 48.dp)) {
+                            Text(stringResource(R.string.page_memory_review_forget))
+                        }
                     }
                 }
                 if (state.items.size == 100) item { Text(uiText("Showing up to 100 memories. Search to narrow the list.")) }
             }
             "Suggestions" -> {
-                item { Text(uiText("Suggestions are not saved facts. Nothing is remembered until you approve it.")) }
+                if (suggestionIntro.value != "seen") item("suggestion_intro") {
+                    Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.large) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(stringResource(R.string.page_memory_intro_title), style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.page_memory_intro_body))
+                            TextButton(onClick = { scope.launch { suggestionIntro.apply(suggestionIntro.value, "seen", "new") } },
+                                modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Got it")) }
+                        }
+                    }
+                }
                 if (pendingStatus.loading) item { Text(stringResource(R.string.zone5_suggestions_loading)); LinearProgressIndicator(Modifier.fillMaxWidth()) }
                 else if (pendingStatus.failed) item { Text(stringResource(R.string.zone5_memory_load_error), color = MaterialTheme.colorScheme.error); Zone5ActionButton(uiText("Try again"), "action_refresh", onClick = viewModel::retry) }
                 else if (pending.isEmpty()) item { Text(uiText("No suggestions awaiting review")) }

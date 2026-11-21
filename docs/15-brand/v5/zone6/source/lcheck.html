@@ -1,0 +1,3 @@
+<!doctype html><html><body style="margin:0;background:#060330"><div id="c" style="width:400px;height:480px"></div><script src="lottie.min.js"></script>
+<script>window.load=(u)=>new Promise((res,rej)=>{document.getElementById('c').innerHTML='';const a=lottie.loadAnimation({container:document.getElementById('c'),renderer:'svg',loop:false,autoplay:false,path:u});
+a.addEventListener('DOMLoaded',()=>{try{let n=0;for(let f=0;f<a.totalFrames;f+=3){a.goToAndStop(f,true);n=document.querySelectorAll('#c path').length}res({frames:a.totalFrames,paths:n})}catch(e){rej(e.message)}});a.addEventListener('data_failed',()=>rej('fail'))});</script></body></html>

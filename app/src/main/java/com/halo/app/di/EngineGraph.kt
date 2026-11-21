@@ -125,6 +125,7 @@ class EngineGraph(
         val privacy = ManualDependencyGraph.privacyModes
         com.halo.app.ai.ParentControlledAiRouter(router,
             profiles = privacy,
+            pause = ManualDependencyGraph.haloPause,
             remoteAllowed = { privacy.mode.value == com.halo.app.ai.PrivacyMode.CLOUD && privacy.sharingAcknowledged &&
                 com.halo.app.ai.OnlineFeature.INFERENCE in privacy.profile(com.halo.app.ai.PrivacyMode.CLOUD).onlineFeatures &&
                 kids.loadedState.value },

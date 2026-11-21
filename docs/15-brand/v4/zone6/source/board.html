@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><script src="icons.js"></script><script src="z6.js"></script></head>
+<body><div id="root"></div>
+<script>
+const q=new URLSearchParams(location.search), b=q.get('b')||'A';
+const wm=`<div class="wm">hal<svg viewBox="0 0 240 240" style="width:30px;height:30px;margin-top:4px"><path d="M197.32 87.18A84 84 0 1 1 152.82 42.68" stroke="#0CF2BA" stroke-width="30" stroke-linecap="round" fill="none"/></svg></div>`;
+const D={
+A:{k:'Direction A · recommended',t:'Calm Dock',p:'The quarter becomes a clear, familiar dock: where you are on top, the 3–4 things you can do in the middle, and places you can go on the bottom — with the ring always labelled in the centre. Nothing hidden behind a gesture.',
+ notes:[['You always know where you are','A place card names the tool, the file and its real state (Saved, Saving, Not saved) — in words, not colour.'],
+ ['Doing is one tap','File · Edit · Add · View become 4 big labelled buttons. The suggested next step is filled mint; the rest wait quietly under More.'],
+ ['Going is visible','Home · Workspace · Activity · More are always on screen. Hold or swipe the ring still opens Places as a shortcut.'],
+ ['The ring says what it does','“Talk”, “Listening”, “Stop” under the ring. When halo listens the whole quarter turns into live words and a Stop button.']]},
+B:{k:'Direction B',t:'Orbit',p:'Keeps today’s orb-first idea but makes it legible: labelled actions curve around the ring like an arc, the ring is captioned, and Places opens as a full sheet of big, live tiles.',
+ notes:[['Closest to today','Same ring-centred mental model, so current users relearn nothing.'],['Playful motion','Actions spring out of the ring and fold back in when halo listens.'],
+ ['Places on demand','A visible Places button plus hold / swipe on the ring. Live tiles say what is waiting.'],['Trade-off','Navigation is still one step away, and arcs fit only 4 actions.']]},
+C:{k:'Direction C',t:'Living Island',p:'The quarter holds one glass island that changes shape with what halo is doing — tool and file on top, actions below, the ring inside. Swipe the island sideways to switch places.',
+ notes:[['One object to watch','Everything halo-related lives in a single island, so the work area stays perfectly calm.'],['Shape = state','Listening, working, needs you — the island morphs instead of new banners appearing.'],
+ ['Swipe between places','Like flipping cards. Places also opens as a tall island sheet.'],['Trade-off','Swiping to switch places is new — needs teaching, and must have a visible fallback.']]},
+};
+const d=D[b];
+const cols=[['home','idle',1,'Home · chat','composer lives in the zone'],['studio','idle',0,'Working in a tool','HaloStudio · poster draft'],['home','listen',0,'Listening','live words + edge light'],['studio','nav',0,b=='A'?'More / Go to':'Places','big live tiles, current marked']];
+document.getElementById('root').innerHTML=`<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · ${d.k}</div><h1>${d.t}</h1><p>${d.p}</p></div>${wm}</div>
+<div class="phones">${cols.map(([s,st,sp,l,sm])=>`<div class="pcol">${phone(b,s,st,sp)}<div class="pl">${l}<small>${sm}</small></div></div>`).join('')}</div>
+<div class="notes">${d.notes.map(([h,p],i)=>`<div class="note ${b!='A'&&i==3?'w':''}"><b>${h}</b><p>${p}</p></div>`).join('')}</div></div>`;
+</script></body></html>

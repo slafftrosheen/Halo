@@ -28,6 +28,7 @@ class AndroidExternalDisplayPresenter(context: Context, private val canPresent: 
     override val state = mutableState.asStateFlow()
     private var activity: Activity? = null
     private var presentation: TextPresentation? = null
+    private var liveOwner: String? = null
     private var listening = false
     private val listener = object : DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId: Int) = refresh()
@@ -61,22 +62,49 @@ class AndroidExternalDisplayPresenter(context: Context, private val canPresent: 
     override suspend fun snapshot(): ExternalDisplayState = withContext(Dispatchers.Main.immediate) { refresh(); state.value }
 
     override suspend fun show(endpointToken: String, text: String, expectedRevision: Long?, requestAllowed: () -> Boolean): ExternalDisplayReceipt =
-        withContext(Dispatchers.Main.immediate) {
+        showText(endpointToken, text, expectedRevision, null, false, requestAllowed)
+
+    /** Record owns this ephemeral claim until it stops or explicitly loses the selected endpoint. */
+    suspend fun showLiveCaptions(endpointToken: String, text: String, expectedRevision: Long, ownerToken: String,
+        opening: Boolean, requestAllowed: () -> Boolean): ExternalDisplayReceipt =
+        showText(endpointToken, text, expectedRevision, ownerToken, opening, requestAllowed)
+
+    suspend fun clearLiveCaptions(ownerToken: String) = withContext(Dispatchers.Main.immediate) {
+        refresh()
+        if (liveOwner == ownerToken) {
+            dismiss()
+            session.cleared()
+            publish()
+        }
+    }
+
+    private suspend fun showText(endpointToken: String, text: String, expectedRevision: Long?, ownerToken: String?,
+        opening: Boolean, requestAllowed: () -> Boolean): ExternalDisplayReceipt = withContext(Dispatchers.Main.immediate) {
             refresh()
             val host = activity
             if (host == null || host.isFinishing || host.isDestroyed || !canPresent() || !requestAllowed())
                 return@withContext reject("Open and unlock Halo with grown-up access to show a card.")
+            val ownsOutput = if (ownerToken == null) liveOwner == null else if (opening) {
+                liveOwner == null && session.state.activeToken == null
+            } else liveOwner == ownerToken && session.state.activeToken == endpointToken
+            if (!ownsOutput) return@withContext reject("The selected display has a different owner. Stop it before using another output.")
             val pages = ExternalDisplaySession.paginate(text)
                 ?: return@withContext reject("Use 1–8000 characters and at most 80 pages. Reduce excess line breaks if needed.")
             val displayId = session.resolve(endpointToken, expectedRevision)
                 ?: return@withContext reject("Display selection changed. Select the connected display again.")
             val display = manager?.getDisplay(displayId)?.takeIf { it.isValid }
                 ?: return@withContext reject("The selected display is unavailable.")
+            val current = presentation?.takeIf { it.isShowing && session.state.activeToken == endpointToken }
+            if (current != null) {
+                current.showPage(pages.first(), 1, pages.size)
+                return@withContext session.presented(endpointToken, pages).also { publish() }
+            }
             dismiss()
             val next = TextPresentation(host, display, pages.first(), pages.size)
             next.setOnDismissListener {
                 if (presentation === next) {
                     presentation = null
+                    liveOwner = null
                     session.cleared()
                     publish()
                 }
@@ -84,6 +112,7 @@ class AndroidExternalDisplayPresenter(context: Context, private val canPresent: 
             try {
                 next.show()
                 presentation = next
+                liveOwner = ownerToken
                 session.presented(endpointToken, pages).also { publish() }
             } catch (_: android.view.WindowManager.InvalidDisplayException) {
                 failed(next)
@@ -99,6 +128,7 @@ class AndroidExternalDisplayPresenter(context: Context, private val canPresent: 
             refresh()
             if (!canPresent() || !requestAllowed())
                 return@withContext reject("Display access changed. Open and unlock Halo to continue.")
+            if (liveOwner != null) return@withContext reject("Live captions do not have pages.")
             val content = session.pageText(endpointToken, page, expectedRevision)
                 ?: return@withContext reject("The display, text or page changed. Read its current state and select a valid page.")
             val current = presentation?.takeIf { it.isShowing }
@@ -138,6 +168,7 @@ class AndroidExternalDisplayPresenter(context: Context, private val canPresent: 
     private fun dismiss() {
         val previous = presentation
         presentation = null
+        liveOwner = null
         previous?.setOnDismissListener(null)
         previous?.dismiss()
     }

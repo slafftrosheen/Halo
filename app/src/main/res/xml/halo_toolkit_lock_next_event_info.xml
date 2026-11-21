@@ -1,0 +1,9 @@
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="110dp" android:minHeight="58dp"
+    android:minResizeWidth="90dp" android:minResizeHeight="56dp"
+    android:targetCellWidth="2" android:targetCellHeight="1" android:updatePeriodMillis="0"
+    android:initialLayout="@layout/halo_toolkit_preview_lock_next_event" android:previewLayout="@layout/halo_toolkit_preview_lock_next_event"
+    android:initialKeyguardLayout="@layout/halo_toolkit_preview_lock_next_event"
+    android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen|keyguard"
+    android:configure="com.halo.app.nativeactions.EverydayWidgetConfigurationActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional" android:description="@string/widget_toolkit_description" />

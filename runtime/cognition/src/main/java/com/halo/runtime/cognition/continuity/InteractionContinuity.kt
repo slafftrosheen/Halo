@@ -40,7 +40,7 @@ data class InteractionContinuityState(
     val inputEndpoint: InteractionEndpoint? = origin,
     val presentationEndpoint: InteractionEndpoint? = InteractionEndpoint.Phone,
     val audioOutputEndpoint: InteractionEndpoint? = current,
-
+    val automaticPresentation: Boolean = false,
 )
 data class ContinuityDelivery(val target: SpeechOutputTarget, val fallback: SpeechOutputFallback,
     val delivery: ResponseDelivery, val presentationEndpoint: InteractionEndpoint = InteractionEndpoint.Phone)
@@ -108,14 +108,17 @@ class InteractionContinuityCoordinator(
     private val playbackActive: (String) -> Boolean = { false },
     private val events: EventBus? = null,
     private val applyAudioHandoff: suspend (String, ContinuityDelivery) -> Unit = { _, _ -> },
+    private val nextPresentation: suspend (InteractionEndpoint) -> InteractionEndpoint.WearOs? = { null },
 ) {
     private val mutex = Mutex()
     private val _state = MutableStateFlow(InteractionContinuityState())
     val state = _state.asStateFlow()
     private val overrides = mutableMapOf<String, InteractionEndpoint>()
     suspend fun bind(conversationId: String?, interactionId: String, endpoint: InteractionEndpoint) = mutex.withLock {
+        val automatic = nextPresentation(endpoint)?.takeIf { isReady(it) }
         _state.value = InteractionContinuityState(conversationId, interactionId, origin = endpoint, current = endpoint, executing = true,
-            presentationEndpoint = if (endpoint == InteractionEndpoint.AndroidAssistant) endpoint else InteractionEndpoint.Phone)
+            presentationEndpoint = automatic ?: if (endpoint == InteractionEndpoint.AndroidAssistant) endpoint else InteractionEndpoint.Phone,
+            automaticPresentation = automatic != null)
     }
     suspend fun attach(runId: AgentRunId) = mutex.withLock {
         val run = runs.get(runId) ?: return@withLock
@@ -125,7 +128,8 @@ class InteractionContinuityCoordinator(
                     Instant.now(), _state.value.origin ?: InteractionEndpoint.Phone, endpoint, InteractionHandoffReason.USER_REQUESTED))
             }
             val presentation = _state.value.presentationEndpoint
-            if (presentation != null && presentation != InteractionEndpoint.Phone && presentation != _state.value.origin) {
+            if (!_state.value.automaticPresentation && presentation != null && presentation != InteractionEndpoint.Phone &&
+                presentation != _state.value.origin) {
                 coordinator.recordStep(AgentStep.InteractionHandoffRecorded(AgentStepId(UUID.randomUUID().toString()), runId,
                     Instant.now(), InteractionEndpoint.Phone, presentation, InteractionHandoffReason.USER_REQUESTED, InteractionHandoffChannel.PRESENTATION))
             }
@@ -154,7 +158,7 @@ class InteractionContinuityCoordinator(
                 run.id, Instant.now(), (if (channel == InteractionHandoffChannel.PRESENTATION) current.presentationEndpoint else current.audioOutputEndpoint) ?: InteractionEndpoint.Phone, to, reason, channel)))
             return@withLock InteractionHandoffStatus.NO_ACTIVE_INTERACTION
         if (channel == InteractionHandoffChannel.PRESENTATION) {
-            _state.value = current.copy(presentationEndpoint = to, status = InteractionHandoffStatus.APPLIED)
+            _state.value = current.copy(presentationEndpoint = to, status = InteractionHandoffStatus.APPLIED, automaticPresentation = false)
         } else {
             overrides[interactionId] = to
             _state.value = current.copy(current = to, audioOutputEndpoint = to, status = InteractionHandoffStatus.APPLIED)

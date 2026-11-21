@@ -1,0 +1,96 @@
+/* ===== M · Calm Dock + Island morph + Orbit spring ===== */
+.M .zone{overflow:visible}
+.M .zbg{position:absolute;left:0;right:0;top:0;bottom:-20px;border-radius:30px 30px 0 0;border:1px solid transparent;border-bottom:0;
+ transition:left .55s var(--sp),right .55s var(--sp),top .55s var(--sp),bottom .55s var(--sp),border-radius .55s var(--sp),border-color .4s,box-shadow .4s}
+.M:not(.st-idle):not(.st-nav) .zbg{left:10px;right:10px;top:4px;bottom:82px;border-radius:26px;border:1px solid rgba(12,242,186,.45);box-shadow:0 0 0 4px rgba(12,242,186,.06),0 12px 40px rgba(0,0,0,.4)}
+.M.st-need .zbg{border-color:rgba(255,159,107,.75);box-shadow:0 0 0 4px rgba(255,159,107,.10),0 0 34px rgba(255,159,107,.22)}
+.M .navbg{position:absolute;left:0;right:0;bottom:-20px;height:106px;opacity:0;transition:opacity .4s;border-radius:0}
+.M:not(.st-idle):not(.st-nav) .navbg{opacity:1}
+.M .horizon{transition:opacity .3s}.M:not(.st-idle):not(.st-nav) .horizon{opacity:0}
+/* panels: each state owns rows 1-2 (y 8..110) */
+.M .pn{position:absolute;top:8px;left:16px;right:16px;height:102px;opacity:0;pointer-events:none;transform:translateY(12px) scale(.98);
+ transition:opacity .28s,transform .5s var(--sp)}
+.M:not(.st-idle):not(.st-nav) .pn{left:24px;right:24px;top:14px;height:92px}
+.M.st-idle .pn.idle,.M.st-nav .pn.idle,.M.st-listen .pn.listen,.M.st-work .pn.work,.M.st-need .pn.need,.M.st-done .pn.done{opacity:1;transform:none;transition-delay:.12s}
+.M .pn .r1{display:flex;align-items:center;gap:10px;height:44px}
+.M .pn .r2{display:flex;gap:8px;height:52px;margin-top:6px}
+.M:not(.st-idle):not(.st-nav) .pn .r2{height:44px;margin-top:4px}
+.M .pn .r2 .btn{flex:1;height:100%}
+/* spring actions out of the ring (B) */
+.M .act,.M .comp,.M .ibtn{transition:transform .6s var(--sp),opacity .3s}
+.M:not(.st-idle):not(.st-nav) .pn.idle .act{transform:translate(var(--dx,0),70px) scale(.4);opacity:0}
+.M .act:nth-child(1){--dx:110px}.M .act:nth-child(2){--dx:40px;transition-delay:.04s}.M .act:nth-child(3){--dx:-40px;transition-delay:.08s}.M .act:nth-child(4){--dx:-110px;transition-delay:.12s}
+.M .act{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:16px;background:rgba(250,250,244,.06);font:600 14px Atk;border:1px solid var(--line);position:relative}
+.M .act svg{width:21px;height:21px}
+.M .act.p{background:var(--mint);color:var(--ink);border-color:transparent;flex:1.25;box-shadow:0 0 22px rgba(12,242,186,.3)}
+.M .comp{flex:1;display:flex;align-items:center;gap:10px;border-radius:26px;background:rgba(250,250,244,.07);border:1px solid var(--line);padding:0 6px 0 16px;color:var(--t3);font-size:16px}
+.M .comp .send{margin-left:auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(250,250,244,.08);color:var(--cream)}
+.M .ibtn{width:52px;flex:none;border-radius:50%;display:grid;place-items:center;background:rgba(250,250,244,.06);border:1px solid var(--line)}
+/* nav */
+.M .nav{position:absolute;left:8px;right:8px;bottom:4px;height:76px;display:grid;grid-template-columns:1fr 1fr 96px 1fr 1fr;align-items:end}
+.M .tab{display:flex;flex-direction:column;align-items:center;gap:4px;font:600 12.5px Atk;color:var(--t2);padding-bottom:6px;transition:opacity .3s}
+.M .tab .ind{position:relative;width:56px;height:32px;border-radius:16px;display:grid;place-items:center;transition:background .3s,width .45s var(--sp)}
+.M .tab.on{color:var(--cream)}.M .tab.on .ind{background:rgba(12,242,186,.16);color:var(--mint);width:64px}
+.M .ocell{display:flex;flex-direction:column;align-items:center;gap:4px;padding-bottom:2px}
+.M .ocell .orb{width:56px;height:56px}
+.M .cap{transition:color .3s}
+.M.st-listen .ocell .cap,.M.st-work .ocell .cap{color:var(--mint)}.M.st-need .ocell .cap{color:var(--ap)}
+/* work state */
+.M .spin{width:28px;height:28px;flex:none;position:relative}
+.M .spin svg{width:28px;height:28px;animation:sp 1.6s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.M .tt{font:600 15px/1.2 Sora}.M .ts{font-size:13px;color:var(--t2)}
+.M .steps{display:flex;gap:6px;align-items:center;flex:1;font:600 13px Atk;color:var(--t2)}
+.M .steps .s{display:flex;align-items:center;gap:6px;height:44px;padding:0 10px;border-radius:14px;background:rgba(250,250,244,.05);white-space:nowrap}
+.M .steps .s svg{width:16px;height:16px}
+.M .steps .s.d{color:var(--mint)}.M .steps .s.c{color:var(--cream);background:rgba(12,242,186,.12);box-shadow:inset 0 0 0 1px rgba(12,242,186,.5)}
+.M .shim{position:absolute;left:10px;right:10px;top:4px;height:2px;border-radius:2px;overflow:hidden;opacity:0;transition:opacity .3s}
+.M.st-work .shim{opacity:1}
+.M .shim:after{content:"";position:absolute;top:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,var(--mint),transparent);animation:shm 1.4s linear infinite}
+@keyframes shm{from{left:-40%}to{left:100%}}
+.M .ap{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(255,159,107,.16);color:var(--ap);flex:none}
+.M .btn.ap2{background:var(--ap);color:var(--ink);border:0}
+.M .ok2{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--mint);color:var(--ink);flex:none;position:relative}
+.M .ok2:after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--mint);opacity:0}
+.M.st-done .ok2:after{animation:bloom 1.2s var(--em) .2s 2}
+@keyframes bloom{0%{opacity:.9;transform:scale(.7)}100%{opacity:0;transform:scale(1.8)}}
+.M.st-work .edge{opacity:.6;animation:breathe 2.4s ease-in-out infinite}
+.M.st-need .edge{opacity:1;box-shadow:inset 0 0 0 2px rgba(255,159,107,.6),inset 0 0 28px rgba(255,159,107,.3);animation:none}
+.M.st-work .dim,.M.st-need .dim{opacity:.55}
+/* places sheet (B tiles, springing from the ring) */
+.M .sheet{bottom:104px;transform-origin:50% 115%;transform:translateY(40px) scale(.2);opacity:0;transition:transform .6s var(--sp),opacity .25s}
+.M.st-nav .sheet{transform:none;opacity:1}
+/* draft card in work area */
+.draft{margin-top:14px;border-radius:20px;padding:14px 16px;background:rgba(255,159,107,.08);border:1px solid rgba(255,159,107,.45)}
+.draft .h2{display:flex;align-items:center;gap:8px;font:600 13px Atk;color:var(--ap);margin-bottom:6px}
+.draft .h2 svg{width:16px;height:16px}
+/* ===== Kids ===== */
+.kid{--ink:#FFF3EA;--cream:#160E1C;--t2:#5B4A60;--t3:#8A7890;--line:rgba(22,14,28,.10);--mint:#047A5E}
+.kid .wall{background:radial-gradient(90% 50% at 90% 0%,rgba(255,159,107,.22),transparent 60%),radial-gradient(80% 50% at 0% 70%,rgba(12,242,186,.12),transparent 60%),#FFF3EA}
+.kid .sb .r i{background:#160E1C}.kid .gb{background:rgba(22,14,28,.4)}
+.kid .glass{background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,247,240,.96))}
+.kid .horizon{background:linear-gradient(90deg,transparent,rgba(255,159,107,.8),transparent)}
+.kid .act{height:56px;font-size:17px;background:#fff;border-color:rgba(22,14,28,.12)}
+.kid .act.p{background:#FF9F6B;color:#160E1C;box-shadow:0 6px 18px rgba(255,159,107,.35)}
+.kid .pn.idle .r2{height:56px}
+.kid .tab{font-size:14px}.kid .tab.on .ind{background:rgba(255,159,107,.22);color:#9B4B19}
+.kid .ocell .orb{width:64px;height:64px}
+.kid .pi{background:rgba(255,159,107,.2);color:#9B4B19}
+.kid .pt{font-size:17px}.kid .ps{font-size:15px}
+.kid .nav{grid-template-columns:1fr 110px 1fr}
+.kq{font:600 26px/1.2 Sora;margin:22px 0 6px;color:#160E1C}
+.apples{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:22px 0}
+.apples i{width:52px;height:52px;border-radius:50% 50% 46% 46%;background:radial-gradient(circle at 35% 30%,#ffb08a,#E2563B 60%);position:relative}
+.apples i:after{content:"";position:absolute;width:6px;height:12px;background:#5a3a1a;left:23px;top:-8px;border-radius:3px}
+.kch{display:flex;gap:12px}.kch div{flex:1;height:72px;border-radius:22px;background:#fff;border:2px solid rgba(22,14,28,.1);display:grid;place-items:center;font:700 30px Sora;color:#160E1C}
+.kch div.g{border-color:#047A5E;box-shadow:0 0 0 4px rgba(12,242,186,.25)}
+.kid .pn.idle .r1{height:40px}.kid .ocell .orb{width:60px;height:60px}.kid .nav{height:84px;bottom:2px}
+.M .pn.work .r2{height:40px}.M .steps .s{height:40px}
+.M.st-work .pn.work .r2{height:40px}
+.M:not(.st-idle):not(.st-nav) .pn.idle .comp,.M:not(.st-idle):not(.st-nav) .pn.idle .ibtn{transform:translateY(70px) scale(.4);opacity:0}
+.M .wd{position:absolute;inset:8px 20px 0;opacity:0;transition:opacity .4s}.M .wh{transition:opacity .4s}
+.M.st-need .wd,.M.st-done .wd{opacity:1}.M.st-need .wh,.M.st-done .wh{opacity:0}
+.M .sheet{pointer-events:none}.M.st-nav .sheet{pointer-events:auto}.M .psheet{pointer-events:none}
+.M .zbg,.M .navbg,.M .horizon,.M .shim{pointer-events:none}
+.M.st-idle .pn.idle,.M.st-listen .pn.listen,.M.st-work .pn.work,.M.st-need .pn.need,.M.st-done .pn.done,.M.st-err .pn.err{pointer-events:auto}
+.M .pn.work{padding:0;overflow:visible}

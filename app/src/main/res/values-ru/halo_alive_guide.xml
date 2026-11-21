@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_guide_appearance">Настроим вместе</string>
+    <string name="alive_guide_look">Что вам больше подходит?</string>
+    <string name="alive_guide_size">Какого размера всё должно быть?</string>
+    <string name="alive_guide_motion">Сколько движения вам нравится?</string>
+    <string name="alive_guide_night">Тихая ночь</string>
+    <string name="alive_guide_paper">Светлая бумага</string>
+    <string name="alive_guide_comfortable">Удобно</string>
+    <string name="alive_guide_bigger">Крупнее</string>
+    <string name="alive_guide_lively">Живо</string>
+    <string name="alive_guide_calm">Спокойно</string>
+    <string name="alive_guide_still">Без движения</string>
+    <string name="alive_guide_this_one">Вот этот вариант</string>
+</resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/halo_paused_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/halo_everyday_widget_background"
+    android:padding="8dp">
+    <TextView
+        android:id="@+id/halo_paused_widget_label"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fontFamily="@font/atkinson_hyperlegible_next_variable"
+        android:gravity="center"
+        android:maxLines="2"
+        android:text="@string/halo_pause_status"
+        android:textColor="#FFFFFFFF"
+        android:textSize="16sp" />
+</FrameLayout>

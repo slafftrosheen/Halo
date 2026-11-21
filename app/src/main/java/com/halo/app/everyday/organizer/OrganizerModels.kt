@@ -106,11 +106,13 @@ data class OrganizerRecord(
     val deletedAt: Instant? = null,
     val location: String = "",
     val calendarUid: String? = null,
+    val leaveBeforeMinutes: Int? = null,
 ) {
     fun validate() {
         require(id.matches(Regex("[A-Za-z0-9_.:-]{1,200}"))) { "Invalid record identity" }
         require(title.isNotBlank() && title.length <= 200 && details.length <= 16000) { "Title or details exceed supported limits" }
         require(location.length <= 1000)
+        require(leaveBeforeMinutes == null || kind == OrganizerKind.EVENT && time?.allDay == false && leaveBeforeMinutes in 0..10080)
         require(calendarUid == null || calendarUid.isNotBlank() && calendarUid.length <= 2000 && calendarUid.none { it.isISOControl() })
         require(version > 0 && links.size <= 50 && links.distinctBy { it.objectId to it.relation }.size == links.size)
         require(parentId == null || kind == OrganizerKind.TASK && parentId != id)
@@ -135,6 +137,7 @@ data class OrganizerOccurrence(
     val start: Instant,
     val end: Instant?,
     val completed: Boolean = false,
+    val allDay: Boolean = record.time?.allDay == true,
 ) { val key: String get() = "${record.id}@${originalStart.toEpochMilli()}" }
 
 /** The original start is immutable identity even when this occurrence moves to another day. */

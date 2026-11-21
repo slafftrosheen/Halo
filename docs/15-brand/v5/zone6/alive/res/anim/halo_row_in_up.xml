@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Next row rises into place (Full). Gentle uses halo_fade_in; Still uses the _still layout without animations. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android" android:interpolator="@android:interpolator/decelerate_cubic" android:duration="380">
+    <translate android:fromYDelta="100%" android:toYDelta="0" />
+    <alpha android:fromAlpha="0" android:toAlpha="1" />
+</set>

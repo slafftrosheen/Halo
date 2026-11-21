@@ -20,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,6 +37,9 @@ import com.halo.sdk.runtime.ink.InkCodec
 import com.halo.sdk.runtime.ink.InkDocument
 import com.halo.app.language.uiText
 import com.halo.app.ui.zone5.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private data class StudioLayerEdit(val revision: Long, val layer: StudioLayer, val adding: Boolean = false)
 private data class StudioVersionPreview(val baseRevision: Long, val version: StudioProjectVersion)
@@ -53,6 +57,27 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     val images by viewModel.images.collectAsStateWithLifecycle()
     val busy = state.busy || externalBusy
     val project = state.project
+    val context = LocalContext.current
+    val lookOwner = remember(context.applicationContext) { studioAppearanceOwner(context) }
+    var studioLook by rememberToolAppearance(lookOwner)
+    var lookDraft by remember { mutableStateOf<StudioAppearance?>(null) }
+    val appearance = lookDraft ?: studioLook?.current ?: StudioAppearance()
+    val scope = rememberCoroutineScope()
+    fun customize() {
+        if (!busy && !canvasLibrary) lookDraft = studioLook?.current
+    }
+    val editPageLabel = stringResource(R.string.alive_tool_edit_page)
+    val studioSettingsLabel = stringResource(R.string.alive_studio_look)
+    val lookSnapshot = studioLook
+    if (lookSnapshot != null && lookDraft != null) {
+        ToolLookDialog(R.string.alive_studio_look, lookSnapshot, appearance, { lookDraft = it },
+            onApply = {
+                studioLook = lookOwner.apply(lookSnapshot, appearance)
+                lookDraft = null
+            }, onDismiss = { lookDraft = null }, preview = { StudioAppearancePreview(appearance.paper) }) {
+            StudioAppearanceControls(appearance) { lookDraft = it }
+        }
+    }
     DisposableEffect(viewModel, project?.id) {
         val token = project?.id?.let(viewModel.service::attachProject)
         onDispose { token?.let(viewModel.service::detachProject) }
@@ -73,6 +98,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     var transforms by remember(project?.id) { mutableStateOf<StudioProject?>(null) }
     var layers by remember(project?.id) { mutableStateOf(false) }
     var addingLayer by remember(project?.id) { mutableStateOf(false) }
+    var removingLayer by remember(project?.id) { mutableStateOf<StudioLayerEdit?>(null) }
     var librarySection by rememberSaveable(canvasLibrary) { mutableStateOf(if (canvasLibrary) "canvases" else "projects") }
     var historyOpen by remember(project?.id) { mutableStateOf(false) }
     var versionPreview by remember(project?.id) { mutableStateOf<StudioVersionPreview?>(null) }
@@ -88,10 +114,28 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val drawName = stringResource(R.string.studio_draw)
     val textName = stringResource(R.string.studio_text)
+    val pictureName = stringResource(R.string.alive_studio_picture)
     val rectangleName = stringResource(R.string.studio_rectangle)
+    fun speakTool(name: String) {
+        if (studioLook?.current?.speakTools != true) return
+        scope.launch {
+            val graph = com.halo.app.di.ManualDependencyGraph
+            val fields = com.halo.app.ui.components.VoiceFieldCancellation
+            val ticket = fields.epoch.value
+            val provenance = withContext(Dispatchers.IO) {
+                com.halo.app.audio.readingProvenance(com.halo.sdk.provider.RemoteDataCategory.TEXT)
+            }
+            if (ticket != fields.epoch.value || fields.activeFields.value.isNotEmpty() ||
+                graph.haloSpeechOutputCoordinator.playbackActive.value ||
+                graph.readAloud.state.value?.preparing == true) return@launch
+            graph.readAloud.start("studio-tool", name, graph.speechSynthesisRegistry.selector.ttsSelection.value.id,
+                cloudApproved = provenance != null, language = null, remoteProvenance = provenance)
+        }
+    }
     fun draw() {
         val current = viewModel.state.value.project ?: return
         if (busy) return
+        speakTool(drawName)
         val selected = current.session.current.layers.find { it.id == current.session.current.selectedLayerId && it.kind == StudioLayerKind.INK && !it.locked }
         if (selected != null) activeInk = viewModel.startInk(current.revision, selected.id)
         else {
@@ -103,8 +147,18 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     }
     fun add(kind: StudioLayerKind, name: String) {
         val current = viewModel.state.value.project ?: return
-        if (!busy) editing = StudioLayerEdit(current.revision, StudioLayer(name = name, kind = kind,
-            bounds = StudioRect(100, 100, 800, 300)), true)
+        if (!busy) {
+            speakTool(name)
+            editing = StudioLayerEdit(current.revision, StudioLayer(name = name, kind = kind,
+                bounds = StudioRect(100, 100, 800, 300)), true)
+        }
+    }
+    fun pickPicture() {
+        if (!busy) viewModel.state.value.project?.let {
+            speakTool(pictureName)
+            importBaseRevision = it.revision
+            importing = true
+        }
     }
     val pageOwner = ShellPageOwner(if (canvasLibrary) "canvases" else "studio", project?.id, "${project?.revision}:${project?.session?.current?.selectedLayerId}:$librarySection",
         canonicalSourceVersion = project?.revision?.toString(),
@@ -117,8 +171,8 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         }) },
         selectionIds = listOfNotNull(project?.session?.current?.selectedLayerId),
         helpDescription = stringResource(R.string.zone5_help_studio),
-        guidanceBlocked = discardTarget != null || busy || state.error || state.loading || naming != null || addingLayer || editing != null || importing ||
-            background != null || transforms != null || layers || historyOpen || activeInk != null || state.aiReview || state.output != null,
+        guidanceBlocked = lookDraft != null || discardTarget != null || busy || state.error || state.loading || naming != null || addingLayer || editing != null || importing ||
+            background != null || transforms != null || layers || removingLayer != null || historyOpen || activeInk != null || state.aiReview || state.output != null,
         completedGuideIds = buildSet {
             if (project != null) add("studio-new.v1")
             if (project?.session?.current?.layers?.isNotEmpty() == true) add("studio-layer.v1")
@@ -147,8 +201,9 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             "page.studio.discard" to stringResource(if (busy) R.string.action_wait else R.string.action_no_changes),
             "page.studio.undo" to stringResource(if (busy) R.string.action_wait else R.string.action_no_undo),
             "page.studio.redo" to stringResource(if (busy) R.string.action_wait else R.string.action_no_redo)))
-    BindShellPageActions(pageOwner,
-        if (project == null) listOf(
+    val editPage = ShellPageAction("page.studio.appearance", editPageLabel, HaloGlyph.APPEARANCE,
+        !busy && studioLook != null, ::customize)
+    val actions = if (project == null) listOf(
             if (librarySection == "canvases") ShellPageAction("page.studio.new-canvas", uiText("New canvas"), HaloGlyph.NOTE,
                 !busy && !state.loading && onOpenCanvas != null) { naming = "canvas" }
             else ShellPageAction("page.studio.new", stringResource(R.string.studio_new_project), HaloGlyph.NOTE, !busy && !state.loading) { naming = "new" },
@@ -161,7 +216,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             ShellPageAction("page.studio.save", stringResource(R.string.studio_save), HaloGlyph.NOTE, !busy && project.hasUnsavedChanges) { viewModel.save() },
             ShellPageAction("page.studio.undo", uiText("Undo"), HaloGlyph.PREVIOUS, !busy && project.session.undo.isNotEmpty()) { viewModel.edit(project.revision, "undo") },
             ShellPageAction("page.studio.redo", uiText("Redo"), HaloGlyph.NEXT, !busy && project.session.redo.isNotEmpty()) { viewModel.edit(project.revision, "redo") },
-            ShellPageAction("page.studio.image", stringResource(R.string.studio_import_image), HaloGlyph.FILE, !busy) { importBaseRevision = project.revision; importing = true },
+            ShellPageAction("page.studio.image", stringResource(R.string.studio_import_image), HaloGlyph.FILE, !busy, ::pickPicture),
             ShellPageAction("page.studio.camera", stringResource(if (onRecoverCamera == null) R.string.studio_camera else R.string.studio_recover_photo), HaloGlyph.SEE, !busy) {
                 if (onRecoverCamera == null) onCamera(project) else onRecoverCamera(project)
             },
@@ -179,7 +234,12 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             ShellPageAction("page.studio.export-jpeg", stringResource(R.string.studio_export_jpeg), HaloGlyph.FILE, !busy) { viewModel.export(CanvasImageFormat.JPEG) },
             ShellPageAction("page.studio.discard", stringResource(R.string.studio_discard), HaloGlyph.TRASH,
                 !busy && project.hasUnsavedChanges, requestDiscard),
-        ))
+        )
+    val preferredIds = appearance.favorites.map { "page.studio." + it.action }
+    val sortedActions = if (project == null) actions else actions.sortedBy { action ->
+        preferredIds.indexOf(action.id).takeIf { it >= 0 } ?: Int.MAX_VALUE
+    }
+    BindShellPageActions(pageOwner, if (canvasLibrary) sortedActions else sortedActions + editPage)
     discardTarget?.let { target ->
         StudioAlertDialog(onDismissRequest = { discardTarget = null },
             title = { Text(stringResource(R.string.studio_discard_confirm)) },
@@ -202,7 +262,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             else viewModel.reportError(StudioOperation.IMPORT, StudioFailureReason.CHANGED)
         }
     }
-    BackHandler(project != null) { if (!busy) viewModel.closeProject() }
+    BackHandler(project != null && lookDraft == null) { if (!busy) viewModel.closeProject() }
     LaunchedEffect(project?.revision, pendingInk) {
         val id = pendingInk
         if (project != null && id != null && project.session.current.layers.any { it.id == id }) {
@@ -220,7 +280,8 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             onBack = { if (project != null) viewModel.closeProject() else onBack() }, enabled = !busy,
             onTitleClick = if (project != null) ({ nameProject("rename") }) else null,
             subtitle = project?.let { pageOwner.statusLabel + " · " + stringResource(R.string.zone5_graphics_dimensions,
-                it.session.current.width, it.session.current.height, it.session.current.layers.size) }) {
+                it.session.current.width, it.session.current.height, it.session.current.layers.size) },
+            onTitleLongClick = (::customize).takeIf { !canvasLibrary && studioLook != null }) {
                 if (project != null) IconButton(onClick = viewModel::save, enabled = !busy && project.hasUnsavedChanges) {
                     val saveLabel = stringResource(R.string.studio_save)
                     Box(Modifier.semantics { contentDescription = saveLabel }) { Zone5Icon("action_save", HaloGlyph.NOTE, Modifier.size(24.dp)) }
@@ -230,7 +291,8 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     onSaveAs = { nameProject("copy") }, onVersions = showVersions,
                     onDiscard = requestDiscard,
                     onExportPng = { viewModel.export(CanvasImageFormat.PNG) },
-                    onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) })
+                    onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) },
+                    onCustomize = { if (studioLook != null) customize() })
         }
     }
     Scaffold(containerColor = com.halo.app.ui.theme.haloWorkspaceBackground(), topBar = {
@@ -246,7 +308,10 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     onSaveAs = { nameProject("copy") }, onVersions = showVersions,
                     onDiscard = requestDiscard,
                     onExportPng = { viewModel.export(CanvasImageFormat.PNG) },
-                    onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) })
+                    onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) },
+                    onCustomize = { if (studioLook != null) customize() })
+                if (project == null && !canvasLibrary) TextButton(onClick = ::customize,
+                    enabled = !busy && studioLook != null) { Text(studioSettingsLabel) }
             })
     }) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
@@ -256,10 +321,11 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 StudioRecoveryNotice(state, viewModel::retry, viewModel::dismissError)
                 StudioWorkbench(viewModel.service, project, busy, ::draw, { add(StudioLayerKind.TEXT, textName) },
-                    { addingLayer = true }, { importBaseRevision = project.revision; importing = true },
+                    { addingLayer = true }, ::pickPicture,
                     { layers = true }, { transforms = project },
                     { id -> viewModel.command(project.revision, StudioCommand.Select(id)) },
-                    { layer -> editing = StudioLayerEdit(project.revision, layer) }, Modifier.weight(1f))
+                    { layer -> editing = StudioLayerEdit(project.revision, layer) }, Modifier.weight(1f),
+                    appearance = appearance, onUndo = { viewModel.edit(project.revision, "undo") })
             } else LazyColumn(Modifier.fillMaxSize().testTag("studio-content"), contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (shellOwnsOrb) item("studio-heading") { Zone5InstrumentHeading(stringResource(R.string.studio_title), if (canvasLibrary) "tool_canvas" else "tool_studio", project?.title,
@@ -372,37 +438,103 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     }, { editing = null }) }
     transforms?.let { draft -> StudioTransformDialog(viewModel.service, draft.session.current,
         { viewModel.command(draft.revision, it) }, { transforms = null }) }
-    if (layers && project != null) ModalBottomSheet(onDismissRequest = { layers = false }) {
+    if (layers && project != null) com.halo.app.ui.zone6.Zone6ButtonSheet(
+        stringResource(R.string.z6_sheet_layers), { layers = false }) {
         LazyColumn(Modifier.fillMaxWidth().heightIn(max = 560.dp).padding(bottom = 24.dp)) {
-            item { Text(stringResource(R.string.studio_layers), Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge) }
+            item {
+                TextButton(onClick = { layers = false; addingLayer = true }, enabled = !busy,
+                    modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 16.dp)) {
+                    Text(stringResource(R.string.z6_sheet_layers_add))
+                }
+            }
             if (project.session.current.layers.isEmpty()) item { Text(stringResource(R.string.zone5_no_layers), Modifier.padding(16.dp)) }
             items(project.session.current.layers.asReversed(), key = { it.id }) { layer ->
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    TextButton(onClick = { viewModel.command(project.revision, StudioCommand.Select(layer.id)) }, enabled = !busy) {
-                        Text(layer.name + if (project.session.current.selectedLayerId == layer.id) " · " + stringResource(R.string.studio_selected) else "", maxLines = 2)
-                    }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                            Text(stringResource(R.string.studio_visible))
-                            Switch(layer.visible, { visible -> viewModel.command(project.revision, StudioCommand.Replace(layer.copy(visible = visible))) },
-                                enabled = !busy && !layer.locked)
+                val selected = project.session.current.selectedLayerId == layer.id
+                var layerMenuOpen by remember(layer.id) { mutableStateOf(false) }
+                val pinnedImage = layer.source?.let { source -> images.firstOrNull {
+                    it.objectId.value == source.objectId && it.version == source.version
+                } }
+                Surface(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    border = if (selected) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp)) {
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { viewModel.command(project.revision, StudioCommand.Select(layer.id)) },
+                            enabled = !busy, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                if (pinnedImage != null) CanvasAnnotatedFilePreview(pinnedImage, "", Modifier.size(40.dp), maxDimension = 96)
+                                else Surface(Modifier.size(40.dp), shape = MaterialTheme.shapes.small,
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+                                    Box(contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                        val glyph = when (layer.kind) {
+                                            StudioLayerKind.TEXT -> HaloGlyph.NOTE
+                                            StudioLayerKind.IMAGE -> HaloGlyph.FILE
+                                            else -> HaloGlyph.TOOL
+                                        }
+                                        com.halo.app.ui.icons.HaloIcon(glyph, null, Modifier.size(20.dp))
+                                    }
+                                }
+                                Column {
+                                    Text(layer.name, maxLines = 2)
+                                    Text(uiText(layer.kind.name.lowercase().replaceFirstChar(Char::uppercaseChar)),
+                                        style = MaterialTheme.typography.bodySmall)
+                                    if (layer.locked) Text(uiText("Locked"), style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
                         }
-                        if (layer.locked) Text(uiText("Locked"), style = MaterialTheme.typography.bodySmall)
-                        TextButton(onClick = { editing = StudioLayerEdit(project.revision, layer); layers = false }, enabled = !busy) { Text(stringResource(R.string.studio_edit_layer)) }
-                        val index = project.session.current.layers.indexOf(layer)
-                        IconButton(onClick = { viewModel.command(project.revision, StudioCommand.Move(layer.id, index + 1)) }, enabled = !busy && !layer.locked && index < project.session.current.layers.lastIndex) {
-                            Icon(Icons.Default.ArrowUpward, stringResource(R.string.studio_move_up))
-                        }
-                        IconButton(onClick = { viewModel.command(project.revision, StudioCommand.Move(layer.id, index - 1)) }, enabled = !busy && !layer.locked && index > 0) {
-                            Icon(Icons.Default.ArrowDownward, stringResource(R.string.studio_move_down))
-                        }
-                        IconButton(onClick = { viewModel.command(project.revision, StudioCommand.Remove(layer.id)) }, enabled = !busy && !layer.locked) {
-                            Icon(Icons.Default.DeleteOutline, stringResource(R.string.studio_remove))
+                        Switch(layer.visible, { visible ->
+                            viewModel.command(project.revision, StudioCommand.Replace(layer.copy(visible = visible)))
+                        }, enabled = !busy && !layer.locked, modifier = Modifier.semantics {
+                            contentDescription = layer.name
+                        })
+                        Box {
+                            IconButton(onClick = { layerMenuOpen = true }, enabled = !busy) {
+                                Icon(Icons.Default.MoreVert, stringResource(R.string.z6_sheet_more))
+                            }
+                            val index = project.session.current.layers.indexOf(layer)
+                            DropdownMenu(expanded = layerMenuOpen, onDismissRequest = { layerMenuOpen = false }) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.studio_edit_layer)) }, onClick = {
+                                    layerMenuOpen = false
+                                    editing = StudioLayerEdit(project.revision, layer)
+                                    layers = false
+                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.studio_move_up)) }, enabled = !layer.locked && index < project.session.current.layers.lastIndex,
+                                    onClick = { layerMenuOpen = false; viewModel.command(project.revision, StudioCommand.Move(layer.id, index + 1)) })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.studio_move_down)) }, enabled = !layer.locked && index > 0,
+                                    onClick = { layerMenuOpen = false; viewModel.command(project.revision, StudioCommand.Move(layer.id, index - 1)) })
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.z6_sheet_delete), color = MaterialTheme.colorScheme.error) },
+                                    enabled = !layer.locked,
+                                    onClick = {
+                                        layerMenuOpen = false
+                                        removingLayer = StudioLayerEdit(project.revision, layer)
+                                        layers = false
+                                    },
+                                )
+                            }
                         }
                     }
                 }
+                }
             }
         }
+    }
+    removingLayer?.let { target ->
+        val valid = !busy && project?.revision == target.revision &&
+            project.session.current.layers.any { it == target.layer && !it.locked }
+        StudioAlertDialog(onDismissRequest = { removingLayer = null },
+            title = { Text(stringResource(R.string.studio_remove)) },
+            text = { Text(if (valid) target.layer.name else stringResource(R.string.zone5_document_changed)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.command(target.revision, StudioCommand.Remove(target.layer.id))
+                    removingLayer = null
+                }, enabled = valid) { Text(uiText("Delete"), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { removingLayer = null }) { Text(uiText("Cancel")) } })
     }
     if (importing) ModalBottomSheet(onDismissRequest = { importing = false }) {
         val valid = project != null && project.revision == importBaseRevision

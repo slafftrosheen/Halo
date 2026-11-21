@@ -70,12 +70,15 @@ class EverydayWidgetApplyOperation(application: Application,private val saved: S
             withContext(Dispatchers.IO) {
                 check(EverydayWidgetProviders.kind(application,widgetId)==kind)
                 require(config.kind==kind && config.hidePrivate)
-                listOfNotNull(config.sourceId?.let {it to if(kind==EverydayCardKind.HEADLINES) CollectorKind.FEED else CollectorKind.WEATHER},
+                listOfNotNull(config.sourceId?.let {it to everydayWidgetMainSourceKind(kind)},
                     config.headlineSourceId?.let {it to CollectorKind.FEED}).forEach { (id,requiredKind) ->
                     val source=requireNotNull(Graph.collectorRepository.state(id)).source
                     require(source.version==sourceVersions[id] && source.selected && source.enabled && !source.muted && source.kind==requiredKind)
                 }
-                EverydayWidgetStore(application).save(widgetId,expected,config,operationId) {Graph.kidsPreferences.requireAdultAction(epoch)}
+                EverydayWidgetStore(application).save(widgetId,expected,config,operationId) {
+                    Graph.kidsPreferences.requireAdultAction(epoch)
+                    com.halo.app.ui.theme.HaloLayoutLock.get(application).requireUnlocked()
+                }
             }
         }
     }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="help_tour_chooser">Покажите, как всё устроено</string>
+    <string name="help_tour_home">Главная и панель</string>
+    <string name="help_tour_talk">Как говорить с halo</string>
+    <string name="help_tour_studio">HaloStudio</string>
+    <string name="help_tour_notes">HaloNotes</string>
+    <string name="help_tour_canvas">HaloCanvas</string>
+    <string name="help_tour_learn">Учёба</string>
+    <string name="help_tour_seen">Просмотрено</string>
+    <string name="help_tour_replay">Повторить</string>
+    <string name="help_tour_step">Шаг %1$d из %2$d</string>
+    <string name="help_tour_exit">Выйти из тура</string>
+    <string name="help_tour_place">Панель показывает, где вы находитесь и что делает halo.</string>
+    <string name="help_tour_places_title">Разделы</string>
+    <string name="help_tour_places">В разделах можно открыть библиотеку, устройства и настройки.</string>
+    <string name="help_tour_ring_title">Кольцо разговора</string>
+    <string name="help_tour_ring">Коснитесь кольца, чтобы говорить. Удерживайте, чтобы открыть разделы.</string>
+    <string name="help_tour_input_title">Написать сообщение</string>
+    <string name="help_tour_input">Пользуйтесь полем сообщения, когда удобнее написать, чем говорить.</string>
+    <string name="help_tour_actions_title">Действия на этой странице</string>
+    <string name="help_tour_actions">Здесь доступны действия: %1$s. Если кнопки не видно, откройте «Ещё».</string>
+</resources>

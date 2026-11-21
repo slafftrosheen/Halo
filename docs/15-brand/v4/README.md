@@ -1,5 +1,14 @@
 # halo DevKit 2.0 (Brand Book 3.0) — start with IMPLEMENTATION.md, then USER_FACING.md
 
+## Zone 6 · Calm Dock, alive
+
+The [Brand Book v4.3](halo-brand-book-v4.3-final.pdf) and [Zone 6 design pack 7.3](zone6/README.md)
+are the current design references. The pack includes the updated [handoff](zone6/docs/ZONE6_HANDOFF.md),
+[Study and Kids learning path](zone6/learn/LEARN.md), [appearance and motion](zone6/alive/ALIVE.md),
+and [page and tool guidance](zone6/alive/pages/PAGES.md).
+The [v4.0 book](halo-brand-book-v4.0-final.pdf) remains available as a previous release.
+
+
 # halo Developer Kit v1.4 (Brand Book v2.3)
 
 **New in v1.4 — Voice & Read everywhere:** `voice/` makes speaking and listening part of every input and every content surface: 8 field kinds, a coverage map of all 39 input surfaces (113 fields) from the app source, 14 new screens (V01–V08 + Kids K15–K17 + Study S45–S47), 10 components, 9 new Lotties, 65 strings, HaloTextField reference and a 7-journey prototype (`learning/prototype`). Start with `voice/VOICE_READ_HANDOFF.md`.

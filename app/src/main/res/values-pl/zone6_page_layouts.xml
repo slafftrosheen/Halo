@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="page_layout_edit">Dostosuj tę stronę</string>
+    <string name="page_layout_restore">Przywróć poprzedni widok</string>
+    <string name="page_layout_error">Nie udało się zapisać widoku. Zamknij panel i spróbuj ponownie.</string>
+    <string name="page_places_search">Znajdź sekcję</string>
+    <string name="page_places_no_matches">Nie znaleziono sekcji. Użyj innej nazwy.</string>
+    <string name="page_places_show_less">Pokaż mniej</string>
+    <string name="page_places_show_all">Wszystkie sekcje</string>
+    <string name="page_places_arrange">Uporządkuj sekcje</string>
+    <string name="page_places_arrange_help">Przytrzymaj nazwę i przeciągnij ją lub użyj przycisków W górę i W dół. Ukryte sekcje nadal są w wyszukiwarce.</string>
+    <string name="page_places_up">W górę</string>
+    <string name="page_places_down">W dół</string>
+    <string name="page_places_visibility">Pokaż %1$s w sekcjach</string>
+    <string name="page_workspace_slot">Przycisk obszaru roboczego w pasku</string>
+    <string name="page_library_list">Lista</string>
+    <string name="page_library_pictures">Duże obrazy</string>
+    <string name="page_library_layout">Widok biblioteki</string>
+    <string name="page_library_by_tool">Według narzędzia</string>
+    <string name="page_activity_layout">Grupuj aktywność</string>
+    <string name="page_activity_day">Według dnia</string>
+    <string name="page_activity_app">Według aplikacji</string>
+    <string name="page_activity_phone_app">Aplikacja telefonu</string>
+    <string name="page_activity_multiple_apps">Kilka aplikacji</string>
+    <string name="page_memory_layout">Widok pamięci</string>
+    <string name="page_memory_simple">Proste wspomnienia</string>
+    <string name="page_memory_details">Pokaż szczegóły</string>
+    <string name="page_memory_review_forget">Sprawdź lub zapomnij</string>
+    <string name="page_memory_intro_title">halo sugeruje, Ty decydujesz</string>
+    <string name="page_memory_intro_body">Sugestie czekają tutaj. Halo zapamięta sugestię dopiero po jej sprawdzeniu i wybraniu opcji Zapamiętaj.</string>
+    <string name="page_devices_layout">Twoje urządzenia</string>
+    <string name="page_devices_layout_help">Wybierz zapisane urządzenie, aby zmienić wyświetlaną nazwę i ikonę.</string>
+    <string name="page_devices_name">Nazwa w Halo</string>
+    <string name="page_devices_default_icon">Domyślna ikona</string>
+    <string name="page_devices_glasses">Okulary</string>
+    <string name="page_devices_robot">Robot</string>
+    <string name="page_devices_watch">Zegarek</string>
+    <string name="page_devices_other">Inne urządzenie</string>
+    <string name="page_devices_add">Dodaj urządzenie</string>
+    <string name="page_devices_step_prepare">Naładuj urządzenie i umieść je blisko telefonu.</string>
+    <string name="page_devices_step_pair">Włącz urządzenie i postępuj zgodnie z jego instrukcją parowania.</string>
+    <string name="page_devices_step_find">Wybierz Znajdź, a następnie wybierz swoje urządzenie z wyników.</string>
+    <string name="page_devices_step">%1$d. %2$s</string>
+    <string name="page_devices_find">Znajdź</string>
+</resources>

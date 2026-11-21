@@ -1,0 +1,17 @@
+<resources>
+    <string name="private_chat_title">Privāta saruna</string>
+    <string name="private_chat_status">Privāti</string>
+    <string name="private_chat_origin">Privāta saruna · nekas netiek saglabāts</string>
+    <string name="private_chat_help">Halo atbild šajā tālrunī, izmantojot tikai to, ko šeit ierakstāt vai diktējat. Saruna tiek notīrīta, kad to aizverat vai izejat no lietotnes.</string>
+    <string name="private_chat_question">Jūsu jautājums</string>
+    <string name="private_chat_ask">Jautāt privāti</string>
+    <string name="private_chat_close">Aizvērt</string>
+    <string name="private_chat_dictate">Diktēt</string>
+    <string name="private_chat_finish_dictation">Pabeigt diktēšanu</string>
+    <string name="private_chat_listening">Klausos šajā tālrunī…</string>
+    <string name="private_chat_transcribing">Pārvēršu runu tekstā…</string>
+    <string name="private_chat_answering">Atbildu šajā tālrunī…</string>
+    <string name="private_chat_mic_permission">Atļaujiet piekļuvi mikrofonam, lai diktētu, vai ierakstiet jautājumu.</string>
+    <string name="private_chat_dictation_error">Diktēšana šajā tālrunī nav pieejama vai runu neizdevās saprast. Mēģiniet vēlreiz vai ierakstiet jautājumu.</string>
+    <string name="private_chat_model_error">Nepieciešams darbam gatavs modelis šajā tālrunī. Pārbaudiet modeļa iestatījumus un mēģiniet vēlreiz.</string>
+</resources>

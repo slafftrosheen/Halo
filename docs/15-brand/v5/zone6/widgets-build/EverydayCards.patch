@@ -1,0 +1,8 @@
+--- a/app/src/main/java/com/halo/app/everyday/presentation/EverydayCards.kt
++++ b/app/src/main/java/com/halo/app/everyday/presentation/EverydayCards.kt
+@@
+ data class EverydayCardRow(val title: String, val detail: String = "", val target: EverydayTarget? = null, val personal: Boolean = false,
+-    val publisher: String? = null,val savedAt: Instant? = null,val stale: Boolean = false)
++    val publisher: String? = null,val savedAt: Instant? = null,val stale: Boolean = false,
++    /** true only for rows from CollectorKind.ALERTS / BriefFactKind.WARNING|ATTENTION — drives the Apricot pill. */
++    val attention: Boolean = false)

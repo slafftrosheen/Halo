@@ -1,5 +1,7 @@
 package com.halo.app.ui.workspace
 
+import com.halo.app.ui.zone6.haloGuideControl
+import androidx.compose.runtime.remember
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloActionButton
 import com.halo.app.ui.components.HaloActionStyle
@@ -157,10 +159,12 @@ fun HaloWorkspaceToggleRow(
     subtitle: String? = null,
     enabled: Boolean = true
 ) {
+    val coachKey = remember { "toggle:" + java.util.UUID.randomUUID() }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
+            .then(if (enabled) Modifier.haloGuideControl(coachKey, title, subtitle) else Modifier)
             .toggleable(
                 value = checked,
                 enabled = enabled,
@@ -232,15 +236,19 @@ fun HaloWorkspaceButton(
 @Composable
 fun HaloWorkspaceDestination(title: String, summary: String, onClick: () -> Unit, modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null) {
-    Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
+    val coachKey = remember { "destination:" + java.util.UUID.randomUUID() }
+    val label = uiText(title)
+    val detail = uiText(summary)
+    Surface(onClick = onClick, modifier = modifier.fillMaxWidth().haloGuideControl(coachKey, label, detail),
+        shape = com.halo.app.ui.design.HaloShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
         Row(Modifier.heightIn(min = 76.dp).padding(16.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             leading?.invoke()
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(uiText(title), style = MaterialTheme.typography.titleSmall)
-                Text(uiText(summary), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(label, style = MaterialTheme.typography.titleSmall)
+                Text(detail, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }

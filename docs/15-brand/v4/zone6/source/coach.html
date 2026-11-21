@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="m.css"><link rel="stylesheet" href="r.css"><script src="icons.js"></script><script src="z6.js"></script><script src="m.js"></script><script src="r.js"></script></head>
+<body><div id="root"></div><script>
+const wm=`<div class="wm">hal<svg viewBox="0 0 240 240" style="width:30px;height:30px;margin-top:4px"><path d="M197.32 87.18A84 84 0 1 1 152.82 42.68" stroke="#0CF2BA" stroke-width="30" stroke-linecap="round" fill="none"/></svg></div>`;
+const dockO={place:{icon:'draw',t:'Poster draft',s:'HaloStudio · '+ok('Saved')},acts:[['add','Add',1],['draw','Draw'],['group','Layers'],['more','More']],nav:'work'};
+// hole rects relative to phone (zone top = 627)
+const steps=[
+ {hole:[8,633,374,48],tip:420,ax:'30%',k:'1 of 4',b:'This tells you where you are',p:'The tool, your file and whether it’s saved — always in the same spot.'},
+ {hole:[8,682,374,58],tip:470,ax:'50%',k:'2 of 4',b:'Your buttons for this page',p:'They change with the page. The filled one is the best next step; everything else is in More.'},
+ {hole:[8,744,374,80],tip:532,ax:'88%',k:'3 of 4',b:'Go anywhere',p:'Home, Workspace and Activity are right here. Places has the rest — Devices, Settings and your Widgets.'},
+ {hole:[147,734,96,94],tip:520,ax:'50%',k:'4 of 4',b:'Tap the ring and just talk',p:'Hold it to open Places. Try saying:',tr:'“What’s on today?”',last:1}];
+const coach=s=>`<div class="coach"><div class="hole" style="left:${s.hole[0]}px;top:${s.hole[1]}px;width:${s.hole[2]}px;height:${s.hole[3]}px"></div>
+ <div class="tip" style="bottom:${844-(s.hole[1]-16)}px;--ax:${s.ax}"><div class="k2">${s.k}</div><b>${s.b}</b><p>${s.p}</p>${s.tr?`<span class="try">${s.tr}</span>`:''}
+ <div class="row"><div class="dots">${[0,1,2,3].map(i=>`<i class="${'1234'[i]==s.k[0]?'on':''}"></i>`).join('')}</div>${s.last?'':'<span class="sk">Skip</span>'}<div class="btn p" style="${s.last?'margin-left:auto':''}">${s.last?'Got it':'Next'}</div></div></div></div>`;
+document.getElementById('root').innerHTML=`<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · first time</div><h1>Four taps to know the dock</h1>
+<p>The first time a person opens a tool, halo spotlights the dock one layer at a time. Skip any time; replay from Help. It never starts the microphone by itself.</p></div>${wm}</div>
+<div class="phones">${steps.map((s,i)=>`<div class="pcol">${ph(W.studio(),dockO,coach(s))}<div class="pl">${['Where you are','What you can do','Where you can go','Talk'][i]}<small>step ${i+1} of 4</small></div></div>`).join('')}</div>
+<div class="notes"><div class="note"><b>Once, then gone</b><p>Shown on first use only; dismissal is remembered. Replay lives in Help & check-up.</p></div>
+<div class="note"><b>Real targets</b><p>Each step spotlights the real control, which stays tappable. TalkBack reads the step and moves focus to it.</p></div>
+<div class="note"><b>Never in the way</b><p>Paused while typing, listening, during a task or an approval — like all halo guidance.</p></div>
+<div class="note"><b>Kids version</b><p>Two steps — “These are your buttons” and “Tap the ring to talk” — read aloud, with big buttons.</p></div></div></div>`;
+</script></body></html>

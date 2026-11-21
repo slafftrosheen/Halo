@@ -1,0 +1,69 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="m.css"><link rel="stylesheet" href="r.css"><link rel="stylesheet" href="r2.css"><link rel="stylesheet" href="r3.css"><link rel="stylesheet" href="r4.css"><link rel="stylesheet" href="alive.css"><script src="icons.js"></script><script src="z6.js"></script><script src="m.js"></script><script src="r.js"></script><script src="r2.js"></script><script src="r3.js"></script><script src="r4.js"></script><script src="alive.js"></script><script src="pages.js"></script><link rel="stylesheet" href="y27.css"><script src="y27.js"></script></head>
+<body><div id="root"></div><script>
+const b=new URLSearchParams(location.search).get('b')||'47';
+const wm=`<div class="wm">hal<svg viewBox="0 0 240 240" style="width:30px;height:30px;margin-top:4px"><path d="M197.32 87.18A84 84 0 1 1 152.82 42.68" stroke="#0CF2BA" stroke-width="30" stroke-linecap="round" fill="none"/></svg></div>`;
+const PLc=(i,t,s)=>({icon:i,t,s});
+const B={
+'47':{k:'halo 2027 · 1 / 5 · Hand it to halo',t:'Say the whole job. halo plans it, does it, and stops where it matters.',p:'Bigger asks become a visible plan: what halo will read, what it will do, and the steps where it will ask you first. You can leave the app — the work keeps going, and every step can be undone afterwards.',
+ ph:[[SY.plan,{place:PLc('task','Plan · 4 steps','2 steps ask you first'),acts:[['close','Not now'],['play','Start',1]],nav:'home',badge:0},'1 · The plan','before anything happens'],
+ [SY.working,{place:PLc('task','Table for Saturday','Working'),acts:[],nav:'home',state:'work',cap:'Working',island:SY.workIsl,badge:0},'2 · Working','leave the app, it keeps going'],
+ [SY.ask,{place:PLc('task','Table for Saturday','Waiting for you'),acts:[],nav:'home',state:'need',cap:'Waiting for you',island:SY.askIsl,badge:1},'3 · It asks first','money, messages, deleting'],
+ [SY.receipt,{place:PLc('task','Table for Saturday','Done · 4 of 4'),acts:[['undo','Undo all'],['check','Thanks',1]],nav:'home',badge:0},'4 · Receipt','what I did, each undoable']],
+ n:[['A plan you can read','Every multi-step ask starts with plain numbered steps, the apps it will touch, and orange tags on the steps where halo will stop. Start is the filled button; Not now keeps the plan.'],['Hard stops','Money, messages to people, deleting and posting always pause for you — Apricot island, a button that names the action (“Book it”). Even in Quiet helper mode, even on the watch.'],['Keeps going outside','Working shows the same steps in the island and on the lock screen (next board). Stop is always one tap away.'],['A receipt, not a mystery','Done lists exactly what changed, each with its own Undo (Cancel, Remove, Change). It is saved in Activity › Done.']]},
+'48':{k:'halo 2027 · 2 / 5 · Outside the app',t:'halo on your lock screen, in the status bar, and over any app',p:'2027 Android lets ongoing work live in the status bar and on the lock screen. halo uses that for one thing at a time, shows only safe text there, and lets you circle anything on screen to ask about it.',
+ ph:[['HOME',{},'Lock screen','live step, nothing private',{fn:SY.lock}],
+ ['HOME',{},'Pull down','live progress + “while you were away”',{fn:SY.shade}],
+ ['HOME',{},'Circle to ask','over any app, screen used once',{fn:()=>`<div class="phone M" style="background:#F6F3EC">${ySBD}${SY.circle}<div class="gb"></div></div>`}],
+ ['HOME',{},'Home-screen widget','the same task, glanceable',{fn:SY.widget27}]],
+ n:[['Status bar chip','A small mint ring + “Step 2/4” while halo works. Apricot when it needs you. Tap → the task. Only one halo chip ever.'],['Lock screen, safe by default','Task name and step only — never message text, names or amounts until you unlock. A grey line says so.'],['Segments you can read','The progress bar is cut into the plan’s steps; orange dots mark where halo will ask you. Stop and Open are the only buttons.'],['Circle anything','Hold the home bar or the ring, then circle. The island answers about that thing with actions that fit it, and says “Screen used once, not kept”.']]},
+'49':{k:'halo 2027 · 3 / 5 · Next for you',t:'A helpful nudge — one at a time, always with a reason',p:'halo can now suggest the next useful thing: leave earlier because of rain, move what’s left to tomorrow. It never piles up cards, always says why, and you choose how much help you want.',
+ ph:[[SY.nextHome,{place:PLc('home','Home','1 suggestion'),acts:[['mic','Ask'],['new_note','Note'],['camera','What’s this?'],['calendar','Today',1]],nav:'home',badge:0},'Morning','one card, with a reason'],
+ [SY.why,{place:PLc('guide_me','Why this?','3 reasons · on this phone'),acts:[['undo','Back'],['check','Got it',1]],nav:'home',badge:0},'Why this?','every suggestion explains itself'],
+ [SY.wrap,{place:PLc('history','Today, done','1 left'),acts:[['speaker','Read aloud'],['check','Good night',1]],nav:'home',badge:0},'Evening','what got done, what’s left'],
+ [SY.helpLevel,{place:PLc('settings','Next for you','Suggest, I decide'),acts:[['undo','Undo'],['check','Apply',1]],nav:'places',badge:0},'You choose','three plain levels']],
+ n:[['One card, max 3 a day','Next for you sits above the starts on Home. Never more than one; dismissed cards don’t come back the same day.'],['Why this?, in lilac','Lilac stays “help”. Each reason names its source and whether it stayed on the phone; learned habits can be forgotten right there.'],['A day with an end','After 21:00 Home shows “Today, done”: done, left, tomorrow. Read aloud, or move what’s left with one tap.'],['Three levels, in examples','Only when I ask · Suggest, I decide (default) · Quiet helper, which may do small safe things and tell you after — never the hard stops.']]},
+'50':{k:'halo 2027 · 4 / 5 · Trust you can see',t:'Always know where an answer came from — and stop halo any time',p:'Every answer now carries a small chip: made on this phone, or used online (and for what). Privacy has its own page in plain numbers, one switch pauses halo completely, and private chats leave nothing behind.',
+ ph:[[SY.answers,{place:PLc('home','Chat','2 answers'),composer:'Ask anything',nav:'home',badge:0},'Answer chips','on this phone · used online'],
+ [SY.glance,{place:PLc('privacy','Privacy','This week'),acts:[['pause','Pause halo'],['check','Done',1]],nav:'places',badge:0},'Privacy at a glance','numbers, not legal text'],
+ [SY.pause,{place:PLc('pause','halo is paused','until 19:00'),acts:[['play','Resume',1]],nav:'places',cls:'paused',cap:'Paused',badge:0},'Pause halo','one switch, everything stops'],
+ [SY.priv,{place:PLc('privacy','Private chat','Nothing kept'),composer:'Ask privately',nav:'home',cls:'priv',cap:'Private',badge:0},'Private chat','dashed ring = nothing kept']],
+ n:[['Two chips, one meaning each','Mint “On this phone” · blue “Used online · weather”. Tap either and halo says what was sent, in one sentence (lilac, because it is help).'],['Plain numbers','Privacy shows this week’s answers on the phone, online, and shared (0). Each permission says when it was last used.'],['Pause, really','Paused: ring grey, caption “Paused”, widgets say Paused, no listening or learning. Alarms still ring. 30 min / 1 hour / until tomorrow.'],['Private chat','A dashed dock edge and grey ring show it at a glance. No memory, history or suggestions; it disappears on close.']]},
+'51':{k:'halo 2027 · 5 / 5 · Across your things',t:'One halo on your phone, watch, glasses and tablet',p:'The task you started on the phone can finish on your wrist. halo sends each question to the device you are using, keeps small approvals on the watch, and never moves payments off the phone.',
+ ph:[[SY.cont,{place:PLc('task','Table for Saturday','Step 4 of 4'),acts:[['watch','Send to watch'],['check','Here',1]],nav:'act',badge:1},'Keep going elsewhere','follow me'],
+ [SY.watch,{place:PLc('devices','On your devices','Watch asks · glasses guide'),acts:[['devices','Devices'],['check','OK',1]],nav:'places',badge:0},'Watch & glasses','the same ask, smaller'],
+ [SY.devices27,{place:PLc('devices','Devices','4 things · 3 ready'),acts:[['search','Find'],['add_device','Add',1]],nav:'places',badge:0},'Your things','one list, plain states'],
+ [S.welcome,{place:PLc('home','Home','Back on the phone'),acts:[['mic','Ask'],['new_note','Note'],['camera','What’s this?'],['calendar','Today',1]],nav:'home',badge:0},'Back on the phone','the receipt is waiting',{tags:[['.tab:nth-child(4)','Receipt from the watch is here']]}]],
+ n:[['Follow me','When you use the watch or glasses, halo’s next question goes there. The phone island shows “On your watch” so you never wonder where it went.'],['Small OKs travel','Send a message, set a timer: approvable on the watch with the Apricot ring. Bookings with money and deletes stay on the phone.'],['Glasses guide, not distract','A small mint-edged card in the corner: where, how far, what’s next. Captions for conversations live here too.'],['One honest list','Devices: Ready · In use · Asleep · Needs a look — the same words as 7.0, now with what each device is used for.']]}
+};
+const d=B[b];
+if(b=='52'){
+ const ico=(deg)=>{const r=30,c=55,a1=(deg-22.5)*Math.PI/180,a2=(deg+22.5)*Math.PI/180;const p=(a)=>[(c+r*Math.cos(a)).toFixed(2),(c-r*Math.sin(a)).toFixed(2)];const[x1,y1]=p(a1),[x2,y2]=p(a2);
+  return `<div class="yico"><svg viewBox="0 0 110 110" width="110" height="110"><path d="M${x1} ${y1}A${r} ${r} 0 1 1 ${x2} ${y2}" stroke="#0CF2BA" stroke-width="11" stroke-linecap="round" fill="none"/>${[0,1,2,3,4,5,6,7,8,9,10,11].map(h=>{const a=(90-h*30)*Math.PI/180;return `<circle cx="${(55+48*Math.cos(a)).toFixed(1)}" cy="${(55-48*Math.sin(a)).toFixed(1)}" r="${h%3?1.2:2}" fill="rgba(250,250,244,.35)"/>`}).join('')}</svg></div>`};
+ document.getElementById('root').innerHTML=`<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · Fixes in 7.4</div><h1>Four things fixed before 2027</h1><p>The app opens from every icon, the ring points the right way, names are lowercase everywhere, and the brand book’s contents now reach the last page.</p></div>${wm}</div>
+ <div class="yfix">
+ <div class="yfx"><div class="no">Fix 1 · App launch</div><h3>halo opens from every icon</h3><p>The launcher entry moves to the Classic icon, and the main screen stays switched on. Changing the icon turns the new one on first, then the old one off, so there is always a way in.</p>
+ <div class="ycode"><s>MainActivity  enabled=false</s>
+<s>no alias with LAUNCHER on first run</s>
+<b>MainActivity  enabled=true · exported</b>
+<b>.Classic  alias · MAIN/LAUNCHER · enabled</b>
+<b>.Match*  aliases · enabled=false</b>
+<b>switch: enable(new) → disable(old)</b>
+<b>never disable the last launcher</b></div></div>
+ <div class="yfx"><div class="no">Fix 2 · App icon ring</div><h3>The gap sits at half past one</h3><p>The launcher ring’s gap was centred near 2:30 (about 29°). It now matches the brand mark: centred at 45°, between 1 and 2 o’clock, on every icon look.</p>
+ <div class="yba"><div class="bad"><div class="lb">Before · 29°</div>${ico(29)}</div><div class="good"><div class="lb">After · 45°</div>${ico(45)}</div></div>
+ <div class="ycode">arc start 22.5° · sweep 315°
+gap centre <b>45°</b> · round caps</div></div>
+ <div class="yfx"><div class="no">Fix 3 · Names</div><h3>Lowercase, the way it’s designed</h3><p>The mini window and the assistant used capitals in code. Every user-facing string now says halo in lowercase, in English, Russian and Latvian keys.</p>
+ <div class="yba"><div class="bad"><div class="lb">Before</div><div class="ynm"><div>Mini Halo</div><div>Ask Halo</div><div>Open Halo</div></div></div><div class="good"><div class="lb">After</div><div class="ynm"><div>mini halo</div><div>ask halo</div><div>open halo</div></div></div></div></div>
+ <div class="yfx"><div class="no">Fix 4 · Brand book</div><h3>Contents reach the last page</h3><p>The contents page now points to a full index of Chapter 23 on its opening page — every section from the audit to halo 2027, with page numbers.</p>
+ <div class="ytoc" style="margin-top:16px"><b>23 · The new look</b> · 225<br>Audit → widgets · 226–237<br>First time, bigger screens · 238–239<br>Inner pages · 240–243<br>Make it yours, icons · 244–246<br>Assistant, mini halo · 247–249<br>Sheets, empty, offline · 250–254<br>Learn · 255–260<br>Make it yours, alive · 261–266<br>Every page & tool · 267–274<br><b>Fixes · halo 2027</b> · 275–281</div></div>
+ </div></div>`;
+} else {
+ const cols=d.ph.map(([w,o,l,sm,x])=>{x=x||{};const phn=x.fn?x.fn():ph(w,o);return `<div class="pcol">${phn}<div class="pl">${l}<small>${sm}</small></div></div>`});
+ document.getElementById('root').innerHTML=`<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · ${d.k}</div><h1>${d.t}</h1><p>${d.p}</p></div>${wm}</div><div class="phones">${cols.join('')}</div>
+ <div class="notes">${d.n.map(([h,p])=>`<div class="note"><b>${h}</b><p>${p}</p></div>`).join('')}</div></div>`;
+ const phones=document.querySelectorAll('.phones>.pcol>.phone');
+ d.ph.forEach(([w,o,l,sm,x],i)=>{x=x||{};if(x.tags)placeTags(phones[i],x.tags);if(x.hand)placeHand(phones[i],x.hand[0],x.hand[1],x.hand[2],x.hand[3])});
+}
+setTimeout(()=>{try{paintAll(0)}catch(e){};window.done=1},400);
+</script></body></html>

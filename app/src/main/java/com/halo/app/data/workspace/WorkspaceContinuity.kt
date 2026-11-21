@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 
 /** Read-only handoff metadata; content and edits remain with their existing canonical owners. */
-enum class WorkspaceDestination { OPEN, FILE_TOOLS, STUDIO, STUDY, CHAT }
+enum class WorkspaceDestination { OPEN, FILE_TOOLS, STUDIO, STUDY, CHAT, SHEETS }
 enum class WorkspaceStudioEffect { OPEN_PROJECT, NEW_PROJECT_FROM_SOURCE }
 enum class WorkspaceSourceState { CURRENT, EARLIER_VERSION, UNAVAILABLE, VERSION_UNVERIFIED }
 data class WorkspaceSourceLink(val objectId: String, val version: String, val title: String?, val state: WorkspaceSourceState, val depth: Int, val nodeId: String? = null)
@@ -48,6 +48,7 @@ class WorkspaceContinuity(private val database: AppDatabase, private val context
         if (item.type == "NOTE" || localFileTools) destinations += WorkspaceDestination.FILE_TOOLS
         if (item.contentRef.startsWith("studio:") || file?.mimeType?.startsWith("image/") == true) destinations += WorkspaceDestination.STUDIO
         val marker = if (item.type == "NOTE") database.notebookDocumentDao().getBlocks(id).singleOrNull()?.language else null
+        if (marker == WorkspaceTextFormat.CSV.blockLanguage) destinations += WorkspaceDestination.SHEETS
         val text = (item.type == "NOTE" && marker !in setOf(WorkspaceFileReceipts.LANGUAGE, WorkspaceFileAnnotations.LANGUAGE)) || file?.mimeType?.startsWith("text/") == true || file?.mimeType in setOf("application/json", com.halo.app.study.StudyTextExtractor.DOCX)
         val image = file?.mimeType in setOf("image/png", "image/jpeg", "image/webp") && file?.sha256 != null
         if (text || image || file?.mimeType == "application/pdf") destinations += WorkspaceDestination.STUDY
@@ -89,6 +90,7 @@ class WorkspaceContinuity(private val database: AppDatabase, private val context
         val encoded = android.net.Uri.encode(id)
         return when (destination) {
             WorkspaceDestination.FILE_TOOLS -> "file_tools?objectId=$encoded"
+            WorkspaceDestination.SHEETS -> "sheets?objectId=$encoded&sourceVersion=${android.net.Uri.encode(item.version)}"
             WorkspaceDestination.STUDY -> "study?captureSource=$encoded&sourceVersion=${android.net.Uri.encode(item.version)}"
             WorkspaceDestination.CHAT -> "home" // Host first selects the exact object through the existing interaction-context adapter.
             WorkspaceDestination.STUDIO -> if (header.contentRef.startsWith("studio:")) "studio?projectId=$encoded"

@@ -365,7 +365,8 @@ fun ConversationDetailScreen(
                             // User-initiated playback uses the shared read-aloud
                             // route and cloud-voice consent, not automatic TTS.
                             com.halo.app.ui.components.HaloReadAloud(
-                                turn.assistantText, label = uiText("Read aloud"), compact = true)
+                                turn.assistantText, label = uiText("Read aloud"), compact = true,
+                                category = com.halo.sdk.provider.RemoteDataCategory.CONVERSATION)
                         }
                     }
                 }

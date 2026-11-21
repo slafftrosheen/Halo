@@ -65,6 +65,7 @@ class AndroidAttentionHost(
         channel == DeliveryChannel.AndroidNotification || channel == DeliveryChannel.PhoneSpeech || channel is DeliveryChannel.WearableSpeech
 
     override suspend fun deliver(request: AttentionRequest, channel: DeliveryChannel): AttentionSinkResult {
+        if (com.halo.app.di.ManualDependencyGraph.isHaloPaused()) return AttentionSinkResult(false, "Halo is paused")
         if (!briefStillAllowed(request)) return AttentionSinkResult(false, "Brief settings or availability changed")
         val text = request.text()
         return when (channel) {
@@ -118,6 +119,7 @@ class AndroidAttentionHost(
         }
     }
     suspend fun surfaceSilently(request: AttentionRequest, surface: SilentSurface): Boolean {
+        if (com.halo.app.di.ManualDependencyGraph.isHaloPaused()) return false
         if (!briefStillAllowed(request)) return false
         // Inbox/Home projections already exist durably; do not emit a conversational response or speech.
         if(request.source == AttentionSource.PersonalSuggestion && surface in setOf(SilentSurface.NOTEBOOK_INBOX,SilentSurface.HOME_PENDING)) return true

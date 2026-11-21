@@ -1,0 +1,21 @@
+<resources>
+    <string name="follow_me_title">Следуй за мной</string>
+    <string name="follow_me_help">Откройте Halo на часах поблизости, чтобы увидеть там ответ. Голосовые вопросы из сопряжённых очков используют привычный аудиоканал.</string>
+    <string name="follow_me_enabled_detail">Отправляет следующий ответ на часы, если на них открыто Halo.</string>
+    <string name="follow_me_watch_approvals">Подтверждать на часах</string>
+    <string name="follow_me_watch_approvals_detail">На часах можно подтверждать действия, которые только читают данные. Действия, которые меняют или передают данные, проверяйте на телефоне.</string>
+    <string name="follow_me_watch_settings">Чтобы пользоваться часами, включите связь с часами поблизости в настройках голоса.</string>
+    <string name="follow_me_devices">Устройства</string>
+    <string name="follow_me_open_devices">Управление устройствами</string>
+    <string name="follow_me_phone">Этот телефон</string>
+    <string name="follow_me_glasses">Очки</string>
+    <string name="follow_me_phone_detail">Полные ответы и проверка действий</string>
+    <string name="follow_me_watch_detail">Ответы и подтверждения чтения</string>
+    <string name="follow_me_glasses_detail">Звук из проверенного голосового сеанса</string>
+    <string name="follow_me_empty">Откройте Halo на сопряжённых часах поблизости или подключите поддерживаемые очки в разделе «Устройства».</string>
+    <string name="follow_me_ready">Готово</string>
+    <string name="follow_me_in_use">Используется</string>
+    <string name="follow_me_needs_a_look">Проверьте устройство</string>
+    <string name="follow_me_delivered_to">Отправлено на %1$s</string>
+    <string name="follow_me_speaking_on">Воспроизведение через %1$s</string>
+</resources>

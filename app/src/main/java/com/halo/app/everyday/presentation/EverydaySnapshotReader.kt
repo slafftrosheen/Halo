@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 import java.time.*
 
 /** Local database reads only, bounded to the card's seven-day window. No bootstrap seed or remote refresh. */
-suspend fun readEverydaySnapshot(context: Context, now: Instant = Instant.now()): EverydaySnapshot = withContext(Dispatchers.IO) {
+suspend fun readEverydaySnapshot(context: Context, now: Instant = Instant.now(), includePastWeek: Boolean = false): EverydaySnapshot = withContext(Dispatchers.IO) {
     val kids = Graph.kidsPreferences.getEnabled()
     val familyRevision=Graph.kidsPreferences.presentationRevision()
     val modeRevision=Graph.privacyModes.revision
@@ -26,7 +26,12 @@ suspend fun readEverydaySnapshot(context: Context, now: Instant = Instant.now())
         val records = Graph.organizerRepository.records().filter { !kids || it.id in settings.childRecordIds }
         val occurrences = mutableListOf<OrganizerOccurrence>()
         records.filter { it.time != null && it.status == OrganizerStatus.ACTIVE }.forEach { record ->
-            val start=now.atZone(zone).toLocalDate().minusDays(if(record.kind in setOf(OrganizerKind.TASK,OrganizerKind.REMINDER)) 30 else 0).atStartOfDay(zone).toInstant()
+            val historyDays = when {
+                record.kind in setOf(OrganizerKind.TASK, OrganizerKind.REMINDER) -> 30L
+                includePastWeek && record.kind == OrganizerKind.EVENT -> 6L
+                else -> 0L
+            }
+            val start = now.atZone(zone).toLocalDate().minusDays(historyDays).atStartOfDay(zone).toInstant()
             occurrences += OrganizerRecurrence.between(record, Graph.organizerRepository.overrides(record.id), start,
                 now.atZone(zone).plusDays(7).toInstant(), zone, limit = 10000)
             require(occurrences.size <= 10000) { "The plan is too large for a card. Open Organizer." }
@@ -90,6 +95,11 @@ suspend fun EverydayTarget.route(): String = when (this) {
         EverydayRoutes.source(id, articleId)
     }
     is EverydayTarget.Brief -> EverydayRoutes.brief(id)
+    is EverydayTarget.WidgetTool -> {
+        check(tool.allowedInKids || !Graph.kidsPreferences.getEnabled())
+        check(tool.route in com.halo.app.ui.shell.HaloScreenCatalog.screens)
+        tool.route
+    }
     is EverydayTarget.Create -> {
         check(!Graph.kidsPreferences.getEnabled())
         "${EverydayRoutes.ORGANIZER}?createKind=${kind.name}"

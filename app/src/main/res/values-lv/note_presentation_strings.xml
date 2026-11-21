@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="note_look_title">Tavas piezīmes</string>
+    <string name="note_look_paper">Papīrs</string>
+    <string name="note_look_plain">Bez līnijām</string>
+    <string name="note_look_lined">Līnijas</string>
+    <string name="note_look_grid">Rūtiņas</string>
+    <string name="note_look_letters">Burti</string>
+    <string name="note_look_easy_read">Viegli lasāms</string>
+    <string name="note_look_book">Grāmatas</string>
+    <string name="note_look_round">Apaļš</string>
+    <string name="note_look_spacing">Rindstarpa</string>
+    <string name="note_look_normal">Parasts</string>
+    <string name="note_look_roomy">Plašs</string>
+    <string name="note_look_extra">Ļoti plašs</string>
+    <string name="note_look_easy_view">Lielāks piezīmju teksts</string>
+    <string name="note_look_dictation">Rādīt diktēšanas vadīklas</string>
+    <string name="note_look_read_back">Nolasīt priekšā</string>
+    <string name="note_look_read_controls">Rādīt nolasīšanas vadīklas</string>
+    <string name="note_look_preview">Tirgus saraksts\nAugi, kartītes un piezīmju bloks</string>
+</resources>

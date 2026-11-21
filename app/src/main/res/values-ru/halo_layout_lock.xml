@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="layout_keep">Зафиксировать оформление</string>
+    <string name="layout_unlock">Разблокировать оформление</string>
+    <string name="layout_phone_lock">Подтвердите блокировку телефона, чтобы изменить настройку.</string>
+    <string name="layout_lock_unavailable">Убедитесь, что включена блокировка экрана, и попробуйте снова.</string>
+    <string name="layout_kept">Оформление зафиксировано.</string>
+    <string name="layout_setup_other">Настроить для другого человека</string>
+    <string name="layout_read_replies">Читать ответы вслух</string>
+</resources>

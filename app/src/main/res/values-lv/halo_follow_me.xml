@@ -1,0 +1,21 @@
+<resources>
+    <string name="follow_me_title">Seko man</string>
+    <string name="follow_me_help">Atveriet Halo tuvumā esošā pulkstenī, lai tajā redzētu atbildi. Balss jautājumiem no savienotām brillēm paliek ierastais audio maršruts.</string>
+    <string name="follow_me_enabled_detail">Nosūta nākamo sarunas atbildi uz pulksteni, ja tajā ir atvērta lietotne Halo.</string>
+    <string name="follow_me_watch_approvals">Apstiprināt pulkstenī</string>
+    <string name="follow_me_watch_approvals_detail">Pulkstenī var apstiprināt darbības, kas tikai lasa informāciju. Darbības, kas ko maina vai kopīgo, pārskatiet tālrunī.</string>
+    <string name="follow_me_watch_settings">Lai izmantotu pulksteni, balss iestatījumos ieslēdziet mijiedarbību ar tuvumā esošu pulksteni.</string>
+    <string name="follow_me_devices">Ierīces</string>
+    <string name="follow_me_open_devices">Pārvaldīt ierīces</string>
+    <string name="follow_me_phone">Šis tālrunis</string>
+    <string name="follow_me_glasses">Brilles</string>
+    <string name="follow_me_phone_detail">Pilnas atbildes un darbību pārskatīšana</string>
+    <string name="follow_me_watch_detail">Sarunas atbildes un lasīšanas apstiprinājumi</string>
+    <string name="follow_me_glasses_detail">Audio no pārbaudītas balss sesijas</string>
+    <string name="follow_me_empty">Atveriet Halo tuvumā esošā savienotā pulkstenī vai sadaļā Ierīces pievienojiet atbalstītas brilles.</string>
+    <string name="follow_me_ready">Gatavs</string>
+    <string name="follow_me_in_use">Tiek izmantots</string>
+    <string name="follow_me_needs_a_look">Jāpārbauda</string>
+    <string name="follow_me_delivered_to">Nosūtīts uz %1$s</string>
+    <string name="follow_me_speaking_on">Atskaņo ierīcē %1$s</string>
+</resources>

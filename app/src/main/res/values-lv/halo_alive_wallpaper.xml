@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_wallpaper_name">halo dzīvā tapete</string>
+    <string name="alive_wallpaper_description">Sešas kustīgas tapetes jūsu izvēlētajā stilā.</string>
+    <string name="alive_wallpaper_title">Tapete · %1$s</string>
+    <string name="alive_wallpaper_see_at">Skatīt noteiktā laikā</string>
+    <string name="alive_wallpaper_now">Tagad</string>
+    <string name="alive_wallpaper_morning">Rīts</string>
+    <string name="alive_wallpaper_day">Diena</string>
+    <string name="alive_wallpaper_evening">Vakars</string>
+    <string name="alive_wallpaper_night">Nakts</string>
+    <string name="alive_wallpaper_in_app">Rādīt halo</string>
+    <string name="alive_wallpaper_react">Reaģē uz halo</string>
+    <string name="alive_wallpaper_calm">Mierīgāk naktī</string>
+    <string name="alive_wallpaper_restore">Atjaunot iepriekšējo</string>
+    <string name="alive_wallpaper_set_android">Atvērt Android tapetes priekšskatījumu</string>
+    <string name="alive_wallpaper_drift">Halo plūdums</string>
+    <string name="alive_wallpaper_aurora">Polārblāzma</string>
+    <string name="alive_wallpaper_tide">Paisums</string>
+    <string name="alive_wallpaper_arc">Dienas loks</string>
+    <string name="alive_wallpaper_constellation">Zvaigznājs</string>
+    <string name="alive_wallpaper_paper">Papīrs</string>
+</resources>

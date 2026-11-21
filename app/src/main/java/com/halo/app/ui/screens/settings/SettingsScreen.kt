@@ -113,15 +113,20 @@ internal fun SettingsContent(
         }
     }
     val shellHosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val easyView = com.halo.app.ui.theme.rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
+    var allEasySettings by androidx.compose.runtime.saveable.rememberSaveable(rootRequest) { mutableStateOf(false) }
+    val settingContext = androidx.compose.ui.platform.LocalContext.current
+    val appearanceTitle = androidx.compose.ui.res.stringResource(R.string.look_title)
+    val pageTitle = page?.let { if (it == "Appearance") appearanceTitle else uiText(it) }
     val savedPalettes = palettePreferences?.state?.collectAsStateWithLifecycle()?.value
     val settingsOwner = ShellPageOwner(if (initialAdvanced) "advanced_settings" else "settings",
         sourceIdentity = "$advanced:$page:$expandedGroup:${state.appearanceMode}:$savedPalettes",
         helpDescription = if (page == null) androidx.compose.ui.res.stringResource(R.string.zone5_help_settings)
-            else androidx.compose.ui.res.stringResource(R.string.zone5_help_settings_page, uiText(page!!)),
+            else androidx.compose.ui.res.stringResource(R.string.zone5_help_settings_page, pageTitle.orEmpty()),
         activeToolId = page?.let { "settings." + it.lowercase().replace(Regex("[^a-z0-9]+"), "_") },
         canonicalToolIds = if (page == "Appearance" || page == "Language") listOf("halo_get_preferences", "halo_set_preferences") else emptyList())
     val searchContent: @Composable () -> Unit = {
-        if (page != null) com.halo.app.ui.screens.notebook.ToolZoneHeader(uiText(page!!), onBack = { page = null })
+        if (pageTitle != null) com.halo.app.ui.screens.notebook.ToolZoneHeader(pageTitle, onBack = { page = null })
         if (searchOpen && !advanced && page == null) HaloTextField(kind = VoiceFieldKind.SEARCH,
             value = searchQuery, onValueChange = { searchQuery = it.take(100) },
             modifier = Modifier.fillMaxWidth(), singleLine = true,
@@ -132,7 +137,7 @@ internal fun SettingsContent(
     androidx.activity.compose.BackHandler(page != null || expandedGroup != null || searchOpen) {
         when { page != null -> page = null; searchOpen -> { searchOpen = false; searchQuery = "" }; else -> expandedGroup = null }
     }
-    BindShellPageActions(settingsOwner, when {
+    if (page != "Appearance" || palettePreferences == null) BindShellPageActions(settingsOwner, when {
         page != null -> listOf(ShellPageAction("page.settings.back", "Back", HaloGlyph.PREVIOUS) { page = null })
         advanced -> listOf(
             ShellPageAction("page.settings.back", "Back", HaloGlyph.PREVIOUS) { onBack?.invoke() ?: run { advanced = false } },
@@ -143,6 +148,8 @@ internal fun SettingsContent(
             ShellPageAction("page.settings.search", androidx.compose.ui.res.stringResource(R.string.brand_settings_search), HaloGlyph.SEARCH) {
                 searchOpen = !searchOpen; if (!searchOpen) searchQuery = ""
             },
+            ShellPageAction("page.settings.look", appearanceTitle, HaloGlyph.APPEARANCE) { page = "Appearance" },
+            ShellPageAction("page.settings.help", "Help & check-up", HaloGlyph.DIAGNOSTICS) { onOpen(SettingsDestination.SYSTEM_CHECK) },
             ShellPageAction("page.settings.brain", "Brain", HaloGlyph.MODEL) { onOpen(SettingsDestination.INTELLIGENCE) },
             ShellPageAction("page.settings.voice", "Voice & reading", HaloGlyph.LISTEN) { onOpen(SettingsDestination.VOICE) },
             ShellPageAction("page.settings.vision", "Vision", HaloGlyph.SEE) { page = "Vision" },
@@ -158,7 +165,8 @@ internal fun SettingsContent(
             SettingsMenuRow(HaloGlyph.SEE, "Vision", "Images and camera", { page = "Vision" }, listOf("photo", "camera", "image", "OCR", "seeing")),
         )),
         SettingsMenuGroup("personal", "Personalization", listOf(
-            SettingsMenuRow(HaloGlyph.APPEARANCE, "Appearance", state.appearanceMode.name.lowercase().replaceFirstChar { it.uppercase() }, { page = "Appearance" }, listOf("theme", "color", "colour", "dark", "light", "mint", "background", "sage", "rose", "paper", "slate")),
+            SettingsMenuRow(HaloGlyph.APPEARANCE, appearanceTitle, state.appearanceMode.name.lowercase().replaceFirstChar { it.uppercase() }, { page = "Appearance" }, listOf("Appearance", "theme", "color", "colour", "dark", "light", "mint", "background", "sage", "rose", "paper", "slate",
+                "bigger text", "text size", "easy view", "крупнее текст", "размер текста", "lielāks teksts", "większy tekst")),
             SettingsMenuRow(HaloGlyph.LANGUAGE, "Language", language.nativeName, { page = "Language" }, listOf("interface", "default replies")),
         )),
         SettingsMenuGroup("privacy", "Privacy", listOf(
@@ -181,7 +189,7 @@ internal fun SettingsContent(
         )),
         SettingsMenuGroup("help", "Help", listOfNotNull(
             if (searchQuery.isNotBlank()) SettingsMenuRow(HaloGlyph.QUESTION, "Guided setup", "Resume or revisit setup without resetting your choices", { onSetup(com.halo.app.ui.onboarding.SetupStage.WELCOME) }) else null,
-            SettingsMenuRow(HaloGlyph.SUCCESS, "Check-up", "Check what works", { onOpen(SettingsDestination.SYSTEM_CHECK) }),
+            SettingsMenuRow(HaloGlyph.SUCCESS, "Help & check-up", "Check what works", { onOpen(SettingsDestination.SYSTEM_CHECK) }),
             if (searchQuery.isNotBlank()) SettingsMenuRow(HaloGlyph.HALO, "About halo", "A little about your companion", { page = "About halo" }) else null,
         )),
     )
@@ -227,13 +235,18 @@ internal fun SettingsContent(
         val rows = if (matches(listOf(group.title))) group.rows else group.rows.filter { matches(it.searchLabels) }
         group.copy(rows = rows).takeIf { rows.isNotEmpty() }
     }
-    val visibleGroups = if (advanced) safeAdvancedGroups else filtered(everydayGroups)
+    val easyOverview = easyView && !advanced && !allEasySettings && !searchOpen
+    val visibleGroups = when {
+        advanced -> safeAdvancedGroups
+        easyOverview -> emptyList()
+        else -> filtered(everydayGroups)
+    }
     if (page != null) {
         if (page == "Language") LanguagePickerPage(language, onLanguage, { page = null }, { page = null; onOpen(SettingsDestination.VOICE) })
         else Column(Modifier.fillMaxSize().imePadding().verticalScroll(androidx.compose.foundation.rememberScrollState())
             .padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (!shellHosted) HaloScreenHeader(uiText(page!!), navigation = { page = null })
-            else com.halo.app.ui.zone5.Zone5PageHeading(uiText(page!!))
+            if (!shellHosted) HaloScreenHeader(pageTitle.orEmpty(), navigation = { page = null })
+            else com.halo.app.ui.zone5.Zone5PageHeading(pageTitle.orEmpty())
                 when (page) {
                     "Vision" -> {
                         SettingsGroup("Vision", compactRows = true) {
@@ -301,6 +314,34 @@ internal fun SettingsContent(
             })
         }
         if (!searchInZone && searchOpen && !advanced) item(key = "search") { searchContent() }
+        if (easyOverview) item(key = "easy_settings") {
+            val shortcuts = listOf(
+                Triple(R.string.alive_easy_text, HaloGlyph.APPEARANCE, { page = "Appearance" }),
+                Triple(R.string.alive_easy_read, HaloGlyph.LISTEN, { onOpen(SettingsDestination.VOICE) }),
+                Triple(R.string.alive_easy_volume, HaloGlyph.SPEAK, {
+                    val opened = runCatching { settingContext.startActivity(android.content.Intent(android.provider.Settings.ACTION_SOUND_SETTINGS)) }.isSuccess
+                    if (!opened) onOpen(SettingsDestination.VOICE)
+                }),
+                Triple(R.string.alive_easy_brain, HaloGlyph.MODEL, { onOpen(SettingsDestination.INTELLIGENCE) }),
+                Triple(R.string.alive_easy_night, HaloGlyph.APPEARANCE, { page = "Appearance" }),
+                Triple(R.string.alive_easy_all, HaloGlyph.TOOL, { allEasySettings = true }),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                shortcuts.forEach { (label, icon, open) ->
+                    OutlinedButton(onClick = open, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                        shape = com.halo.app.ui.design.HaloShapes.control) {
+                        HaloIcon(icon, null, Modifier.size(24.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Text(androidx.compose.ui.res.stringResource(label), Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+        if (easyView && allEasySettings && !advanced && !searchOpen) item(key = "easy_settings_back") {
+            TextButton(onClick = { allEasySettings = false }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(androidx.compose.ui.res.stringResource(R.string.alive_view_easy))
+            }
+        }
         if (advanced) item(key = "advanced_intro") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(uiText("Technical options, kept in one place."),
@@ -361,7 +402,7 @@ internal fun SettingsContent(
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        if (!advanced && searchQuery.isBlank()) item(key = "advanced") {
+        if (!advanced && !easyOverview && searchQuery.isBlank()) item(key = "advanced") {
             Surface(shape = com.halo.app.ui.design.HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
                 SettingsLink(HaloGlyph.DIAGNOSTICS, "Advanced", "Model roles, custom servers and technical report",
                     { onOpen(SettingsDestination.ADVANCED) }, technical = true)

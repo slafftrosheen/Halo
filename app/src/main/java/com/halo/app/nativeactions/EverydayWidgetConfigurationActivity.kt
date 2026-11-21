@@ -28,6 +28,7 @@ import com.halo.app.ui.theme.*
 import kotlinx.coroutines.*
 
 /** Android configuration result rules: cancelled until one exact durable instance save succeeds. */
+@OptIn(ExperimentalMaterial3Api::class)
 class EverydayWidgetConfigurationActivity : ComponentActivity() {
     private var snapshot by mutableStateOf<EverydaySnapshot?>(null)
     private var instance by mutableStateOf<EverydayWidgetInstance?>(null)
@@ -69,7 +70,9 @@ class EverydayWidgetConfigurationActivity : ComponentActivity() {
             val ready by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
             val dark = when (appearance) { AppearanceMode.LIGHT -> false; AppearanceMode.DARK -> true; else -> isSystemInDarkTheme() }
             HaloTheme(dark,assistant.fontScale,if (dark) palettes.dark else palettes.light) {
-                Surface(Modifier.fillMaxSize()) {
+                ModalBottomSheet(onDismissRequest = ::cancelConfiguration,
+                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                    sheetGesturesEnabled = !busy) {
                     if (!ready || snapshot == null) Column(Modifier.padding(24.dp)) {
                         Text(uiText("Configure widget"),style=MaterialTheme.typography.headlineMedium)
                         if (error == null) LinearProgressIndicator(Modifier.fillMaxWidth()) else {
@@ -81,7 +84,7 @@ class EverydayWidgetConfigurationActivity : ComponentActivity() {
                         Text(uiText("Ask a grown-up to configure this widget."))
                         TextButton(::cancelConfiguration,Modifier.heightIn(min=56.dp),enabled=!busy) { Text(uiText("Close")) }
                     } else instance?.let { current -> EverydayWidgetConfigurationForm(current,snapshot!!,busy,error,
-                        cancel=::cancelConfiguration,save=::save,openSources={ startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(this,"screen/sources")) },palettes=palettes) }
+                        cancel=::cancelConfiguration,save=::save,openSources={ startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(this@EverydayWidgetConfigurationActivity,"screen/sources")) },palettes=palettes) }
                 }
             }
         } }
@@ -94,7 +97,7 @@ class EverydayWidgetConfigurationActivity : ComponentActivity() {
     private fun load() { lifecycleScope.launch {
         try {
             (application as HaloApplication).awaitOrganizerBootstrap()
-            val data = readEverydaySnapshot(this@EverydayWidgetConfigurationActivity)
+            val data = readEverydayWidgetSnapshot(this@EverydayWidgetConfigurationActivity)
             if (!loaded) {
                 val current = withContext(Dispatchers.IO) { EverydayWidgetStore(this@EverydayWidgetConfigurationActivity).get(widgetId) }
                 expected = current?.version; instance = current?.let { if(it.config.kind==kind) it else it.copy(config=EverydayCardConfig(kind!!)) }
@@ -130,9 +133,15 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
     var limit by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.limit) }
     var priority by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.priority?.name) }
     var theme by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.theme) }
+    var widgetStyle by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetStyle.name) }
+    var widgetShows by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetShows.name) }
+    var widgetSize by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetSize?.name) }
+    var widgetMotion by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetMotion) }
+    var widgetLook by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetMatchLook) }
     var sections by rememberSaveable(instance.id,instance.version) { mutableStateOf(ArrayList(instance.config.sections.map { it.name })) }
     var picker by rememberSaveable { mutableStateOf(false) }
-    val config=instance.config.copy(zoneId=zone,cityLabel=city,sourceId=source,recordId=recordId,limit=limit,priority=priority?.let(com.halo.app.everyday.organizer.TaskPriority::valueOf),theme=if(launcher) theme else "INHERIT",sections=sections.map(EverydayCardKind::valueOf),headlineSourceId=headlineSource)
+    val config=instance.config.copy(zoneId=zone,cityLabel=city,sourceId=source,recordId=recordId,limit=limit,priority=priority?.let(com.halo.app.everyday.organizer.TaskPriority::valueOf),theme=if(launcher) theme else "INHERIT",sections=sections.map(EverydayCardKind::valueOf),headlineSourceId=headlineSource, widgetSize=widgetSize?.let(EverydayWidgetSize::valueOf),
+        widgetMotion=widgetMotion, widgetMatchLook=widgetLook, widgetStyle=EverydayWidgetStyle.valueOf(widgetStyle), widgetShows=EverydayWidgetShows.valueOf(widgetShows))
     val locale=androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
     val resources=androidx.compose.ui.platform.LocalContext.current.resources
     val face=EverydayCards.project(config,snapshot,locale,externalHost=launcher,text={com.halo.app.language.resolveUiText(resources,it)})
@@ -141,11 +150,13 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
     val previewColors=if (launcher && theme != "INHERIT") haloColorScheme(previewDark,if(previewDark) palettes.dark else palettes.light).let {colors ->
         if(visual.higherContrast) colors.copy(onSurfaceVariant=colors.onSurface,outline=colors.onSurface.copy(alpha=.72f),outlineVariant=colors.onSurface.copy(alpha=.38f)) else colors
     } else MaterialTheme.colorScheme
-    Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
+    val screenHeight = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp
+    val panel = if (launcher) Modifier.fillMaxWidth().heightIn(max = screenHeight * .84f) else Modifier.fillMaxSize()
+    Column(panel.imePadding().padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(uiText(if(launcher) "Configure widget" else "Configure this card"),style=MaterialTheme.typography.headlineMedium)
         if(busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         Text(uiText(EverydayCards.title(config.kind)),style=MaterialTheme.typography.titleLarge)
-        MaterialTheme(colorScheme=previewColors) { Surface(shape=MaterialTheme.shapes.large,color=MaterialTheme.colorScheme.surfaceContainerLow) {
+        if (launcher) EverydayWidgetPreview(config, snapshot) else MaterialTheme(colorScheme=previewColors) { Surface(shape=MaterialTheme.shapes.large,color=MaterialTheme.colorScheme.surfaceContainerLow) {
             Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                 Text(uiText("Preview"),style=MaterialTheme.typography.labelLarge)
                 Text(face.value,style=MaterialTheme.typography.headlineSmall)
@@ -153,6 +164,8 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
                 Text(face.status,style=MaterialTheme.typography.bodySmall)
             }
         } }
+        Column(Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if(launcher) Text(uiText("Personal titles and details stay inside Halo. The widget shows safe summaries and opens the original item."),style=MaterialTheme.typography.bodySmall)
         if (config.kind in setOf(EverydayCardKind.CLOCK,EverydayCardKind.CLOCK_WEATHER,EverydayCardKind.DASHBOARD)) {
             Text(city.ifBlank { zone ?: uiText("Phone time zone") })
@@ -160,7 +173,8 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
             TextButton({ zone=null;city="" },enabled=!busy) { Text(uiText("Use phone time zone")) }
         }
         val sourceKinds=when(config.kind) {
-            EverydayCardKind.WEATHER,EverydayCardKind.CLOCK_WEATHER -> listOf(CollectorKind.WEATHER)
+            EverydayCardKind.WEATHER,EverydayCardKind.CLOCK_WEATHER,EverydayCardKind.LOCK_RAIN -> listOf(CollectorKind.WEATHER)
+            EverydayCardKind.AIR_POLLEN -> listOf(CollectorKind.AIR_QUALITY)
             EverydayCardKind.HEADLINES -> listOf(CollectorKind.FEED)
             EverydayCardKind.DASHBOARD -> listOf(CollectorKind.WEATHER,CollectorKind.FEED)
             else -> emptyList()
@@ -168,12 +182,20 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
         sourceKinds.forEach { sourceKind ->
             val selectedId=if(config.kind==EverydayCardKind.DASHBOARD && sourceKind==CollectorKind.FEED) headlineSource else source
             fun select(id: String?) { if(config.kind==EverydayCardKind.DASHBOARD && sourceKind==CollectorKind.FEED) headlineSource=id else source=id }
-            Text(uiText(if(sourceKind==CollectorKind.WEATHER) "Weather source" else "Headline source"),style=MaterialTheme.typography.titleMedium)
+            Text(uiText(when (sourceKind) {
+                CollectorKind.WEATHER -> "Weather source"
+                CollectorKind.AIR_QUALITY -> "Air & pollen source"
+                else -> "Headline source"
+            }), style = MaterialTheme.typography.titleMedium)
             val choices=snapshot.sources.filter { it.source.kind == sourceKind && it.source.selected && it.source.enabled && !it.source.muted }
-            FilterChip(selectedId==null,{select(null)},enabled=!busy,label={Text(uiText(if(sourceKind==CollectorKind.WEATHER) "First selected weather city" else "All selected feeds"))})
+            FilterChip(selectedId == null, { select(null) }, enabled = !busy, label = { Text(uiText(when (sourceKind) {
+                CollectorKind.WEATHER -> "First selected weather city"
+                CollectorKind.AIR_QUALITY -> "First selected air & pollen city"
+                else -> "All selected feeds"
+            })) })
             choices.forEach { row -> FilterChip(selectedId==row.source.id,{select(row.source.id)},enabled=!busy,label={Text(row.source.title)},modifier=Modifier.heightIn(min=48.dp)) }
             if (selectedId != null && choices.none { it.source.id==selectedId }) Text(uiText("The selected source is unavailable. Choose another source."),color=MaterialTheme.colorScheme.error)
-            TextButton(openSources,enabled=!busy) { Text(uiText("Manage sources and weather cities")) }
+            TextButton(openSources,enabled=!busy) { Text(uiText(if (sourceKind == CollectorKind.AIR_QUALITY) "Manage air & pollen sources" else "Manage sources and weather cities")) }
             Text(uiText("Source selection does not fetch in Local. Selected external sources refresh only in Power."),style=MaterialTheme.typography.bodySmall)
         }
         if (config.kind == EverydayCardKind.TASKS) {
@@ -220,9 +242,17 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
                 }
             }
         }
-        if(config.kind !in setOf(EverydayCardKind.CLOCK,EverydayCardKind.CLOCK_WEATHER,EverydayCardKind.WEATHER,EverydayCardKind.DEVICE)) {
+        if(config.kind !in EverydayToolkitWidgets.launcherKinds &&
+            config.kind !in setOf(EverydayCardKind.CLOCK,EverydayCardKind.CLOCK_WEATHER,EverydayCardKind.WEATHER,EverydayCardKind.DEVICE)) {
             Text(uiText("Visible items"),style=MaterialTheme.typography.titleMedium)
             FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)) { (1..if(launcher) 3 else 5).forEach { count -> FilterChip(limit==count,{limit=count},enabled=!busy,label={Text(count.toString())}) } }
+        }
+        if (launcher) WidgetDisplayChoices(config, enabled = !busy) { next ->
+            widgetSize = next.widgetSize?.name
+            widgetMotion = next.widgetMotion
+            widgetLook = next.widgetMatchLook
+            widgetStyle = next.widgetStyle.name
+            widgetShows = next.widgetShows.name
         }
         if(launcher) Text(uiText("Widget theme"),style=MaterialTheme.typography.titleMedium)
         if(launcher) FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -233,6 +263,7 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
         error?.let { Text(uiText(it),color=MaterialTheme.colorScheme.error) }
         Button({save(config)},enabled=!busy,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText(if(launcher) "Apply to this widget" else "Apply to this card")) }
         TextButton(cancel,enabled=!busy,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Cancel")) }
+        }
     }
     if (picker) OfflineCityPicker(busy,onDismiss={picker=false}) { selected -> zone=selected.zoneId;city="${selected.name} · ${selected.countryCode}".take(120);picker=false }
 }

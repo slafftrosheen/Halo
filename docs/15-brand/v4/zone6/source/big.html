@@ -1,0 +1,54 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="m.css"><link rel="stylesheet" href="r.css"><script src="icons.js"></script><script src="z6.js"></script><script src="m.js"></script><script src="r.js"></script>
+<style>
+.dev{position:relative;border-radius:36px;background:var(--ink);overflow:hidden;box-shadow:0 0 0 10px #15123d,0 0 0 11px #2a2766;transform-origin:top left}
+.dev .wall{position:absolute;inset:0;background:radial-gradient(100% 60% at 85% 0%,rgba(12,242,186,.10),transparent 60%),var(--ink)}
+.dev .sbr{position:absolute;top:0;left:0;right:0;height:24px;display:flex;justify-content:space-between;padding:4px 24px;font:600 13px Atk;z-index:5}
+.dev .wk{position:absolute;left:0;right:0;top:24px}
+.dev .dk{position:absolute;left:0;right:0;bottom:16px;border-radius:30px 30px 0 0}
+.dev .gbar{position:absolute;bottom:5px;left:50%;width:110px;height:4px;margin-left:-55px;border-radius:3px;background:rgba(250,250,244,.5)}
+.dev .ln{position:absolute;left:0;right:0;border-top:1px dashed rgba(255,159,107,.8);z-index:6}
+.dev .ln span{position:absolute;right:12px;top:-20px;font:700 11px Atk;color:var(--ap);letter-spacing:.06em}
+.drow{display:flex;align-items:center;gap:10px}
+.wact{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 18px;border-radius:16px;background:rgba(250,250,244,.06);border:1px solid var(--line);font:600 15px Atk;white-space:nowrap}
+.wact.p{background:var(--mint);color:var(--ink);border:0}.wact svg{width:21px;height:21px}
+.wnav{display:flex;align-items:flex-end;justify-content:center;gap:6px}
+.fold .wtab{width:78px}.fold .wact{padding:0 12px}.wtab{width:92px;display:flex;flex-direction:column;align-items:center;gap:4px;font:600 13px Atk;color:var(--t2)}
+.wtab .ind{width:56px;height:32px;border-radius:16px;display:grid;place-items:center;position:relative}.wtab.on{color:var(--cream)}.wtab.on .ind{background:rgba(12,242,186,.16);color:var(--mint)}
+.wring{width:110px;display:flex;flex-direction:column;align-items:center;gap:4px}.wring .orb{width:56px;height:56px}
+.art2{transform-origin:center}
+.cap2{font:600 13px Atk}
+.lbl{font:600 18px Sora;margin-top:14px}.lbl small{display:block;font:500 15px Atk;color:var(--t2);margin-top:4px}
+</style></head><body><div id="root"></div><script>
+const wm=`<div class="wm">hal<svg viewBox="0 0 240 240" style="width:30px;height:30px;margin-top:4px"><path d="M197.32 87.18A84 84 0 1 1 152.82 42.68" stroke="#0CF2BA" stroke-width="30" stroke-linecap="round" fill="none"/></svg></div>`;
+const place=(big)=>`<div class="place"><div class="pi">${I('draw')}</div><div><div class="pt" style="${big?'font-size:17px':''}">Poster draft</div><div class="ps">HaloStudio · ${ok('Saved')}</div></div></div>`;
+const acts=(n)=>[['add','Add',1],['draw','Draw'],['group','Layers'],['heading','Text'],['image','Image'],['more','More']].slice(0,n-1).concat([['more','More']]).map(([i,l,p])=>`<div class="wact ${p?'p':''}">${I(i)}${l}</div>`).join('');
+const tabs=(all)=>{const L=all?[['home','Home'],['notebook','Workspace',1],['notifications','Activity',0,2],'RING',['devices','Devices'],['settings','Settings'],['widget','Widgets']]:[['home','Home'],['notebook','Workspace',1],'RING',['notifications','Activity',0,2],['grid_view','Places']];
+ return L.map(t=>t=='RING'?`<div class="wring">${orb()}<div class="cap2">Talk</div></div>`:`<div class="wtab ${t[2]?'on':''}"><div class="ind">${I(t[0])}${t[3]?`<span class="badge">${t[3]}</span>`:''}</div>${t[1]}</div>`).join('')};
+const artboard=(s)=>`<div style="position:absolute;inset:0;display:grid;place-items:center;background:conic-gradient(#1b1860 25%,#16134f 0 50%,#1b1860 0 75%,#16134f 0) 0 0/20px 20px"><div class="art" style="transform:scale(${s})"><div class="sun"></div><div class="hill2"></div><div class="hill"></div><div class="tx">Autumn<br>market</div><div class="sel"><i></i><i></i><i></i><i></i></div></div></div>`;
+function dev(w,h,kind,scale){
+ const usable=h-24-16, dock=Math.round(usable*.25), work=usable-dock;
+ let dk='';
+ if(kind=='tabP') dk=`<div style="padding:12px 24px 0" class="drow">${place(1)}<div class="next" style="margin-left:auto">${I('guide_me')}Next: add a title</div></div>
+   <div class="drow" style="justify-content:center;margin-top:12px">${acts(kind=='fold'?4:6)}</div>
+   <div class="wnav" style="position:absolute;bottom:8px;left:0;right:0">${tabs(1)}</div>`;
+ if(kind=='tabL'||kind=='fold') dk=`<div style="padding:12px ${kind=='fold'?16:24}px 0" class="drow">${place(kind!='fold')}<div class="drow" style="margin-left:auto;gap:8px">${acts(kind=='fold'?4:6)}</div></div>
+   <div class="wnav ${kind}" style="position:absolute;bottom:6px;left:0;right:0">${tabs(1)}</div>`;
+ if(kind=='phL') dk=`<div class="drow" style="height:100%;padding:0 18px;gap:12px">${place(0)}<div class="drow" style="margin-left:auto">${[['add','Add',1],['draw','Draw'],['more','More']].map(([i,l,p])=>`<div class="wact ${p?'p':''}" style="height:48px;padding:0 14px">${I(i)}${l}</div>`).join('')}</div>
+   <div class="wring" style="width:70px"><div class="orb" style="width:44px;height:44px"><div class="glow"></div>${ring()}</div><div class="cap2">Talk</div></div><div class="wtab" style="width:64px"><div class="ind">${I('grid_view')}</div>Places</div></div>`;
+ const a=kind=='phL'?0.62:kind=='tabL'?1.0:kind=='fold'?1.0:1.35;
+ return `<div style="width:${w*scale}px;height:${h*scale}px"><div class="dev" style="width:${w}px;height:${h}px;transform:scale(${scale})"><div class="wall"></div><div class="sbr"><span>9:41</span><span>●●●</span></div>
+ <div class="wk" style="height:${work}px">${artboard(a)}</div><div class="ln" style="top:${24+work}px"><span>75 / 25</span></div>
+ <div class="dk glass" style="height:${dock}px"><div class="horizon"></div>${dk}</div><div class="gbar"></div></div></div>`;
+}
+document.getElementById('root').innerHTML=`<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · bigger screens</div><h1>Same dock, more room</h1>
+<p>The quarter rule holds on every screen. With width to spare (600dp and up) the bar shows every place — no Places step — and the action row shows more buttons. Phone landscape folds the dock into one row.</p></div>${wm}</div>
+<div style="display:flex;gap:50px;align-items:flex-start">
+<div>${dev(800,1280,'tabP',.5)}<div class="lbl">Tablet · portrait<small>800 × 1280dp · dock 310dp · 6 buttons · all places</small></div></div>
+<div><div>${dev(1280,800,'tabL',.56)}<div class="lbl">Tablet · landscape<small>1280 × 800dp · place + 6 buttons on one row</small></div></div>
+<div style="margin-top:40px">${dev(844,390,'phL',.7)}<div class="lbl">Phone · landscape<small>844 × 390dp · one-row dock, ring 44dp, Places</small></div></div></div>
+<div>${dev(673,841,'fold',.6)}<div class="lbl">Foldable · open<small>673 × 841dp · place + 4 buttons · all places</small></div></div></div>
+<div class="notes"><div class="note"><b>≥ 600dp: no Places step</b><p>Home · Workspace · Activity · ring · Devices · Settings · Widgets sit in the bar; Places stays as hold-the-ring.</p></div>
+<div class="note"><b>More buttons, same order</b><p>The action row grows from 4 to 6 by promoting items out of More — never reshuffling the first ones.</p></div>
+<div class="note"><b>Landscape phone = one row</b><p>Short windows use the compact row: place, 3 buttons, ring, Places. Same rule as the keyboard.</p></div>
+<div class="note"><b>Ring stays centred</b><p>The ring keeps one anchor on every size, so muscle memory carries across devices.</p></div></div></div>`;
+</script></body></html>

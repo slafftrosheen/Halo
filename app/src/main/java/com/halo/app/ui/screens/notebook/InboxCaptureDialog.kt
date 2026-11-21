@@ -31,7 +31,12 @@ import java.io.File
 
 /** Explicit capture into the existing Inbox. Board insertion reuses the saved object id. */
 @Composable
-internal fun InboxCaptureDialog(canvasId: String? = null, initialImport: Boolean = false, onDismiss: () -> Unit) {
+internal fun InboxCaptureDialog(
+    canvasId: String? = null,
+    initialImport: Boolean = false,
+    onInsertMemo: ((String) -> Boolean)? = null,
+    onDismiss: () -> Unit,
+) {
     val context = LocalContext.current
     val owner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
@@ -109,33 +114,35 @@ internal fun InboxCaptureDialog(canvasId: String? = null, initialImport: Boolean
     }
     DisposableEffect(owner, recorder) {
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_STOP && recording) {
-            recorder.cancel(); recording = false; message = "Recording cancelled when Canvas left the foreground."
+            recorder.cancel(); recording = false; message = "Recording cancelled when halo left the foreground."
         } }
         owner.lifecycle.addObserver(observer)
         onDispose { owner.lifecycle.removeObserver(observer); recorder.cancel() }
     }
     fun close() { if (!busy) { recorder.cancel(); onDismiss() } }
-    AlertDialog(onDismissRequest = ::close, title = { Text(uiText("Save to Inbox")) },
+    AlertDialog(onDismissRequest = ::close, title = { Text(uiText(if (onInsertMemo == null) "Save to Inbox" else "Voice memo")) },
         text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(uiText("Capture now, organize later. Everything stays local unless you choose to share it."))
-            HaloTextField(kind = VoiceFieldKind.TEXT, value = text, onValueChange = { text = it.take(12_000) }, label = { Text(uiText("Short note")) }, modifier = Modifier.fillMaxWidth(), enabled = !busy && !recording)
-            HaloActionButton(onClick = {
-                busy = true
-                scope.launch {
-                    try { savedId = Graph.notebookUseCases.createNote(text).id; text = ""; message = "Saved to Inbox." }
-                    catch (cancelled: CancellationException) { throw cancelled }
-                    catch (_: Exception) { message = "Could not save that change. Try again." }
-                    finally { busy = false }
-                }
-            }, enabled = !busy && !recording && text.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text(uiText("Save note")) }
-            HaloActionButton(onClick = { picker.launch(arrayOf("*/*")) }, enabled = !busy && !recording,
-                modifier = Modifier.fillMaxWidth(), style = HaloActionStyle.SECONDARY) { Text(uiText("Import file")) }
-            HaloActionButton(onClick = {
-                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }, enabled = !busy && !recording,
-                modifier = Modifier.fillMaxWidth(), style = HaloActionStyle.SECONDARY) { Text(uiText("Choose a photo")) }
-            HaloActionButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) takePhoto() else cameraPermission.launch(Manifest.permission.CAMERA) },
-                enabled = !busy && !recording, modifier = Modifier.fillMaxWidth(), style = HaloActionStyle.SECONDARY) { Text(uiText("Photo")) }
+            if (onInsertMemo == null) {
+                Text(uiText("Capture now, organize later. Everything stays local unless you choose to share it."))
+                HaloTextField(kind = VoiceFieldKind.TEXT, value = text, onValueChange = { text = it.take(12_000) }, label = { Text(uiText("Short note")) }, modifier = Modifier.fillMaxWidth(), enabled = !busy && !recording)
+                HaloActionButton(onClick = {
+                    busy = true
+                    scope.launch {
+                        try { savedId = Graph.notebookUseCases.createNote(text).id; text = ""; message = "Saved to Inbox." }
+                        catch (cancelled: CancellationException) { throw cancelled }
+                        catch (_: Exception) { message = "Could not save that change. Try again." }
+                        finally { busy = false }
+                    }
+                }, enabled = !busy && !recording && text.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text(uiText("Save note")) }
+                HaloActionButton(onClick = { picker.launch(arrayOf("*/*")) }, enabled = !busy && !recording,
+                    modifier = Modifier.fillMaxWidth(), style = HaloActionStyle.SECONDARY) { Text(uiText("Import file")) }
+                HaloActionButton(onClick = {
+                    photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }, enabled = !busy && !recording,
+                    modifier = Modifier.fillMaxWidth(), style = HaloActionStyle.SECONDARY) { Text(uiText("Choose a photo")) }
+                HaloActionButton(onClick = { if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) takePhoto() else cameraPermission.launch(Manifest.permission.CAMERA) },
+                    enabled = !busy && !recording, modifier = Modifier.fillMaxWidth(), style = HaloActionStyle.SECONDARY) { Text(uiText("Photo")) }
+            }
             if (recording) {
                 HaloActionButton(onClick = {
                     val file = recorder.stop(); recording = false
@@ -170,6 +177,14 @@ internal fun InboxCaptureDialog(canvasId: String? = null, initialImport: Boolean
             message?.let { Text(uiText(it))
                 if (it in setOf("Microphone permission denied.", "Camera permission was not granted"))
                     com.halo.app.ui.components.AndroidPermissionHelp() }
+            if (onInsertMemo != null && savedId != null) HaloActionButton(
+                onClick = {
+                    if (onInsertMemo(requireNotNull(savedId))) close()
+                    else message = "Saved to Inbox. The note changed; add the memo from Inbox."
+                },
+                enabled = !busy && !recording,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(uiText("Insert memo")) }
             if (canvasId != null && savedId != null) HaloActionButton(onClick = {
                 busy = true
                 scope.launch {

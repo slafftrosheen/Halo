@@ -25,6 +25,8 @@ data class OrganizerDraft(
     val notify: Boolean = base.notifyBeforeMinutes != null, val lead: String = (base.notifyBeforeMinutes ?: 0).toString(),
     val duration: String = ((base.timer?.durationMs ?: 300_000) / 1000).toString(),
     val links: List<String> = base.links.map { it.objectId }, val resetOccurrences: Boolean = false,
+    val spokenReview: Boolean = false, val spokenTimeGuess: String? = null, val spokenDateGuess: Boolean = false,
+    val leaveLead: String = base.leaveBeforeMinutes?.toString().orEmpty(),
 ) {
     val hasEnd: Boolean get() = base.kind == OrganizerKind.EVENT || (originalOverride?.replacementTime ?: base.time)?.end != null
     fun record(now: Instant, elapsedMs: Long, bootId: String): OrganizerRecord {
@@ -46,6 +48,7 @@ data class OrganizerDraft(
         return base.copy(title = title.trim(), details = details, location = location, time = scheduled, repeat = repeat,
             priority = priority, parentId = parentId, timer = timer,
             notifyBeforeMinutes = if (notify && scheduled != null && base.kind != OrganizerKind.ALARM) lead.toInt() else null,
+            leaveBeforeMinutes = if (scheduled?.allDay == false && base.kind == OrganizerKind.EVENT) leaveLead.takeIf(String::isNotBlank)?.toInt() else null,
             links = links.distinct().map { id -> base.links.find { it.objectId == id } ?: OrganizerLink(id) }).also { it.validate() }
     }
     fun bundle() = Bundle().apply {
@@ -54,9 +57,11 @@ data class OrganizerDraft(
         mapOf("title" to title, "details" to details, "location" to location, "date" to date, "time" to time,
             "endDate" to endDate, "endTime" to endTime, "zone" to zone, "frequency" to frequency, "interval" to interval,
             "count" to count, "until" to until, "priority" to priority.name, "parentId" to parentId,
-            "lead" to lead, "duration" to duration).forEach { (key, value) -> putString(key, value) }
+            "lead" to lead, "duration" to duration, "spokenTimeGuess" to spokenTimeGuess,
+            "leaveLead" to leaveLead).forEach { (key, value) -> putString(key, value) }
         mapOf("dated" to dated, "allDay" to allDay, "followZone" to followZone, "notify" to notify,
-            "resetOccurrences" to resetOccurrences).forEach { (key, value) -> putBoolean(key, value) }
+            "resetOccurrences" to resetOccurrences, "spokenReview" to spokenReview,
+            "spokenDateGuess" to spokenDateGuess).forEach { (key, value) -> putBoolean(key, value) }
         putStringArrayList("weekdays", ArrayList(weekdays.map { it.name })); putStringArrayList("links", ArrayList(links))
     }
     companion object {
@@ -87,7 +92,9 @@ data class OrganizerDraft(
                 interval = getString("interval").orEmpty(), weekdays = getStringArrayList("weekdays").orEmpty().map(DayOfWeek::valueOf).toSet(),
                 count = getString("count").orEmpty(), until = getString("until").orEmpty(), priority = TaskPriority.valueOf(requireNotNull(getString("priority"))),
                 parentId = getString("parentId"), notify = getBoolean("notify"), lead = getString("lead").orEmpty(), duration = getString("duration").orEmpty(),
-                links = getStringArrayList("links").orEmpty(), resetOccurrences = getBoolean("resetOccurrences"))
+                links = getStringArrayList("links").orEmpty(), resetOccurrences = getBoolean("resetOccurrences"),
+                spokenReview = getBoolean("spokenReview"), spokenTimeGuess = getString("spokenTimeGuess"),
+                spokenDateGuess = getBoolean("spokenDateGuess"), leaveLead = getString("leaveLead").orEmpty())
         }
     }
 }

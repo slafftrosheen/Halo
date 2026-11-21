@@ -20,6 +20,7 @@ internal object OrganizerCodec {
         put("createdAt", record.createdAt.toEpochMilli()); put("updatedAt", record.updatedAt.toEpochMilli()); put("deletedAt", record.deletedAt?.toEpochMilli())
         put("sourceUrl", record.sourceUrl); put("sourceLabel", record.sourceLabel)
         put("location", record.location)
+        put("leaveBeforeMinutes", record.leaveBeforeMinutes)
         put("calendarUid", record.calendarUid)
         record.time?.let { put("time", time(it)) }
         record.repeat?.let { rule -> put("repeat", JSONObject().put("frequency", rule.frequency.name).put("interval", rule.interval)
@@ -42,7 +43,8 @@ internal object OrganizerCodec {
             json.nullable("parentId"), json.number("notifyBeforeMinutes")?.toInt(), timer,
             json.getJSONArray("links").let { links -> (0 until links.length()).map { index -> links.getJSONObject(index).let { OrganizerLink(it.getString("id"), it.getString("relation")) } } },
             json.nullable("sourceUrl"), json.nullable("sourceLabel"), json.getLong("version"), Instant.ofEpochMilli(json.getLong("createdAt")),
-            Instant.ofEpochMilli(json.getLong("updatedAt")), json.number("deletedAt")?.let(Instant::ofEpochMilli), json.optString("location", ""), json.nullable("calendarUid")).also { it.validate() }
+            Instant.ofEpochMilli(json.getLong("updatedAt")), json.number("deletedAt")?.let(Instant::ofEpochMilli),
+            json.optString("location", ""), json.nullable("calendarUid"), json.number("leaveBeforeMinutes")?.toInt()).also { it.validate() }
     }
     fun encode(value: OccurrenceOverride) = JSONObject().apply {
         put("schema", 1); put("recordId", value.recordId); put("originalStart", value.originalStart.toEpochMilli())

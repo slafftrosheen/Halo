@@ -39,6 +39,7 @@ class ContinuationWatchRuntime(
     private val repository: RoomContinuationWatchRepository,
     private val attentionController: AttentionController?,
     private val agentRunCoordinator: AgentRunCoordinator? = null,
+    private val allowMatch: () -> Boolean = { true },
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -95,6 +96,7 @@ class ContinuationWatchRuntime(
     }
 
     private suspend fun processWatchMatch(watch: ContinuationWatch, occurredAt: Instant, source: String) {
+        if (!allowMatch()) return
         val claimed = repository.claimMatch(watch.id, occurredAt)
         if (!claimed) return
 

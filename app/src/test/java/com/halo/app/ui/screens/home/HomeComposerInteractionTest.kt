@@ -29,16 +29,20 @@ import org.robolectric.annotation.Config
 class HomeComposerInteractionTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun hostedComposerHasOneEditorAndSendWithoutDuplicatingZoneActions() {
+    @Test fun hostedComposerHasOneEditorAttachmentAndSend() {
         var sent = 0
+        var attachments = 0
         compose.setContent { HaloTheme {
             androidx.compose.runtime.CompositionLocalProvider(com.halo.app.ui.presence.LocalShellHaloOrb provides true) {
                 HaloComposer("Keep this draft", {}, { sent++ }, {}, {}, true, true, false, "Talk", false,
-                    onAttach = {}, onTools = {}, surfaceSwitcher = { androidx.compose.material3.Text("Surface picker fixture") })
+                    onAttach = { attachments++ }, onTools = {}, surfaceSwitcher = { androidx.compose.material3.Text("Surface picker fixture") })
             }
         } }
         compose.onAllNodes(hasSetTextAction()).assertCountEquals(1)
-        compose.onNodeWithContentDescription("Attach").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Attach").assertIsDisplayed()
+            .assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp).performClick()
+        assertEquals(1, attachments)
+        assertEquals(0, sent)
         compose.onNodeWithContentDescription("Tools").assertDoesNotExist()
         compose.onNodeWithContentDescription("Home / Screen").assertDoesNotExist()
         compose.onNodeWithContentDescription("Send").assertIsDisplayed().performClick()
@@ -253,7 +257,7 @@ class HomeComposerInteractionTest {
         assertEquals(1, sends)
     }
     @Test @Config(qualifiers = "w360dp-h800dp")
-    fun shellLargeTextKeepsFullWidthDraftAboveSendWithoutDuplicateZoneControls() {
+    fun shellLargeTextKeepsFullWidthDraftAboveAttachmentAndSend() {
         val draft = mutableStateOf("Keep this draft")
         var sends = 0
         var attachments = 0
@@ -271,15 +275,21 @@ class HomeComposerInteractionTest {
         }
         val field = compose.onNodeWithTag("home_composer_editor", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         assertTrue("Enlarged draft needs the full row", field.width >= with(compose.density) { 280.dp.toPx() })
-        listOf("Chat or Screen", "Attach", "Tools").forEach { label ->
+        listOf("Chat or Screen", "Tools").forEach { label ->
             compose.onNodeWithContentDescription(label).assertDoesNotExist()
         }
+        val attach = compose.onNodeWithContentDescription("Attach")
+        attach.assertIsDisplayed().assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
+        assertTrue("Attach overlaps the draft", attach.fetchSemanticsNode().boundsInRoot.top >= field.bottom)
+        attach.performClick()
         val send = compose.onNodeWithContentDescription("Send")
         send.assertIsDisplayed().assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
         assertTrue("Send overlaps the draft", send.fetchSemanticsNode().boundsInRoot.top >= field.bottom)
         compose.onNode(hasSetTextAction()).performTextInput(" preserved")
         compose.onNodeWithContentDescription("Send").performClick()
-        assertEquals(0, attachments); assertEquals(0, tools); assertEquals(1, sends)
+        assertEquals(1, attachments)
+        assertEquals(0, tools)
+        assertEquals(1, sends)
         assertTrue(draft.value.contains("preserved"))
         compose.onNodeWithContentDescription("Talk").assertDoesNotExist()
     }

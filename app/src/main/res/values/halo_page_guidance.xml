@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="coach_show">Show me</string>
+    <string name="coach_explore">Explore this screen</string>
+    <string name="coach_watch">Watch, then try</string>
+    <string name="coach_again">Again</string>
+    <string name="coach_alternative">Do it for me</string>
+    <string name="coach_got_it">Got it</string>
+    <string name="coach_read_all">Read all</string>
+    <string name="coach_stop_showing">Stop showing</string>
+    <string name="coach_control_hint">%1$s is available on this page. Open More for actions outside the dock.</string>
+    <string name="coach_talk">Talk to halo</string>
+    <string name="coach_places">Open Places</string>
+    <string name="coach_page_actions">More actions</string>
+    <string name="coach_ring_hold">Hold the ring</string>
+    <string name="coach_ring_hold_body">Press and hold the ring to open Places. A quick tap talks to halo.</string>
+    <string name="coach_dock_swipe">Swipe up from the ring</string>
+    <string name="coach_dock_swipe_body">Start on the ring and move up to open Places.</string>
+    <string name="coach_studio_move">Move around the artboard</string>
+    <string name="coach_studio_move_body">Drag on the artboard to move it, or pinch to zoom.</string>
+    <string name="coach_note_dictate">Hold to dictate</string>
+    <string name="coach_note_dictate_body">Hold the note microphone for long dictation. Review the words before adding them to the note.</string>
+    <string name="coach_canvas_link">Drag to link cards</string>
+    <string name="coach_canvas_link_body">In Connect mode, drag from one card to a second card. Review the link before saving.</string>
+    <string name="coach_kids_demos">Hand demos</string>
+    <string name="coach_kids_demo_body">Tap a choice to hear its name. Tap again to choose it.</string>
+    <string name="coach_edit_page">Edit this page</string>
+    <string name="coach_practice_reminder">Practice reminder at 18:00</string>
+    <string name="coach_practice_reminder_body">Remind me only when cards are due.</string>
+    <string name="coach_practice_due">Study cards are ready to practise.</string>
+</resources>

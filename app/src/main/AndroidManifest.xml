@@ -4,6 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -169,6 +171,16 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+        <service
+            android:name=".wallpaper.HaloLiveWallpaperService"
+            android:exported="true"
+            android:label="@string/alive_wallpaper_name"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data android:name="android.service.wallpaper" android:resource="@xml/halo_live_wallpaper" />
+        </service>
         <service android:name=".ui.mini.FloatingHaloService" android:exported="false" android:foregroundServiceType="specialUse">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-enabled floating Halo launcher with visible controls; no background microphone capture" />
         </service>
@@ -243,10 +255,6 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.BrainTool">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <!-- OEM fallback qualification path when the role picker does not enumerate a
                  VoiceInteractionService candidate directly. The active role still uses Halo's
                  VoiceInteractionSession overlay; this opens Halo only on activity-based assist. -->
@@ -287,6 +295,61 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
+
+        <activity-alias android:name="com.halo.app.icon.Classic" android:targetActivity=".MainActivity" android:exported="true" android:enabled="true"
+            android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.NightMint" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_night_mint" android:roundIcon="@mipmap/ic_launcher_night_mint_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.NightBlue" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_night_blue" android:roundIcon="@mipmap/ic_launcher_night_blue_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.NightLilac" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_night_lilac" android:roundIcon="@mipmap/ic_launcher_night_lilac_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.NightCoral" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_night_coral" android:roundIcon="@mipmap/ic_launcher_night_coral_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.NightSage" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_night_sage" android:roundIcon="@mipmap/ic_launcher_night_sage_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.NightRose" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_night_rose" android:roundIcon="@mipmap/ic_launcher_night_rose_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.CreamMint" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_cream_mint" android:roundIcon="@mipmap/ic_launcher_cream_mint_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.CreamBlue" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_cream_blue" android:roundIcon="@mipmap/ic_launcher_cream_blue_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.CreamLilac" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_cream_lilac" android:roundIcon="@mipmap/ic_launcher_cream_lilac_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.CreamCoral" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_cream_coral" android:roundIcon="@mipmap/ic_launcher_cream_coral_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.CreamSage" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_cream_sage" android:roundIcon="@mipmap/ic_launcher_cream_sage_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name="com.halo.app.icon.CreamRose" android:targetActivity=".MainActivity" android:exported="true" android:enabled="false"
+            android:icon="@mipmap/ic_launcher_cream_rose" android:roundIcon="@mipmap/ic_launcher_cream_rose_round" android:label="@string/app_name">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity android:name=".ui.toolkit.HaloEmergencyActivity" android:exported="false"
+            android:excludeFromRecents="true" android:theme="@style/Theme.BrainTool" />
         <activity android:name=".nativeactions.NativeDndSettingsActivity" android:exported="true"
             android:theme="@style/Theme.BrainTool" />
         <activity android:name=".nativeactions.NativeResultActivity" android:exported="false"
@@ -306,7 +369,19 @@
             android:label="@string/app_name" android:icon="@drawable/ic_halo_talk">
             <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
         </service>
-        <activity android:name=".nativeactions.EverydayWidgetConfigurationActivity" android:exported="true" android:theme="@style/Theme.BrainTool"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter></activity>
+        <service android:name=".ui.toolkit.HaloMagnifierTile" android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:icon="@drawable/halo_ic_timer" android:label="@string/halo_magnifier_tile">
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
+        </service>
+        <service android:name=".nativeactions.HaloBedsideDreamService" android:exported="true"
+            android:permission="android.permission.BIND_DREAM_SERVICE" android:label="@string/halo_bedside_title">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+        <activity android:name=".nativeactions.EverydayWidgetConfigurationActivity" android:exported="true" android:theme="@style/Theme.Halo.WidgetConfiguration"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter></activity>
         <receiver android:name=".nativeactions.HaloClockWidget" android:exported="false" android:label="@string/everyday_widget_clock"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_everyday_clock_info" /></receiver>
         <receiver android:name=".nativeactions.HaloClockWeatherWidget" android:exported="false" android:label="@string/everyday_widget_clock_weather"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_everyday_clock_weather_info" /></receiver>
         <receiver android:name=".nativeactions.HaloUpcomingWidget" android:exported="false" android:label="@string/everyday_widget_upcoming"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_everyday_upcoming_info" /></receiver>
@@ -314,7 +389,72 @@
         <receiver android:name=".nativeactions.HaloBriefWidget" android:exported="false" android:label="@string/everyday_widget_brief"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_everyday_brief_info" /></receiver>
         <receiver android:name=".nativeactions.HaloHeadlinesWidget" android:exported="false" android:label="@string/everyday_widget_headlines"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_everyday_headlines_info" /></receiver>
         <receiver android:name=".nativeactions.HaloAlarmTimerWidget" android:exported="false" android:label="@string/everyday_widget_alarms_timers"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_everyday_alarms_timers_info" /></receiver>
+        <receiver android:name=".nativeactions.HaloScanWidget" android:exported="false" android:label="@string/widget_toolkit_scan">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_scan_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloRecordWidget" android:exported="false" android:label="@string/widget_toolkit_record">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_record_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloQuickNoteWidget" android:exported="false" android:label="@string/widget_toolkit_quick_note">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_quick_note_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloTranslateWidget" android:exported="false" android:label="@string/widget_toolkit_translate">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_translate_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloAirPollenWidget" android:exported="false" android:label="@string/widget_toolkit_air_pollen">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_air_pollen_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloPlannerWeekWidget" android:exported="false" android:label="@string/widget_toolkit_planner_week">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_planner_week_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloFocusWidget" android:exported="false" android:label="@string/widget_toolkit_focus">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_focus_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloLittleHabitsWidget" android:exported="false" android:label="@string/widget_toolkit_little_habits">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_little_habits_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloNextRideWidget" android:exported="false" android:label="@string/widget_toolkit_next_ride">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_next_ride_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloOurHomeWidget" android:exported="false" android:label="@string/widget_toolkit_our_home">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_our_home_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloLearnWidget" android:exported="false" android:label="@string/widget_toolkit_learn">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_learn_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloKidsSkyWidget" android:exported="false" android:label="@string/widget_toolkit_kids_sky">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_kids_sky_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloYourThingsWidget" android:exported="false" android:label="@string/widget_toolkit_your_things">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_your_things_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloLockNextEventWidget" android:exported="false" android:label="@string/widget_toolkit_lock_next_event">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_lock_next_event_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloLockRainWidget" android:exported="false" android:label="@string/widget_toolkit_lock_rain">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_lock_rain_info" />
+        </receiver>
+        <receiver android:name=".nativeactions.HaloSmartStackWidget" android:exported="false" android:label="@string/widget_toolkit_smart_stack">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_toolkit_smart_stack_info" />
+        </receiver>
         <receiver android:name=".nativeactions.HaloDashboardWidget" android:exported="false" android:label="@string/everyday_widget_dashboard"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/halo_everyday_dashboard_info" /></receiver>
+        <receiver android:name=".nativeactions.EverydayWidgetPinReceiver" android:exported="false" />
         <receiver android:name=".nativeactions.EverydayWidgetMaintenanceReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /><action android:name="android.intent.action.TIME_SET" /><action android:name="android.intent.action.TIMEZONE_CHANGED" /><action android:name="android.intent.action.DATE_CHANGED" /><action android:name="android.intent.action.LOCALE_CHANGED" /><action android:name="android.intent.action.USER_UNLOCKED" /></intent-filter></receiver>
         <receiver android:name=".nativeactions.HaloNativeWidget" android:exported="false" android:label="@string/app_name">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>

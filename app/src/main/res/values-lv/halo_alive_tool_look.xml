@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_tool_edit_page">Pielāgot šo lapu</string>
+    <string name="alive_tool_restore">Atjaunot iepriekšējo</string>
+    <string name="alive_tool_save_failed">Neizdevās saglabāt izskatu. Mēģiniet vēlreiz.</string>
+    <string name="alive_studio_look">Jūsu studija</string>
+    <string name="alive_studio_artboard">Audekls</string>
+    <string name="alive_studio_plain">Bez palīglīnijām</string>
+    <string name="alive_studio_dots">Punkti</string>
+    <string name="alive_studio_grid">Režģis</string>
+    <string name="alive_studio_favourites">Izlase joslā</string>
+    <string name="alive_studio_favourites_limit">Izvēlieties līdz četriem.</string>
+    <string name="alive_studio_left">Izkārtojums kreiļiem</string>
+    <string name="alive_studio_snap">Pietuvinot pieskaņot audekla izmēram</string>
+    <string name="alive_studio_names">Nosaukt rīkus zīmēšanas laikā</string>
+    <string name="alive_studio_words">Vārdi</string>
+    <string name="alive_studio_picture">Attēls</string>
+    <string name="alive_canvas_look">Jūsu tāfeles</string>
+    <string name="alive_canvas_colors">Kartīšu krāsas</string>
+    <string name="alive_canvas_by_kind">Pēc veida</string>
+    <string name="alive_canvas_by_me">Manis izvēlētas</string>
+    <string name="alive_canvas_one">Viena krāsa</string>
+    <string name="alive_canvas_links">Saites</string>
+    <string name="alive_canvas_curved">Liektas</string>
+    <string name="alive_canvas_straight">Taisnas</string>
+    <string name="alive_canvas_dotted">Punktotas</string>
+    <string name="alive_canvas_snap">Piesaistīt kartītes režģim</string>
+    <string name="alive_canvas_list">Atvērt sarakstā</string>
+    <string name="alive_canvas_one_color">Tāfeles krāsa</string>
+    <string name="alive_canvas_card_color">Atlasītās kartītes krāsa</string>
+    <string name="alive_canvas_mint">Piparmētru</string>
+    <string name="alive_canvas_lilac">Ceriņu</string>
+    <string name="alive_canvas_pink">Rozā</string>
+    <string name="alive_canvas_apricot">Persiku</string>
+    <string name="alive_canvas_neutral">Neitrāls</string>
+    <string name="alive_mini_look">Jūsu mini halo</string>
+    <string name="alive_mini_size">Burbuļa izmērs</string>
+    <string name="alive_mini_small">Mazs</string>
+    <string name="alive_mini_medium">Vidējs</string>
+    <string name="alive_mini_large">Liels</string>
+    <string name="alive_mini_side">Ekrāna mala</string>
+    <string name="alive_mini_left">Pa kreisi</string>
+    <string name="alive_mini_right">Pa labi</string>
+    <string name="alive_mini_hide">Paslēpt pilnekrāna lietotnēs</string>
+    <string name="alive_mini_hide_restricted">Lai atpazītu spēles un video, Android pieprasa lietotņu lietojuma piekļuvi.</string>
+    <string name="alive_mini_usage">Atvērt lietojuma piekļuvi</string>
+</resources>

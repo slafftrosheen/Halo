@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- values-ru · lowercase "halo" kept in Latin script. -->
+<resources>
+    <string name="mini_halo_title">mini halo</string>
+    <string name="mini_halo_ask_hint">спросить halo</string>
+    <string name="mini_halo_open_app">открыть halo</string>
+    <string name="assistant_open_halo">открыть halo</string>
+    <string name="assistant_talk_to_halo">поговорить с halo</string>
+    <string name="floating_halo_label">mini halo</string>
+    <string name="floating_halo_dismiss">Скрыть mini halo</string>
+</resources>

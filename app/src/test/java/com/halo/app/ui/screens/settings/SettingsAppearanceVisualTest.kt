@@ -36,14 +36,15 @@ class SettingsAppearanceVisualTest {
                 language, {}, {}, {}, palettePreferences = preferences,
                 assistantPreferences = AssistantPreferences(ApplicationProvider.getApplicationContext<Application>()))
         } } }
-        compose.onNodeWithText(if (language == AppLanguage.RUSSIAN) "Оформление" else "Appearance")
+        compose.onNodeWithText(if (language == AppLanguage.RUSSIAN) "Настройте под себя" else "Make it yours")
             .performScrollTo().performClick()
-        if (scale >= 2f) compose.onNodeWithText("Оформление")
+        if (scale >= 2f) compose.onNodeWithText("Настройте под себя")
             .assertHeightIsAtLeast(40.dp)
         if (scale >= 2f && language == AppLanguage.RUSSIAN) {
             val modeOption = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton)
             listOf("Светлая", "Тёмная", "Как на телефоне").forEach { label ->
                 val layouts = mutableListOf<TextLayoutResult>()
+                compose.onNode(modeOption and hasText(label)).performScrollTo()
                 val node = compose.onNode(hasText(label) and hasAnyAncestor(modeOption), useUnmergedTree = true).assertIsDisplayed()
                 node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
                 assertFalse("Mode label must not overflow: $label", layouts.single().hasVisualOverflow)

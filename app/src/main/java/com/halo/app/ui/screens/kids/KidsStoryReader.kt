@@ -29,10 +29,16 @@ internal fun KidsStoryReader(noteId: String, text: String, onDismiss: () -> Unit
     val hash = remember(text) { java.security.MessageDigest.getInstance("SHA-256")
         .digest(text.toByteArray(Charsets.UTF_8)).take(12).joinToString("") { "%02x".format(it) } }
     val sentences = remember(text) { SentenceSegmenter.split(text) }
-    val pages = remember(sentences) { sentences.chunked(3).map { it.joinToString(" ") } }
-    val key = "kids_reading_v1_${noteId}_$hash"
-    var page by rememberSaveable(noteId, hash) { mutableIntStateOf(
-        runCatching { Graph.storage.getString(key)?.toIntOrNull() ?: 0 }.getOrDefault(0).coerceIn(0, (pages.size - 1).coerceAtLeast(0))) }
+    val sections = remember(text) { com.halo.sdk.provider.SpeechParagraphs.sections(text, maxChars = 1_200, packParagraphs = false).take(400).toList() }
+    val pages = remember(sections) { sections.map { it.text } }
+    val key = "kids_reading_offset_v2_${noteId}_$hash"
+    var page by rememberSaveable(noteId, hash) { mutableIntStateOf(runCatching {
+        val offset = Graph.storage.getString(key)?.toIntOrNull() ?: run {
+            val previous = Graph.storage.getString("kids_reading_v1_${noteId}_$hash")?.toIntOrNull()
+            previous?.let { SentenceSegmenter.ranges(text).chunked(3).getOrNull(it)?.firstOrNull()?.start } ?: 0
+        }
+        sections.indexOfLast { it.start <= offset }.coerceAtLeast(0)
+    }.getOrDefault(0)) }
     var practice by rememberSaveable { mutableStateOf(false) }
     var sentenceIndex by rememberSaveable { mutableIntStateOf(0) }
     var heard by rememberSaveable { mutableStateOf("") }
@@ -47,7 +53,7 @@ internal fun KidsStoryReader(noteId: String, text: String, onDismiss: () -> Unit
     val ownPrefix = "kids-story:$noteId:$hash:"
     val pageId = ownPrefix + "page:$page"
     fun readPage(index: Int) { scope.launch {
-        if (!readKidsText(ownPrefix + "page:$index", pages.getOrNull(index).orEmpty()))
+        if (!readKidsText(ownPrefix + "page:$index", pages.getOrNull(index).orEmpty(), storyId = noteId))
             notice = "Stop the microphone before starting reading."
     } }
     fun dismiss() {
@@ -56,7 +62,7 @@ internal fun KidsStoryReader(noteId: String, text: String, onDismiss: () -> Unit
         onDismiss()
     }
     LaunchedEffect(page, practice) {
-        if (!practice) try { Graph.storage.putString(key, page.toString()) }
+        if (!practice) try { Graph.storage.putString(key, sections.getOrNull(page)?.start?.toString()) }
         catch (_: Exception) { notice = "Could not save your reading position. Your story is kept." }
     }
     LaunchedEffect(reading?.id, reading?.notice) {
@@ -92,7 +98,7 @@ internal fun KidsStoryReader(noteId: String, text: String, onDismiss: () -> Unit
                 KidsStoryPage(styled, large = large, spacing = spacing, onWordClick = { offset ->
                         val word = Regex("[\\p{L}\\p{M}]+(?:['’][\\p{L}\\p{M}]+)*").findAll(passage)
                             .firstOrNull { offset in it.range }?.value
-                        if (word != null) { automatic = false; scope.launch { readKidsText(ownPrefix + "word", word) } }
+                        if (word != null) { automatic = false; scope.launch { readKidsText(ownPrefix + "word", word, storyId = noteId) } }
                     })
                 Text(uiText(if (practice) "Sentence %1\$d of %2\$d" else "Page %1\$d of %2\$d",
                     if (practice) sentenceIndex + 1 else page + 1,
@@ -112,7 +118,7 @@ internal fun KidsStoryReader(noteId: String, text: String, onDismiss: () -> Unit
                         sentenceIndex = (sentenceIndex + 1).coerceAtMost(sentences.lastIndex); heard = ""
                     }, enabled = sentenceIndex < sentences.lastIndex,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Next sentence")) }
-                    OutlinedButton(onClick = { scope.launch { readKidsText(ownPrefix + "example", passage) } },
+                    OutlinedButton(onClick = { scope.launch { readKidsText(ownPrefix + "example", passage, storyId = noteId) } },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText("Read to me")) }
                 } else {
                     KidsPrimaryButton(onClick = { automatic = true; readPage(page) },

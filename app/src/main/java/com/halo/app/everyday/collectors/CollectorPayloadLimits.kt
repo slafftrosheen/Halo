@@ -2,10 +2,18 @@ package com.halo.app.everyday.collectors
 
 /** Publication and restore share these limits; an accepted snapshot must remain readable after restart. */
 object CollectorPayloadLimits {
+    fun validateSource(source: CollectorSource, payload: CollectorPayload) {
+        validateKind(source.kind, payload)
+        if (payload is CollectorPayload.AirQuality) require(payload.value.place == source.place) {
+            "Air quality snapshot belongs to a different city"
+        }
+    }
+
     fun validateKind(kind: CollectorKind,payload: CollectorPayload) {
         require(when(kind) {
             CollectorKind.FEED -> payload is CollectorPayload.Articles
             CollectorKind.WEATHER -> payload is CollectorPayload.Weather
+            CollectorKind.AIR_QUALITY -> payload is CollectorPayload.AirQuality
             CollectorKind.ALERTS -> payload is CollectorPayload.Warnings
             CollectorKind.PUBLIC_CALENDAR -> payload is CollectorPayload.Calendar
             else -> payload is CollectorPayload.Local
@@ -36,10 +44,18 @@ object CollectorPayloadLimits {
                 require(payload.fact.days.size <= 16)
                 require(payload.fact.temperatureC?.let { it.isFinite() && it in -100.0..80.0 } != false)
                 require(payload.fact.weatherCode?.let { it in 0..99 } != false)
+                require(payload.fact.windKph?.let { it.isFinite() && it in 0.0..600.0 } != false)
                 payload.fact.days.forEach { day ->
                     require(listOfNotNull(day.maximumC, day.minimumC).all { it.isFinite() && it in -100.0..80.0 })
                     require(day.precipitationProbability?.let { it in 0..100 } != false && day.weatherCode?.let { it in 0..99 } != false)
                 }
+            }
+            is CollectorPayload.AirQuality -> {
+                val air = payload.value
+                require(air.europeanAqi?.let { it in 0..10_000 } != false)
+                require(air.pollen.values.all { it.isFinite() && it in 0.0..1_000_000.0 })
+                require(air.europeanAqi != null || air.pollen.isNotEmpty())
+                require(air.attribution.length in 1..200)
             }
             is CollectorPayload.Calendar -> {
                 require(payload.preview.records.size <= 100 && payload.preview.exceptions.size <= 2000 && payload.preview.issues.size <= 2000)

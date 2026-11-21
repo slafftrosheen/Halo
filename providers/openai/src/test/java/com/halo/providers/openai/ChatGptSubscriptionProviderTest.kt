@@ -126,13 +126,21 @@ class ChatGptSubscriptionProviderTest {
         Fixture().use { f ->
             val tool = ToolDefinition("halo_test", "halo_test", "Read a synthetic value", mapOf("type" to "object"))
             f.stream("""{"type":"response.completed","response":{"status":"completed","output":[{"type":"function_call","call_id":"call-1","namespace":"halo","name":"halo_test","arguments":"{\"count\":2}"}]}}""")
-            val reply = f.provider.generate(AiRequest("Test", modelId = "z"), AiContext(availableTools = listOf(tool)))
+            val reply = f.provider.generate(AiRequest("Test", modelId = "z", toolUseMode = ToolUseMode.REQUIRED),
+                AiContext(availableTools = listOf(tool)))
             assertEquals(ToolCall("call-1", "halo_test", mapOf("count" to 2)), reply.toolCalls.single())
             val sent = JSONObject(f.server.takeRequest().body.readUtf8())
             assertEquals("namespace", sent.getJSONArray("tools").getJSONObject(0).getString("type"))
-            val next = f.provider.body(AiRequest(modelId = "z", appendTextAsUserMessage = false), AiContext(conversation = listOf(
-                AIMessage(Role.SYSTEM, "Instructions"), AIMessage(Role.ASSISTANT, "", reply.toolCalls),
-                AIMessage(Role.TOOL, "Result", toolCallId = "call-1"))), "z")
+            assertEquals("required", sent.getString("tool_choice"))
+            f.stream("""{"type":"response.completed","response":{"status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"Read the result."}]}]}}""")
+            val continuation = f.provider.generate(AiRequest(modelId = "z", appendTextAsUserMessage = false,
+                toolUseMode = ToolUseMode.REQUIRED, turnKind = ProviderTurnKind.TOOL_CONTINUATION), AiContext(
+                availableTools = listOf(tool),
+                conversation = listOf(AIMessage(Role.SYSTEM, "Instructions"), AIMessage(Role.ASSISTANT, "", reply.toolCalls),
+                    AIMessage(Role.TOOL, "Result", toolCallId = "call-1"))))
+            assertEquals("Read the result.", continuation.text)
+            val next = JSONObject(f.server.takeRequest().body.readUtf8())
+            assertFalse(next.has("tool_choice"))
             val history = next.getJSONArray("input")
             assertEquals("developer", history.getJSONObject(0).getString("role"))
             assertEquals("halo", history.getJSONObject(1).getString("namespace"))

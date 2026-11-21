@@ -22,12 +22,14 @@ import com.halo.app.ui.glass.components.HaloMarkdownText
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActiveSession: Boolean,
-    cloudReply: Boolean = false, onCopy: () -> Unit, onSave: () -> Unit, onEdit: (() -> Unit)? = null) {
+    cloudReply: Boolean = false, onCopy: () -> Unit, onSave: () -> Unit, onEdit: (() -> Unit)? = null,
+    origin: HomeAnswerOrigin = if (cloudReply) HomeAnswerOrigin.ONLINE else HomeAnswerOrigin.UNKNOWN) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val displayedText = uiState.nativeReceiptCopy?.let { uiText(it.english) } ?: responseText
     val identityKey = uiState.conversationId to (uiState.presentedIdentity?.turnId ?: uiState.presentedIdentity?.requestId)
     var readRequest by remember(identityKey) { mutableLongStateOf(0) }
     var shareFailed by remember(identityKey) { mutableStateOf(false) }
+    var shareReview by remember(identityKey) { mutableStateOf(false) }
     val canAct = !isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null
     Surface(
         modifier = Modifier
@@ -56,21 +58,10 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
-                // The current selection cannot provide provenance for a saved reply.
-                // This badge comes only from the actual response/committed turn.
-                if (cloudReply) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        HaloIcon(HaloGlyph.CLOUD, contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(6.dp))
-                        Text(uiText("Cloud"), style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
+                HomeAnswerOriginChip(origin)
 
                 if (canAct) HomeMessageActions(onCopy = onCopy,
-                    onShare = { shareFailed = !shareHomeMessage(context, responseText) },
+                    onShare = { shareReview = true },
                     onSave = onSave, onRead = { readRequest++ }, onEdit = onEdit, identityKey = identityKey)
             }
             Spacer(Modifier.height(4.dp))
@@ -108,6 +99,10 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
             }
 
         }
+    }
+    if (shareReview && canAct) HomeShareReview({ shareReview = false }) {
+        shareReview = false
+        shareFailed = !shareHomeMessage(context, responseText)
     }
     if (shareFailed) Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_share_failed),
         color = MaterialTheme.colorScheme.error)

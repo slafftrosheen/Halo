@@ -21,8 +21,14 @@ fun CheckUpScreen(
     onBack: () -> Unit,
     onIntelligence: () -> Unit,
     onVoice: () -> Unit,
+    onTourRoute: ((String) -> Unit)? = null,
 ) {
-    SettingsChildZone("Check-up", onBack, listOf(settingsChildLink("onIntelligence", "Brain", onIntelligence), settingsChildLink("onVoice", "Voice & reading", onVoice)))
+    val title = androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_help_title)
+    SettingsChildZone(title, onBack, listOf(
+        settingsChildLink("refresh", "Check now", viewModel::runSafeChecks),
+        settingsChildLink("onIntelligence", "Brain", onIntelligence),
+        settingsChildLink("onVoice", "Voice & reading", onVoice),
+    ))
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val observations = systemCheckEssentialItems(state.sections).associateBy { it.id }
     val labels = listOf(
@@ -39,35 +45,58 @@ fun CheckUpScreen(
     var attempted by remember { mutableStateOf(false) }
     var heard by remember { mutableStateOf<Boolean?>(null) }
     var recognized by remember { mutableStateOf<String?>(null) }
-    val sampleIsPlaying = readingState?.let { sample == it.sentences.joinToString(" ") && it.playing } == true
+    val sampleIsPlaying = readingState?.let { sample == it.sections.joinToString(" ") && it.playing } == true
     LaunchedEffect(sampleIsPlaying) { if (sampleIsPlaying) { attempted = true; heard = null } }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val checkTime = remember(state.sections) { if (state.sections.isNotEmpty()) System.currentTimeMillis() else null }
+    val localSpace = remember(checkTime) { context.filesDir.usableSpace }
+    val onlyStatuses = labels.map { (id, label) ->
+        uiText(label) to observations[id]?.status
+    }
+    val reportTitle = androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_help_share_report)
+    val storageLine = uiText("Free storage") + " · " + android.text.format.Formatter.formatFileSize(context, localSpace)
+    val reportReady = onlyStatuses.any { it.second != null && it.second != CheckStatus.RUNNING }
+    fun shareCheckup(labels: List<Pair<String, String>>) {
+        val report = (listOf(title) + labels.map { (name, status) -> "$name · $status" } + storageLine).joinToString("\n")
+        val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_TEXT, report)
+        }
+        context.startActivity(android.content.Intent.createChooser(send, reportTitle))
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("Check-up"), uiText("See what is available, then choose what to set up."), navigation = onBack) }
+        item {
+            val subtitle = androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_help_sub)
+            if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(title, subtitle, navigation = onBack)
+            else Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+        }
+        if (onTourRoute != null) item(key = "tours") { HelpTourChooser(onTourRoute) }
         item {
             Surface(shape = HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    labels.forEach { (id, label) ->
-                        val status = observations[id]?.status
+                    val needs = onlyStatuses.count { (_, status) ->
+                        status in setOf(CheckStatus.FAILED, CheckStatus.BLOCKED, CheckStatus.NOT_CONFIGURED)
+                    }
+                    Text(uiText(if (needs == 0) "Check-up status" else "Needs a look"), style = MaterialTheme.typography.titleMedium)
+                    onlyStatuses.forEach { (label, status) ->
+                        val attention = status in setOf(CheckStatus.FAILED, CheckStatus.BLOCKED, CheckStatus.NOT_CONFIGURED)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Text(uiText(label), Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
-                            Text(uiText(when (status) {
-                                CheckStatus.READY -> "Available"
-                                CheckStatus.PASSED -> "Checked"
-                                CheckStatus.RUNNING -> "Checking…"
-                                CheckStatus.NOT_CONFIGURED -> "Needs setup"
-                                CheckStatus.FAILED -> "Needs attention"
-                                CheckStatus.BLOCKED -> "Unavailable right now"
-                                CheckStatus.UNSUPPORTED -> "Not available on this phone"
-                                null -> "Not checked yet"
-                            }), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(label, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
+                            Text(uiText(zone6CheckStatus(status)), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium,
+                                color = when {
+                                    attention -> MaterialTheme.colorScheme.tertiary
+                                    status == CheckStatus.PASSED -> MaterialTheme.colorScheme.primary
+                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                })
                         }
                     }
+                    Text(storageLine, style = MaterialTheme.typography.bodyMedium)
+
                 }
             }
         }
@@ -95,7 +124,7 @@ fun CheckUpScreen(
             Surface(shape = HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(uiText("Speaking"), style = MaterialTheme.typography.titleMedium)
-                    com.halo.app.ui.components.HaloReadAloud(sample, label = uiText("Try halo’s voice"))
+                    com.halo.app.ui.components.HaloReadAloud(sample, label = uiText("Try halo’s voice"), category = com.halo.sdk.provider.RemoteDataCategory.TEXT)
                     if (attempted) {
                         Text(uiText("Did you hear halo?"))
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -109,6 +138,17 @@ fun CheckUpScreen(
             }
         }
         item {
+            val rows = onlyStatuses.map { (label, status) -> label to uiText(zone6CheckStatus(status)) }
+            Text(uiText("How do I…"), style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onIntelligence, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Choose how halo answers")) }
+                TextButton(onVoice, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Set up voice")) }
+            }
+            OutlinedButton({ shareCheckup(rows) }, enabled = reportReady, modifier = Modifier.heightIn(min = 48.dp)) { Text(reportTitle) }
+            Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_help_share_report_note),
+                style = MaterialTheme.typography.bodySmall)
+        }
+        item {
             Text(uiText("Available means ready to try. It does not mean you have already tried it."),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             TextButton(onClick = viewModel::runSafeChecks, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -116,6 +156,17 @@ fun CheckUpScreen(
             }
         }
     }
+}
+
+private fun zone6CheckStatus(status: CheckStatus?): String = when (status) {
+    CheckStatus.READY -> "Available"
+    CheckStatus.PASSED -> "Checked"
+    CheckStatus.RUNNING -> "Checking…"
+    CheckStatus.NOT_CONFIGURED -> "Needs setup"
+    CheckStatus.FAILED -> "Needs attention"
+    CheckStatus.BLOCKED -> "Unavailable right now"
+    CheckStatus.UNSUPPORTED -> "Not available on this phone"
+    else -> "Not checked yet"
 }
 
 /** A bounded report: fixed labels and status values only; no source detail or payloads. */

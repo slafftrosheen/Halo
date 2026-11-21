@@ -16,6 +16,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.activity.compose.BackHandler
 import com.halo.app.ui.design.HaloFocusAction
 import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.theme.HaloAccent
+import com.halo.app.ui.theme.HaloViewMode
+import com.halo.app.ui.theme.brandAccent
+import com.halo.app.ui.theme.rememberVisualPreferences
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -28,6 +34,60 @@ import org.json.JSONObject
 import java.time.*
 
 private enum class TriggerCategory(val title: String) { SCHEDULE("Schedule"), DEVICE("Device"), APPS("Apps"), BATTERY("Battery & power"), NETWORK("Network") }
+
+@Composable
+private fun RoutineSentence(routine: Routine, labels: AutomationLabels) {
+    val actions = mutableListOf<String>()
+    routine.actions.forEach { actions += it.uiLabel() }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        RoutineSentenceBlock(uiText("When"), routine.trigger.uiLabel(labels), HaloGlyph.WATCH, HaloAccent.SAGE)
+        Box(Modifier.padding(start = 18.dp)) { Text("↓", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        RoutineSentenceBlock(uiText("Then halo"), actions.joinToString("\n").ifBlank { uiText("Choose an action") },
+            HaloGlyph.ACTION, HaloAccent.MINT)
+    }
+}
+
+@Composable
+private fun RoutineSentenceBlock(label: String, details: String, icon: HaloGlyph, accent: HaloAccent) {
+    val tint = brandAccent(dark = true, accent = accent)
+    Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Surface(shape = MaterialTheme.shapes.small, color = tint.fill, contentColor = tint.onFill) {
+                HaloIcon(icon, null, Modifier.padding(8.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.labelLarge)
+                Text(details, style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoutinePrivacy(routine: Routine) {
+    val input = when (routine.trigger) {
+        is RoutineTrigger.NotificationFromApp -> uiText("Halo checks notifications from the chosen app.")
+        is RoutineTrigger.AppStarted -> uiText("Halo checks when the chosen app opens.")
+        is RoutineTrigger.DeviceConnected, is RoutineTrigger.DeviceDisconnected -> uiText("Halo checks the chosen device’s connection.")
+        is RoutineTrigger.BatteryCrossedAbove, is RoutineTrigger.BatteryCrossedBelow,
+        RoutineTrigger.ChargingStarted, RoutineTrigger.ChargingStopped -> uiText("Halo checks battery or charging state on this phone.")
+        RoutineTrigger.NetworkAvailable, RoutineTrigger.NetworkLost -> uiText("Halo checks whether this phone has a usable network.")
+        is RoutineTrigger.AtTime, is RoutineTrigger.Once -> uiText("Halo uses the time you choose.")
+    }
+    val output = when {
+        routine.actions.any { it.toolId !in setOf("halo_routine_message", "halo_notification_digest") } ->
+            uiText("Review the additional action and its access before saving.")
+        routine.actions.any { it.toolId == "halo_notification_digest" } -> uiText("The notification digest is made on this phone.")
+        else -> null
+    }
+    val device = if (routine.delivery is RoutineDeliveryPolicy.WearableSpeech) uiText("The chosen device reads results aloud.") else null
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        HaloIcon(HaloGlyph.SECURITY, null)
+        Text(listOfNotNull(input, output, device).joinToString(" "), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
 
 @Composable
 internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descriptors: List<ToolDescriptor>,
@@ -46,6 +106,9 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
     var deviceTarget by rememberSaveable { mutableStateOf<Int?>(null) }
     var zoneQuery by rememberSaveable { mutableStateOf("") }
     var leaving by rememberSaveable { mutableStateOf(false) }
+    val easy = rememberVisualPreferences().viewMode == HaloViewMode.EASY
+    var moreDetails by rememberSaveable { mutableStateOf(false) }
+    val showDetails = !easy || moreDetails
     BackHandler { if (!busy) { if (proposal != null) reviewing = false else leaving = true } }
     if (leaving) AlertDialog(onDismissRequest = { leaving = false },
         title = { Text(uiText("Discard this automation draft?")) },
@@ -59,13 +122,28 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
     val editorReadiness = readiness.copy(labels = labels)
     fun replaceAction(index: Int, action: RoutineAction) { routine = routine.copy(actions = routine.actions.mapIndexed { i, old -> if (i == index) action else old }) }
     fun replaceCondition(index: Int, condition: RoutineCondition) { routine = routine.copy(conditions = routine.conditions.mapIndexed { i, old -> if (i == index) condition else old }) }
+    fun openReview(tryIt: Boolean) {
+        try {
+            val candidate = routine.copy(name = routine.name.trim(), grantDigest = null, updatedAt = Instant.now())
+            candidate.actions.filter { it.toolId == "halo_routine_message" }.forEach {
+                require(actionArguments(it).optString("text", "").trim().length in 1..240) { "Enter a message with 1 to 240 characters" }
+            }
+            review(candidate)
+            localError = null
+            routine = candidate
+            reviewing = true
+            confirmTrial = tryIt
+        } catch (e: IllegalArgumentException) { localError = e.message ?: "Check the routine fields" }
+    }
     proposal?.let { proposed ->
-        AutomationPage("Review automation", { if (!busy) reviewing = false }) {
+        AutomationPage("Review routine", { if (!busy) reviewing = false }) {
             Text(proposed.name, style = MaterialTheme.typography.titleLarge)
+            RoutineSentence(proposed, labels)
+            RoutinePrivacy(proposed)
             RoutineReviewFields(proposed, labels)
             if (onTryOnce != null) {
-                Text(uiText("Try these actions now. Conditions still apply. The result stays here and in History; no notification, speech or future run is scheduled."))
-                OutlinedButton(enabled = !busy, onClick = { confirmTrial = true }) { Text(uiText("Try it once")) }
+                Text(uiText("The trial checks your conditions and keeps the result here and in History."))
+                OutlinedButton(enabled = !busy, onClick = { confirmTrial = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Try it")) }
                 if (trial.running) {
                     Text(uiText("Trying it once…"))
                     TextButton(onClick = onStopTrial) { Text(uiText("Stop trial")) }
@@ -94,8 +172,9 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             dismissButton = { TextButton(onClick = { confirmTrial = false }) { Text(uiText("Cancel")) } })
         return
     }
-    AutomationPage(if (initial.originalId == null) "New automation" else "Edit automation", { leaving = true }) {
-        Text(uiText("Changes stay in this draft until you review and save. An existing enabled automation keeps its saved definition."))
+    AutomationPage(if (initial.originalId == null) "New routine" else "Edit routine", { leaving = true }) {
+        RoutineSentence(routine, labels)
+        RoutinePrivacy(routine)
         HaloTextField(routine.name, { routine = routine.copy(name = it.take(120)) }, label = { Text(uiText("Name")) }, modifier = Modifier.fillMaxWidth(), kind = VoiceFieldKind.SHORT, maxChars = 120)
         HaloSettingsSection(uiText("When")) {
             Text(routine.trigger.uiLabel(labels))
@@ -129,7 +208,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                 Text(uiText("Repeated notifications during this window count as one automation occurrence."), style = MaterialTheme.typography.bodySmall)
             }
         }
-        HaloSettingsSection(uiText("Only if")) {
+        if (showDetails) HaloSettingsSection(uiText("Only if")) {
             if (routine.conditions.isEmpty()) Text(uiText("No additional conditions"))
             routine.conditions.forEachIndexed { index, condition ->
                 HaloWorkspaceCard { Column(Modifier.padding(12.dp)) {
@@ -145,7 +224,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             }
             OutlinedButton(enabled = routine.conditions.size < 10, onClick = { picker = "condition" }) { Text(uiText("Add condition")) }
         }
-        HaloSettingsSection(uiText("Do")) {
+        HaloSettingsSection(uiText("Then halo")) {
             if (routine.actions.isEmpty()) Text(uiText("Choose what this automation should do"))
             routine.actions.forEachIndexed { index, action ->
                 HaloWorkspaceCard { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -174,30 +253,24 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             if (routine.actions.size >= 8) Text("${routine.actions.size} of 10 actions")
             OutlinedButton(enabled = routine.actions.size < 10, onClick = { picker = "action" }) { Text(uiText("Add action")) }
         }
-        HaloSettingsSection(uiText("Tell me")) {
+        if (showDetails) HaloSettingsSection(uiText("Tell me")) {
             Text(routine.delivery.uiLabel(labels))
             OutlinedButton(onClick = { picker = "delivery" }) { Text(uiText("Choose delivery")) }
         }
-        HaloSettingsSection(uiText("Time between runs")) {
+        if (showDetails) HaloSettingsSection(uiText("Time between runs")) {
             PresetSeconds("Minimum time between runs", routine.minimumIntervalSeconds, listOf(0L, 60L, 300L, 900L, 3600L), 86400, onValidity = { inputValidity("cooldown", it) }) {
                 routine = routine.copy(minimumIntervalSeconds = it)
             }
         }
-        AutomationSetup(routine, editorReadiness, onNotifications, onInbox)
+        if (easy) TextButton({ moreDetails = !moreDetails }, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(uiText(if (moreDetails) "Fewer options" else "Conditions and delivery"))
+        }
+        if (showDetails) AutomationSetup(routine, editorReadiness, onNotifications, onInbox)
         (localError ?: error)?.let { Text(uiText(routineErrorLabel(it)), color = MaterialTheme.colorScheme.error) }
-        com.halo.app.ui.components.HaloActionButton(modifier = Modifier.fillMaxWidth(), enabled = invalidInputs.isEmpty(), onClick = {
-            try {
-                val candidate = routine.copy(name = routine.name.trim(), grantDigest = null, updatedAt = Instant.now())
-                candidate.actions.filter { it.toolId == "halo_routine_message" }.forEach {
-                    require(actionArguments(it).optString("text", "").trim().length in 1..240) { "Enter a message with 1 to 240 characters" }
-                }
-                review(candidate) // Existing executor validates schema, safety, source and exact grant preview.
-                localError = null
-                routine = candidate
-                reviewing = true
-            } catch (e: IllegalArgumentException) { localError = e.message ?: "Check the automation fields" }
-        }) { Text(uiText("Review & save")) }
-        Text(uiText("Try it once is available on the review page before saving."), style = MaterialTheme.typography.bodySmall)
+        if (onTryOnce != null) OutlinedButton({ openReview(tryIt = true) }, enabled = invalidInputs.isEmpty() && !busy,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Try it")) }
+        com.halo.app.ui.components.HaloActionButton(modifier = Modifier.fillMaxWidth(), enabled = invalidInputs.isEmpty() && !busy,
+            onClick = { openReview(tryIt = false) }) { Text(uiText("Review & save")) }
     }
     picker?.let { selected -> AutomationPicker(when (selected) {
         "trigger" -> category?.title ?: "Choose a trigger"

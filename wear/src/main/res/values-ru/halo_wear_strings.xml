@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wear_phone_unavailable">Телефон с Halo недоступен поблизости</string>
+    <string name="wear_expired">Время ожидания истекло</string>
+    <string name="wear_connected">Halo · Подключено к телефону</string>
+    <string name="wear_no_interaction">Нет ожидающих действий</string>
+    <string name="wear_yes">Да</string>
+    <string name="wear_no">Нет</string>
+    <string name="wear_review_on_phone">Проверьте этот запрос на телефоне.</string>
+    <string name="wear_open_on_phone">Открыть на телефоне</string>
+</resources>

@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="wg.css"><script src="icons.js"></script><script src="z6.js"></script>
+<style>.lw{--cream:#060330;--t2:#50516B;--t3:#76788A;--line:rgba(6,3,48,.10);--mint:#047A5E}
+.lw.wg{background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(246,247,245,.97));border-color:rgba(6,3,48,.08)}
+.lw .askr{background:rgba(6,3,48,.06)}
+.bigt .wl{font-size:21px}.bigt .hd{font-size:17px}
+.stale{color:#F4C56A !important}
+.row3{display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start}
+.c2x1{width:calc(var(--cw)*2);height:calc(var(--ch)*1)}.c4x1{width:calc(var(--cw)*4);height:calc(var(--ch)*1)}
+</style></head><body>
+<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · widgets · sizes & states</div><h1>Every size, every state, still honest</h1>
+<p>Widgets resize from 2×1 to 4×4. Small sizes keep one fact; big sizes add context. When data is old, missing or text is large, the widget says so and stays usable.</p></div></div>
+<div class="row3" id="g"></div>
+<div class="notes">
+<div class="note"><b>Small keeps one fact</b><p>2×1 shows the single most useful line: the time, the next event, the running timer.</p></div>
+<div class="note"><b>Old data says so</b><p>“Updated 2 h ago · can’t reach the source” in amber, plus Try again. It never pretends to be live.</p></div>
+<div class="note"><b>Large text, fewer lines</b><p>At large text the widget drops to its essentials instead of shrinking letters.</p></div>
+<div class="note"><b>Light & accents</b><p>Widgets follow halo’s Appearance — light or dark, any accent — so the home screen matches the app.</p></div></div></div>
+<script>
+const wr=(w,c='#0CF2BA')=>`<svg viewBox="0 0 240 240" style="width:${w}px;height:${w}px;display:block"><path d="M197.32 87.18A84 84 0 1 1 152.82 42.68" stroke="${c}" stroke-width="22" stroke-linecap="round" fill="none"/></svg>`;
+const ask=(c)=>`<div class="askr">${wr(20,c)}</div>`;
+const X=[
+['Your day · 4×4','',`<div class="wg c4x4"><div class="hd">${I('widget')}Your day in halo ${ask()}</div>
+ <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px"><div class="big" style="font-size:56px">9:41</div><div style="text-align:right"><div class="mid">3° · cloudy</div><div class="sm">Fri 20 Nov · Riga</div></div></div>
+ <div class="pill ap" style="margin-top:12px">${I('notifications')}Frost warning tonight · Official</div>
+ <div class="wl" style="margin-top:8px"><span class="t">10:30</span>Coffee at Miera iela<span class="x">next</span></div>
+ <div class="wl"><span class="ck"></span>Call the framer<span class="x">+2 tasks</span></div>
+ <div class="wl"><span class="t" style="color:var(--t2)">News</span>Tram line 7 extended<span class="x">Local</span></div>
+ <div class="wl"><span style="width:46px;color:var(--mint)">${I('check')}</span>halo added 3 events<span class="x">8:12</span></div>
+ <div class="sm" style="margin-top:8px">Updated 9:38 · from 6 sources</div></div>`],
+['Small · 2×1','one fact',`<div style="display:flex;flex-direction:column;gap:16px"><div class="wg c2x1" style="display:flex;align-items:center;gap:10px"><div class="big" style="font-size:36px">9:41</div><div class="sm">Fri<br>3°</div></div>
+ <div class="wg c2x1"><div class="sm" style="color:var(--mint);font-weight:600">10:30 · next</div><div style="font:600 15px Atk;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Coffee at Miera iela</div></div>
+ <div class="wg c2x1" style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 56 56" style="width:40px;height:40px"><circle cx="28" cy="28" r="24" stroke="rgba(12,242,186,.2)" stroke-width="6" fill="none"/><path d="M28 4a24 24 0 1 1 -20.8 36" stroke="#0CF2BA" stroke-width="6" stroke-linecap="round" fill="none"/></svg><div><div class="mid" style="font-size:18px">04:32</div><div class="sm">Tea</div></div></div></div>`],
+['Out of date','amber + one fix',`<div class="wg c4x2"><div class="hd">${I('sources')}News · your sources ${ask()}</div>
+ <div class="wl" style="padding:10px 0"><div><div style="font:600 15px Atk">First frost expected this weekend</div><div class="sm">Weather · 2 h ago</div></div></div>
+ <div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span class="sm stale">${'Updated 2 h ago · can’t reach the source'}</span><span class="pill" style="margin-left:auto;height:34px">${I('retry')}Try again</span></div></div>`],
+['Large text','essentials only',`<div class="wg c4x2 bigt"><div class="hd">${I('calendar')}Upcoming</div>
+ <div class="wl"><span class="t" style="font-size:19px;width:62px">10:30</span>Coffee</div><div class="wl"><span class="t" style="font-size:19px;width:62px">14:00</span>Framer</div></div>`],
+['Light · Lilac accent','follows Appearance',`<div class="wg c4x2 lw" style="--mint:#6446D6"><div class="hd">${I('task')}Tasks · today ${ask('#6446D6')}</div>
+ <div class="wl"><span class="ck d" style="background:#6446D6;border-color:#6446D6"></span><span style="text-decoration:line-through;color:var(--t2)">Order clay</span></div><div class="wl"><span class="ck"></span>Call the framer</div><div class="wl"><span class="ck"></span>Send Anna the photos<span class="x">+2</span></div></div>`],
+['Not set up yet','never guesses',`<div class="wg c4x2"><div class="hd">${I('cloud')}Weather ${ask()}</div>
+ <div class="mid" style="margin-top:12px;font-size:18px">No weather source yet</div><div class="sm" style="margin-top:4px">halo never guesses the weather.</div>
+ <div class="pill" style="margin-top:12px">${I('add')}Choose a source</div></div>`],
+];
+document.getElementById('g').innerHTML=X.map(([t,s,h])=>`<div class="wcol"><div class="wcap">${t}<small>${s}</small></div>${h}</div>`).join('');
+</script></body></html>

@@ -10,23 +10,33 @@ internal object ShellOrbCatalog {
     /** Adult shell roots only. Child mode retains its existing allowlist. */
     fun globalDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) destinations(true) else listOf(
         HaloOrbDestination("home", "Home", HaloGlyph.HOME),
-        HaloOrbDestination("screen/organizer", "Organizer", HaloGlyph.CALENDAR),
-        HaloOrbDestination("screen/sources", "Sources", HaloGlyph.SEARCH),
-        HaloOrbDestination("screen/brief", "Your day in Halo", HaloGlyph.ACTIVITY),
-        HaloOrbDestination("screen/clocks", "World clocks", HaloGlyph.WATCH),
         HaloOrbDestination("notebook", "Workspace", HaloGlyph.NOTE),
         HaloOrbDestination("devices", "Devices", HaloGlyph.DEVICE),
-        HaloOrbDestination("activity", "Activities & notifications", HaloGlyph.ACTIVITY),
+        HaloOrbDestination("activity", "Activity", HaloGlyph.ACTIVITY),
         HaloOrbDestination("settings", "Settings", HaloGlyph.SETTINGS),
+        HaloOrbDestination("screen/sources", "Widgets & sources", HaloGlyph.INTEGRATIONS),
+        HaloOrbDestination("focus", "Focus", HaloGlyph.PAUSE),
+        HaloOrbDestination("routines", "Routines", HaloGlyph.AUTOMATION),
+        HaloOrbDestination("family", "Family space", HaloGlyph.HOME),
+        HaloOrbDestination("checkin", "Morning check-in", HaloGlyph.CALENDAR),
+        HaloOrbDestination("emergency", "Emergency info", HaloGlyph.SECURITY),
+        HaloOrbDestination("on_move", "On the move", HaloGlyph.NEXT),
+        HaloOrbDestination("winddown", "Wind down", HaloGlyph.PAUSE),
+        HaloOrbDestination("bedside", "Bedside", HaloGlyph.WATCH),
+        HaloOrbDestination("private_chat", "Private chat", HaloGlyph.SECURITY),
+        HaloOrbDestination("pause", "Pause halo", HaloGlyph.PAUSE),
+        HaloOrbDestination("follow_me", "Follow me", HaloGlyph.DEVICE),
+        HaloOrbDestination("at_a_glance", "halo at a glance", HaloGlyph.TOOL),
     )
     /** Direct instrument destinations are a presentation subset of the canonical catalogue. */
     fun workspaceDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) emptyList() else
-        listOf("studio", "file_tools", "study", "notebook/memory", "canvases").mapNotNull { route ->
+        com.halo.app.ui.toolkit.HaloToolkit.tools.mapNotNull { tool ->
+            val route = tool.route
             destinations(false).firstOrNull { it.route == route }
         }
     /** Only restores controls on already allowed child pages; entry/object checks remain mandatory. */
     fun allowsPageProjection(owner: ShellPageOwner, kids: Boolean): Boolean =
-        !kids || owner.routeFamily in setOf("kids", "note", "canvas", "study", "everyday_brief", "everyday_clocks", "everyday_organizer", "everyday_source")
+        !kids || owner.routeFamily in setOf("kids", "kids_scan", "kids_day", "note", "canvas", "study", "everyday_brief", "everyday_clocks", "everyday_organizer", "everyday_source")
 
     /** Kids Home does not host the adult catalogue; use its already allowed exact Study route. */
     fun directContextRoute(action: HaloOrbContextAction, kids: Boolean): String? =
@@ -44,6 +54,8 @@ internal object ShellOrbCatalog {
         "canvas" -> route?.startsWith("notebook/canvas/") == true && owner.objectId == objectId
         "note" -> route?.startsWith("notebook/note/") == true && owner.objectId == objectId
         "studio" -> route?.substringBefore("?") == "studio"
+        "scan", "translate", "magnifier", "sheets", "record", "album", "vault", "kids_scan", "kids_day" ->
+            route?.substringBefore("?") == owner.routeFamily
         "file_tools" -> route?.substringBefore("?") == "file_tools"
         "memory" -> route?.substringBefore("?") == "notebook/memory"
         "study" -> (route?.startsWith("study") == true || route?.startsWith("notebook/study/") == true) &&

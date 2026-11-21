@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_start_edit">Rediģēt šo lapu</string>
+    <string name="home_start_show_me">Parādi man</string>
+    <string name="home_start_title">Tava sākumlapa</string>
+    <string name="home_start_instructions">Izvēlies līdz četrām ātrajām darbībām. Velc, lai mainītu secību.</string>
+    <string name="home_start_add">Pievienot</string>
+    <string name="home_start_greeting">Sveiciena rinda</string>
+    <string name="home_start_greeting_weather">Diena un laikapstākļi</string>
+    <string name="home_start_greeting_day">Tikai diena</string>
+    <string name="home_start_greeting_off">Izslēgts</string>
+    <string name="home_start_day_with_weather">%1$s · %2$s %3$d °C</string>
+    <string name="home_start_today">Kas šodien gaidāms?</string>
+    <string name="home_start_note">Izveidot piezīmi</string>
+    <string name="home_start_study">Iemācīties ko jaunu</string>
+    <string name="home_start_camera">Kas tas ir?</string>
+    <string name="home_start_timer">Taimeris</string>
+    <string name="home_start_weather">Laikapstākļi</string>
+    <string name="home_start_brief">Izlasīt manu kopsavilkumu</string>
+    <string name="home_start_draw">Zīmēt</string>
+    <string name="home_start_move_up">Pārvietot augšup</string>
+    <string name="home_start_move_down">Pārvietot lejup</string>
+    <string name="home_start_remove">Noņemt %1$s</string>
+    <string name="home_start_restore">Atjaunot iepriekšējo</string>
+    <string name="home_start_save_error">Neizdevās saglabāt sākumlapu. Mēģini vēlreiz.</string>
+    <string name="home_start_undo">Atsaukt</string>
+    <string name="home_start_done">Gatavs</string>
+</resources>

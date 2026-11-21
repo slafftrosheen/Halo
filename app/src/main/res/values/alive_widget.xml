@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_widget_title">Add a widget</string>
+    <string name="alive_widget_size">Size</string>
+    <string name="alive_widget_auto">Automatic</string>
+    <string name="alive_widget_small">Small</string>
+    <string name="alive_widget_wide">Wide</string>
+    <string name="alive_widget_tall">Tall</string>
+    <string name="alive_widget_size_explanation">This changes how much the widget shows. Your launcher controls its actual size.</string>
+    <string name="alive_widget_motion">Widget motion</string>
+    <string name="alive_widget_match">Match my look</string>
+    <string name="alive_widget_pin_requested">Confirm placement on your home screen.</string>
+    <string name="alive_widget_pin_unavailable">Add Halo from your launcher’s widget picker.</string>
+    <string name="alive_widget_installed">Your widgets</string>
+    <string name="alive_widget_preview_error">The widget preview could not be loaded.</string>
+</resources>

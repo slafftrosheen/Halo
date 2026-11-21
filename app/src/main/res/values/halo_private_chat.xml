@@ -1,0 +1,17 @@
+<resources>
+    <string name="private_chat_title">Private chat</string>
+    <string name="private_chat_status">Private</string>
+    <string name="private_chat_origin">Private · nothing kept</string>
+    <string name="private_chat_help">Halo answers on this phone using only what you type or dictate here. This chat clears when you close it or leave the app.</string>
+    <string name="private_chat_question">Your question</string>
+    <string name="private_chat_ask">Ask privately</string>
+    <string name="private_chat_close">Close</string>
+    <string name="private_chat_dictate">Dictate</string>
+    <string name="private_chat_finish_dictation">Finish dictation</string>
+    <string name="private_chat_listening">Listening on this phone…</string>
+    <string name="private_chat_transcribing">Turning speech into text…</string>
+    <string name="private_chat_answering">Answering on this phone…</string>
+    <string name="private_chat_mic_permission">Allow the microphone to dictate, or type your question.</string>
+    <string name="private_chat_dictation_error">On-device dictation is unavailable or the speech was unclear. Try again or type your question.</string>
+    <string name="private_chat_model_error">A ready on-device model is required. Check your model settings and try again.</string>
+</resources>

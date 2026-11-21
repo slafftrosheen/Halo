@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kids_sky_picker">Wybierz swoje niebo</string>
+    <string name="kids_sky_tap_help">Dotknij, by usłyszeć nazwę. Dotknij ponownie, by wybrać.</string>
+    <string name="kids_choice_tap_again">Dotknij ponownie, by wybrać</string>
+    <string name="kids_sky_stars">Gwiazdy</string>
+    <string name="kids_sky_sea">Morze</string>
+    <string name="kids_sky_garden">Ogród</string>
+    <string name="kids_sky_moon">Księżyc</string>
+    <string name="kids_sky_allowed">Dostępne nieba</string>
+    <string name="kids_learn_size">Widok nauki</string>
+    <string name="kids_learn_pictures">Obrazki</string>
+    <string name="kids_learn_simple">Prosty</string>
+    <string name="kids_motion">Ruch</string>
+    <string name="kids_motion_gentle">Łagodny</string>
+    <string name="kids_motion_still">Bez ruchu</string>
+    <string name="kids_read_automatically">Automatycznie czytaj opcje i odpowiedzi</string>
+    <string name="kids_more_explanation">Pokaż całe wyjaśnienie</string>
+    <string name="kids_less_explanation">Pokaż pierwszą część</string>
+</resources>

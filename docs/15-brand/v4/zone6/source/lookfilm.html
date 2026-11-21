@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="m.css"><link rel="stylesheet" href="r.css"><link rel="stylesheet" href="r2.css"><link rel="stylesheet" href="th.css"><script src="icons.js"></script><script src="z6.js"></script><script src="m.js"></script><script src="r.js"></script><script src="r2.js"></script><script src="th.js"></script>
+<style>body{width:1920px;height:1080px;overflow:hidden;background:#04021f}
+.st{position:absolute;left:250px;top:58px;transform:scale(1.13);transform-origin:top left}.st>div{position:absolute;left:0;top:0}
+.ai{position:absolute;left:900px;top:300px}.ai>div{position:absolute;left:0;top:0}
+.side{position:absolute;left:1180px;top:240px;width:640px}.k{font:700 15px Atk;letter-spacing:.14em;text-transform:uppercase;color:#0CF2BA}
+h2{font:600 58px/1.08 Sora;letter-spacing:-.03em;margin:16px 0 18px;color:#FAFAF4}.dsc{font-size:24px;line-height:1.45;color:#B7B9D3}
+.lbl{position:absolute;left:900px;top:520px;width:220px;text-align:center;font:600 18px Sora;color:#FAFAF4}.lbl small{display:block;font:500 15px Atk;color:#B7B9D3;margin-top:6px}
+.bgf{position:absolute;inset:0}
+</style></head><body><div class="bgf" id="bg"></div><div class="st" id="st"></div><div class="ai" id="ai"></div><div class="lbl" id="lb"></div>
+<div class="side"><div class="k">halo · Make it yours</div><h2 id="t">Pick a look</h2><div class="dsc" id="d"></div></div>
+<script>
+const L=[['Night Mint',1,'MINT','NATURAL','The classic: Night Ink and Mint.'],['Paper Sage',1,'SAGE','PAPER','Warm paper dark with a soft green.'],['Slate Blue',1,'BLUE','SLATE','Cool slate, calm blue.'],['Warm Rose',0,'ROSE','WARM','Light and warm, dusty rose.'],['Cool Lilac',0,'LILAC','COOL','Light and crisp, lilac accent.'],['Coral Day',0,'CORAL','NATURAL','Cream with a coral spark.']];
+
+st.innerHTML=L.map(([n,dk,a,t],i)=>`<div id="p${i}" style="opacity:${i?0:1}">${themed(ph(W.home(),{place:{icon:'appearance',t:n,s:'Previewing · '+ANAME[a]+' · '+TNAME[t]},acts:[['check','Apply',1],['undo','Undo'],['guide_me','Help']],nav:'home'}),dk,a,t)}</div>`).join('');
+ai.innerHTML=L.map(([n,dk,a,t],i)=>`<div id="a${i}" style="opacity:${i?0:1}">${appIcon(dk?'dark':'light',a,220)}</div>`).join('');
+const D=2.4;window.TOTAL=L.length*D+.6;
+window.frame=function(t){const i=Math.min(L.length-1,Math.floor(t/D)),lt=t-i*D;
+ L.forEach((_,j)=>{let o=0;if(j==i)o=1;if(j==i-1&&lt<.5)o=1-lt/.5;if(j==i)o=Math.min(1,lt/.5)+(i==0?1:0);
+  document.getElementById('p'+j).style.opacity=Math.min(1,o);document.getElementById('a'+j).style.opacity=Math.min(1,o)});
+ const [n,dk,a,tn,ds]=L[i];document.getElementById('t').textContent=n;document.getElementById('d').textContent=ds+' The dock, ring, icons, widgets and app icon all change together.';
+ document.getElementById('lb').innerHTML=`App icon<small>${dk?'Night':'Cream'} · ${ANAME[a]}</small>`;
+ const T=TONES[dk?'dark':'light'][tn];document.getElementById('bg').style.background=`radial-gradient(50% 60% at 25% 50%,${ACC[a][0]}22,transparent),#04021f`;
+ document.getAnimations().forEach(an=>{an.pause();try{an.currentTime=t*1000}catch(e){}});};
+frame(0);
+</script></body></html>

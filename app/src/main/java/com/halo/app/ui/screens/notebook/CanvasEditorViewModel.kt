@@ -602,6 +602,16 @@ class CanvasEditorViewModel(
         }
     }
 
+    /** A reviewed list edit commits only if the card still has the text the editor opened. */
+    internal fun saveListCardText(expected: CanvasNode, text: String, onSaved: () -> Unit) = command {
+        flushPendingEdits()
+        val current = mutableState.value.nodes.firstOrNull { it.id == expected.id }
+        check(mutableState.value.canEditBoard() && current != null && current.refObjectId == null && current.type == expected.type &&
+            current.revision == expected.revision && current.text == expected.text) { "Source changed. Review it again." }
+        check(repository.updateText(canvasId, expected.id, text, expectedText = expected.text)) { "Canvas card unavailable" }
+        onSaved()
+    }
+
     fun moveNode(nodeId: String, dx: Float, dy: Float) {
         if (!mutableState.value.canEditBoard()) return
         val state = mutableState.value
@@ -626,6 +636,17 @@ class CanvasEditorViewModel(
                 }
             } finally { nodePositionSaves.remove("batch") }
         }
+    }
+
+    /** Apply the final grid correction through the same move/undo and persistence owner. */
+    internal fun snapMovedCard(nodeId: String) {
+        val state = mutableState.value
+        if (!state.canEditBoard()) return
+        val card = state.nodes.firstOrNull { it.id == nodeId } ?: return
+        val grid = 32f
+        val dx = (kotlin.math.round(card.x / grid) * grid - card.x) * state.viewportScale
+        val dy = (kotlin.math.round(card.y / grid) * grid - card.y) * state.viewportScale
+        if (kotlin.math.abs(dx) > .01f || kotlin.math.abs(dy) > .01f) moveNode(nodeId, dx, dy)
     }
 
     fun deleteSelectedNode() {

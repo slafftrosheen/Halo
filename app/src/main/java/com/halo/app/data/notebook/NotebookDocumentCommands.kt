@@ -310,6 +310,7 @@ enum class InlineStyle(val marker: String) {
     BOLD("**"),
     ITALIC("*"),
     STRIKE("~~"),
+    HIGHLIGHT("=="),
     CODE("`"),
 }
 
@@ -369,6 +370,7 @@ object InlineFormatting {
     fun stripInlineMarkers(text: String): String = text
         .replace(Regex("\\*\\*(.+?)\\*\\*"), "$1")
         .replace(Regex("~~(.+?)~~"), "$1")
+        .replace(Regex("==([^=]+)=="), "$1")
         .replace(Regex("(?<!\\*)\\*([^*]+)\\*(?!\\*)"), "$1")
         .replace(Regex("`([^`]+)`"), "$1")
         .replace(Regex("\\[([^\\]]+)]\\(([^)]*)\\)"), "$1")

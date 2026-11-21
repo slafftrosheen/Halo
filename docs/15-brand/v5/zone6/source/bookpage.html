@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><script src="lottie.min.js"></script>
+<style>body{width:2400px;height:1500px;overflow:hidden;background:#05021F}
+.hd{position:absolute;top:0;left:0;right:0;height:96px;display:flex;align-items:center;padding:0 70px;border-bottom:1px solid rgba(250,250,244,.08)}
+.hd .c{font:700 18px Atk;letter-spacing:.16em;text-transform:uppercase;color:var(--mint)}.hd .p{margin-left:auto;font:500 20px Atk;color:var(--t2)}
+.img{position:absolute;top:116px;left:0;right:0;bottom:24px;display:grid;place-items:center}.img img{max-width:2300px;max-height:1360px;border-radius:18px}
+.div{position:absolute;inset:0;padding:200px 160px;background:radial-gradient(60% 60% at 85% 20%,rgba(12,242,186,.12),transparent),#05021F}
+.div .n{font:600 220px/1 Sora;color:rgba(12,242,186,.9);letter-spacing:-.04em}.div h1{font:600 96px/1.05 Sora;letter-spacing:-.03em;margin-top:30px}
+.div p{font-size:34px;line-height:1.5;color:var(--t2);max-width:1500px;margin-top:30px}
+.div ul{margin-top:40px;columns:2;column-gap:80px;font-size:28px;line-height:1.7;color:var(--cream);max-width:1900px;list-style:none}
+.div li:before{content:"○";color:var(--mint);margin-right:14px}
+.mot{position:absolute;top:150px;left:90px;right:90px}.mot h2{font:600 54px Sora;letter-spacing:-.02em}.mot .s{font-size:24px;color:var(--t2);margin:10px 0 30px}
+.rows{display:grid;grid-template-columns:1fr 1fr;column-gap:70px}.lr{display:grid;grid-template-columns:250px 1fr;gap:30px;align-items:center;padding:12px 0;border-top:1px solid rgba(250,250,244,.08)}
+.lr b{font:600 24px Sora;display:block}.lr span{font-size:19px;color:var(--t2)}
+.fs{display:flex;gap:18px}.fs div{background:#0b0838;border-radius:14px;border:1px solid rgba(250,250,244,.06);display:grid;place-items:center}
+</style></head><body><div id="r"></div><script>
+const q=new URLSearchParams(location.search);const kind=q.get('k');const pg=q.get('p');
+const hd=`<div class="hd"><div class="c">Chapter 23 · halo Zone 6 · Calm Dock, alive</div><div class="p">${q.get('ttl')||''} · page ${pg}</div></div>`;
+if(kind=='img') r.innerHTML=hd+`<div class="img"><img src="${q.get('src')}"></div>`;
+if(kind=='div') r.innerHTML=`<div class="div"><div class="n">23</div><h1>The new look — Calm Dock, alive</h1><p>November 2026. The bottom quarter becomes a clear, living dock: where you are, what you can do, where you can go — with a labelled ring, an island that changes shape with what halo is doing, and springy motion that shows where things come from. HaloScreen is gone; its organiser, sources, news and clocks live in home-screen widgets.</p>
+<ul><li>Audit of the Zone 5 quarter</li><li>Structure and task flow</li><li>Home & Workspace</li><li>The five tools</li><li>Activity, Devices, Settings, light</li><li>Kids, large text, errors</li><li>Sources → widgets</li><li>Widget family, sizes and states</li><li>Motion & Lottie set</li><li>Build order & acceptance</li></ul></div>`;
+if(kind=='mot'){const L=[['dock_spring','Buttons spring out of the ring','390×197 · 36f · out / settled',[3,10,30],230,116],['island_lift','Dock lifts into the island','390×197 · 30f',[0,7,29],230,116],['places_open','Places tiles spring from the ring','374×460 · 40f',[4,14,39],130,160],['need_glow','Apricot edge, needs you','390×120 · 72f loop',[0,36,60],230,71],['receipt_bloom','Receipt check + 2 blooms','96×96 · 60f',[6,18,45],100,100],['listen_wave','Listening bars','120×40 · 30f loop',[0,8,15],170,57],['widget_refresh','One refresh lap, then still','48×48 · 36f',[0,14,35],80,80],['error_soften','Soft red edge, no shake','390×120 · 24f',[0,8,23],230,71]];
+ r.innerHTML=hd+`<div class="mot"><h2>Motion & Lottie set</h2><div class="s">Breathe, don’t spin. Spring = damping 0.62 · stiffness 380 (≈600 ms). Dark + light files, shape layers only, tinted from the accent at runtime. Reduced motion → end frames, 150 ms fades.</div>
+ <div class="rows">${L.map(([id,t,s,fr,w,h])=>`<div class="lr"><div><b>${t}</b><span>halo_z6_${id} · ${s}</span></div><div class="fs">${fr.map(f=>`<div style="width:${w+20}px;height:${h+20}px"><div class="lt" data-id="${id}" data-f="${f}" style="width:${w}px;height:${h}px"></div></div>`).join('')}</div></div>`).join('')}</div></div>`;
+ window.ready=Promise.all([...document.querySelectorAll('.lt')].map(el=>new Promise(res=>{const a=lottie.loadAnimation({container:el,renderer:'svg',loop:false,autoplay:false,path:'lottie/halo_z6_'+el.dataset.id+'_dark.json'});a.addEventListener('DOMLoaded',()=>{a.goToAndStop(+el.dataset.f,true);res()})})));}
+if(kind=='build') r.innerHTML=hd+`<div class="mot"><h2>Build order & acceptance</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:30px;font-size:27px;line-height:1.55">
+<div><div class="s" style="font-size:22px;color:var(--mint);font-weight:700;letter-spacing:.1em">BUILD ORDER</div><ol style="padding-left:34px">
+<li>Tokens + HaloDock behind a flag; reuse the action lease, ring owner and guide session.</li><li>Visible nav + Places sheet + Widgets page; hold-ring stays a shortcut.</li><li>Island states wired to real owners: voice, tasks, approvals, receipts, Studio errors.</li><li>Keyboard compact row, large text, Kids.</li><li>Widget restyle per size and state.</li><li>Motion polish: Lottie, haptics, reduced motion.</li></ol></div>
+<div><div class="s" style="font-size:22px;color:var(--mint);font-weight:700;letter-spacing:.1em">ACCEPTANCE</div><ul style="padding-left:30px">
+<li>75 / 25 measured on device</li><li>Ring caption always matches the real state</li><li>No navigation that exists only as a gesture</li><li>One filled primary per dock</li><li>Apricot only for needs-you; Done only after a receipt</li><li>TalkBack: ring has “Open Places”; island changes announced</li><li>200% text: no clipped labels · Kids targets ≥ 56dp</li><li>Widgets show freshness and honest empty states</li></ul></div></div></div>`;
+</script></body></html>

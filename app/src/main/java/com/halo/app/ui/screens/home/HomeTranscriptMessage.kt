@@ -26,11 +26,13 @@ catch (_: SecurityException) { false }
 
 @Composable
 internal fun HomeTranscriptMessage(identity: String, text: String, user: Boolean,
-    onEdit: (() -> Unit)? = null, onSave: (() -> Unit)? = null, canRead: Boolean = false) {
+    onEdit: (() -> Unit)? = null, onSave: (() -> Unit)? = null, canRead: Boolean = false,
+    origin: HomeAnswerOrigin = HomeAnswerOrigin.UNKNOWN) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     var readRequest by remember(identity) { mutableLongStateOf(0) }
     var shareFailed by remember(identity) { mutableStateOf(false) }
+    var shareReview by remember(identity) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().padding(start = if (user) 32.dp else 0.dp,
         end = if (user) 0.dp else 16.dp)) {
         Surface(shape = MaterialTheme.shapes.medium,
@@ -42,16 +44,22 @@ internal fun HomeTranscriptMessage(identity: String, text: String, user: Boolean
                         color = if (user) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
                     HomeMessageActions(
                         onCopy = { clipboard.setText(AnnotatedString(text)) },
-                        onShare = { shareFailed = !shareHomeMessage(context, text) },
+                        onShare = { shareReview = true },
                         onSave = onSave, onRead = if (!user && canRead) ({ readRequest++ }) else null,
                         onEdit = onEdit, identityKey = identity)
                 }
+                if (!user) HomeAnswerOriginChip(origin)
                 if (user) Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 12.dp))
                 else HaloMarkdownText(text, textColor = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(bottom = 12.dp))
             }
         }
+        if (shareReview) HomeShareReview({ shareReview = false }) {
+            shareReview = false
+            shareFailed = !shareHomeMessage(context, text)
+        }
         if (shareFailed) Text(stringResource(R.string.home_share_failed), color = MaterialTheme.colorScheme.error)
         if (readRequest > 0) com.halo.app.ui.components.HaloVoiceTextActions(text = "", onText = {},
-            allowDictation = false, readText = text, readRequest = readRequest, showReadAction = false)
+            allowDictation = false, readText = text, readRequest = readRequest, showReadAction = false,
+            readCategory = com.halo.sdk.provider.RemoteDataCategory.CONVERSATION)
     }
 }

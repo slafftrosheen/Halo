@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kids_sky_picker">Pick your sky</string>
+    <string name="kids_sky_tap_help">Tap to hear the name, then tap again to pick.</string>
+    <string name="kids_choice_tap_again">Tap again to choose</string>
+    <string name="kids_sky_stars">Stars</string>
+    <string name="kids_sky_sea">Sea</string>
+    <string name="kids_sky_garden">Garden</string>
+    <string name="kids_sky_moon">Moon</string>
+    <string name="kids_sky_allowed">Skies to choose from</string>
+    <string name="kids_learn_size">Learn size</string>
+    <string name="kids_learn_pictures">Pictures</string>
+    <string name="kids_learn_simple">Simple</string>
+    <string name="kids_motion">Motion</string>
+    <string name="kids_motion_gentle">Gentle</string>
+    <string name="kids_motion_still">Still</string>
+    <string name="kids_read_automatically">Read choices and replies automatically</string>
+    <string name="kids_more_explanation">Show the whole explanation</string>
+    <string name="kids_less_explanation">Show the first part</string>
+</resources>

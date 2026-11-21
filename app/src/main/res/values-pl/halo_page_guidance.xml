@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="coach_show">Pokaż mi</string>
+    <string name="coach_explore">Odkryj ten ekran</string>
+    <string name="coach_watch">Obejrzyj i spróbuj</string>
+    <string name="coach_again">Jeszcze raz</string>
+    <string name="coach_alternative">Zrób to za mnie</string>
+    <string name="coach_got_it">Rozumiem</string>
+    <string name="coach_read_all">Przeczytaj wszystko</string>
+    <string name="coach_stop_showing">Ukryj wskazówki</string>
+    <string name="coach_control_hint">„%1$s” jest dostępne na tej stronie. Pozostałe działania znajdziesz w menu „Więcej”.</string>
+    <string name="coach_talk">Rozmawiaj z halo</string>
+    <string name="coach_places">Otwórz miejsca</string>
+    <string name="coach_page_actions">Więcej działań</string>
+    <string name="coach_ring_hold">Przytrzymaj pierścień</string>
+    <string name="coach_ring_hold_body">Przytrzymaj pierścień, aby otworzyć miejsca. Krótkie dotknięcie zaczyna rozmowę z halo.</string>
+    <string name="coach_dock_swipe">Przesuń w górę od pierścienia</string>
+    <string name="coach_dock_swipe_body">Zacznij na pierścieniu i przesuń palec w górę, aby otworzyć miejsca.</string>
+    <string name="coach_studio_move">Poruszaj się po obszarze roboczym</string>
+    <string name="coach_studio_move_body">Przeciągnij obszar roboczy lub użyj dwóch palców, aby zmienić powiększenie.</string>
+    <string name="coach_note_dictate">Przytrzymaj, aby dyktować</string>
+    <string name="coach_note_dictate_body">Przytrzymaj mikrofon notatki do dłuższego dyktowania. Sprawdź słowa przed dodaniem.</string>
+    <string name="coach_canvas_link">Przeciągnij, aby połączyć karty</string>
+    <string name="coach_canvas_link_body">W trybie łączenia przeciągnij od jednej karty do drugiej. Sprawdź połączenie przed zapisaniem.</string>
+    <string name="coach_kids_demos">Pokazy gestów</string>
+    <string name="coach_kids_demo_body">Dotknij, aby usłyszeć nazwę. Dotknij ponownie, aby wybrać.</string>
+    <string name="coach_edit_page">Dostosuj tę stronę</string>
+    <string name="coach_practice_reminder">Przypomnienie o ćwiczeniu o 18:00</string>
+    <string name="coach_practice_reminder_body">Przypominaj tylko, gdy karty są gotowe do powtórki.</string>
+    <string name="coach_practice_due">Pora powtórzyć fiszki.</string>
+</resources>

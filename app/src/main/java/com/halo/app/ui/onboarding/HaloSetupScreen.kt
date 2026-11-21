@@ -96,8 +96,10 @@ fun HaloSetupScreen(store: SetupProgressStore, onOpen: (String) -> Unit, onExit:
     // AppShell already applies safe drawing (including IME) insets to this surface.
     Scaffold(containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0), bottomBar = {
-        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shadowElevation = 0.dp) {
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shadowElevation = 0.dp,
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                com.halo.app.ui.zone6.Zone6DockHorizon()
                 Button(onClick = {
                     if(progress.stage == SetupStage.FIRST) { if(store.finish(progress.limited || !fullChecksReady)) onExit() }
                     else { if(progress.stage == SetupStage.READINESS && !fullChecksReady) store.limited(true); store.next() }

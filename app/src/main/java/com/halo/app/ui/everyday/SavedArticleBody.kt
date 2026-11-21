@@ -24,8 +24,9 @@ internal fun SavedArticleBody(article: ArticleFact) {
     }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         val status = body?.status ?: article.contentStatus
-        Text(uiText(if (status == "PAGE_CAPTURED") "Saved article text" else "Some article content may be missing. The saved text is shown below."),
-            style = MaterialTheme.typography.labelLarge)
+        Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_article_saved), style = MaterialTheme.typography.titleMedium)
+        if (status != "PAGE_CAPTURED") Text(
+            androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_article_partial), style = MaterialTheme.typography.bodySmall)
         body?.retrievedAt?.let { Text(uiText("Retrieved %1\$s", it), style = MaterialTheme.typography.bodySmall) }
         Text((body?.text ?: article.text).ifBlank { uiText("The publisher supplied a title only. Open the publisher to read more.") })
         (body?.images ?: article.images).forEach { image ->

@@ -56,7 +56,8 @@ internal object EverydayArchive {
                 "DELIVERY" -> {val r=receipt(entry.body);val owner=requireNotNull(records[r.recordId]);require(entry.id==r.occurrenceKey && r.recordVersion<=owner.version)
                     require(r.occurrenceKey.startsWith("${r.recordId}@") && r.recordVersion>0)}
                 "SOURCE" -> {val source=sources.getValue(entry.id);require(source.id==entry.id && source.version<Long.MAX_VALUE);source.endpoint?.let(CollectorUrlPolicy::validate)
-                    json(entry.body).optJSONObject("snapshot")?.let {s -> snapshot(source,s).also {CollectorPayloadLimits.validateKind(source.kind,it.payload)}}}
+                    if (source.kind == CollectorKind.AIR_QUALITY) require(source.endpoint == OpenMeteoAirQuality.endpoint(requireNotNull(source.place)))
+                    json(entry.body).optJSONObject("snapshot")?.let {s -> snapshot(source,s).also {CollectorPayloadLimits.validateSource(source,it.payload)}}}
                 "CLOCK" -> require(worldClock(entry.body).let {it.id==entry.id && it.version<Long.MAX_VALUE})
                 "BRIEF" -> require(BriefCodec.document(entry.body).id==entry.id)
                 "BRIEF_SETTINGS" -> {require(entry.id=="1" && BriefCodec.settings(entry.body).version<Long.MAX_VALUE)}

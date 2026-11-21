@@ -1,16 +1,22 @@
 package com.halo.app.ui.workspace
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -18,29 +24,30 @@ import com.halo.app.R
 import com.halo.app.data.studio.*
 import com.halo.app.language.uiText
 import com.halo.app.ui.zone5.*
+import com.halo.app.ui.zone6.BindHaloGestureAlternative
+import com.halo.app.ui.zone6.HaloGesture
+import com.halo.app.ui.zone6.LocalHaloPageGuidance
+import com.halo.app.ui.zone6.haloGestureAnchor
+import kotlinx.coroutines.flow.collect
 
 /** The artboard owns the working area; manual tools and the current layer have stable positions. */
 @Composable
 internal fun StudioWorkbench(service: StudioService, project: StudioProject, busy: Boolean,
     onDraw: () -> Unit, onText: () -> Unit, onShapes: () -> Unit, onImage: () -> Unit,
     onLayers: () -> Unit, onTransform: () -> Unit, onSelect: (String) -> Unit, onEdit: (StudioLayer) -> Unit,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier, appearance: StudioAppearance = StudioAppearance(), onUndo: () -> Unit = {}) {
     val document = project.session.current
     val selected = document.layers.firstOrNull { it.id == document.selectedLayerId }
-    val checker = MaterialTheme.colorScheme.surfaceContainerHigh
+    val easy = com.halo.app.ui.theme.rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
     if (com.halo.app.ui.presence.LocalShellHaloOrb.current) {
-        BoxWithConstraints(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            val ratio = document.width.toFloat() / document.height
-            val width = minOf(maxWidth, maxHeight * ratio)
-            Surface(Modifier.width(width).height(width / ratio), color = MaterialTheme.colorScheme.surface,
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-                StudioDocumentPreview(service, document, Modifier.fillMaxSize().drawBehind {
-                    val tile = 14.dp.toPx()
-                    for (row in 0..(size.height / tile).toInt()) for (column in 0..(size.width / tile).toInt()) {
-                        if ((row + column) % 2 == 0) drawRect(checker, Offset(column * tile, row * tile), Size(tile, tile))
-                    }
-                })
+        Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (easy && appearance.leftHanded) StudioEasyActions(busy, project.session.undo.isNotEmpty(), onDraw, onText, onImage, onUndo)
+            BoxWithConstraints(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                val ratio = document.width.toFloat() / document.height
+                val width = minOf(maxWidth, maxHeight * ratio)
+                StudioArtworkFrame(service, project, appearance, Modifier.width(width).height(width / ratio))
             }
+            if (easy && !appearance.leftHanded) StudioEasyActions(busy, project.session.undo.isNotEmpty(), onDraw, onText, onImage, onUndo)
         }
         return
     }
@@ -53,15 +60,8 @@ internal fun StudioWorkbench(service: StudioService, project: StudioProject, bus
             Text(stringResource(R.string.zone5_graphics_dimensions, document.width, document.height, document.layers.size),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Surface((if (short) Modifier.height(220.dp) else Modifier.weight(1f)).fillMaxWidth().heightIn(min = 120.dp), color = MaterialTheme.colorScheme.surface,
-            shape = MaterialTheme.shapes.small, border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-            StudioDocumentPreview(service, document, Modifier.fillMaxSize().drawBehind {
-                val tile = 14.dp.toPx()
-                for (row in 0..(size.height / tile).toInt()) for (column in 0..(size.width / tile).toInt()) {
-                    if ((row + column) % 2 == 0) drawRect(checker, Offset(column * tile, row * tile), Size(tile, tile))
-                }
-            }.padding(16.dp))
-        }
+        StudioArtworkFrame(service, project, appearance,
+            (if (short) Modifier.height(220.dp) else Modifier.weight(1f)).fillMaxWidth().heightIn(min = 120.dp))
         if (document.layers.isNotEmpty()) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             document.layers.asReversed().forEach { layer ->
@@ -92,5 +92,75 @@ internal fun StudioWorkbench(service: StudioService, project: StudioProject, bus
             Zone5ActionButton(stringResource(R.string.studio_transforms), "studio_transform", !busy, onClick = onTransform)
         }
     }
+    }
+}
+
+@Composable
+private fun StudioArtworkFrame(
+    service: StudioService, project: StudioProject, appearance: StudioAppearance, modifier: Modifier,
+) {
+    val guidance = LocalHaloPageGuidance.current
+    val visual = com.halo.app.ui.theme.rememberVisualPreferences()
+    val reduced by com.halo.app.ui.theme.rememberReducedMotion()
+    val ink = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .4f)
+    var zoom by remember(project.id) { mutableFloatStateOf(1f) }
+    var pan by remember(project.id) { mutableStateOf(Offset.Zero) }
+    val transform = rememberTransformableState { ratio, movement, _ ->
+        zoom = (zoom * ratio).coerceIn(1f, 4f)
+        pan = if (zoom == 1f) Offset.Zero else pan + movement
+    }
+    LaunchedEffect(transform, guidance, appearance.snapZoom) {
+        var moving = false
+        snapshotFlow { transform.isTransformInProgress }.collect { active ->
+            if (active && !moving) guidance?.gestureUsed(HaloGesture.STUDIO_MOVE)
+            if (!active && moving && appearance.snapZoom && zoom < 1.12f) {
+                zoom = 1f
+                pan = Offset.Zero
+            }
+            moving = active
+        }
+    }
+    BindHaloGestureAlternative(HaloGesture.STUDIO_MOVE) {
+        if (zoom == 1f) zoom = 1.5f else {
+            zoom = 1f
+            pan = Offset.Zero
+        }
+    }
+    val shownZoom by animateFloatAsState(zoom, animationSpec = if (transform.isTransformInProgress || reduced)
+        snap() else spring(dampingRatio = visual.motionLevel.damping), label = "Studio view")
+    Surface(modifier.haloGestureAnchor(HaloGesture.STUDIO_MOVE),
+        shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+        Box(Modifier.fillMaxSize().clipToBounds().transformable(transform)) {
+            StudioDocumentPreview(service, project.session.current, Modifier.fillMaxSize().graphicsLayer {
+                scaleX = shownZoom
+                scaleY = shownZoom
+                val horizontalLimit = size.width * (shownZoom - 1f).coerceAtLeast(0f) / 2f
+                val verticalLimit = size.height * (shownZoom - 1f).coerceAtLeast(0f) / 2f
+                translationX = pan.x.coerceIn(-horizontalLimit, horizontalLimit)
+                translationY = pan.y.coerceIn(-verticalLimit, verticalLimit)
+            }.drawWithContent { drawContent(); drawStudioPaper(appearance.paper, ink) })
+            if (zoom != 1f) TextButton(onClick = { zoom = 1f; pan = Offset.Zero },
+                modifier = Modifier.align(if (appearance.leftHanded) Alignment.BottomStart else Alignment.BottomEnd)
+                    .heightIn(min = 48.dp)) {
+                Text(uiText("Fit image"))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StudioEasyActions(
+    busy: Boolean, canUndo: Boolean, onDraw: () -> Unit, onText: () -> Unit, onImage: () -> Unit, onUndo: () -> Unit,
+) {
+    val actions = listOf(R.string.studio_draw to onDraw, R.string.alive_studio_words to onText,
+        R.string.alive_studio_picture to onImage, R.string.studio_undo to onUndo)
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        actions.forEach { (label, action) ->
+            OutlinedButton(onClick = action, enabled = !busy && (label != R.string.studio_undo || canUndo),
+                modifier = Modifier.defaultMinSize(minWidth = 84.dp, minHeight = 84.dp)) {
+                Text(stringResource(label))
+            }
+        }
     }
 }

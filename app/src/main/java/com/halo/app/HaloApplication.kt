@@ -150,6 +150,9 @@ class HaloApplication :
 
         ManualDependencyGraph.init(this)
         organizerGraphReady.complete(Unit)
+        resourceScope.launch {
+            com.halo.app.privacy.observeHaloPause(this@HaloApplication)
+        }
         resourceScope.launch { runCatching { com.halo.app.nativeactions.EverydayWidgetUpdates.maintain(this@HaloApplication) }
             .onFailure { Log.w("HaloWidget","Widget update needs retry",it) } }
         // Organizer recovery is local and does not wait for model/provider or secret-store bootstrap.
@@ -188,6 +191,15 @@ class HaloApplication :
             }
         }
         resourceScope.launch { storageBootstrap.await(); ManualDependencyGraph.attentionController }
+        resourceScope.launch {
+            storageBootstrap.await()
+            runCatching { com.halo.app.notification.HaloPlanLiveUpdates.get(this@HaloApplication).observe() }
+                .onFailure { if (it is CancellationException) throw it else Log.w("HaloLivePlan", "Live status unavailable", it) }
+        }
+        resourceScope.launch {
+            runCatching { com.halo.app.ui.toolkit.HaloFocusOwner.get(this@HaloApplication).current() }
+                .onFailure { if (it is CancellationException) throw it else Log.w("HaloFocus", "Focus recovery needs retry", it) }
+        }
         resourceScope.launch {
             storageBootstrap.await()
             ManualDependencyGraph.devicePresenceRepository.presenceMap.collect { ManualDependencyGraph.attentionContextProvider.refresh() }

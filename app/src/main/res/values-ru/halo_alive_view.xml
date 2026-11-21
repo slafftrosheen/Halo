@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_view_title">Вид</string>
+    <string name="alive_view_easy">Простой</string>
+    <string name="alive_view_standard">Стандартный</string>
+    <string name="alive_view_compact">Компактный</string>
+    <string name="alive_easy_text">Размер текста</string>
+    <string name="alive_easy_read">Прочитать вслух</string>
+    <string name="alive_easy_volume">Громкость</string>
+    <string name="alive_easy_brain">Кто мне помогает</string>
+    <string name="alive_easy_night">Ночь</string>
+    <string name="alive_easy_all">Все настройки</string>
+</resources>

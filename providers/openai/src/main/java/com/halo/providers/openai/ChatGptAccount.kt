@@ -21,7 +21,10 @@ data class ChatGptAccountState(val connected: Boolean = false, val subscriptionA
 
 /** Content-free diagnostics only. Never include tokens, callback URLs, claims or provider bodies. */
 enum class ChatGptConnectionStage { REGISTERED, TOKEN_EXCHANGE, TOKEN_RECEIVED, VERIFY_IDENTITY,
-    IDENTITY_VERIFIED, CONNECTED, DNS_FAILED, NETWORK_FAILED, HTTP_REJECTED }
+    IDENTITY_VERIFIED, CONNECTED, DNS_FAILED, NETWORK_FAILED, HTTP_REJECTED, POLICY_BLOCKED }
+
+enum class ChatGptSignInFailure { BROWSER_DENIED, REGISTRATION_INCOMPLETE, POLICY_BLOCKED, DNS, NETWORK, SERVER_REJECTED }
+class ChatGptSignInException(val failure: ChatGptSignInFailure) : IllegalStateException(failure.name)
 
 /** OpenAI's public Sign in with ChatGPT token-sharing flow, not an API-key substitute.
  * Credentials and refresh checkpoints are stored only in the host's protected secret store.
@@ -56,7 +59,7 @@ class ChatGptAccount(
     }
     private fun publish() {
         val record = saved
-        mutableState.value = ChatGptAccountState(connected = record?.has("tokens") == true && record.has("subject"),
+        mutableState.value = ChatGptAccountState(connected = !record?.optString("subject").isNullOrBlank(),
             subscriptionAccess = record?.optJSONObject("tokens")?.let { tokens -> scopes(tokens).containsAll(REQUIRED) } == true,
             displayName = record?.optString("name")?.takeIf { it.isNotBlank() }, revision = UUID.randomUUID().toString())
     }
@@ -102,14 +105,15 @@ class ChatGptAccount(
             uri.queryParameterValues("state").size == 1 && MessageDigest.isEqual(
                 uri.queryParameter("state").orEmpty().toByteArray(), attempt.state.toByteArray())) { "ChatGPT sign-in state did not match" }
         pending = null
-        check(uri.queryParameter("error") == null) { "ChatGPT sign-in was not completed" }
+        if (uri.queryParameter("error") != null) throw ChatGptSignInException(ChatGptSignInFailure.BROWSER_DENIED)
         val code = uri.queryParameter("code")
         require(!code.isNullOrBlank() && code.length <= 8192 && uri.queryParameterValues("code").size == 1)
         val returnedClient = uri.queryParameter("client_id")
         val clientId = returnedClient ?: attempt.clientId
-        require(uri.queryParameterValues("client_id").size <= 1 && clientId != null &&
-            clientId.matches(Regex("[A-Za-z0-9_-]{1,200}")) && clientId != "dynamic_agent_client" &&
-            (attempt.clientId == null || returnedClient == null || returnedClient == attempt.clientId)) { "ChatGPT app registration did not finish" }
+        if (uri.queryParameterValues("client_id").size > 1 || clientId == null ||
+            !clientId.matches(Regex("[A-Za-z0-9_-]{1,200}")) || clientId == "dynamic_agent_client" ||
+            (attempt.clientId != null && returnedClient != null && returnedClient != attempt.clientId)
+        ) throw ChatGptSignInException(ChatGptSignInFailure.REGISTRATION_INCOMPLETE)
         // Registration survives an expired code; retries must not create another application.
         val record = JSONObject(requireNotNull(saved).toString()).put("clientId", clientId)
         persist(record)
@@ -119,7 +123,7 @@ class ChatGptAccount(
             .add("code", code).add("code_verifier", attempt.verifier).add("redirect_uri", attempt.redirect).add("resource", RESOURCE).build())
         val receivedAt = now()
         diagnostic(ChatGptConnectionStage.TOKEN_RECEIVED)
-        val tokens = tokenFields(response, null, receivedAt)
+        val tokens = signInTokens(response, receivedAt)
         val idToken = response.getString("id_token")
         diagnostic(ChatGptConnectionStage.VERIFY_IDENTITY)
         val identity = verifyIdentity(idToken, clientId, attempt.nonce, receivedAt)
@@ -127,7 +131,8 @@ class ChatGptAccount(
         val oldSubject = record.optString("subject").takeIf { it.isNotBlank() }
         check(oldSubject == null || oldSubject == identity.getString("sub")) { "Disconnect the previous ChatGPT account before changing accounts" }
         record.remove("pendingRefresh")
-        record.put("subject", identity.getString("sub")).put("name", identity.optString("name").take(200)).put("tokens", tokens)
+        record.put("subject", identity.getString("sub")).put("name", identity.optString("name").take(200))
+        if (tokens == null) record.remove("tokens") else record.put("tokens", tokens)
         persist(record)
         diagnostic(ChatGptConnectionStage.CONNECTED)
     }
@@ -136,7 +141,8 @@ class ChatGptAccount(
     suspend fun accessToken(): String = mutex.withLock {
         loadLocked()
         val record = saved?.let { JSONObject(it.toString()) } ?: error("Sign in with ChatGPT first")
-        var tokens = record.optJSONObject("tokens") ?: error("Sign in with ChatGPT first")
+        check(!record.optString("subject").isBlank()) { "Sign in with ChatGPT first" }
+        var tokens = record.optJSONObject("tokens") ?: error("This ChatGPT connection has not granted subscription access")
         check(scopes(tokens).containsAll(REQUIRED)) { "This ChatGPT connection has not granted subscription access" }
         if (record.has("pendingRefresh") || tokens.getLong("expiresAt") <= now() + 60000) {
             val clientId = record.getString("clientId")
@@ -183,6 +189,19 @@ class ChatGptAccount(
                 .add("token_type_hint", "refresh_token").add("client_id", previous.getString("clientId")).build()).build(), emptyOk = true)
             true
         } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { false }
+    }
+    // A successful identity-only sign-in can omit access credentials. If ChatGPT
+    // says it granted offline access or token sharing, credentials are mandatory.
+    private fun signInTokens(json: JSONObject, at: Long): JSONObject? {
+        val scope = json.getString("scope").also { require(it.length <= 8192) }
+        val granted = scope.split(Regex("\\s+")).toSet()
+        val access = json.opt("access_token")
+        if (access is String && access.isNotEmpty()) return tokenFields(json, scope, at)
+        require(access == null || access == JSONObject.NULL || access == "") { "ChatGPT returned invalid credentials" }
+        require("offline_access" !in granted && "chatgpt.tokens.use.direct" !in granted) {
+            "ChatGPT did not return the granted access credentials"
+        }
+        return null
     }
     private fun tokenFields(json: JSONObject, previousScope: String?, at: Long, requireRefresh: Boolean = false): JSONObject {
         val scope = if (json.has("scope")) json.getString("scope") else requireNotNull(previousScope) { "ChatGPT did not confirm permissions" }
@@ -252,14 +271,22 @@ class ChatGptAccount(
         call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: java.io.IOException) {
                 if (continuation.isActive) {
-                    diagnostic(if (e is java.net.UnknownHostException) ChatGptConnectionStage.DNS_FAILED else ChatGptConnectionStage.NETWORK_FAILED)
-                    continuation.resumeWithException(IllegalStateException("ChatGPT could not connect. Try again."))
+                    val (stage, failure) = when (e) {
+                        is com.halo.sdk.provider.RemoteDispatchBlocked ->
+                            ChatGptConnectionStage.POLICY_BLOCKED to ChatGptSignInFailure.POLICY_BLOCKED
+                        is java.net.UnknownHostException -> ChatGptConnectionStage.DNS_FAILED to ChatGptSignInFailure.DNS
+                        else -> ChatGptConnectionStage.NETWORK_FAILED to ChatGptSignInFailure.NETWORK
+                    }
+                    diagnostic(stage)
+                    continuation.resumeWithException(ChatGptSignInException(failure))
                 }
             }
             override fun onResponse(call: Call, response: Response) {
                 val result = runCatching { response.use {
-                    if (!it.isSuccessful) diagnostic(ChatGptConnectionStage.HTTP_REJECTED)
-                    check(it.isSuccessful) { "ChatGPT request failed (HTTP ${it.code}). Check your account or sign in again." }
+                    if (!it.isSuccessful) {
+                        diagnostic(ChatGptConnectionStage.HTTP_REJECTED)
+                        throw ChatGptSignInException(ChatGptSignInFailure.SERVER_REJECTED)
+                    }
                     val body = it.body ?: error("ChatGPT returned no response")
                     require(body.contentLength() <= 1024 * 1024)
                     val bytes = body.byteStream().use { input ->

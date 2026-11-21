@@ -1,0 +1,13 @@
+<resources>
+    <string name="halo_record_display_choose">Subtitri brillēs</string>
+    <string name="halo_record_display_about">Izvēlieties pievienoto ekrānu, kurā rādīt subtitrus.</string>
+    <string name="halo_record_display_empty">Pievienojiet brilles, ko Android atpazīst kā ārēju ekrānu. Ar Bluetooth audio savienojumu vien nepietiek, lai rādītu subtitrus.</string>
+    <string name="halo_record_display_in_use">Ekrānā tiek rādīta cita kartīte. Lai rādītu subtitrus, aizveriet kartīti sadaļā «Ierīces».</string>
+    <string name="halo_record_display_confirm_title">Vai rādīt subtitrus ekrānā %1$s?</string>
+    <string name="halo_record_display_confirm_body">Ierakstītos vārdus var redzēt arī citi šī ekrāna lietotāji. Halo sūta subtitrus tikai tik ilgi, kamēr šis ieraksts ir atvērts. Pārliecinieties, ka visi sarunas dalībnieki piekrīt.</string>
+    <string name="halo_record_display_sending">Subtitri tiek sūtīti uz ekrānu %1$s</string>
+    <string name="halo_record_display_stop">Apturēt subtitrus ekrānā</string>
+    <string name="halo_record_display_waiting">HaloRecord · Gaida runu</string>
+    <string name="halo_record_display_start">Rādīt subtitrus</string>
+    <string name="halo_record_display_cancel">Atcelt</string>
+</resources>

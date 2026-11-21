@@ -1,6 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo Zone 6 widget colours. Live faces repaint from the Appearance scheme (nearbyScheme); these are static fallbacks + previews. -->
 <resources>
-<color name="everyday_widget_surface">#16241E</color>
-<color name="everyday_widget_text">#E9F4EF</color>
-<color name="everyday_widget_metadata">#B8CDC1</color>
-<color name="everyday_widget_primary">#7DE8BB</color>
+<color name="everyday_widget_surface">#110E45</color>
+<color name="everyday_widget_text">#FAFAF4</color>
+<color name="everyday_widget_metadata">#B7B9D3</color>
+<color name="everyday_widget_primary">#0CF2BA</color>
+<color name="everyday_widget_outline">#1FFAFAF4</color>
+<color name="everyday_widget_glow">#330CF2BA</color>
+<color name="everyday_widget_pill">#1F0CF2BA</color>
+<color name="everyday_widget_attention_fill">#29FF9F6B</color>
+<color name="everyday_widget_attention_ink">#FFB58C</color>
+<color name="everyday_widget_stale">#F4C56A</color>
 </resources>

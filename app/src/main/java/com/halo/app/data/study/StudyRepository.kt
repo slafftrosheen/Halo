@@ -27,6 +27,8 @@ class StudyRepository(
     private val newId: () -> String = { UUID.randomUUID().toString() },
     private val clockTicks: Flow<Long> = minuteClock(now),
 ) {
+    internal fun observeChildAttemptCount(from: Long, until: Long) = dao.observeChildAttemptCount(from, until)
+
     fun observeActiveSessions(): Flow<List<StudySessionRecord>> =
         dao.observeActiveSessions().map { rows -> rows.map(StudySessionEntity::toRecord) }
 

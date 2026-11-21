@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_widget_title">Pievienot logrīku</string>
+    <string name="alive_widget_size">Izmērs</string>
+    <string name="alive_widget_auto">Automātiski</string>
+    <string name="alive_widget_small">Mazs</string>
+    <string name="alive_widget_wide">Plats</string>
+    <string name="alive_widget_tall">Augsts</string>
+    <string name="alive_widget_size_explanation">Tas maina rādāmās informācijas daudzumu. Faktisko izmēru nosaka palaidējs.</string>
+    <string name="alive_widget_motion">Logrīka kustība</string>
+    <string name="alive_widget_match">Pieskaņot manam stilam</string>
+    <string name="alive_widget_pin_requested">Apstipriniet novietojumu sākuma ekrānā.</string>
+    <string name="alive_widget_pin_unavailable">Pievienojiet Halo palaidēja logrīku izvēlnē.</string>
+    <string name="alive_widget_installed">Jūsu logrīki</string>
+    <string name="alive_widget_preview_error">Neizdevās ielādēt logrīka priekšskatījumu.</string>
+</resources>

@@ -438,8 +438,12 @@ object HaloToolDescriptors {
     }
 
     fun file(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
-        "halo_file_tool_capabilities", "halo_text_get", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_annotation_get" -> descriptor(definition.name, definition, ToolCategory.FILES,
+        "halo_file_tool_capabilities", "halo_text_get", "halo_sheets_analyze", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_annotation_get" -> descriptor(definition.name, definition, ToolCategory.FILES,
             readOnly(definition.name), keywords = setOf("file", "document", "csv", "pdf", "image"))
+        "halo_sheets_delete" -> descriptor(definition.name, definition, ToolCategory.FILES,
+            ToolSecurityPolicy(ToolRiskClass.DESTRUCTIVE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("spreadsheet", "table", "csv", "delete", "row", "column"),
+            presentation = ToolPresentation(title = "Delete from a table", actionVerb = "Delete"))
         "halo_file_attach_canvas" -> descriptor(definition.name, definition, ToolCategory.FILES,
             reversible(ReplaySafety.NEVER_REPLAY),
             dependencies = setOf(ToolId("halo_note_get"), ToolId("halo_get_file_metadata"), ToolId("halo_workspace_canvases")),
@@ -737,6 +741,17 @@ object HaloToolDescriptors {
         )
 
     fun assistant(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        in com.halo.app.di.tools.host.HaloRecordControls.NAMES -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
+            if (definition.name == com.halo.app.di.tools.host.HaloRecordControls.STATUS) readOnly(definition.name)
+            else reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("record", "microphone", "stop"))
+            .copy(operability = com.halo.app.di.tools.host.HaloRecordControls.operability(definition.name))
+        com.halo.app.di.tools.host.FollowMeTools.STATUS, com.halo.app.di.tools.host.FollowMeTools.SET ->
+            com.halo.app.di.tools.host.FollowMeTools.descriptor(definition)
+        com.halo.app.di.tools.host.HaloPauseTools.STATUS, com.halo.app.di.tools.host.HaloPauseTools.START ->
+            com.halo.app.di.tools.host.HaloPauseTools.descriptor(definition)
+        com.halo.app.di.tools.host.AlbumFindTools.FIND -> com.halo.app.di.tools.host.AlbumFindTools.descriptor(definition)
+        com.halo.app.di.tools.host.FocusTools.STATUS, com.halo.app.di.tools.host.FocusTools.START,
+        com.halo.app.di.tools.host.FocusTools.END -> com.halo.app.di.tools.host.FocusTools.descriptor(definition)
         in com.halo.app.di.tools.host.NotebookLibraryTools.NAMES ->
             com.halo.app.di.tools.host.NotebookLibraryTools.descriptor(definition)
         in com.halo.app.di.tools.host.NotebookOrganizationTools.NAMES ->

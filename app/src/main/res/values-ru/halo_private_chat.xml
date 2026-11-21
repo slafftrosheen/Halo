@@ -1,0 +1,17 @@
+<resources>
+    <string name="private_chat_title">Личный чат</string>
+    <string name="private_chat_status">Личное</string>
+    <string name="private_chat_origin">Личный чат · ничего не сохраняется</string>
+    <string name="private_chat_help">Halo отвечает на этом телефоне, используя только текст, который вы здесь вводите или диктуете. Чат очищается при закрытии или выходе из приложения.</string>
+    <string name="private_chat_question">Ваш вопрос</string>
+    <string name="private_chat_ask">Спросить лично</string>
+    <string name="private_chat_close">Закрыть</string>
+    <string name="private_chat_dictate">Диктовать</string>
+    <string name="private_chat_finish_dictation">Завершить диктовку</string>
+    <string name="private_chat_listening">Слушаю на этом телефоне…</string>
+    <string name="private_chat_transcribing">Преобразую речь в текст…</string>
+    <string name="private_chat_answering">Отвечаю на этом телефоне…</string>
+    <string name="private_chat_mic_permission">Разрешите доступ к микрофону для диктовки или введите вопрос.</string>
+    <string name="private_chat_dictation_error">Диктовка на этом телефоне недоступна или речь не удалось разобрать. Попробуйте ещё раз или введите вопрос.</string>
+    <string name="private_chat_model_error">Нужна готовая модель на телефоне. Проверьте настройки модели и попробуйте снова.</string>
+</resources>

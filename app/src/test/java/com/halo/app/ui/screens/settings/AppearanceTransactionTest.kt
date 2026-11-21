@@ -8,6 +8,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.core.app.ApplicationProvider
@@ -26,7 +28,7 @@ import org.robolectric.annotation.Config
 class AppearanceTransactionTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun modeAndBothPalettesStayLocalOnCancelAndRestoreAfterApply() = runBlocking {
+    @Test fun modeAndBothPalettesStayLocalOnUndoAndRestoreAfterApply() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Application>()
         context.getSharedPreferences("halo_palettes", Context.MODE_PRIVATE).edit().clear().commit()
         context.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE).edit().clear().commit()
@@ -45,12 +47,13 @@ class AppearanceTransactionTest {
         fun editBoth() {
             compose.onNodeWithText("Blue").performScrollTo().performClick()
             compose.onNodeWithText("Dark").performScrollTo().performClick()
-            compose.onNodeWithText("Rose").performScrollTo().performClick()
+            val swatch = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.RadioButton)
+            compose.onNode(hasText("Rose") and swatch).performScrollTo().performClick()
         }
         editBoth()
         assertEquals(AppearanceMode.LIGHT, appearance.mode.value)
         assertEquals(HaloPalettes(), palettes.state.value)
-        compose.onNodeWithText("Cancel").performScrollTo().performClick()
+        compose.onNodeWithText("Undo").performScrollTo().performClick()
         compose.onNode(hasText("Apply") and hasClickAction()).assertIsNotEnabled()
         assertEquals(AppearanceMode.LIGHT, appearance.mode.value)
         assertEquals(HaloPalettes(), palettes.state.value)
@@ -69,7 +72,7 @@ class AppearanceTransactionTest {
         assertEquals(AppearanceMode.DARK, restoredAppearance.mode.value)
     }
 
-    @Test fun uncertainRollbackSurvivesCancelAndUnrelatedSaveUntilSuccessfulReapply() {
+    @Test fun uncertainRollbackSurvivesUndoAndUnrelatedSaveUntilSuccessfulReapply() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val palettes = PalettePreferences(context)
         val assistant = AssistantPreferences(context)
@@ -90,7 +93,7 @@ class AppearanceTransactionTest {
         compose.onNodeWithText("Large").performScrollTo().performClick()
         compose.waitUntil(5_000) { assistant.state.value.fontScale == 1.25f }
         compose.onNodeWithText(message).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Cancel").performScrollTo().performClick()
+        compose.onNodeWithText("Undo").performScrollTo().performClick()
         compose.onNodeWithText(message).performScrollTo().assertIsDisplayed()
         compose.onNode(hasText("Apply") and hasClickAction()).performScrollTo().assertIsEnabled()
         compose.runOnIdle { fail = false }

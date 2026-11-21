@@ -22,7 +22,7 @@ import com.halo.runtime.kernel.resource.DefaultResourceLeaseManager
  * Owns all cross-cutting infrastructure: buses, logger, scheduler, scope.
  * No domain logic. No Android dependencies.
  */
-class InfrastructureGraph {
+class InfrastructureGraph(private val allowWork: () -> Boolean = { true }) {
 
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val clock: RuntimeClock = SystemRuntimeClock()
@@ -45,7 +45,9 @@ class InfrastructureGraph {
     val cognitiveBus by lazy { com.halo.runtime.kernel.bus.DefaultCognitiveBus() }
     val executionBus by lazy { com.halo.runtime.kernel.bus.DefaultExecutionBus() }
     val blackboard by lazy { com.halo.runtime.cognition.blackboard.DefaultBlackboard() }
-    val resourceLeaseManager by lazy { DefaultResourceLeaseManager() }
+    val resourceLeaseManager: com.halo.sdk.runtime.resource.ResourceLeaseManager by lazy {
+        com.halo.app.privacy.PauseResourceLeaseManager(DefaultResourceLeaseManager(), allowWork)
+    }
 
     val cognitiveTrace by lazy {
         CognitiveTrace(scope, perceptionBus, cognitiveBus, executionBus).apply { start() }

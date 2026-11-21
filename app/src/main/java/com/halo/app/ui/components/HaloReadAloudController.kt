@@ -1,7 +1,7 @@
 package com.halo.app.ui.components
 
 import com.halo.app.audio.HaloSpeechOutputCoordinator
-import com.halo.app.study.SentenceSegmenter
+import com.halo.sdk.provider.SpeechParagraphs
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -9,7 +9,7 @@ import java.util.UUID
 
 data class ReadAloudState(
     val id: String,
-    val sentences: List<String>,
+    val sections: List<String>,
     val providerId: String,
     val cloudApproved: Boolean,
     val language: String?,
@@ -23,10 +23,10 @@ data class ReadAloudState(
     val remoteProvenance: com.halo.sdk.provider.RemoteDispatchProvenance? = null,
     val sessionToken: String = UUID.randomUUID().toString(),
 ) {
-    val current: String get() = sentences.getOrNull(index).orEmpty()
+    val current: String get() = sections.getOrNull(index).orEmpty()
 }
 
-/** Sentence transport only: synthesis, audio focus and output routing stay in the canonical coordinator. */
+/** Reading transport only: synthesis, audio focus and output routing stay in the canonical coordinator. */
 class HaloReadAloudController(
     private val bus: EventBus,
     private val output: HaloSpeechOutputCoordinator,
@@ -122,7 +122,7 @@ class HaloReadAloudController(
                     mutable.value = current.copy(range = event.start until event.end)
                 is TtsCompleted -> {
                     transaction = null
-                    if (current.index < current.sentences.lastIndex) {
+                    if (current.index < current.sections.lastIndex) {
                         mutable.value = current.copy(index = current.index + 1, range = null, playing = false)
                         speak()
                     } else mutable.value = current.copy(playing = false, preparing = false, range = null,
@@ -158,10 +158,9 @@ class HaloReadAloudController(
             acceptedStop = VoiceFieldCancellation.epoch.value
             cancelAudio()
             sentenceAllowed = beforeSentence
-            val parts = SentenceSegmenter.ranges(text)
-            val sentences = parts.map { it.text }
-            if (sentences.isEmpty()) return@launch
-            mutable.value = ReadAloudState(id, sentences, providerId, cloudApproved, language, speed = rate.value,
+            val parts = SpeechParagraphs.sections(text.take(120_000)).take(400).toList()
+            if (parts.isEmpty()) return@launch
+            mutable.value = ReadAloudState(id, parts.map { it.text }, providerId, cloudApproved, language, speed = rate.value,
                 limited = (parts.lastOrNull()?.end ?: 0) < text.trimEnd().length, remoteProvenance = remoteProvenance, sessionToken = sessionToken)
             speak()
         }
@@ -177,13 +176,13 @@ class HaloReadAloudController(
         if (current.playing || current.preparing) {
             cancelAudio()
             mutable.value = current.copy(playing = false, preparing = false, range = null)
-        } else speak() // Resume restarts the current sentence; no simulated sample-accurate seek.
+        } else speak() // Resume restarts the current section; no simulated sample-accurate seek.
     } }
     fun sentence(delta: Int) { scope.launch(Dispatchers.Main.immediate) {
         val current = state.value ?: return@launch
         val play = current.playing || current.preparing
         cancelAudio()
-        mutable.value = current.copy(index = (current.index + delta).coerceIn(0, current.sentences.lastIndex),
+        mutable.value = current.copy(index = (current.index + delta).coerceIn(0, current.sections.lastIndex),
             playing = false, preparing = false, range = null, notice = null)
         if (play) speak()
     } }

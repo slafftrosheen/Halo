@@ -2,6 +2,8 @@ package com.halo.app.ui.screens.settings
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -16,6 +18,8 @@ import com.halo.app.R
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,6 +34,14 @@ import kotlinx.coroutines.launch
 @Composable internal fun AppearanceControls(mode: AppearanceMode, onApply: suspend (AppearanceDraft) -> Unit,
     preferences: PalettePreferences, assistant: AssistantPreferences = ManualDependencyGraph.assistantPreferences,
     ownerUncertain: Boolean = false) {
+    val lockContext = LocalContext.current
+    val layoutLock = remember(lockContext.applicationContext) { HaloLayoutLock.get(lockContext) }
+    val layoutLocked by layoutLock.state.collectAsStateWithLifecycle()
+    if (layoutLocked) {
+        Text(stringResource(R.string.layout_kept), style = MaterialTheme.typography.bodyMedium)
+        HaloLayoutLock.Controls(layoutLock, locked = true, enabled = true)
+        return
+    }
     val palettes by preferences.state.collectAsStateWithLifecycle()
     var draft by remember { mutableStateOf(AppearanceDraft(mode, palettes)) }
     LaunchedEffect(mode, palettes) { draft = draft.refresh(mode, palettes) }
@@ -41,9 +53,20 @@ import kotlinx.coroutines.launch
     }
     val palette = draft.palette(dark)
     val assistantState by assistant.state.collectAsStateWithLifecycle()
-    val options = rememberVisualPreferences()
     val context = LocalContext.current
     val visual = remember(context) { VisualPreferences.get(context) }
+    val savedVisual by visual.state.collectAsStateWithLifecycle()
+    var lookDraft by remember { mutableStateOf<HaloVisualOptions?>(null) }
+    var guidedStart by remember { mutableStateOf<Pair<AppearanceDraft, HaloVisualOptions?>?>(null) }
+    val options = lookDraft ?: savedVisual
+    var careReading by remember { mutableStateOf<Boolean?>(null) }
+    val changed = draft.changed || lookDraft?.let { it != savedVisual } == true || careReading != null
+    val previewOwner = remember { Any() }
+    SideEffect {
+        if (changed) HaloLookPreview.show(HaloLookPreview.Draft(previewOwner, dark, palette, options))
+        else HaloLookPreview.clear(previewOwner)
+    }
+    DisposableEffect(previewOwner) { onDispose { HaloLookPreview.clear(previewOwner) } }
     val scope = rememberCoroutineScope()
     var failure by remember { mutableStateOf(false) }
     var rollbackUncertain by remember { mutableStateOf(false) }
@@ -65,7 +88,106 @@ import kotlinx.coroutines.launch
         }
         finally { saving = false }
     }
+    suspend fun applyLook() {
+        val requested = draft
+        val requestedVisual = options
+        save(appearanceApply = true) {
+            layoutLock.requireUnlocked()
+            if (requested.changed || rollbackUncertain) onApply(requested)
+            if (requestedVisual != savedVisual) visual.update { latest ->
+                latest.copy(iconStyle = requestedVisual.iconStyle, appIcon = requestedVisual.appIcon,
+                    motionLevel = requestedVisual.motionLevel, lessMotion = requestedVisual.lessMotion,
+                    haptics = requestedVisual.haptics, edgeLight = requestedVisual.edgeLight,
+                    buttonLabels = requestedVisual.buttonLabels, viewMode = requestedVisual.viewMode,
+                    guideLight = requestedVisual.guideLight, guidanceAmount = requestedVisual.guidanceAmount)
+            }
+            HaloAppIconSwitcher.apply(context, requestedVisual.appIcon, dark, requested.palette(dark).accent)
+            careReading?.let { read ->
+                val reader = ManualDependencyGraph.readAloud
+                if (reader.autoReadAnswers.value != read) {
+                    reader.setAutoReadAnswers(read)
+                    check(reader.autoReadAnswers.value == read) { "Could not save automatic reading" }
+                }
+            }
+            careReading = null
+            draft = AppearanceDraft(requested.mode, requested.palettes)
+            lookDraft = null
+        }
+    }
+    fun resetDraft() {
+        draft = AppearanceDraft(mode, palettes)
+        lookDraft = null
+        careReading = null
+        if (!rollbackUncertain) failure = false
+    }
+    guidedStart?.let { (originalDraft, originalVisual) ->
+        AppearanceGuidedSetup(
+            dark = dark,
+            palette = palette,
+            onLook = { preset -> draft = draft.editPalette(preset.dark, preset.palette)
+                .copy(mode = if (preset.dark) AppearanceMode.DARK else AppearanceMode.LIGHT) },
+            onView = { lookDraft = (lookDraft ?: savedVisual).withViewMode(it) },
+            onMotion = { lookDraft = (lookDraft ?: savedVisual).copy(motionLevel = it, lessMotion = it == HaloLookMotion.STILL) },
+            onCancel = {
+                draft = originalDraft
+                lookDraft = originalVisual
+                guidedStart = null
+            },
+            onDone = { guidedStart = null },
+        )
+    }
+    val applyLabel = stringResource(R.string.look_apply)
+    val lookOwner = com.halo.app.ui.presence.LocalShellPageActions.current
+    // The Settings page owns the preferences. The dock uses the same apply and undo callbacks.
+    if (lookOwner != null) com.halo.app.ui.presence.BindShellPageActions(
+        com.halo.app.ui.presence.ShellPageOwner("settings", activeToolId = "settings.appearance", statusLabel = if (changed) uiText("Previewing changes") else null),
+        listOf(
+            com.halo.app.ui.presence.ShellPageAction("page.look.apply", applyLabel, HaloGlyph.SUCCESS,
+                !saving && (changed || rollbackUncertain)) { scope.launch { applyLook() } },
+            com.halo.app.ui.presence.ShellPageAction("page.look.undo", uiText("Undo"), HaloGlyph.PREVIOUS,
+                !saving && changed) { resetDraft() },
+        ))
     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Text(stringResource(R.string.look_subtitle), style = MaterialTheme.typography.bodyMedium)
+        OutlinedButton(onClick = { guidedStart = draft to lookDraft }, enabled = !saving,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            HaloIcon(HaloGlyph.QUESTION, null, Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.alive_guide_appearance))
+        }
+        OutlinedButton(onClick = {
+            lookDraft = options.withViewMode(HaloViewMode.EASY)
+            careReading = true
+        }, enabled = !saving, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            Text(stringResource(R.string.layout_setup_other))
+        }
+        careReading?.let { checked ->
+            com.halo.app.ui.workspace.HaloWorkspaceToggleRow(
+                title = stringResource(R.string.layout_read_replies), checked = checked,
+                onCheckedChange = { value -> if (!saving) careReading = value })
+        }
+        HaloLayoutLock.Controls(layoutLock, locked = false, enabled = !saving && !changed)
+        AppearanceLabel("Looks")
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            HaloLookPreset.entries.forEach { preset ->
+                val scheme = haloColorScheme(preset.dark, preset.palette)
+                val name = stringResource(preset.label)
+                val selected = dark == preset.dark && palette == preset.palette
+                Surface(onClick = {
+                    draft = draft.editPalette(preset.dark, preset.palette).copy(
+                        mode = if (preset.dark) AppearanceMode.DARK else AppearanceMode.LIGHT)
+                }, enabled = !saving, shape = MaterialTheme.shapes.medium, color = scheme.surface,
+                    contentColor = scheme.onSurface,
+                    border = BorderStroke(1.dp, if (selected) scheme.primary else scheme.outlineVariant),
+                    modifier = Modifier.widthIn(min = 100.dp).heightIn(min = 64.dp).semantics { this.selected = selected }) {
+                    Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        HaloIcon(HaloGlyph.HALO, null, Modifier.size(24.dp), tint = scheme.primary)
+                        Text(name, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            }
+        }
         AppearanceLabel("Mode")
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val fontScale = LocalDensity.current.fontScale
@@ -147,23 +269,49 @@ import kotlinx.coroutines.launch
         }
         AppearanceLabel("Preview")
         AppearancePreview(dark, palette)
+        com.halo.app.wallpaper.WallpaperControls()
+        Text(stringResource(R.string.alive_view_title), style = MaterialTheme.typography.labelLarge)
+        FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(HaloViewMode.EASY to R.string.alive_view_easy, HaloViewMode.STANDARD to R.string.alive_view_standard,
+                HaloViewMode.COMPACT to R.string.alive_view_compact).forEach { (viewMode, title) ->
+                FilterChip(options.viewMode == viewMode, { lookDraft = options.withViewMode(viewMode) },
+                    enabled = !saving, label = { Text(stringResource(title)) }, modifier = Modifier.heightIn(min = 48.dp))
+            }
+        }
         Text(stringResource(R.string.interface4_appearance_preview), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {
-                val requested = draft
-                scope.launch { save(appearanceApply = true) {
-                    onApply(requested)
-                    draft = AppearanceDraft(requested.mode, requested.palettes)
-                } }
-            }, enabled = !saving && (draft.changed || rollbackUncertain), modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply")) }
-            TextButton(onClick = { draft = AppearanceDraft(mode, palettes); if (!rollbackUncertain) failure = false }, enabled = !saving && draft.changed,
-                modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
+            Button(onClick = { scope.launch { applyLook() } }, enabled = !saving && (changed || rollbackUncertain),
+                modifier = Modifier.heightIn(min = 48.dp)) { Text(applyLabel) }
+            TextButton(onClick = ::resetDraft, enabled = !saving && changed,
+                modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Undo")) }
             TextButton(onClick = { draft = draft.editPalette(dark, HaloPalette()) }, enabled = !saving,
                 modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.interface4_appearance_defaults)) }
         }
         Text(stringResource(R.string.zone5_theme_colors),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.look_icons), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.look_app_icon), style = MaterialTheme.typography.labelLarge)
+        LookChoices(options.appIcon, listOf(
+            HaloAppIconMode.MATCH_LOOK to R.string.look_app_icon_match, HaloAppIconMode.CLASSIC to R.string.look_app_icon_classic,
+            HaloAppIconMode.LIGHT to R.string.look_app_icon_light, HaloAppIconMode.SYSTEM to R.string.look_app_icon_system),
+            !saving) { lookDraft = options.copy(appIcon = it) }
+        Text(stringResource(R.string.look_app_icon_note), style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.look_icon_style), style = MaterialTheme.typography.labelLarge)
+        LookChoices(options.iconStyle, listOf(HaloIconStyle.LINE to R.string.look_icon_line,
+            HaloIconStyle.SPOT to R.string.look_icon_spot, HaloIconStyle.TILE to R.string.look_icon_tile),
+            !saving) { lookDraft = options.copy(iconStyle = it) }
+        Text(stringResource(R.string.look_motion), style = MaterialTheme.typography.titleMedium)
+        LookChoices(options.motionLevel, listOf(HaloLookMotion.FULL to R.string.look_motion_full,
+            HaloLookMotion.GENTLE to R.string.look_motion_gentle, HaloLookMotion.STILL to R.string.look_motion_still),
+            !saving) { lookDraft = options.copy(motionLevel = it, lessMotion = it == HaloLookMotion.STILL) }
+        com.halo.app.ui.workspace.HaloWorkspaceToggleRow(stringResource(R.string.look_haptics),
+            options.haptics, { lookDraft = options.copy(haptics = it) })
+        com.halo.app.ui.workspace.HaloWorkspaceToggleRow(stringResource(R.string.look_edge_light),
+            options.edgeLight, { lookDraft = options.copy(edgeLight = it) })
+        Text(stringResource(R.string.look_labels), style = MaterialTheme.typography.labelLarge)
+        LookChoices(options.buttonLabels, listOf(HaloButtonLabels.ALWAYS to R.string.look_labels_always,
+            HaloButtonLabels.SELECTED_ONLY to R.string.look_labels_selected), !saving) { lookDraft = options.copy(buttonLabels = it) }
         AppearanceLabel("Text size")
         Text(uiText("Follows Android. You can make it bigger here."), style = MaterialTheme.typography.bodyMedium)
         FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -178,9 +326,6 @@ import kotlinx.coroutines.launch
             Column {
                 com.halo.app.ui.workspace.HaloWorkspaceToggleRow(uiText("Higher contrast"),
                     options.higherContrast, { value -> scope.launch { save { visual.update { it.copy(higherContrast = value) } } } })
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                com.halo.app.ui.workspace.HaloWorkspaceToggleRow(uiText("Less motion"),
-                    options.lessMotion, { value -> scope.launch { save { visual.update { it.copy(lessMotion = value) } } } })
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 com.halo.app.ui.workspace.HaloWorkspaceToggleRow(uiText("Guide light"),
                     options.guideLight, { value -> scope.launch { save { visual.update { it.copy(guideLight = value) } } } })
@@ -198,8 +343,21 @@ import kotlinx.coroutines.launch
                     })) }, enabled = !saving, modifier = Modifier.heightIn(min = 48.dp))
             }
         }
+        TextButton(onClick = { com.halo.app.ui.zone6.Zone6GuideReplay.replay() },
+            modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Replay the dock guide")) }
         if (failure) Text(if (rollbackUncertain) stringResource(R.string.interface4_appearance_rollback_unknown)
             else uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun <T> LookChoices(selected: T, choices: List<Pair<T, Int>>, enabled: Boolean, onSelect: (T) -> Unit) {
+    FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        choices.forEach { (value, title) ->
+            FilterChip(selected == value, { onSelect(value) }, enabled = enabled,
+                label = { Text(stringResource(title)) }, modifier = Modifier.heightIn(min = 48.dp))
+        }
     }
 }
 
@@ -271,4 +429,59 @@ import kotlinx.coroutines.launch
     HaloTone.PAPER -> stringResource(R.string.interface4_tone_paper)
     HaloTone.SLATE -> stringResource(R.string.interface4_tone_slate)
     else -> uiText(tone.name.lowercase().replaceFirstChar { it.uppercase() })
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AppearanceGuidedSetup(
+    dark: Boolean,
+    palette: HaloPalette,
+    onLook: (HaloLookPreset) -> Unit,
+    onView: (HaloViewMode) -> Unit,
+    onMotion: (HaloLookMotion) -> Unit,
+    onCancel: () -> Unit,
+    onDone: () -> Unit,
+) {
+    var step by remember { mutableIntStateOf(0) }
+    val answers = remember { mutableStateListOf<Int?>(null, null, null) }
+    val questions = listOf(R.string.alive_guide_look, R.string.alive_guide_size, R.string.alive_guide_motion)
+    val options = when (step) {
+        0 -> listOf(R.string.alive_guide_night to HaloGlyph.HALO, R.string.alive_guide_paper to HaloGlyph.NOTE)
+        1 -> listOf(R.string.alive_guide_comfortable to HaloGlyph.NOTE, R.string.alive_guide_bigger to HaloGlyph.NOTE)
+        else -> listOf(R.string.alive_guide_lively to HaloGlyph.SPEAK, R.string.alive_guide_calm to HaloGlyph.HALO,
+            R.string.alive_guide_still to HaloGlyph.STOP)
+    }
+    val question = stringResource(questions[step])
+    val answerLabels = options.map { stringResource(it.first) }
+    ModalBottomSheet(onDismissRequest = onCancel) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+            .navigationBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(question, style = MaterialTheme.typography.titleLarge)
+            com.halo.app.ui.components.HaloReadAloud(
+                (listOf(question) + answerLabels).joinToString(". "),
+                category = com.halo.sdk.provider.RemoteDataCategory.TEXT, compact = true)
+            AppearancePreview(dark, palette)
+            options.forEachIndexed { index, (_, icon) ->
+                FilterChip(selected = answers[step] == index, onClick = {
+                    answers[step] = index
+                    when (step) {
+                        0 -> onLook(if (index == 0) HaloLookPreset.NIGHT_MINT else HaloLookPreset.WARM_ROSE)
+                        1 -> onView(if (index == 0) HaloViewMode.STANDARD else HaloViewMode.EASY)
+                        else -> onMotion(HaloLookMotion.entries[index])
+                    }
+                }, label = { Text(answerLabels[index]) },
+                    leadingIcon = { HaloIcon(icon, null, Modifier.size(20.dp)) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                TextButton(onClick = { if (step == 0) onCancel() else step-- }) {
+                    Text(uiText(if (step == 0) "Cancel" else "Back"))
+                }
+                Button(onClick = { if (step == questions.lastIndex) onDone() else step++ },
+                    enabled = answers[step] != null) {
+                    Text(stringResource(R.string.alive_guide_this_one))
+                }
+            }
+        }
+    }
 }

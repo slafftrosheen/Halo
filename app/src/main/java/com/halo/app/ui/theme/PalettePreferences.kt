@@ -41,6 +41,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
     }
     private var lastWrite: Job? = null
     fun select(dark: Boolean, palette: HaloPalette) {
+        if (HaloLayoutLock.get(context).state.value) return
         val index = if (dark) 1 else 0
         val generation = synchronized(mutations) {
             val next = generations[index].incrementAndGet()
@@ -62,6 +63,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
     suspend fun selectPersisted(dark: Boolean, palette: HaloPalette) = withContext(scope.coroutineContext.minusKey(Job)) {
         loaded.await()
         writes.withLock {
+            HaloLayoutLock.get(context).requireUnlocked()
             val prefix = if (dark) "dark" else "light"
             check(disk().edit().putString("$prefix.accent", palette.accent.name)
                 .putString("$prefix.tone", palette.tone.name)
@@ -77,6 +79,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
     suspend fun selectPalettesPersisted(palettes: HaloPalettes) = withContext(scope.coroutineContext.minusKey(Job)) {
         loaded.await()
         writes.withLock {
+            HaloLayoutLock.get(context).requireUnlocked()
             val editor = disk().edit()
             listOf("light" to palettes.light, "dark" to palettes.dark).forEach { (prefix, palette) ->
                 editor.putString("$prefix.accent", palette.accent.name)
@@ -105,6 +108,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
     ) {
         loaded.await()
         writes.withLock {
+            HaloLayoutLock.get(context).requireUnlocked()
             val originalDisk = diskSnapshot()
             val before = synchronized(mutations) {
                 check(mutable.value == expected) { "Appearance changed; review the current choices" }

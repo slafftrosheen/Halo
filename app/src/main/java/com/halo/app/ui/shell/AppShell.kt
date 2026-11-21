@@ -7,6 +7,7 @@ import com.halo.app.ui.presence.invokePageAction
 import com.halo.app.language.uiText
 import com.halo.app.ui.everyday.*
 
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 import androidx.compose.foundation.layout.Box
@@ -58,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
+import com.halo.app.ui.zone6.Zone6SheetLayer
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -98,7 +100,6 @@ import com.halo.app.ui.screens.settings.SystemCheckScreen
 import com.halo.app.ui.screens.settings.SystemCheckViewModel
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) {
     data object Home : Screen("home", "Home", HaloGlyph.HOME)
@@ -229,8 +230,14 @@ fun AppShell(
         navController.addOnDestinationChangedListener(observer)
         onDispose {navController.removeOnDestinationChangedListener(observer)}
     }
-    fun navigateSafely(route: String) {
-        val childSurface = route in setOf("home", "mini_halo", "study", "workspace_handoff") ||
+    fun navigateSafely(requestedRoute: String) {
+        val route = when (requestedRoute) {
+            "planner" -> EverydayRoutes.ORGANIZER
+            "routines" -> "automation"
+            else -> requestedRoute
+        }
+        if (route in setOf("kids_scan", "kids_day") && !ManualDependencyGraph.kidsPreferences.enabled.value) return
+        val childSurface = route in setOf("home", "mini_halo", "study", "workspace_handoff", "kids_scan", "kids_day") ||
             route.substringBefore("?") in setOf(EverydayRoutes.BRIEF, EverydayRoutes.CLOCKS, EverydayRoutes.ORGANIZER, EverydayRoutes.SOURCE) ||
             route.startsWith("notebook/note/") || route.startsWith("notebook/canvas/") || route.startsWith("notebook/study/")
         if (ManualDependencyGraph.kidsPreferences.enabled.value && !childSurface) { parentRoute = route; parentGate() }
@@ -268,11 +275,26 @@ fun AppShell(
         HaloScreenRequests.collectResumed(ownerLifecycle, ManualDependencyGraph.requestedHaloScreen,
             navigate = { navigateRequestedScreen(it) }, awaitReady = navController::awaitNavigationReady)
     }
+    var startupCarModeChecked by androidx.compose.runtime.saveable.rememberSaveable {
+        androidx.compose.runtime.mutableStateOf(false)
+    }
     LaunchedEffect(Unit) {
         navController.awaitNavigationReady()
         val screen = ManualDependencyGraph.assistantPreferences.get().startScreen
         val kids = ManualDependencyGraph.kidsPreferences.getEnabled()
-        if (!kids && !ManualDependencyGraph.explicitHaloScreenRequested && ManualDependencyGraph.requestedHaloScreen.value == null && navController.currentDestination?.route == "home" && screen != "home") navigateSafely(screen)
+        fun startingOnHome() = !ManualDependencyGraph.kidsPreferences.enabled.value &&
+            !ManualDependencyGraph.explicitHaloScreenRequested && ManualDependencyGraph.requestedHaloScreen.value == null &&
+            navController.currentDestination?.route == "home"
+        if (!kids && startingOnHome()) {
+            if (screen != "home") navigateSafely(screen)
+            else if (!startupCarModeChecked && !setupSession && shellActivity is com.halo.app.MainActivity) {
+                startupCarModeChecked = true
+                val autoOpen = com.halo.app.ui.toolkit.HaloCarMode.autoOpen(studyContext)
+                if (autoOpen && startingOnHome() && com.halo.app.ui.toolkit.HaloCarMode.active(studyContext)) {
+                    navigateSafely("on_move")
+                }
+            }
+        }
     }
 
     LaunchedEffect(homeViewModel) {
@@ -404,40 +426,70 @@ fun AppShell(
     }
     val utilityBand = remember { androidx.compose.runtime.mutableStateOf<com.halo.app.ui.presence.ShellUtilityProjection?>(null) }
     val livePageActions = pageActions.value?.takeIf { pageOwnerFilter(it.owner) }
+    val privateShell = contextualRoute == "private_chat"
+    val paused by ManualDependencyGraph.haloPause.state.collectAsStateWithLifecycle()
     BindCurrentScreenContext(ManualDependencyGraph.currentScreenContext, backStackEntry?.id, contextualRoute,
-        livePageActions, ownerLifecycle, shellOrbVisible && !kidsMode)
+        livePageActions, ownerLifecycle, shellOrbVisible && !kidsMode && !privateShell)
     val currentContextObjectId = if (contextualRoute?.substringBefore("?") == "file_tools") livePageActions?.owner?.objectId else contextObjectId
     androidx.compose.runtime.DisposableEffect(livePageActions?.owner) {
         onDispose { contextJob?.cancel(); contextJob = null }
     }
 
     val orbDestinations = remember(kidsMode) { ShellOrbCatalog.globalDestinations(kidsMode) }
-    val orbContext = remember(contextualRoute, kidsMode, currentContextObjectId, livePageActions) {
-        val page = if (!kidsMode && currentContextObjectId != null)
+    val orbContext = remember(contextualRoute, kidsMode, currentContextObjectId, livePageActions, privateShell, paused.paused) {
+        val page = if (!kidsMode && !privateShell && !paused.paused && currentContextObjectId != null)
             listOf(com.halo.app.ui.presence.HaloOrbContextAction("page-context", "Use this page as context", HaloGlyph.NOTE)) else emptyList()
         val actions = livePageActions?.actions?.map { com.halo.app.ui.presence.HaloOrbContextAction("page:${it.id}", it.title, it.glyph,
             enabled = it.enabled, disabledReason = if (it.enabled) null else livePageActions.owner.disabledReasonFor(it.id), pageLease = livePageActions) }
             ?: if (kidsMode && contextualRoute != "home") ShellOrbCatalog.context(contextualRoute, true) else emptyList()
         actions.filterNot { it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS } + page +
-            if (!kidsMode && contextualRoute != "home") listOf(com.halo.app.ui.presence.HaloOrbContextAction("type-message", "Type a message", HaloGlyph.NOTE)) else emptyList()
+            if (!kidsMode && !privateShell && !paused.paused && contextualRoute != "home") listOf(com.halo.app.ui.presence.HaloOrbContextAction("type-message", "Type a message", HaloGlyph.NOTE)) else emptyList()
     }
     val orbOverride = remember { androidx.compose.runtime.mutableStateOf<com.halo.app.ui.presence.ShellOrbOverride?>(null) }
                 val liveHome by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val guideStarting by homeViewModel.listeningRequested.collectAsStateWithLifecycle()
                 val guideSubmission by homeViewModel.textSubmission.collectAsStateWithLifecycle()
                 val voiceFields by com.halo.app.ui.components.VoiceFieldCancellation.activeFields.collectAsStateWithLifecycle()
+    val wallpaperActivity = when {
+        paused.paused -> com.halo.app.wallpaper.HaloAmbient.IDLE
+        kidsMode -> com.halo.app.wallpaper.HaloAmbient.IDLE
+        liveHome.runtimeWaitingState == com.halo.runtime.cognition.agent.AgentRunState.WAITING_FOR_APPROVAL ->
+            com.halo.app.wallpaper.HaloAmbient.NEEDS_YOU
+        voiceFields.isNotEmpty() || liveHome.inputStatus.capturing ||
+            liveHome.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Listening ->
+            com.halo.app.wallpaper.HaloAmbient.LISTENING
+        guideSubmission.busy || liveHome.runtimeState in setOf(
+            com.halo.app.ui.glass.material.HaloRuntimeState.Reasoning,
+            com.halo.app.ui.glass.material.HaloRuntimeState.Executing,
+            com.halo.app.ui.glass.material.HaloRuntimeState.Planning) -> com.halo.app.wallpaper.HaloAmbient.WORKING
+        else -> com.halo.app.wallpaper.HaloAmbient.IDLE
+    }
+    LaunchedEffect(wallpaperActivity, shellLifecycle) {
+        shellLifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+            com.halo.app.wallpaper.HaloWallpaperActivity.show(wallpaperActivity)
+            try { kotlinx.coroutines.awaitCancellation() }
+            finally { com.halo.app.wallpaper.HaloWallpaperActivity.show(com.halo.app.wallpaper.HaloAmbient.IDLE) }
+        }
+    }
     val shellGuideIdle = voiceFields.isEmpty() && (!kidsMode || orbOverride.value?.interaction?.canStop != true) && !guideStarting && !guideSubmission.busy && !guideSubmission.needsRecovery && !liveHome.inputStatus.capturing &&
                         !liveHome.speechActive && !liveHome.speechProcessing &&
                         liveHome.runtimeState == com.halo.app.ui.glass.material.HaloRuntimeState.Idle &&
                         (liveHome.sessionState == com.halo.sdk.provider.CognitiveSessionState.Idle ||
                             liveHome.sessionState is com.halo.sdk.provider.CognitiveSessionState.Completed ||
                             liveHome.sessionState is com.halo.sdk.provider.CognitiveSessionState.Failed)
+    val zone6Sheets = remember(backStackEntry?.id) { com.halo.app.ui.zone6.Zone6SheetHost() }
+    val pageGuidance = remember(backStackEntry?.id, kidsMode) {
+        com.halo.app.ui.zone6.HaloPageGuidance(ManualDependencyGraph.storage)
+    }
     androidx.compose.runtime.CompositionLocalProvider(
+        com.halo.app.ui.zone6.LocalZone6SheetHost provides if (shellOrbVisible) zone6Sheets else null,
+        com.halo.app.ui.zone6.LocalHaloPageGuidance provides pageGuidance.takeIf { shellOrbVisible && !kidsMode },
         com.halo.app.ui.theme.LocalHaloDecorationPaused provides (!shellGuideIdle || zone5GuideSession.presentationActive ||
             livePageActions?.owner?.guidanceBlocked == true || showTypedMessage ||
             WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0),
         com.halo.app.ui.zone5.LocalZone5HelpReadAloud provides { text ->
-            com.halo.app.ui.components.HaloVoiceTextActions(text, onText = {}, allowDictation = false, readText = text)
+            com.halo.app.ui.components.HaloVoiceTextActions(text, onText = {}, allowDictation = false, readText = text,
+                readCategory = com.halo.sdk.provider.RemoteDataCategory.TEXT)
         },
         com.halo.app.ui.workspace.LocalWorkspaceExport provides if (kidsMode) null else exportOwner::request,
         com.halo.app.ui.presence.LocalShellHaloOrb provides shellOrbVisible,
@@ -446,7 +498,7 @@ fun AppShell(
         com.halo.app.ui.zone5.LocalZone5GuideSession provides zone5GuideSession,
         com.halo.app.ui.presence.LocalShellUtilityBand provides utilityBand,
         com.halo.app.ui.presence.LocalShellPageOwnerFilter provides pageOwnerFilter) {
-    ShellTypedMessageSheet(homeViewModel, showTypedMessage && shellOrbVisible && !kidsMode) { showTypedMessage = false }
+    ShellTypedMessageSheet(homeViewModel, showTypedMessage && shellOrbVisible && !kidsMode && !privateShell && !paused.paused) { showTypedMessage = false }
     if (!kidsMode) com.halo.app.ui.screens.devices.HeyCyanWifiPeerDialog()
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -482,13 +534,15 @@ fun AppShell(
                 HaloZone(contextualRoute, (this@BoxWithConstraints.maxHeight -
                     WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() -
                     WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()).coerceAtLeast(0.dp),
-                    compact = this@BoxWithConstraints.maxHeight < 520.dp || WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0,
+                    compact = this@BoxWithConstraints.maxHeight < 480.dp || WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0,
                     actions = orbContext, onAction = dispatchContext, onNavigate = ::navigateSafely,
                     attentionCount = if (kidsMode) 0 else inbox.items.count { it.active } + activity.events.filter { it.status == com.halo.app.ui.screens.activity.ActivityStatus.PENDING }.mapNotNull { it.reviewRunId }.distinct().size,
                     utility = {
-                        com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
-                            onVoiceSettings = { navigateSafely("settings/voice/output") })
-                        contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
+                        if (!privateShell && (contextualRoute != "home" || kidsMode)) {
+                            com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
+                                onVoiceSettings = { navigateSafely("settings/voice/output") })
+                            contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
+                        }
                         if (currentRoute?.startsWith("activity") == true || currentRoute == "notifications")
                             BellSubviewControls(currentRoute, ::navigateSafely, { navController.popBackStack() })
                         utilityBand.value?.takeIf { pageOwnerFilter(it.owner) }?.let { com.halo.app.ui.presence.RenderShellUtilityBand(it) }
@@ -516,10 +570,14 @@ fun AppShell(
         Row(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)
             .semantics { testTagsAsResourceId = true }.testTag("halo-working-area")) {
         Column(Modifier.weight(1f).fillMaxSize()) {
+        if (shellOrbVisible && contextualRoute == "home" && !kidsMode) {
+            com.halo.app.ui.components.HaloReadAloudBar(onVoiceSettings = { navigateSafely("settings/voice/output") })
+            contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
+        }
         kidsLoadError?.let { Text(uiText(it), Modifier.padding(16.dp)) }
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize())
+            com.halo.app.wallpaper.HaloWallpaperBackdrop(Modifier.matchParentSize(), kidsMode)
             SharedTransitionLayout {
             com.halo.app.ui.design.HaloLabBoundary(
                 enabled = currentRoute?.let { com.halo.app.ui.screens.settings.isDeveloperDestination(it) } == true,
@@ -573,9 +631,11 @@ fun AppShell(
                         navController.navigate("home") { popUpTo("guided_setup") { inclusive = true }; launchSingleTop = true }
                     })
                 }
-                composable(Screen.Home.route) {
+                composable(Screen.Home.route) { homeEntry ->
+                    val homeEntryScope = rememberCoroutineScope()
+                    var makingNote by remember { androidx.compose.runtime.mutableStateOf(false) }
                     if (kidsMode) com.halo.app.ui.screens.kids.KidsModeScreen(homeViewModel, onRequestPermissions,
-                        onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") })
+                        onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") }, onOpenTool = ::navigateSafely)
                     else Column(Modifier.fillMaxSize()) {
                         HomeScreen(
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
@@ -588,10 +648,102 @@ fun AppShell(
                         onAssistantSetup = { navigateSafely("android_assistant") },
                         onOpenProvider = { navigateSafely("settings/intelligence/providers/${android.net.Uri.encode(it)}") },
                         onRequestMicrophonePermission = onRequestPermissions,
+                        onOpenZone6HomeDestination = ::navigateSafely,
+                        onStartNote = if (makingNote) null else ({
+                            makingNote = true
+                            homeEntryScope.launch {
+                                try {
+                                    val note = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                        ManualDependencyGraph.notebookRepository.createNote()
+                                    }
+                                    if (navController.currentBackStackEntry?.id == homeEntry.id)
+                                        navigateSafely("notebook/note/" + android.net.Uri.encode(note.id))
+                                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                                    throw cancelled
+                                } catch (_: Exception) {
+                                    contextNotice = "Could not start a note. Try again."
+                                } finally { makingNote = false }
+                            }
+                        }),
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@composable,
                         allowSharedOrb = com.halo.app.ui.presence.canShareHaloOrb(true, reducedMotion)
                     )
+                    }
+                }
+                composable("sheets?objectId={objectId}&sourceVersion={sourceVersion}", arguments = listOf(
+                    navArgument("objectId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("sourceVersion") { type = NavType.StringType; nullable = true; defaultValue = null },
+                )) { entry ->
+                    com.halo.app.ui.toolkit.HaloSheetsRoute(entry.savedStateHandle, entry.arguments?.getString("objectId"),
+                        entry.arguments?.getString("sourceVersion")) { navController.popBackStack() }
+                }
+                composable("scan") {
+                    com.halo.app.ui.toolkit.HaloScanScreen({ navController.popBackStack() }, ::navigateSafely)
+                }
+                composable("translate") {
+                    com.halo.app.ui.toolkit.HaloScanScreen({ navController.popBackStack() }, ::navigateSafely,
+                        initialMode = com.halo.app.ui.toolkit.HaloScanMode.TRANSLATE)
+                }
+                composable("magnifier") {
+                    com.halo.app.ui.toolkit.HaloScanScreen({ navController.popBackStack() }, ::navigateSafely, magnifier = true)
+                }
+                composable("record") {
+                    com.halo.app.ui.toolkit.HaloRecordScreen({ navController.popBackStack() }, ::navigateSafely)
+                }
+                composable("album") {
+                    com.halo.app.ui.toolkit.HaloAlbumScreen({ navController.popBackStack() }, ::navigateSafely)
+                }
+                composable("bedside") {
+                    com.halo.app.nativeactions.HaloBedsideScreen({ navController.popBackStack() }, requestVoiceModeFromSurface)
+                }
+                composable("kids_scan") {
+                    if (kidsMode) com.halo.app.ui.toolkit.HaloKidsScanScreen({ navController.popBackStack() }, ::navigateSafely)
+                    else LaunchedEffect(Unit) { navigateSafely("home") }
+                }
+                composable("kids_day") {
+                    if (kidsMode) com.halo.app.ui.toolkit.HaloKidsDayScreen { navController.popBackStack() }
+                    else LaunchedEffect(Unit) { navigateSafely("home") }
+                }
+                composable("vault") {
+                    com.halo.app.nativeactions.HaloVaultScreen { navController.popBackStack() }
+                }
+                composable("pause") {
+                    com.halo.app.privacy.HaloPauseScreen { navController.popBackStack() }
+                }
+                composable("follow_me") {
+                    com.halo.app.ui.toolkit.HaloFollowMeScreen({ navController.popBackStack() },
+                        { navigateSafely("devices") })
+                }
+                composable("private_chat") {
+                    com.halo.app.ui.toolkit.HaloPrivateChatScreen { navController.popBackStack() }
+                }
+                composable("at_a_glance") {
+                    com.halo.app.ui.toolkit.HaloAtAGlance({ navController.popBackStack() }, ::navigateSafely)
+                }
+                composable("family") {
+                    com.halo.app.ui.toolkit.HaloFamilyScreen { navController.popBackStack() }
+                }
+                composable("checkin") {
+                    com.halo.app.ui.toolkit.HaloMorningCheckIn { navController.popBackStack() }
+                }
+                composable("emergency") {
+                    com.halo.app.ui.toolkit.HaloEmergencyEditor { navController.popBackStack() }
+                }
+                composable("on_move") {
+                    com.halo.app.ui.toolkit.HaloOnMoveScreen({ navController.popBackStack() }, ::navigateSafely)
+                }
+                composable("winddown") {
+                    com.halo.app.ui.toolkit.HaloWindDownScreen({ navController.popBackStack() }, ::navigateSafely)
+                }
+                composable("focus") {
+                    com.halo.app.ui.toolkit.HaloFocusScreen({ navController.popBackStack() }, ::navigateSafely)
+                }
+                composable("quick_note") { entry ->
+                    LaunchedEffect(entry) {
+                        navController.popBackStack()
+                        performNavigation("notebook")
+                        ManualDependencyGraph.notebookViewModel.createNote()
                     }
                 }
                 composable("screen/organizer?recordId={recordId}&createKind={createKind}&occurrenceStart={occurrenceStart}", arguments = listOf(navArgument("recordId") { type = NavType.StringType; nullable = true; defaultValue = null },
@@ -624,7 +776,8 @@ fun AppShell(
                     })
                     SourcesScreen(model, null, null, onBack = { if (!navController.popBackStack()) navigateSafely("home") },
                         onSource = { id, item -> navigateSafely(EverydayRoutes.source(id, item)) },
-                        onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) })
+                        onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) },
+                        onWidgetsDestination = ::navigateSafely)
                 }
                 composable("screen/source?sourceId={sourceId}&itemId={itemId}", arguments = listOf(
                     navArgument("sourceId") { type = NavType.StringType; defaultValue = "" },
@@ -635,7 +788,8 @@ fun AppShell(
                     SourcesScreen(model, entry.arguments?.getString("sourceId"), entry.arguments?.getString("itemId"),
                         onBack = { if (!navController.popBackStack()) navigateSafely("home") },
                         onSource = { id, item -> navigateSafely(EverydayRoutes.source(id, item)) },
-                        onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) })
+                        onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) },
+                        onWidgetsDestination = ::navigateSafely)
                 }
                 composable("study?captureSource={captureSource}&goal={goal}&sourceVersion={sourceVersion}&sourceReference={sourceReference}", arguments = listOf(
                     navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null },
@@ -810,6 +964,8 @@ fun AppShell(
                             val kind = if (item?.type == WorkspaceObjectType.NOTE) "note" else "file"
                             navigateSafely("notebook/$kind/${android.net.Uri.encode(id)}")
                         } }, onConfigureVision = { navigateSafely("settings/intelligence/roles") },
+                            presentationStorage = ManualDependencyGraph.storage,
+                            onConfigureReadingVoice = { navigateSafely("settings/voice/output") },
                             onStartVoiceMode = requestVoiceModeFromSurface, activeTools = ManualDependencyGraph.activeStudyToolsOwner) { navController.popBackStack() }
                     }
                 }
@@ -1171,6 +1327,7 @@ fun AppShell(
                         viewModel = viewModel, onBack = { navController.popBackStack() },
                         onIntelligence = { navigateSafely("ai_settings") },
                         onVoice = { navigateSafely("voice_settings") },
+                        onTourRoute = ::navigateSafely,
                     ) else if (checkRoute == "technical_report") com.halo.app.ui.screens.settings.TechnicalReportScreen(
                         viewModel = viewModel, onBack = { navController.popBackStack() },
                     ) else SystemCheckScreen(
@@ -1465,6 +1622,7 @@ fun AppShell(
             }
             } // Lab boundary
             } // SharedTransitionLayout; external Activity cannot share across windows
+            if (shellOrbVisible) Zone6SheetLayer(zone6Sheets)
         }
         }
     }

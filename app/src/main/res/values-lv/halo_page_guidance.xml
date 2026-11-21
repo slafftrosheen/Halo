@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="coach_show">Parādi man</string>
+    <string name="coach_explore">Izpētīt šo ekrānu</string>
+    <string name="coach_watch">Noskaties un izmēģini</string>
+    <string name="coach_again">Vēlreiz</string>
+    <string name="coach_alternative">Izdari manā vietā</string>
+    <string name="coach_got_it">Sapratu</string>
+    <string name="coach_read_all">Nolasīt visu</string>
+    <string name="coach_stop_showing">Paslēpt norādes</string>
+    <string name="coach_control_hint">Šajā lapā pieejams “%1$s”. Citas darbības ir sadaļā “Vairāk”.</string>
+    <string name="coach_talk">Runāt ar halo</string>
+    <string name="coach_places">Atvērt sadaļas</string>
+    <string name="coach_page_actions">Citas darbības</string>
+    <string name="coach_ring_hold">Turi gredzenu</string>
+    <string name="coach_ring_hold_body">Turi gredzenu, lai atvērtu sadaļas. Īss pieskāriens sāk sarunu ar halo.</string>
+    <string name="coach_dock_swipe">Velc uz augšu no gredzena</string>
+    <string name="coach_dock_swipe_body">Sāc pie gredzena un velc augšup, lai atvērtu sadaļas.</string>
+    <string name="coach_studio_move">Pārvietoties pa audeklu</string>
+    <string name="coach_studio_move_body">Velc audeklu, lai to pārvietotu, vai savelc pirkstus, lai mainītu mērogu.</string>
+    <string name="coach_note_dictate">Turi, lai diktētu</string>
+    <string name="coach_note_dictate_body">Turi piezīmes mikrofonu garai diktēšanai. Pārbaudi vārdus pirms pievienošanas.</string>
+    <string name="coach_canvas_link">Velc, lai savienotu kartītes</string>
+    <string name="coach_canvas_link_body">Savienošanas režīmā velc no vienas kartītes uz otru. Pārbaudi saiti pirms saglabāšanas.</string>
+    <string name="coach_kids_demos">Žestu paraugi</string>
+    <string name="coach_kids_demo_body">Pieskaries, lai dzirdētu nosaukumu, un vēlreiz, lai izvēlētos.</string>
+    <string name="coach_edit_page">Pielāgot šo lapu</string>
+    <string name="coach_practice_reminder">Atkārtošanas atgādinājums plkst. 18.00</string>
+    <string name="coach_practice_reminder_body">Atgādināt tikai tad, kad kartītes jāatkārto.</string>
+    <string name="coach_practice_due">Laiks atkārtot mācību kartītes.</string>
+</resources>

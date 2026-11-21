@@ -61,19 +61,19 @@ class SpeechRule(
             com.halo.cognition.language.ConversationSemantics.isExplanation(transcript))
             return RuleMatch(confidence = confidence.coerceAtLeast(0.7f), intent = QuestionIntent,
                 consumedTokens = consumedTokens, diagnostics = "Conversational response")
+        val actionReason = com.halo.cognition.language.ConversationSemantics.actionReason(transcript)
+        if (actionReason == com.halo.cognition.language.ToolActionReason.EXPLICIT_TOOL_REQUEST)
+            return RuleMatch(confidence = 0.99f, intent = com.halo.cognition.language.ToolActionIntent(actionReason),
+                consumedTokens = consumedTokens, diagnostics = "Explicit request for a Halo tool")
         val native = com.halo.cognition.language.NativeCommandParser.parse(transcript)
         native?.takeUnless { it is com.halo.cognition.language.NativeOpenApplicationIntent }?.let { intent ->
             return RuleMatch(confidence = 0.99f, intent = intent, consumedTokens = consumedTokens,
                 diagnostics = "Resolved native command slots")
         }
-        // An explicit request for saved personal material cannot be answered from
-        // model knowledge alone, even if the optional classifier calls it a summary.
-        if (com.halo.cognition.language.ConversationSemantics.actionReason(transcript) ==
-            com.halo.cognition.language.ToolActionReason.WORKSPACE_LOOKUP) {
-            return RuleMatch(confidence = 0.95f,
-                intent = com.halo.cognition.language.ToolActionIntent(com.halo.cognition.language.ToolActionReason.WORKSPACE_LOOKUP),
+        // Saved material requires its owner even if the optional classifier would answer from model knowledge.
+        if (actionReason == com.halo.cognition.language.ToolActionReason.WORKSPACE_LOOKUP)
+            return RuleMatch(confidence = 0.95f, intent = com.halo.cognition.language.ToolActionIntent(actionReason),
                 consumedTokens = consumedTokens, diagnostics = "Saved context requires owner reads")
-        }
         // Native controls with resolved slots are above this boundary.
         // For everything else, the tiny on-device model may distinguish
         // an actual request to act from discussion of an action. It never
@@ -90,8 +90,7 @@ class SpeechRule(
                 ModelIntentDecision.ACTION -> return RuleMatch(
                     confidence = 0.92f,
                     intent = com.halo.cognition.language.ToolActionIntent(
-                        com.halo.cognition.language.ConversationSemantics.actionReason(transcript)
-                            ?: com.halo.cognition.language.ToolActionReason.ACTION_INTENT),
+                        actionReason ?: com.halo.cognition.language.ToolActionReason.ACTION_INTENT),
                     consumedTokens = consumedTokens, diagnostics = "Local intent: tool-capable route")
                 ModelIntentDecision.UNCERTAIN -> return RuleMatch(
                     confidence = 0.7f, intent = com.halo.cognition.language.IntentNeedsClarification(
@@ -106,7 +105,7 @@ class SpeechRule(
             confidence = 0.99f, intent = OpenIntent,
             entities = listOf(ApplicationEntity(native.application.titlecaseWords(), 0.99f)),
             consumedTokens = consumedTokens, diagnostics = "Resolved application command")
-        com.halo.cognition.language.ConversationSemantics.actionReason(transcript)?.let { reason ->
+        actionReason?.let { reason ->
             return RuleMatch(confidence = 0.95f, intent = com.halo.cognition.language.ToolActionIntent(reason),
                 consumedTokens = consumedTokens, diagnostics = reason.name)
         }

@@ -3,7 +3,6 @@ package com.halo.app.ui.screens.study
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,47 +19,82 @@ import com.halo.app.ui.fx.haloTrace
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 
-internal fun LearningStage.displayLabel(): String = when (this) {
-    LearningStage.START -> "Start"
-    LearningStage.DISCOVER -> "What do you already know?"
-    LearningStage.EXPLAIN -> "One idea at a time"
-    LearningStage.EXPLORE -> "Explore"
-    LearningStage.PRACTICE -> "Try it yourself"
-    LearningStage.REFLECT -> "What I learned"
-    LearningStage.CONTINUE -> "Continue learning"
+internal enum class LearnPathStep(val title: String, val glyph: HaloGlyph) {
+    CHOOSE("Choose", HaloGlyph.QUESTION),
+    LOOK("Look", HaloGlyph.READ_MODE),
+    TRY("Try", HaloGlyph.NOTE),
+    HELP("Help", HaloGlyph.THINK),
+    KEEP("Keep", HaloGlyph.SUCCESS),
 }
 
-/** Position in a saved journey, not a score or a measure of mastery. */
+internal fun learnPathStep(stage: LearningStage, helpActive: Boolean = false, finished: Boolean = false): LearnPathStep =
+    when {
+        finished || stage == LearningStage.REFLECT || stage == LearningStage.CONTINUE -> LearnPathStep.KEEP
+        helpActive -> LearnPathStep.HELP
+        stage == LearningStage.START -> LearnPathStep.CHOOSE
+        stage == LearningStage.PRACTICE -> LearnPathStep.TRY
+        else -> LearnPathStep.LOOK
+    }
+
 @Composable
-internal fun StudyJourneyProgress(stage: LearningStage, kids: Boolean = false) {
-    // K02 groups the persisted journey into five child-facing phases.
-    // This is navigation progress, never a knowledge or completion score.
-    val position = if (kids) when (stage) {
-        LearningStage.START, LearningStage.DISCOVER -> 0
-        LearningStage.EXPLAIN -> 1
-        LearningStage.EXPLORE -> 2
-        LearningStage.PRACTICE -> 3
-        LearningStage.REFLECT, LearningStage.CONTINUE -> 4
-    } else stage.ordinal
-    val total = if (kids) 5 else LearningStage.entries.size
-    val label = uiText("Step %1\$d of %2\$d · %3\$s", position + 1,
-        total, uiText(stage.displayLabel()))
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
-            contentDescription = label
-            progressBarRangeInfo = ProgressBarRangeInfo(position.toFloat(), 0f..(total - 1).toFloat(), total - 2)
-        }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            repeat(total) { index ->
-                Box(Modifier.weight(1f).height(if (kids) 8.dp else 4.dp).background(
-                    when {
-                        index == position -> MaterialTheme.colorScheme.primary
-                        index < position -> MaterialTheme.colorScheme.primary.copy(alpha = .6f)
-                        else -> MaterialTheme.colorScheme.outlineVariant
-                    }, HaloShapes.pill))
+internal fun learnPathLabel(stage: LearningStage, finished: Boolean = false): String {
+    val step = learnPathStep(stage, finished = finished)
+    return uiText("Step %1\$d of %2\$d · %3\$s", step.ordinal + 1, LearnPathStep.entries.size, uiText(step.title))
+}
+
+/** Navigation through the saved journey. Help is optional and never stands for a grade. */
+@Composable
+internal fun StudyJourneyProgress(
+    stage: LearningStage,
+    kids: Boolean = false,
+    helpActive: Boolean = false,
+    finished: Boolean = false,
+) {
+    val step = learnPathStep(stage, helpActive, finished)
+    val steps = if (kids) LearnPathStep.entries.drop(1) else LearnPathStep.entries
+    val position = steps.indexOf(step).coerceAtLeast(0)
+    val activeTitle = uiText(if (kids && step == LearnPathStep.KEEP) "Done" else steps[position].title)
+    val label = uiText("Step %1\$d of %2\$d · %3\$s", position + 1, steps.size, activeTitle)
+    val colors = MaterialTheme.colorScheme
+    val mint = com.halo.app.ui.theme.HaloMint
+    val showLabels = LocalDensity.current.fontScale < 1.5f
+    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp).semantics(mergeDescendants = true) {
+        progressBarRangeInfo = ProgressBarRangeInfo(position.toFloat(), 0f..steps.lastIndex.toFloat(), steps.size - 2)
+    }, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(label, style = MaterialTheme.typography.labelLarge, color = colors.primary)
+        Row(Modifier.fillMaxWidth().clearAndSetSemantics {}, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            steps.forEachIndexed { index, marker ->
+                val isCurrent = index == position
+                val visited = index < position && marker != LearnPathStep.HELP
+                val color = when {
+                    visited || finished && isCurrent -> mint
+                    kids && isCurrent -> colors.primary
+                    isCurrent && marker == LearnPathStep.HELP ->
+                        com.halo.app.ui.theme.brandAccent(false, com.halo.app.ui.theme.HaloAccent.LILAC).fill
+                    isCurrent -> colors.primary
+                    else -> colors.outlineVariant
+                }
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(Modifier.fillMaxWidth().height(if (kids) 24.dp else 4.dp)
+                        .background(color, HaloShapes.pill), contentAlignment = Alignment.Center) {
+                        if (kids) HaloIcon(marker.glyph, null, Modifier.size(16.dp),
+                            tint = when {
+                                visited || finished && isCurrent ->
+                                    com.halo.app.ui.theme.brandAccent(false, com.halo.app.ui.theme.HaloAccent.MINT).onFill
+                                isCurrent -> colors.onPrimary
+                                else -> colors.onSurfaceVariant
+                            })
+                    }
+                    if (showLabels) {
+                        val title = uiText(if (kids && marker == LearnPathStep.KEEP) "Done" else marker.title)
+                        Text(title, style = MaterialTheme.typography.labelSmall,
+                            color = if (isCurrent) colors.onSurface else colors.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                }
             }
         }
-        if (!kids) Text(label, style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -100,7 +134,7 @@ internal fun StudyReviewEntry(count: Int, enabled: Boolean, onStart: () -> Unit)
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             StudyCardIcon(HaloGlyph.MEMORY)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(uiText("Ready to remember"), style = MaterialTheme.typography.titleSmall,
+                Text(uiText("Keep practising"), style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold)
                 Text(uiText("Ready to review: %1\$d", count), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -129,19 +163,13 @@ private fun StudyCardIcon(glyph: HaloGlyph) {
 }
 
 @Composable
-internal fun StudyEmptyHome(onStart: () -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(top = 48.dp, bottom = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        com.halo.app.ui.presence.HaloSignalFace(
-            com.halo.app.ui.presence.HaloSignalPresentation(), size = 84.dp,
-            contentDescription = uiText("halo"))
-        Text(uiText("Learn anything, at your pace"), style = MaterialTheme.typography.titleMedium,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-        Text(uiText("Choose a topic, add a photo, a PDF or a note, and halo guides you step by step."),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-        StudyFocusAction("Start a new lesson", HaloGlyph.NOTE, true, onStart, guide = true)
+internal fun StudyChooseLesson(enabled: Boolean, onTopic: () -> Unit, onMaterial: () -> Unit) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(uiText("Choose what to learn"), style = MaterialTheme.typography.titleMedium)
+        StudyFocusAction("Learn a topic", HaloGlyph.QUESTION, enabled, onTopic)
+        OutlinedButton(onClick = onMaterial, enabled = enabled,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            StudyActionLabel(HaloGlyph.FILE, "My homework or notes")
+        }
     }
 }

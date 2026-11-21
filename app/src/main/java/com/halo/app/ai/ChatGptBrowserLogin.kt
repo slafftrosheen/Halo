@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.halo.providers.openai.ChatGptAccount
+import com.halo.providers.openai.ChatGptSignInException
+import com.halo.providers.openai.ChatGptSignInFailure
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.net.InetAddress
@@ -23,11 +25,12 @@ class ChatGptBrowserLogin(
 ) {
     private val mutableState = MutableStateFlow(ChatGptLoginState())
     val state = mutableState.asStateFlow()
-    private var job: Job? = null
+    @Volatile private var job: Job? = null
     @Synchronized fun start() {
-        check(allowed() && onlineAllowed() && job?.isActive != true) { "Open Power mode and account settings first" }
+        check(allowed() && onlineAllowed() && job?.isCompleted != false) { "Open Power mode and account settings first" }
         mutableState.value = ChatGptLoginState(true, "Finish signing in in your browser, then return to Halo.")
         job = scope.launch {
+            var message = "ChatGPT sign-in stopped. You can try again."
             try {
                 withTimeout(5 * 60_000L) {
                     coroutineScope {
@@ -37,20 +40,35 @@ class ChatGptBrowserLogin(
                     }
                 }
                 changed()
-                mutableState.value = ChatGptLoginState(false, if (account.state.value.subscriptionAccess)
+                message = if (account.state.value.subscriptionAccess)
                     "ChatGPT connected. Fetch your models to choose an answer model."
-                    else "Signed in, but ChatGPT did not grant subscription access to this account.")
+                    else "Signed in, but ChatGPT did not grant subscription access to this account."
+            } catch (_: TimeoutCancellationException) {
+                message = "ChatGPT sign-in timed out. Start again and return to Halo after approving access."
             } catch (cancelled: CancellationException) {
-                mutableState.value = ChatGptLoginState(false, "ChatGPT sign-in stopped. You can try again.")
                 throw cancelled
+            } catch (failure: ChatGptSignInException) {
+                message = when (failure.failure) {
+                    ChatGptSignInFailure.BROWSER_DENIED -> "ChatGPT sign-in was declined in the browser."
+                    ChatGptSignInFailure.REGISTRATION_INCOMPLETE -> "ChatGPT did not complete app registration. Try signing in again."
+                    ChatGptSignInFailure.POLICY_BLOCKED -> "Unlock your phone, open Halo and enable Power to finish signing in."
+                    ChatGptSignInFailure.DNS, ChatGptSignInFailure.NETWORK ->
+                        "Could not reach ChatGPT. Check your connection and try signing in again."
+                    ChatGptSignInFailure.SERVER_REJECTED -> "ChatGPT rejected the sign-in request. Try signing in again."
+                }
+            } catch (_: android.content.ActivityNotFoundException) {
+                message = "Halo could not open a browser. Set a default browser and try signing in again."
             } catch (_: Exception) {
-                mutableState.value = ChatGptLoginState(false, "ChatGPT sign-in could not finish. Return to Halo and try again.")
-            } finally { withContext(NonCancellable) { account.cancelSignIn() } }
+                message = "ChatGPT sign-in could not finish. Return to Halo and try again."
+            } finally {
+                withContext(NonCancellable) { account.cancelSignIn() }
+                mutableState.value = ChatGptLoginState(false, message)
+            }
         }
     }
     fun cancel() { job?.cancel() }
     suspend fun disconnect(expectedRevision: String): Boolean {
-        check(allowed() && !state.value.busy && account.state.value.revision == expectedRevision) { "Account changed. Read its status again." }
+        check(allowed() && job?.isCompleted != false && account.state.value.revision == expectedRevision) { "Account changed. Read its status again." }
         val revoked = account.disconnect(expectedRevision, revokeRemote = onlineAllowed())
         changed()
         mutableState.value = ChatGptLoginState(false, if (revoked) "ChatGPT disconnected."
@@ -112,7 +130,11 @@ class ChatGptBrowserLogin(
                 if (accepted != null) {
                     // On phones the browser may retain foreground/network authority after the
                     // callback. Finish only after the user returns, within the existing timeout.
-                    finishChatGptAfterReturn(allowed, onlineAllowed) { account.complete(accepted) }
+                    mutableState.value = ChatGptLoginState(true, "Return to Halo to finish checking your ChatGPT connection.")
+                    finishChatGptAfterReturn(allowed, onlineAllowed) {
+                        mutableState.value = ChatGptLoginState(true, "Checking your ChatGPT connection…")
+                        account.complete(accepted)
+                    }
                     break
                 }
             }

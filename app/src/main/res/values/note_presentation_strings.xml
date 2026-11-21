@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="note_look_title">Your notes</string>
+    <string name="note_look_paper">Paper</string>
+    <string name="note_look_plain">Plain</string>
+    <string name="note_look_lined">Lined</string>
+    <string name="note_look_grid">Grid</string>
+    <string name="note_look_letters">Letters</string>
+    <string name="note_look_easy_read">Easy-read</string>
+    <string name="note_look_book">Book</string>
+    <string name="note_look_round">Round</string>
+    <string name="note_look_spacing">Space between lines</string>
+    <string name="note_look_normal">Normal</string>
+    <string name="note_look_roomy">Roomy</string>
+    <string name="note_look_extra">Extra</string>
+    <string name="note_look_easy_view">Larger note text</string>
+    <string name="note_look_dictation">Show dictation controls</string>
+    <string name="note_look_read_back">Read back aloud</string>
+    <string name="note_look_read_controls">Show read-back controls</string>
+    <string name="note_look_preview">Market list\nPlants, cards and a notebook</string>
+</resources>

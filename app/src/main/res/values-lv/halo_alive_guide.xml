@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_guide_appearance">Iestatīsim kopā</string>
+    <string name="alive_guide_look">Kurš šķiet tuvāks jums?</string>
+    <string name="alive_guide_size">Cik lieliem jābūt elementiem?</string>
+    <string name="alive_guide_motion">Cik daudz kustības vēlaties?</string>
+    <string name="alive_guide_night">Mierīga nakts</string>
+    <string name="alive_guide_paper">Gaišs papīrs</string>
+    <string name="alive_guide_comfortable">Ērti</string>
+    <string name="alive_guide_bigger">Lielāk</string>
+    <string name="alive_guide_lively">Kustīgi</string>
+    <string name="alive_guide_calm">Mierīgi</string>
+    <string name="alive_guide_still">Nekustīgi</string>
+    <string name="alive_guide_this_one">Šo variantu</string>
+</resources>

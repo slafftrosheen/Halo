@@ -90,6 +90,10 @@ import com.halo.runtime.cognition.agent.*
 import com.halo.sdk.runtime.resource.ResourceId
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import com.halo.app.ui.zone6.Choose
+import com.halo.app.ui.zone6.editZone6PageOnHold
+import com.halo.app.ui.zone6.rememberZone6PageSetting
+import kotlinx.coroutines.withContext
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -116,6 +120,40 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, foc
         else -> ActivityFilter.HISTORY
     }
     val filtered = filterActivityStories(uiState.events, filter).filter {focusObjectId==null || it.objectId==focusObjectId}
+    val layout = rememberZone6PageSetting("activity.group")
+    var groupDraft by remember { mutableStateOf<String?>(null) }
+    val grouping = groupDraft ?: layout.value ?: "day"
+    val locale = LocalConfiguration.current.locales[0] ?: Locale.ENGLISH
+    val zone = ZoneId.systemDefault()
+    val dateFormat = remember(locale, zone) {
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale).withZone(zone)
+    }
+    val appContext = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    val packageNames = remember(filtered) { filtered.flatMap { it.appPackages }.toSet() }
+    val appNames by produceState<Map<String, String>>(emptyMap(), packageNames) {
+        value = withContext(Dispatchers.IO) {
+            packageNames.mapNotNull { name ->
+                @Suppress("DEPRECATION")
+                runCatching {
+                    val info = appContext.packageManager.getApplicationInfo(name, 0)
+                    name to appContext.packageManager.getApplicationLabel(info).toString()
+                }.getOrNull()
+            }.toMap()
+        }
+    }
+    val sections = remember(filtered, grouping, zone) {
+        filtered.groupBy { story ->
+            if (grouping == "app") when {
+                story.appPackages.size > 1 -> "multiple"
+                else -> story.appPackages.singleOrNull() ?: "halo"
+            } else story.timestamp.atZone(zone).toLocalDate().toString()
+        }.entries.toList()
+    }
+    val editLabel = stringResource(R.string.page_layout_edit)
+    val editLayout = { groupDraft = grouping }
+    if (groupDraft != null) layout.Choose("day", stringResource(R.string.page_activity_layout), listOf(
+        "day" to stringResource(R.string.page_activity_day), "app" to stringResource(R.string.page_activity_app)),
+        grouping, { groupDraft = it }, { groupDraft = null })
     val reviewCount = uiState.events.count { it.reviewRunId != null } +
         pendingUpdates.size + learningSuggestions.size
     val runningCount = uiState.events.count {
@@ -132,8 +170,8 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, foc
     }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var focusScrolled by remember(focusRunId,focusObjectId,focusEventId) { mutableStateOf(false) }
-    LaunchedEffect(focusRunId,focusObjectId,focusEventId,filtered, filter) {
-        val index = filtered.indexOfFirst(::matchesFocus)
+    LaunchedEffect(focusRunId,focusObjectId,focusEventId,sections, filter) {
+        val index = sections.flatMap { listOf(null) + it.value }.indexOfFirst { it != null && matchesFocus(it) }
         if (!focusScrolled && index >= 0) {
             listState.scrollToItem(index + 1)
             focusScrolled = true
@@ -147,8 +185,10 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, foc
         defaultDisabledActionReason = androidx.compose.ui.res.stringResource(com.halo.app.R.string.action_current_view)), listOf(
         ShellPageAction("page.activity.all", "Show all activity", HaloGlyph.ACTIVITY, focusObjectId!=null || focusEventId!=null) {onShowAll()},
         ShellPageAction("page.activity.details", "Details", HaloGlyph.QUESTION) { showActivityDetails = true },
+        ShellPageAction("page.activity.layout", editLabel, HaloGlyph.SETTINGS, onInvoke = editLayout),
         ShellPageAction("page.activity.review", "Show requests", HaloGlyph.APPROVAL, filter != ActivityFilter.REVIEW) { selectedFilter = ActivityFilter.REVIEW },
-        ShellPageAction("page.activity.history", "Show completed", HaloGlyph.ACTIVITY, filter != ActivityFilter.HISTORY) { selectedFilter = ActivityFilter.HISTORY },
+        ShellPageAction("page.activity.running", "Running", HaloGlyph.PLAY, filter != ActivityFilter.RUNNING) { selectedFilter = ActivityFilter.RUNNING },
+        ShellPageAction("page.activity.history", "Done", HaloGlyph.ACTIVITY, filter != ActivityFilter.HISTORY) { selectedFilter = ActivityFilter.HISTORY },
     ))
     if (showActivityDetails) androidx.compose.material3.AlertDialog(
         onDismissRequest = { showActivityDetails = false },
@@ -175,11 +215,17 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, foc
         if (!hostedUtility) {
             HaloScreenHeader(uiText("Activity"), trailing = { ActivityOverflowMenu { showActivityDetails = true } })
             activityUtility()
-        } else com.halo.app.ui.zone5.Zone5PageHeading(uiText("Activities"))
+        } else com.halo.app.ui.zone5.Zone5PageHeading(uiText("Activities"), modifier = Modifier.editZone6PageOnHold(editLayout))
 
         if (filtered.isEmpty() && !hasSupplementaryReview) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                HaloEmptyState(
+                if (uiState.events.isEmpty() && runningCount == 0 && reviewCount == 0) {
+                    com.halo.app.ui.zone6.Zone6RingEmptyState(
+                        androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_empty_activity_t),
+                        androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_empty_activity_p),
+                        HaloGlyph.ACTIVITY, listOf(com.halo.app.ui.zone6.Zone6Start(uiText("Open Home"), HaloGlyph.HOME, onHome)),
+                    )
+                } else HaloEmptyState(
                     uiText(if (uiState.events.isEmpty()) "No activity yet" else "Nothing in this view"),
                     uiText(if (uiState.events.isEmpty()) "Ask halo something on Home to get started."
                         else "There is nothing here right now. You can check another tab."),
@@ -234,9 +280,20 @@ fun ActivityScreen(viewModel: ActivityViewModel, focusRunId: String? = null, foc
 
             }
 
-                items(filtered, key = { it.id }) { event ->
-                    ActivityListItem(event, onOpenObject, onReviewRun, onHome,
-                        focused = event.id == "agent:$focusRunId" || focusRunId != null && focusRunId in event.relatedRunIds)
+                sections.forEach { (section, entries) ->
+                    item(key = "activity-group:$grouping:$section") {
+                        val label = if (grouping == "day") dateFormat.format(entries.first().timestamp)
+                            else when (section) {
+                                "halo" -> "halo"
+                                "multiple" -> stringResource(R.string.page_activity_multiple_apps)
+                                else -> appNames[section] ?: stringResource(R.string.page_activity_phone_app)
+                            }
+                        Text(label, style = MaterialTheme.typography.titleMedium)
+                    }
+                    items(entries, key = { it.id }) { event ->
+                        ActivityListItem(event, onOpenObject, onReviewRun, onHome,
+                            focused = event.id == "agent:$focusRunId" || focusRunId != null && focusRunId in event.relatedRunIds)
+                    }
                 }
             }
         }
@@ -597,6 +654,7 @@ data class ActivityStory(
     /** Durable AgentRunState.SUSPENDED, not a guessed paused timestamp. */
     val suspended: Boolean = false,
     val sourceRunId: String? = null,
+    val appPackages: Set<String> = emptySet(),
 )
 
 data class ActivityUiState(
@@ -917,6 +975,9 @@ internal fun AgentRun.toStory(): ActivityStory {
         suspended = state == AgentRunState.SUSPENDED,
         steps = activitySteps,
         sourceRunId = id.value,
+        appPackages = (steps.filterIsInstance<AgentStep.SemanticAppOperationRecorded>()
+            .mapNotNull { it.receipt.targetPackage } + steps.filterIsInstance<AgentStep.UiTransactionRecorded>()
+            .mapNotNull { it.transaction.observation?.packageName }).toSet(),
         planPresentation = planPresentation,
         typedPlanProgress = typedPlanProgress,
         planTitleKey = "Plan".takeIf { planPresentation != null },

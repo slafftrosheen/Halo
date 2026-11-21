@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="help_tour_chooser">Show me around</string>
+    <string name="help_tour_home">Home and the dock</string>
+    <string name="help_tour_talk">Talking to halo</string>
+    <string name="help_tour_studio">HaloStudio</string>
+    <string name="help_tour_notes">HaloNotes</string>
+    <string name="help_tour_canvas">HaloCanvas</string>
+    <string name="help_tour_learn">Learn</string>
+    <string name="help_tour_seen">Seen</string>
+    <string name="help_tour_replay">Replay</string>
+    <string name="help_tour_step">Step %1$d of %2$d</string>
+    <string name="help_tour_exit">Exit tour</string>
+    <string name="help_tour_place">The dock shows where you are and what halo is doing.</string>
+    <string name="help_tour_places_title">Places</string>
+    <string name="help_tour_places">Places opens destinations such as the library, devices and settings.</string>
+    <string name="help_tour_ring_title">The talk ring</string>
+    <string name="help_tour_ring">Tap the ring to talk. Hold it to open Places.</string>
+    <string name="help_tour_input_title">Type a message</string>
+    <string name="help_tour_input">Use the message field whenever you want to type instead of speak.</string>
+    <string name="help_tour_actions_title">Actions for this page</string>
+    <string name="help_tour_actions">These actions are available here: %1$s. Look under More if a button isn’t visible.</string>
+</resources>

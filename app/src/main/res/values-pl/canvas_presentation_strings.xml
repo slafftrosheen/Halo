@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="canvas_presentation_board">Tablica</string>
+    <string name="canvas_presentation_list">Lista</string>
+    <string name="canvas_presentation_show_board">Pokaż tablicę</string>
+    <string name="canvas_presentation_show_list">Tablica jako lista</string>
+    <string name="canvas_presentation_linked_to">Łącze do %1$s</string>
+    <string name="canvas_presentation_linked_from">Łącze z %1$s</string>
+    <string name="canvas_presentation_card_changed">Karta się zmieniła. Zamknij ją i otwórz ponownie.</string>
+</resources>

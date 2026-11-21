@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo 2027 · Quietly ahead · English. Lowercase "halo" everywhere. -->
+<resources>
+    <!-- 47 Hand it to halo -->
+    <string name="y27_plan_title">Here’s how I’ll do it</string>
+    <string name="y27_plan_start">Start</string>
+    <string name="y27_plan_not_now">Not now</string>
+    <string name="y27_tag_reads">reads</string>
+    <string name="y27_tag_asks_first">asks you first</string>
+    <string name="y27_hard_stop_rule">halo always stops and asks before money, messages to people, deleting or posting.</string>
+    <string name="y27_working_title">On it.</string>
+    <string name="y27_working_leave">You can leave — it keeps going and shows on your lock screen.</string>
+    <string name="y27_step_of">Step %1$d of %2$d</string>
+    <string name="y27_one_thing">One thing to check</string>
+    <string name="y27_receipt_title">Done · %1$d of %2$d</string>
+    <string name="y27_receipt_sub">Here’s exactly what I did. Each one can be undone.</string>
+    <string name="y27_undo_all">Undo all</string>
+    <!-- 48 Outside the app -->
+    <string name="y27_channel_name">What halo is doing</string>
+    <string name="y27_lock_safe">nothing private shown on the lock screen</string>
+    <string name="y27_ask_first_dots">Orange dots = I’ll ask you first</string>
+    <string name="y27_away_title">While you were away</string>
+    <string name="y27_circled">What you circled</string>
+    <string name="y27_screen_once">Screen used once, not kept</string>
+    <string name="y27_widget_working">halo · Working</string>
+    <!-- 49 Next for you -->
+    <string name="y27_next_for_you">Next for you</string>
+    <string name="y27_why_this">Why this?</string>
+    <string name="y27_why_title">Why I suggested this</string>
+    <string name="y27_fewer_like_this">Fewer like this</string>
+    <string name="y27_change_helpful">Change how helpful</string>
+    <string name="y27_forget_this">forget this</string>
+    <string name="y27_today_done">Today, done</string>
+    <string name="y27_left_tomorrow">Left for tomorrow</string>
+    <string name="y27_move_tomorrow">Move to tomorrow</string>
+    <string name="y27_level_title">How helpful should halo be?</string>
+    <string name="y27_level_only_ask">Only when I ask</string>
+    <string name="y27_level_only_ask_d">No suggestions. halo waits for you.</string>
+    <string name="y27_level_suggest">Suggest, I decide</string>
+    <string name="y27_level_suggest_d">One card at a time, at most 3 a day.</string>
+    <string name="y27_level_quiet">Quiet helper</string>
+    <string name="y27_level_quiet_d">Also does small safe things for you and tells you after.</string>
+    <string name="y27_never_while">Never suggest while</string>
+    <!-- 50 Trust -->
+    <string name="y27_on_phone">On this phone</string>
+    <string name="y27_used_online">Used online · %1$s</string>
+    <string name="y27_what_sent">What was sent?</string>
+    <string name="y27_privacy_glance">Privacy at a glance</string>
+    <string name="y27_privacy_week">This week, in plain numbers.</string>
+    <string name="y27_pause">Pause halo</string>
+    <string name="y27_paused">halo is paused</string>
+    <string name="y27_paused_sub">Nothing listens, learns or runs. Widgets say “Paused”.</string>
+    <string name="y27_alarms_still">Alarms and timers you already set still ring.</string>
+    <string name="y27_resume">Resume</string>
+    <string name="y27_private">Private · nothing kept</string>
+    <string name="y27_private_sub">No memory, no history, no suggestions from this chat. It disappears when you close it.</string>
+    <!-- 51 Across your things -->
+    <string name="y27_keep_going">Keep going on another device</string>
+    <string name="y27_follow_me">Follow me</string>
+    <string name="y27_follow_me_d">Questions move to the device you’re using</string>
+    <string name="y27_approve_watch">Approve on watch</string>
+    <string name="y27_approve_watch_d">Small OKs only — never payments</string>
+    <string name="y27_on_your_watch">On your watch</string>
+    <string name="y27_your_things">Your things</string>
+</resources>

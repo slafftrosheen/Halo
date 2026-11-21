@@ -92,23 +92,15 @@ class OpenRouterSpeechProvider(
     override fun streamPcm(request: SpeechRequest): Flow<PcmSpeech> = flow {
         val pinned = pinSpeechRequest(request)
         val version = epoch.get()
-        var text = pinned.text
-        require(text.length <= 120000) { "Speech text is too long" }
-        while (text.isNotBlank()) {
+        require(pinned.text.length <= 120_000) { "Speech text is too long" }
+        SpeechParagraphs.sections(pinned.text).forEach { section ->
             ensureCurrent(version)
-            var end = minOf(3000, text.length)
-            if (end < text.length) {
-                val boundary = text.lastIndexOf(' ', end - 1)
-                if (boundary >= 1500) end = boundary + 1
-                else if (text[end - 1].isHighSurrogate()) end--
-            }
-            emit(synthesizeChunk(pinned.copy(text = text.substring(0, end)), version))
-            text = text.substring(end)
+            emit(synthesizeChunk(pinned.copy(text = section.text), version))
         }
     }
     override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech {
         val pinned = pinSpeechRequest(request)
-        require(pinned.text.isNotBlank() && pinned.text.length <= 3000) { "Use streamed phrases for long speech" }
+        require(pinned.text.isNotBlank() && pinned.text.length <= SpeechParagraphs.MAX_REQUEST_CHARS) { "Use streamed phrases for long speech" }
         return synthesizeChunk(pinned, epoch.get())
     }
     private suspend fun synthesizeChunk(request: SpeechRequest, version: Long): PcmSpeech {
@@ -138,8 +130,11 @@ class OpenRouterSpeechProvider(
             call.enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     calls.remove(call)
-                    if (continuation.isActive) continuation.resumeWithException(if (call.isCanceled() || epoch.get() != version)
-                        CancellationException("Speech cancelled") else SpeechProviderException(SpeechErrorCode.NETWORK_ERROR, "OpenRouter speech could not connect"))
+                    if (continuation.isActive) continuation.resumeWithException(when {
+                        call.isCanceled() || epoch.get() != version -> CancellationException("Speech cancelled")
+                        e is RemoteDispatchBlocked -> e
+                        else -> SpeechProviderException(SpeechErrorCode.NETWORK_ERROR, "OpenRouter speech could not connect")
+                    })
                 }
                 override fun onResponse(call: Call, response: Response) {
                     val result = runCatching { response.use {
@@ -189,8 +184,10 @@ class OpenRouterSpeechProvider(
         const val VOICE = "openrouter_tts_voice"
         // https://ai.google.dev/gemini-api/docs/speech-generation#output-formats
         // Qualified against OpenRouter's dedicated speech endpoint, not chat audio.
-        private val GEMINI_PCM_MODELS = setOf("google/gemini-3.8-flash-lite-tts",
-            "google/gemini-3.8-flash-tts", "google/gemini-3.1-flash-tts-preview")
+        private val GEMINI_PCM_MODELS = setOf(
+            "google/gemini-3.8-flash-lite-tts", "google/gemini-3.8-flash-tts", "google/gemini-3.1-flash-tts-preview",
+            "google/gemini-2.5-flash-tts", "google/gemini-2.5-pro-tts",
+        )
         fun defaultClient() = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS).callTimeout(60, TimeUnit.SECONDS)
             .followRedirects(false).followSslRedirects(false).retryOnConnectionFailure(false).build()

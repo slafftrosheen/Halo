@@ -1,0 +1,13 @@
+<resources>
+    <string name="halo_record_display_choose">Napisy w okularach</string>
+    <string name="halo_record_display_about">Wybierz podłączony ekran, na którym chcesz wyświetlać napisy.</string>
+    <string name="halo_record_display_empty">Podłącz okulary widoczne w Androidzie jako ekran zewnętrzny. Samo połączenie dźwiękowe Bluetooth nie wystarczy do wyświetlania napisów.</string>
+    <string name="halo_record_display_in_use">Na ekranie jest wyświetlana inna karta. Zamknij ją w sekcji „Urządzenia”, aby włączyć napisy.</string>
+    <string name="halo_record_display_confirm_title">Wyświetlać napisy na ekranie %1$s?</string>
+    <string name="halo_record_display_confirm_body">Osoby korzystające z tego ekranu mogą zobaczyć wypowiedzi z nagrania. Halo wysyła napisy tylko wtedy, gdy to nagranie jest otwarte. Upewnij się, że wszyscy rozmówcy wyrażają zgodę.</string>
+    <string name="halo_record_display_sending">Wysyłanie napisów na ekran %1$s</string>
+    <string name="halo_record_display_stop">Wyłącz napisy na ekranie</string>
+    <string name="halo_record_display_waiting">HaloRecord · Oczekiwanie na wypowiedź</string>
+    <string name="halo_record_display_start">Pokaż napisy</string>
+    <string name="halo_record_display_cancel">Anuluj</string>
+</resources>

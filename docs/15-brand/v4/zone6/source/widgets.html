@@ -1,0 +1,77 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><script src="icons.js"></script><script src="z6.js"></script>
+<style>
+:root{--cw:84px;--ch:104px}
+.hs{position:absolute;inset:0;background:radial-gradient(90% 60% at 80% 10%,#2b2a8a,transparent 60%),radial-gradient(80% 60% at 10% 90%,#7a3f5a,transparent 60%),linear-gradient(160deg,#141155,#0a0738)}
+.wg{position:relative;border-radius:28px;background:linear-gradient(180deg,rgba(26,22,98,.82),rgba(10,7,52,.9));backdrop-filter:blur(18px);border:1px solid rgba(250,250,244,.10);
+ padding:16px 18px;overflow:hidden;color:var(--cream);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.wg:before{content:"";position:absolute;right:-40px;top:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(closest-side,rgba(12,242,186,.16),transparent)}
+.wg .hd{display:flex;align-items:center;gap:8px;font:600 13px Atk;color:var(--t2);text-transform:none}
+.wg .hd svg{width:16px;height:16px;color:var(--mint)}
+.wg .hd .askr{margin-left:auto}
+.askr{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(250,250,244,.07);flex:none}
+.askr svg{width:22px;height:22px}
+.big{font:300 64px/1 Sora;letter-spacing:-.04em}
+.mid{font:600 20px/1.2 Sora;letter-spacing:-.01em}
+.sm{font-size:14px;color:var(--t2)}
+.wl{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:15px;border-bottom:1px solid var(--line)}.wl:last-child{border:0}
+.wl .t{font:600 14px Atk;color:var(--mint);width:46px;flex:none}.wl .x{margin-left:auto;color:var(--t2);font-size:13px}
+.ck{width:22px;height:22px;border-radius:50%;border:2px solid var(--t3);flex:none}.ck.d{background:var(--mint);border-color:var(--mint)}
+.pill{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;background:rgba(12,242,186,.12);color:var(--mint);font:600 14px Atk}
+.pill svg{width:18px;height:18px}.pill.ap{background:rgba(255,159,107,.16);color:var(--ap)}
+.tg{width:44px;height:26px;border-radius:13px;background:var(--mint);position:relative;flex:none}.tg:after{content:"";position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:var(--ink)}
+.c2x2{width:calc(var(--cw)*2);height:calc(var(--ch)*2)}.c4x2{width:calc(var(--cw)*4);height:calc(var(--ch)*2)}.c4x3{width:calc(var(--cw)*4);height:calc(var(--ch)*3)}.c4x4{width:calc(var(--cw)*4);height:calc(var(--ch)*4)}
+.gridw{display:flex;flex-wrap:wrap;gap:28px 30px;align-content:flex-start}
+.wcol{display:flex;flex-direction:column;gap:10px}.wcap{font:600 15px Sora}.wcap small{font:500 13px Atk;color:var(--t2);margin-left:6px}
+.ringw svg{width:100%;height:100%}
+.hourly{display:flex;justify-content:space-between;margin-top:12px}.hourly div{text-align:center;font-size:13px;color:var(--t2)}.hourly b{display:block;font:600 15px Atk;color:var(--cream);margin-top:4px}
+</style></head><body>
+<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · home-screen widgets</div><h1>Screen moved to your home screen</h1>
+<p>Organiser, sources, news, clocks and the brief now live as Android widgets. Same calm glass, same open ring, same honest states — and every widget has a small ring to ask halo about it.</p></div></div>
+<div style="display:flex;gap:70px;align-items:flex-start">
+<div id="left"></div>
+<div class="gridw" id="gw" style="flex:1"></div></div>
+<div class="notes">
+<div class="note"><b>Glance, then go</b><p>Each widget answers one question. A tap opens the exact item in halo — the organiser entry, the article, the timer.</p></div>
+<div class="note"><b>Ask about this</b><p>The small ring on every widget starts halo with that widget as context: “What do I need for 14:00?”</p></div>
+<div class="note"><b>Honest when empty</b><p>No source yet? The widget says so and offers one fix — “Choose a weather source” — instead of showing made-up data.</p></div>
+<div class="note"><b>Follows your look</b><p>Accent, light / dark and text size follow halo’s Appearance. Apricot appears only when something needs you.</p></div></div>
+</div>
+<script>
+const wring=(w,c='#0CF2BA')=>`<svg viewBox="0 0 240 240" style="width:${w}px;height:${w}px"><path d="M197.32 87.18A84 84 0 1 1 152.82 42.68" stroke="${c}" stroke-width="22" stroke-linecap="round" fill="none"/></svg>`;
+const ask=`<div class="askr">${wring(20)}</div>`;
+const WG={
+cw:()=>`<div class="wg c4x3"><div class="hd">${I('calendar')}Friday, 20 November ${ask}</div>
+ <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:10px"><div class="big">9:41</div><div style="text-align:right"><div class="mid">3° · cloudy</div><div class="sm">Riga · feels −1°</div></div></div>
+ <div class="hourly">${[['10','3°'],['12','4°'],['14','5°'],['16','4°'],['18','2°']].map(([h,t])=>`<div>${h}:00<b>${t}</b></div>`).join('')}</div>
+ <div style="margin-top:12px" class="pill">${I('reminder')}Alarm 07:00 tomorrow</div></div>`,
+up:()=>`<div class="wg c4x2"><div class="hd">${I('calendar')}Upcoming ${ask}</div>
+ <div class="wl"><span class="t">10:30</span>Coffee at Miera iela<span class="x">in 49 min</span></div><div class="wl"><span class="t">14:00</span>Pick up the frame<span class="x">Brīvības 40</span></div><div class="wl"><span class="t">16:00</span>Market hall</div></div>`,
+halo:()=>`<div class="wg c2x2" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px"><div style="position:relative;width:88px;height:88px"><div style="position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,159,107,.3),rgba(12,242,186,.2) 55%,transparent)"></div><div style="position:relative">${wring(88)}</div></div><div class="mid" style="font-size:17px">Ask halo</div></div>`,
+clock:()=>`<div class="wg c2x2" style="display:grid;place-items:center;text-align:center"><div style="position:relative;width:124px;height:124px;display:grid;place-items:center"><div style="position:absolute;inset:0;opacity:.35">${wring(124)}</div><div><div class="big" style="font-size:40px">9:41</div><div class="sm">Fri 20 Nov</div></div></div></div>`,
+tasks:()=>`<div class="wg c4x2"><div class="hd">${I('task')}Tasks · today ${ask}</div>
+ <div class="wl"><span class="ck d"></span><span style="text-decoration:line-through;color:var(--t2)">Order clay</span></div><div class="wl"><span class="ck"></span>Call the framer</div><div class="wl"><span class="ck"></span>Send Anna the photos<span class="x">+2 more</span></div></div>`,
+brief:()=>`<div class="wg c4x2"><div class="hd">${I('read_mode')}Morning brief · 3 things ${ask}</div>
+ <div style="font-size:15px;line-height:1.45;margin-top:8px">Dry until 15:00. Your 14:00 moved to Brīvības 40. Two orders shipped overnight.</div>
+ <div style="display:flex;gap:8px;margin-top:12px"><div class="pill">${I('speaker')}Read aloud</div><div class="pill" style="background:rgba(250,250,244,.07);color:var(--cream)">Open</div></div></div>`,
+news:()=>`<div class="wg c4x3"><div class="hd">${I('sources')}News · your sources ${ask}</div>
+ <div class="wl" style="align-items:flex-start;padding:10px 0"><div><div style="font:600 15px Atk">Riga extends tram line 7 to the market district</div><div class="sm">Local · 25 min ago</div></div></div>
+ <div class="wl" style="align-items:flex-start;padding:10px 0"><div><div style="font:600 15px Atk">First frost expected this weekend across Latvia</div><div class="sm">Weather · 1 h ago</div></div></div>
+ <div class="wl" style="align-items:flex-start;padding:10px 0"><div><div style="font:600 15px Atk">Design week opens with handmade objects show</div><div class="sm">Culture · 2 h ago</div></div></div></div>`,
+alarm:()=>`<div class="wg c4x2"><div class="hd">${I('timer')}Alarms & timers ${ask}</div>
+ <div style="display:flex;align-items:center;gap:14px;margin-top:10px"><div style="position:relative;width:56px;height:56px"><svg viewBox="0 0 56 56" style="width:56px;height:56px"><circle cx="28" cy="28" r="24" stroke="rgba(12,242,186,.2)" stroke-width="5" fill="none"/><path d="M28 4a24 24 0 1 1 -20.8 36" stroke="#0CF2BA" stroke-width="5" stroke-linecap="round" fill="none"/></svg></div>
+ <div><div class="mid">04:32</div><div class="sm">Tea timer</div></div><div class="pill" style="margin-left:auto">${I('pause')}Pause</div></div>
+ <div class="wl" style="margin-top:8px"><span class="t">07:00</span>Weekdays<span class="tg" style="margin-left:auto"></span></div></div>`,
+empty:()=>`<div class="wg c4x2"><div class="hd">${I('sources')}Weather ${ask}</div>
+ <div class="mid" style="margin-top:12px;font-size:18px">No weather source yet</div><div class="sm" style="margin-top:4px">halo never guesses the weather.</div>
+ <div class="pill" style="margin-top:12px">${I('add')}Choose a source</div></div>`,
+};
+document.getElementById('left').innerHTML=`<div class="pcol"><div class="phone" style="background:none"><div class="hs"></div>${sb}
+ <div style="position:absolute;top:56px;left:26px;right:26px;display:flex;flex-direction:column;gap:14px;--cw:84.5px;--ch:92px" id="hsw"></div>
+ <div style="position:absolute;bottom:40px;left:30px;right:30px;display:flex;justify-content:space-between">${['phone','send','camera','search'].map(i=>`<div style="width:56px;height:56px;border-radius:18px;background:rgba(250,250,244,.14);display:grid;place-items:center">${I(i)}</div>`).join('')}</div><div class="gb"></div></div>
+ <div class="pl">On the home screen<small>Clock & weather · Upcoming · halo</small></div></div>
+`;
+document.getElementById('hsw').innerHTML=WG.cw()+WG.up()+`<div style="display:flex;gap:14px">${WG.halo()}${WG.clock()}</div>`;
+const L=[['tasks','Tasks','4×2'],['brief','Brief','4×2'],['alarm','Alarms & timers','4×2'],['news','Headlines','4×3 · your sources'],['empty','Empty state','one honest fix']];
+document.getElementById('gw').innerHTML=L.map(([k,n,s])=>`<div class="wcol"><div class="wcap">${n}<small>${s}</small></div>${WG[k]()}</div>`).join('')+
+ `<div class="wcol"><div class="wcap">Also in the family<small>same language</small></div><div class="sm" style="width:336px;line-height:1.5;font-size:15px">Clock 2×2 · Clock & weather 4×3 · Upcoming 4×2 · Dashboard 4×4 (clock, next event, tasks, brief in one) · halo 2×2. All resize, keep 48dp targets and switch to a simpler layout at large text.</div></div>`;
+</script></body></html>

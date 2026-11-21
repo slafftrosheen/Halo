@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo brand ring for in-app use (24dp). Same geometry as the brand mark: gap centred at 45°. Tint with the current accent. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+  <path android:pathData="M19.39,8.94A8,8 0,1 1,15.06 4.61" android:strokeColor="#FF0CF2BA" android:strokeWidth="2.6" android:strokeLineCap="round" android:fillColor="#00000000"/>
+</vector>

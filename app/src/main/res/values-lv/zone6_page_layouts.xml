@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="page_layout_edit">Pielāgot šo lapu</string>
+    <string name="page_layout_restore">Atjaunot iepriekšējo skatu</string>
+    <string name="page_layout_error">Skatu nevarēja saglabāt. Aizveriet paneli un mēģiniet vēlreiz.</string>
+    <string name="page_places_search">Atrast sadaļu</string>
+    <string name="page_places_no_matches">Neviena sadaļa neatbilst. Mēģiniet citu nosaukumu.</string>
+    <string name="page_places_show_less">Rādīt mazāk</string>
+    <string name="page_places_show_all">Visas sadaļas</string>
+    <string name="page_places_arrange">Sakārtot sadaļas</string>
+    <string name="page_places_arrange_help">Turiet un velciet nosaukumu vai izmantojiet pogas Augšup un Lejup. Paslēptās sadaļas var atrast meklētājā.</string>
+    <string name="page_places_up">Augšup</string>
+    <string name="page_places_down">Lejup</string>
+    <string name="page_places_visibility">Rādīt sadaļu %1$s</string>
+    <string name="page_workspace_slot">Darbvietas poga joslā</string>
+    <string name="page_library_list">Saraksts</string>
+    <string name="page_library_pictures">Lieli attēli</string>
+    <string name="page_library_layout">Bibliotēkas skats</string>
+    <string name="page_library_by_tool">Pēc rīka</string>
+    <string name="page_activity_layout">Grupēt darbības</string>
+    <string name="page_activity_day">Pēc dienas</string>
+    <string name="page_activity_app">Pēc lietotnes</string>
+    <string name="page_activity_phone_app">Tālruņa lietotne</string>
+    <string name="page_activity_multiple_apps">Vairākas lietotnes</string>
+    <string name="page_memory_layout">Atmiņas skats</string>
+    <string name="page_memory_simple">Vienkāršas atmiņas</string>
+    <string name="page_memory_details">Rādīt informāciju</string>
+    <string name="page_memory_review_forget">Pārskatīt vai aizmirst</string>
+    <string name="page_memory_intro_title">halo iesaka, jūs izlemjat</string>
+    <string name="page_memory_intro_body">Ieteikumi gaida šeit. Halo atceras tikai to, ko pārskatāt un apstiprināt ar pogu Atcerēties.</string>
+    <string name="page_devices_layout">Jūsu ierīces</string>
+    <string name="page_devices_layout_help">Izvēlieties saglabātu ierīci, lai mainītu redzamo nosaukumu un ikonu.</string>
+    <string name="page_devices_name">Nosaukums Halo</string>
+    <string name="page_devices_default_icon">Noklusējuma ikona</string>
+    <string name="page_devices_glasses">Brilles</string>
+    <string name="page_devices_robot">Robots</string>
+    <string name="page_devices_watch">Pulkstenis</string>
+    <string name="page_devices_other">Cita ierīce</string>
+    <string name="page_devices_add">Pievienot ierīci</string>
+    <string name="page_devices_step_prepare">Uzlādējiet ierīci un turiet to pie tālruņa.</string>
+    <string name="page_devices_step_pair">Ieslēdziet ierīci un izpildiet tās savienošanas norādījumus.</string>
+    <string name="page_devices_step_find">Izvēlieties Atrast un pēc tam izvēlieties savu ierīci rezultātu sarakstā.</string>
+    <string name="page_devices_step">%1$d. %2$s</string>
+    <string name="page_devices_find">Atrast</string>
+</resources>

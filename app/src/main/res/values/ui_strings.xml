@@ -4802,4 +4802,311 @@
     <string name="ui_a242d11b47ee" formatted="false">"Finding available actions"</string>
     <string name="ui_1763ec4aca04" formatted="false">"Read your day"</string>
     <string name="ui_587943da5e6f" formatted="false">"Read saved source image"</string>
+    <string name="ui_eb5cfb73677d" formatted="false">"Places"</string>
+    <string name="ui_90a90a48e23d" formatted="false">"Good morning"</string>
+    <string name="ui_d325e1bbfd1c" formatted="false">"Good afternoon"</string>
+    <string name="ui_15a421e4cf76" formatted="false">"Good evening"</string>
+    <string name="ui_8f84e2685423" formatted="false">"What’s on today?"</string>
+    <string name="ui_8d0ba5826696" formatted="false">"Start a note"</string>
+    <string name="ui_a16cb91f0312" formatted="false">"What’s this?"</string>
+    <string name="ui_cb8d46381f4a" formatted="false">"Widgets &amp; sources"</string>
+    <string name="ui_3a439f1856aa" formatted="false">"Help &amp; check-up"</string>
+    <string name="ui_8ba35bb80dda" formatted="false">"Chat actions"</string>
+    <string name="ui_c05434032f47" formatted="false">"Previewing changes"</string>
+    <string name="ui_7dbda3bb5411" formatted="false">"Tap an option or say its number."</string>
+    <string name="ui_dc484cdf2b27" formatted="false">"Say the number"</string>
+    <string name="ui_27d21150ed82" formatted="false">"Pause halo"</string>
+    <string name="ui_8eac9402d815" formatted="false">"halo is paused"</string>
+    <string name="ui_20872de95c81" formatted="false">"Follow me"</string>
+    <string name="ui_38581d183b73" formatted="false">"Planner"</string>
+    <string name="ui_86b0d9b2865f" formatted="false">"Open Planner"</string>
+    <string name="ui_0fc63b56b1b7" formatted="false">"Planner view"</string>
+    <string name="ui_91279280d8b0" formatted="false">"Easy view settings"</string>
+    <string name="ui_db451136da1e" formatted="false">"Make Planner yours"</string>
+    <string name="ui_e3868f65dcf7" formatted="false">"Week view"</string>
+    <string name="ui_d42462263a8b" formatted="false">"Easy view · today only"</string>
+    <string name="ui_95655e8f2bf9" formatted="false">"Choose a day to see its plan. Add by talking, then check the time and repeats before you save."</string>
+    <string name="ui_82f601d85536" formatted="false">"Your plans, on this phone."</string>
+    <string name="ui_a40fd711ff7b" formatted="false">"Nothing planned for this day."</string>
+    <string name="ui_31aadc7f3ac3" formatted="false">"Free time"</string>
+    <string name="ui_3ae7f14b7896" formatted="false">"%1$s to %2$s is open."</string>
+    <string name="ui_135b8779a3a1" formatted="false">"Leave before · minutes, optional"</string>
+    <string name="ui_af06a83f4770" formatted="false">"Shows a departure time in Planner."</string>
+    <string name="ui_cd885ae10b20" formatted="false">"Leave at %1$s"</string>
+    <string name="ui_c0f8bbcd4176" formatted="false">"Previous week"</string>
+    <string name="ui_21fbde19cfb0" formatted="false">"Next week"</string>
+    <string name="ui_a711f636e6c3" formatted="false">"1 planned item"</string>
+    <string name="ui_76f185d1ce9f" formatted="false">"%1$d planned items"</string>
+    <string name="ui_3743a0cb9a0b" formatted="false">"Add by talking"</string>
+    <string name="ui_1d3093f27d6b" formatted="false">"Read my day"</string>
+    <string name="ui_fce45a69288a" formatted="false">"Tell halo what to remind you about and when. You can edit the reminder before you save it."</string>
+    <string name="ui_dd34917b154e" formatted="false">"Every Thursday evening remind me to put the bins out."</string>
+    <string name="ui_7dfcd2ad89f3" formatted="false">"What would you like to remember?"</string>
+    <string name="ui_5ded6845709d" formatted="false">"Review reminder"</string>
+    <string name="ui_27c051a6564f" formatted="false">"Check your reminder"</string>
+    <string name="ui_61ae5ba68fb9" formatted="false">"More reminder settings"</string>
+    <string name="ui_79f1a101d9bd" formatted="false">"Back to reminder review"</string>
+    <string name="ui_290db31ff529" formatted="false">"Every %1$s"</string>
+    <string name="ui_eb272bae1c89" formatted="false">"On this phone at the scheduled time"</string>
+    <string name="ui_9137516eb047" formatted="false">"On this phone, %1$s minutes before"</string>
+    <string name="ui_3515e29e1b63" formatted="false">"Choose a title"</string>
+    <string name="ui_3aec36bbe993" formatted="false">"Remind"</string>
+    <string name="ui_96dbedeca7df" formatted="false">"Starts"</string>
+    <string name="ui_048f0d0f2289" formatted="false">"halo suggested %1$s. Tap When to change the time."</string>
+    <string name="ui_d5961e2cebc3" formatted="false">"halo used %1$s for “%2$s”. Tap When to change it."</string>
+    <string name="ui_ee7ce69dec98" formatted="false">"halo suggested the start date. Tap Starts to change it."</string>
+    <string name="ui_3580392ebdf4" formatted="false">"About this saved article:"</string>
+    <string name="ui_5b10b4ab3c56" formatted="false">"Add air &amp; pollen city"</string>
+    <string name="ui_787aecf31add" formatted="false">"No internet · saved information stays available"</string>
+    <string name="ui_ab87cef98e3e" formatted="false">"Read it to me"</string>
+    <string name="ui_d6bd8c0aeee8" formatted="false">"Document"</string>
+    <string name="ui_2c16368aaa6d" formatted="false">"Keep a paper"</string>
+    <string name="ui_8fe147696fbf" formatted="false">"Translate"</string>
+    <string name="ui_5757007c79c2" formatted="false">"Downloading the language pack over Wi-Fi"</string>
+    <string name="ui_a2e3c24f189f" formatted="false">"Translating on this phone"</string>
+    <string name="ui_3ef493b9a158" formatted="false">"Language pack unavailable. Connect to Wi-Fi and try again."</string>
+    <string name="ui_e7d2bf38853a" formatted="false">"Could not translate the text. Try again."</string>
+    <string name="ui_7ff2a79db085" formatted="false">"Ask a grown-up to choose an identification source."</string>
+    <string name="ui_c0218905017d" formatted="false">"The camera is getting ready. Try again in a moment."</string>
+    <string name="ui_31dec21fbd14" formatted="false">"Looking closely"</string>
+    <string name="ui_0be3ad5c1244" formatted="false">"Hold still — reading"</string>
+    <string name="ui_f84a025a8b85" formatted="false">"I’m not sure. Try getting a little closer."</string>
+    <string name="ui_73ddd33492a5" formatted="false">"No text found. Try more light or move a little closer."</string>
+    <string name="ui_12fe8c665036" formatted="false">"Could not read this frame. Try again."</string>
+    <string name="ui_68c372dd7ab1" formatted="false">"Keeping the paper"</string>
+    <string name="ui_4ebe3a42be57" formatted="false">"Could not keep the paper. Try again."</string>
+    <string name="ui_b3a4c2cd1dae" formatted="false">"Magnifier"</string>
+    <string name="ui_05e2017a7a91" formatted="false">"HaloScan"</string>
+    <string name="ui_e317ce8426e7" formatted="false">"Grown-up approved online source"</string>
+    <string name="ui_4c3edc075faa" formatted="false">"It looks like %s!"</string>
+    <string name="ui_e18835ef2f6c" formatted="false">"Allow camera"</string>
+    <string name="ui_a3ce3188d00d" formatted="false">"Capture paper"</string>
+    <string name="ui_9d057a586a74" formatted="false">"Keep paper"</string>
+    <string name="ui_e8555d4ee069" formatted="false">"Open paper"</string>
+    <string name="ui_897321f3c8a6" formatted="false">"Hear it"</string>
+    <string name="ui_d36feef04807" formatted="false">"Look again"</string>
+    <string name="ui_59816d1ed72f" formatted="false">"Capture text"</string>
+    <string name="ui_36f07fcf1892" formatted="false">"Download language pack"</string>
+    <string name="ui_206f3c576939" formatted="false">"Hear translation"</string>
+    <string name="ui_509b1035c55f" formatted="false">"Freeze"</string>
+    <string name="ui_b76c42cb4bf3" formatted="false">"Show me"</string>
+    <string name="ui_133fc35187bd" formatted="false">"Just point the phone."</string>
+    <string name="ui_f188f626529a" formatted="false">"Allow camera access to point HaloScan at a page or object."</string>
+    <string name="ui_3610f4a9d310" formatted="false">"Zoom %s×"</string>
+    <string name="ui_c579b8f4ba81" formatted="false">"Highlighted words can help you check a label."</string>
+    <string name="ui_218197693424" formatted="false">"From"</string>
+    <string name="ui_f4b06ef6d3c8" formatted="false">"To"</string>
+    <string name="ui_0cf4d8722910" formatted="false">"A language pack needs Wi-Fi. Your photo and text stay on this phone."</string>
+    <string name="ui_966680e57d7d" formatted="false">"Tap a label to hear it."</string>
+    <string name="ui_53c5206a46a0" formatted="false">"This looks like %s."</string>
+    <string name="ui_0ada13e458a6" formatted="false">"Paper kept in your Inbox."</string>
+    <string name="ui_336bc7bbed78" formatted="false">"Used online"</string>
+    <string name="ui_80a768ced792" formatted="false">"Unfreeze"</string>
+    <string name="ui_de2b814aeb96" formatted="false">"New scan"</string>
+    <string name="ui_415a8336713e" formatted="false">"High contrast"</string>
+    <string name="ui_d6915875decb" formatted="false">"Easy"</string>
+    <string name="ui_63a9bd4f8fd2" formatted="false">"Send it to Notebook"</string>
+    <string name="ui_4f4a15242e89" formatted="false">"Standard controls"</string>
+    <string name="ui_2ea7457308f5" formatted="false">"Point the camera at a thing you know. Tap What’s this? to see what halo can find."</string>
+    <string name="ui_6c9b43e248e4" formatted="false">"Point at small print. Slide to zoom, then tap Freeze. Tap Read to turn the image into words."</string>
+    <string name="ui_2d95ffef69d6" formatted="false">"Point the camera at the page. Choose Read, Document, Translate, or What’s this? and tap the yellow button."</string>
+    <string name="ui_fe6951113784" formatted="false">"Try it"</string>
+    <string name="ui_7fe187df734d" formatted="false">"Use the approved online source?"</string>
+    <string name="ui_cc97a30d2aeb" formatted="false">"This camera picture will be sent to %s, the online source your grown-up chose."</string>
+    <string name="ui_351df0d7378a" formatted="false">"the online source"</string>
+    <string name="ui_2b7a94cb3ae8" formatted="false">"Look online"</string>
+    <string name="ui_2705f89b68ce" formatted="false">"Captured camera frame"</string>
+    <string name="ui_06cc3b14a4df" formatted="false">"Camera unavailable"</string>
+    <string name="ui_6893f4b66076" formatted="false">"Camera preview"</string>
+    <string name="ui_9f91161f4343" formatted="false">"leaf"</string>
+    <string name="ui_dc9c5edb8b2d" formatted="false">"tree"</string>
+    <string name="ui_7a5179eecc0f" formatted="false">"bird"</string>
+    <string name="ui_c06b0cfe0cc5" formatted="false">"flower"</string>
+    <string name="ui_77af778b51ab" formatted="false">"cat"</string>
+    <string name="ui_cd6357efdd96" formatted="false">"dog"</string>
+    <string name="ui_92719fe0cf8c" formatted="false">"book"</string>
+    <string name="ui_e9de08263f4a" formatted="false">"ball"</string>
+    <string name="ui_3a7bd3e2360a" formatted="false">"apple"</string>
+    <string name="ui_350a770c0ec9" formatted="false">"rock"</string>
+    <string name="ui_b474a99a2705" formatted="false">"fish"</string>
+    <string name="ui_8fced00b6ce2" formatted="false">"rainbow"</string>
+    <string name="ui_b6e797dd8fdc" formatted="false">"A leaf helps a plant use sunlight to make food."</string>
+    <string name="ui_3b89d2ed8300" formatted="false">"Trees grow new leaves and branches as they get bigger."</string>
+    <string name="ui_0a7292dad2fd" formatted="false">"Birds have feathers."</string>
+    <string name="ui_10b34175c0f7" formatted="false">"Some flowers make seeds after they bloom."</string>
+    <string name="ui_a3bd56e805b6" formatted="false">"A book can use pictures and words to tell a story."</string>
+    <string name="ui_e4ef9438211b" formatted="false">"A rainbow can form when sunlight passes through drops of water."</string>
+    <string name="ui_971445964bda" formatted="false">"Look closely at its shape and colors."</string>
+    <string name="ui_a659b60d246d" formatted="false">"German"</string>
+    <string name="ui_3411059cb8e0" formatted="false">"Spanish"</string>
+    <string name="ui_7458199fe97a" formatted="false">"French"</string>
+    <string name="ui_6f424303fa12" formatted="false">"Ukrainian"</string>
+    <string name="ui_b493d48364af" formatted="false">"banana"</string>
+    <string name="ui_d29af8a2e160" formatted="false">"bicycle"</string>
+    <string name="ui_25cdb46d8d21" formatted="false">"boat"</string>
+    <string name="ui_fcfd075cbe36" formatted="false">"butterfly"</string>
+    <string name="ui_2b2961a431b2" formatted="false">"car"</string>
+    <string name="ui_3d7eb3d3dab1" formatted="false">"chair"</string>
+    <string name="ui_d8198efa3604" formatted="false">"clock"</string>
+    <string name="ui_56681010b753" formatted="false">"cloud"</string>
+    <string name="ui_2d2370db2447" formatted="false">"duck"</string>
+    <string name="ui_74fa5327cc0f" formatted="false">"frog"</string>
+    <string name="ui_9209526aaa61" formatted="false">"fruit"</string>
+    <string name="ui_23eeb69c681d" formatted="false">"garden"</string>
+    <string name="ui_d081f5e40298" formatted="false">"guitar"</string>
+    <string name="ui_fd62862b6dc2" formatted="false">"horse"</string>
+    <string name="ui_9e78b43ea00e" formatted="false">"moon"</string>
+    <string name="ui_5ef2c394d5b6" formatted="false">"mushroom"</string>
+    <string name="ui_1d78e018e405" formatted="false">"piano"</string>
+    <string name="ui_96044d9734b6" formatted="false">"plant"</string>
+    <string name="ui_d37d96b42ad4" formatted="false">"rabbit"</string>
+    <string name="ui_4a69f19c8c26" formatted="false">"sea"</string>
+    <string name="ui_ce635c4eabff" formatted="false">"shell"</string>
+    <string name="ui_a746222f09d8" formatted="false">"snow"</string>
+    <string name="ui_0d4fc4a78d37" formatted="false">"table"</string>
+    <string name="ui_116f54c41d04" formatted="false">"train"</string>
+    <string name="ui_74dd730b5c36" formatted="false">"turtle"</string>
+    <string name="ui_1b2fffea95f7" formatted="false">"My day"</string>
+    <string name="ui_100ec1bc78a4" formatted="false">"To do"</string>
+    <string name="ui_75420330e532" formatted="false">"Ask a grown-up to add pictures for your day."</string>
+    <string name="ui_eb633895c5da" formatted="false">"Your check could not be kept. Try again."</string>
+    <string name="ui_096ddd8b0dc9" formatted="false">"Hear my day"</string>
+    <string name="ui_0d21bd52022c" formatted="false">"Online"</string>
+    <string name="ui_6e2683f2ddca" formatted="false">"Could not save the photo source."</string>
+    <string name="ui_222a8d9fdfa8" formatted="false">"Set pictures for My day"</string>
+    <string name="ui_9f9715684660" formatted="false">"Choose an identification source"</string>
+    <string name="ui_9fc69cd49baa" formatted="false">"Choose a source for common objects. The on-phone labels come with halo."</string>
+    <string name="ui_3c360b1658c7" formatted="false">"Online identification needs a cloud Vision model, Power mode, and image sharing and media approval."</string>
+    <string name="ui_5584a1808e36" formatted="false">"Review online source"</string>
+    <string name="ui_84d35fd59f90" formatted="false">"Turn off identification"</string>
+    <string name="ui_61e302add34c" formatted="false">"Allow online photo identification?"</string>
+    <string name="ui_45cccd02059c" formatted="false">"When your child confirms a photo, halo will send it to %s (%s) to identify a common object. You can turn this off here at any time."</string>
+    <string name="ui_4255a5b9b94d" formatted="false">"Allow this source"</string>
+    <string name="ui_4058365da297" formatted="false">"Add a picture"</string>
+    <string name="ui_a6b148b34930" formatted="false">"Could not save My day."</string>
+    <string name="ui_badc532511b7" formatted="false">"Picture and time"</string>
+    <string name="ui_913d33c7fd39" formatted="false">"Breakfast"</string>
+    <string name="ui_6cd2e331855d" formatted="false">"School"</string>
+    <string name="ui_39de4731eedc" formatted="false">"Drawing"</string>
+    <string name="ui_1b4e390dcd79" formatted="false">"Bath"</string>
+    <string name="ui_216713d08860" formatted="false">"Dinner"</string>
+    <string name="ui_57f8d39329f2" formatted="false">"Bedtime"</string>
+    <string name="ui_bd737a3f8f1e" formatted="false">"What’s this? source"</string>
+    <string name="ui_b4604359e70b" formatted="false">"Scanned paper.pdf"</string>
+    <string name="ui_bbe54d8faf07" formatted="false">"Add decisions and to-dos"</string>
+    <string name="ui_72683535cab1" formatted="false">"Allow microphone access to record."</string>
+    <string name="ui_07ddee803e73" formatted="false">"Caption display changed. Select it again."</string>
+    <string name="ui_ec9457d02d79" formatted="false">"Caption display couldn't start."</string>
+    <string name="ui_7872b3e9188e" formatted="false">"Caption display stopped. Select the display again to continue."</string>
+    <string name="ui_b10f1d9766cc" formatted="false">"Could not keep the notes. Try again."</string>
+    <string name="ui_8d449f137a14" formatted="false">"Could not keep the recording. Try again."</string>
+    <string name="ui_c13b07c9991f" formatted="false">"Could not play this recording."</string>
+    <string name="ui_6abc22ff4172" formatted="false">"Could not start the phone microphone. Close other recording tools and try again."</string>
+    <string name="ui_ad0a51a721c8" formatted="false">"Couldn't get the speaker models. Check your connection and download settings."</string>
+    <string name="ui_30ba702eee51" formatted="false">"Decided"</string>
+    <string name="ui_7920330ff1a7" formatted="false">"Discard this recording?"</string>
+    <string name="ui_059314a1a3f6" formatted="false">"Download about 28 MB of models. Audio and speaker labels stay on this phone. Power and model downloads must be allowed."</string>
+    <string name="ui_1f1c30368462" formatted="false">"Finishing recording"</string>
+    <string name="ui_448c3bdb235b" formatted="false">"Get speaker labels"</string>
+    <string name="ui_0dafbd087c78" formatted="false">"halo record"</string>
+    <string name="ui_5c99c45c1f19" formatted="false">"Keep notes"</string>
+    <string name="ui_c595ebde39c8" formatted="false">"Keep recording"</string>
+    <string name="ui_e2f05d66fc31" formatted="false">"Keeping the notes"</string>
+    <string name="ui_1604e61812ed" formatted="false">"Keeping the recording"</string>
+    <string name="ui_e3fb1f8cc05a" formatted="false">"Letters mark estimated speakers in this recording."</string>
+    <string name="ui_584f8e89daa9" formatted="false">"Live words"</string>
+    <string name="ui_7667137a943a" formatted="false">"Live words need an installed local speech model. Audio capture can continue."</string>
+    <string name="ui_0c153d1b9ccb" formatted="false">"New recording"</string>
+    <string name="ui_02b9ed80daed" formatted="false">"No audio kept. Hold the phone closer and try again."</string>
+    <string name="ui_3e6ce84402bf" formatted="false">"On-device summary unavailable. You can enter decisions and to-dos from the transcript."</string>
+    <string name="ui_9f0cc833900d" formatted="false">"Opening microphone"</string>
+    <string name="ui_67e0ddff71f2" formatted="false">"Play recording"</string>
+    <string name="ui_1abb498c7c8a" formatted="false">"Prepare reminder"</string>
+    <string name="ui_d5572321b95f" formatted="false">"Prepare summary"</string>
+    <string name="ui_fbc5a83bb7c3" formatted="false">"Preparing a summary on this phone"</string>
+    <string name="ui_4c5e3e42e379" formatted="false">"Record a conversation"</string>
+    <string name="ui_80e8dd1a5a05" formatted="false">"Recording"</string>
+    <string name="ui_aca16ffe4cbc" formatted="false">"Recording kept in your Inbox."</string>
+    <string name="ui_aeb3eba8a655" formatted="false">"Recording notes"</string>
+    <string name="ui_b35c75e53ab3" formatted="false">"Recording tools are paused or restricted."</string>
+    <string name="ui_0c2b37538fe2" formatted="false">"Review recording"</string>
+    <string name="ui_1478adea4460" formatted="false">"Review the draft against the recording."</string>
+    <string name="ui_6d17fce741aa" formatted="false">"Show live words"</string>
+    <string name="ui_a9e0c7058512" formatted="false">"Speaker"</string>
+    <string name="ui_700440b9d203" formatted="false">"Speaker labels are ready for your next recording."</string>
+    <string name="ui_247af3a7c88b" formatted="false">"Speaker labels are unavailable for this recording."</string>
+    <string name="ui_09e46741888d" formatted="false">"Speaker models are on this phone."</string>
+    <string name="ui_30756af0134e" formatted="false">"Start recording"</string>
+    <string name="ui_7ec716e5abe2" formatted="false">"Stop display captions"</string>
+    <string name="ui_3d591e826d54" formatted="false">"Stop recording"</string>
+    <string name="ui_bd8a446cfef8" formatted="false">"Tap Start recording. Your audio stays on this phone. You can turn on live words on a connected display. Tap Stop to play or keep the recording."</string>
+    <string name="ui_a812687d6a8b" formatted="false">"The microphone disconnected. Review the audio captured before it stopped."</string>
+    <string name="ui_721164f0dc70" formatted="false">"Transcript"</string>
+    <string name="ui_2eccf68f1fda" formatted="false">"Unclear speaker"</string>
+    <string name="ui_131a2b810f88" formatted="false">"Voice recording.wav"</string>
+    <string name="ui_d42c7d52fe13" formatted="false">"Glasses captions"</string>
+    <string name="ui_bd3fed4aebe7" formatted="false">"Choose the connected display you want to use for captions."</string>
+    <string name="ui_9f05256f927f" formatted="false">"Connect glasses that Android lists as an external display. Bluetooth audio alone cannot show captions."</string>
+    <string name="ui_a88c90b92699" formatted="false">"Another card is using the display. Stop it in Devices to use captions."</string>
+    <string name="ui_600f1a573fdc" formatted="false">"Show live words on %1$s?"</string>
+    <string name="ui_6020ef647f63" formatted="false">"Words captured during this recording may be visible to others using this display. halo sends captions only while this recording is open. Everyone speaking should agree."</string>
+    <string name="ui_fe597a324fd8" formatted="false">"Sending live words to %1$s"</string>
+    <string name="ui_1b634345a3d0" formatted="false">"HaloRecord · Waiting for live words"</string>
+    <string name="ui_6920ef3de830" formatted="false">"Show captions"</string>
+    <string name="ui_f05e840e0069" formatted="false">"Album"</string>
+    <string name="ui_5c387ffb0ba0" formatted="false">"A day to remember"</string>
+    <string name="ui_62c6f88f63e2" formatted="false">"%s photos"</string>
+    <string name="ui_c8dec36eb47d" formatted="false">"Some photos could not be added. Choose readable photos and try again."</string>
+    <string name="ui_6157bbdadb35" formatted="false">"Photos were kept. People matches could not be refreshed."</string>
+    <string name="ui_53cd794ec92b" formatted="false">"Could not add these photos."</string>
+    <string name="ui_a7b796a0d8e8" formatted="false">"Could not open the album."</string>
+    <string name="ui_14aa9444c6b7" formatted="false">"Could not open photo selection."</string>
+    <string name="ui_605dc0626e9b" formatted="false">"Could not create this MP4 on this phone. Try again."</string>
+    <string name="ui_8f052537970c" formatted="false">"Ask a grown-up to open Album."</string>
+    <string name="ui_1563955eed73" formatted="false">"Could not open sharing for this video."</string>
+    <string name="ui_a8196528a0b2" formatted="false">"Video kept in Workspace."</string>
+    <string name="ui_bea153b4ede2" formatted="false">"Could not keep this video."</string>
+    <string name="ui_5db49dfb02b6" formatted="false">"Review family share"</string>
+    <string name="ui_abc1dfd6f9bf" formatted="false">"Choose photos"</string>
+    <string name="ui_40acf06bced9" formatted="false">"Make a story"</string>
+    <string name="ui_12c7612021e3" formatted="false">"Could not play this video."</string>
+    <string name="ui_1a928245ce6d" formatted="false">"Creating a video on this phone"</string>
+    <string name="ui_6318fb9012f9" formatted="false">"Play story"</string>
+    <string name="ui_56cf81a8af5d" formatted="false">"Soft music"</string>
+    <string name="ui_9889551ac7e1" formatted="false">"Change words"</string>
+    <string name="ui_2429174fd72b" formatted="false">"Keep video"</string>
+    <string name="ui_6ac7b387e42d" formatted="false">"Open video"</string>
+    <string name="ui_84aeba7f1108" formatted="false">"Gran’s birthday last summer"</string>
+    <string name="ui_32746ae21124" formatted="false">"Choose photos to search dates, words, nearby cities, and people you add."</string>
+    <string name="ui_e140da2ffa8e" formatted="false">"No matching photos. Try a name, a date, or a word."</string>
+    <string name="ui_bc11be8c1339" formatted="false">"Date unknown"</string>
+    <string name="ui_02d7d5755787" formatted="false">"Search happens on this phone."</string>
+    <string name="ui_1e03d526ef14" formatted="false">"Speak to search"</string>
+    <string name="ui_982bf05820dd" formatted="false">"Near %s"</string>
+    <string name="ui_6fd71e293604" formatted="false">"People matches · %s"</string>
+    <string name="ui_f54e5dbb30e3" formatted="false">"Names, places and words"</string>
+    <string name="ui_151f3c0c1453" formatted="false">"Use this photo for People search"</string>
+    <string name="ui_6aa93ffd9055" formatted="false">"Could not save photo names and places."</string>
+    <string name="ui_60c44020ef58" formatted="false">"Pick photos to add to Album. Choose original files to find nearby cities from any location information already in those files."</string>
+    <string name="ui_83903f747448" formatted="false">"Photo picker"</string>
+    <string name="ui_f91542ee4f8f" formatted="false">"Original files"</string>
+    <string name="ui_c697162b02f1" formatted="false">"Add someone to People search"</string>
+    <string name="ui_8e1c64f75b7b" formatted="false">"Selected reference photo"</string>
+    <string name="ui_208a63cae258" formatted="false">"Choose a clear photo of one person and enter the name you use for them. halo looks for similar faces in your Album on this phone. You can remove the person at any time."</string>
+    <string name="ui_cbf18c1999ad" formatted="false">"Person's name"</string>
+    <string name="ui_cc6d5c5672eb" formatted="false">"Person added. Search their name to see matches."</string>
+    <string name="ui_527a479be947" formatted="false">"Choose a clear reference photo that shows one person."</string>
+    <string name="ui_71dcf1ebd969" formatted="false">"Could not match this person on this phone."</string>
+    <string name="ui_670b096936b5" formatted="false">"Match this person"</string>
+    <string name="ui_586b960e2051" formatted="false">"People search"</string>
+    <string name="ui_c97c8c806fc0" formatted="false">"Open a clear photo of one person to add them to People search."</string>
+    <string name="ui_fb093a2584c1" formatted="false">"Could not remove this person from People search."</string>
+    <string name="ui_94d65c0bc52b" formatted="false">"Send to family?"</string>
+    <string name="ui_888d3b87da05" formatted="false">"MP4 · %s seconds"</string>
+    <string name="ui_c0b66d15b4f3" formatted="false">"Includes soft music"</string>
+    <string name="ui_b77c8a4bd22c" formatted="false">"Choose who receives this video on the next screen."</string>
+    <string name="ui_7594ca819390" formatted="false">"Choose app and person"</string>
+    <string name="ui_1a91a2e0abeb" formatted="false">"Choose photos, then say or type what you remember. Open a clear photo of one person to add them to People search. Make a story creates a video you can play, keep, or share after review."</string>
+    <string name="ui_096e1dedffce" formatted="false">"Larger photos"</string>
+    <string name="ui_c3c5a845d7c8" formatted="false">"Story video preview"</string>
 </resources>

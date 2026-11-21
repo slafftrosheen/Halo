@@ -16,10 +16,12 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.zone5.Zone5Icon
 import com.halo.app.ui.zone5.Zone5PageHeading
+import com.halo.app.ui.zone6.editZone6PageOnHold
 
 @Composable
-internal fun WorkspaceHeadingAndTabs(library: Boolean, onSelect: (Boolean) -> Unit) {
-    Zone5PageHeading(uiText("Workspace"), stringResource(R.string.zone5_workspace_subtitle))
+internal fun WorkspaceHeadingAndTabs(library: Boolean, onSelect: (Boolean) -> Unit, onEdit: (() -> Unit)? = null) {
+    Zone5PageHeading(uiText("Workspace"), stringResource(R.string.zone5_workspace_subtitle),
+        modifier = onEdit?.let { Modifier.editZone6PageOnHold(it) } ?: Modifier)
     val stackedTabs = LocalDensity.current.fontScale >= 1.4f
     val tabs: @Composable (Modifier) -> Unit = { tabModifier ->
         listOf(true, false).forEach { isLibrary ->
@@ -69,53 +71,26 @@ internal fun WorkspaceSectionSwitcher(library: Boolean, onSelect: (Boolean) -> U
     else Row(Modifier.fillMaxWidth()) { tabs(Modifier.weight(1f)) }
 }
 
-/** Rows navigate straight to existing owners. No suite state or operation lives here. */
+/** Native entry points keep each tool with its own data and permission owner. */
 @Composable
-internal fun WorkspaceToolsList(onStudy: () -> Unit, onMemory: () -> Unit,
-    onStudio: (() -> Unit)?, onOffice: (() -> Unit)?, onCanvas: (() -> Unit)? = null,onEveryday: ((String)->Unit)? = null) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(stringResource(R.string.zone5_choose_tool), style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics { heading() })
-        Surface(color = Color.Transparent) {
-            Column {
-                listOf(Triple("Organizer","Events, tasks, reminders, alarms and timers",com.halo.app.ui.everyday.EverydayRoutes.ORGANIZER),
-                    Triple("Your day in Halo","Build and read a brief from saved information",com.halo.app.ui.everyday.EverydayRoutes.BRIEF),
-                    Triple("World clocks","Time in your saved cities",com.halo.app.ui.everyday.EverydayRoutes.CLOCKS),
-                    Triple("Sources","Choose saved weather, news and public calendars",com.halo.app.ui.everyday.EverydayRoutes.SOURCES)).forEach { (title,purpose,route) ->
-                    WorkspaceInstrumentRow(uiText(title),uiText(purpose),"tool_notes",onEveryday?.let {open ->{open(route)}})
-                    HorizontalDivider(Modifier.padding(horizontal=16.dp))
-                }
-                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_studio), stringResource(R.string.zone5_studio_purpose), "tool_studio", onStudio)
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_notes), stringResource(R.string.zone5_office_purpose), "tool_notes", onOffice)
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_study), stringResource(R.string.zone5_study_purpose), "tool_study", onStudy)
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_memory), stringResource(R.string.zone5_memory_purpose), "tool_memory", onMemory)
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                WorkspaceInstrumentRow(stringResource(R.string.zone5_tool_canvas), stringResource(R.string.zone5_canvas_purpose), "tool_canvas", onCanvas)
-            }
-        }
-        Text(stringResource(R.string.zone5_creations_in_library), style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-private fun WorkspaceInstrumentRow(title: String, purpose: String, icon: String, open: (() -> Unit)?) {
-    Surface(onClick = { open?.invoke() }, enabled = open != null, color = Color.Transparent,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 88.dp)) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
-                Zone5Icon(icon, HaloGlyph.TOOL, Modifier.size(40.dp))
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                Text(if (open == null) stringResource(R.string.zone5_host_unavailable) else purpose,
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Zone5Icon("action_forward", HaloGlyph.NEXT, Modifier.size(24.dp))
+internal fun WorkspaceToolsList(
+    onStudy: () -> Unit,
+    onMemory: () -> Unit,
+    onStudio: (() -> Unit)?,
+    onOffice: (() -> Unit)?,
+    onCanvas: (() -> Unit)? = null,
+    onEveryday: ((String) -> Unit)? = null,
+    easy: Boolean = false,
+    onEdit: (() -> Unit)? = null,
+) {
+    com.halo.app.ui.toolkit.HaloToolkitShelf(easy, onEdit) { route ->
+        when (route) {
+            "studio" -> onStudio?.invoke()
+            "file_tools" -> onOffice?.invoke()
+            "canvases" -> onCanvas?.invoke()
+            "study" -> onStudy()
+            "notebook/memory" -> onMemory()
+            else -> onEveryday?.invoke(route)
         }
     }
 }

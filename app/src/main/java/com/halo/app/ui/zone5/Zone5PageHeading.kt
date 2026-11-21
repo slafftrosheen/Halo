@@ -9,13 +9,14 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.halo.app.ui.zone6.haloEditablePageTitle
 
 /** Root-page identity, using the existing font and palette authorities. */
 @Composable
 internal fun Zone5PageHeading(title: String, subtitle: String? = null, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(title, style = MaterialTheme.typography.headlineMedium.copy(fontSize = 26.sp, lineHeight = 34.sp),
-            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.semantics { heading() })
+            color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.haloEditablePageTitle().semantics { heading() })
         subtitle?.let { Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }

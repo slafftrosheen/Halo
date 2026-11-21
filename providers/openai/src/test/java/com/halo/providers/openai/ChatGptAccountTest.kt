@@ -35,6 +35,7 @@ class ChatGptAccountTest {
         var nonce = ""
         var identityNonce: String? = null
         var scope = ChatGptAccount.SCOPES
+        var returnCredentials = true
         var unavailableKeys = false
         var wrongIssuer = false
         var refreshes = 0
@@ -64,10 +65,13 @@ class ChatGptAccountTest {
                             val body = request.body.readUtf8(); bodies += body
                             val refresh = body.contains("grant_type=refresh_token")
                             if (refresh) refreshes++
-                            MockResponse().setBody(JSONObject().put("access_token", if (refresh) "rotated-access" else "fixture-access")
+                            val response = JSONObject().put("scope", scope)
+                                .put("id_token", jwt(if (refresh) null else identityNonce ?: nonce))
+                            if (returnCredentials) response
+                                .put("access_token", if (refresh) "rotated-access" else "fixture-access")
                                 .put("refresh_token", if (refresh) "rotated-refresh" else "fixture-refresh")
                                 .put("token_type", "Bearer").put("expires_in", 3600)
-                                .put("scope", scope).put("id_token", jwt(if (refresh) null else identityNonce ?: nonce)).toString())
+                            MockResponse().setBody(response.toString())
                         }
                         "/revoke" -> { bodies += request.body.readUtf8(); MockResponse().setBody("") }
                         else -> MockResponse().setResponseCode(404)
@@ -124,6 +128,37 @@ class ChatGptAccountTest {
             assertFalse(f.account.state.value.subscriptionAccess)
             assertTrue(runCatching { f.account.accessToken() }.isFailure)
             assertEquals(0, f.refreshes)
+        }
+    }
+    @Test fun identityOnlyResponseSurvivesRestartAndCanBeUpgradedBySigningInAgain() = runBlocking {
+        Fixture().use { f ->
+            f.scope = "openid profile email"
+            f.returnCredentials = false
+            f.account.complete(f.callback(f.authorization()))
+            assertTrue(f.account.state.value.connected)
+            assertFalse(f.account.state.value.subscriptionAccess)
+            assertFalse(JSONObject(f.secrets.value!!).has("tokens"))
+            val restarted = f.owner()
+            restarted.load()
+            assertTrue(restarted.state.value.connected)
+            assertFalse(restarted.state.value.subscriptionAccess)
+            assertTrue(runCatching { restarted.accessToken() }.isFailure)
+
+            f.scope = ChatGptAccount.SCOPES
+            f.returnCredentials = true
+            val retry = f.authorization()
+            assertEquals("issued_client", retry.queryParameter("client_id"))
+            f.account.complete(f.callback(retry))
+            assertTrue(f.account.state.value.subscriptionAccess)
+            assertEquals("fixture-access", f.account.accessToken())
+        }
+    }
+    @Test fun missingTokensAreRejectedWhenDirectAccessOrOfflineAccessWasGranted() = runBlocking {
+        for (scope in listOf("openid chatgpt.tokens.use.direct", "openid offline_access")) Fixture().use { f ->
+            f.scope = scope
+            f.returnCredentials = false
+            assertTrue(runCatching { f.account.complete(f.callback(f.authorization())) }.isFailure)
+            assertFalse(f.account.state.value.connected)
         }
     }
     @Test fun refreshRotationIsRecoveredAfterKeyOutageAndRestartWithoutReusingConsumedGrant() = runBlocking {

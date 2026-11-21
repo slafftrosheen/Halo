@@ -68,6 +68,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -109,6 +110,8 @@ fun HomeScreen(
     animatedVisibilityScope: AnimatedVisibilityScope? = null,
     allowSharedOrb: Boolean = false,
     surfaceSwitcher: (@Composable () -> Unit)? = null,
+    onOpenZone6HomeDestination: ((String) -> Unit)? = null,
+    onStartNote: (() -> Unit)? = null,
 ) {
     val dashboard by viewModel.dashboard.collectAsStateWithLifecycle()
     val daily by viewModel.dailyAssistant.collectAsStateWithLifecycle()
@@ -265,6 +268,85 @@ fun HomeScreen(
 
 
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
+    val startPreferences = remember(context.applicationContext) { HomeStartPreferences(context) }
+    val layoutKept = com.halo.app.ui.theme.rememberHaloLayoutLocked()
+    var homeStartSnapshot by remember { mutableStateOf<HomeStartSnapshot?>(null) }
+    var homeStartDraft by remember { mutableStateOf<HomeStartLayout?>(null) }
+    var savingHomeStarts by remember { mutableStateOf(false) }
+    var homeStartSaveError by remember { mutableStateOf(false) }
+    val homeStartLayout = homeStartDraft ?: homeStartSnapshot?.current ?: HomeStartLayout()
+    val homeClock = androidx.compose.runtime.produceState(java.time.ZonedDateTime.now(), shellOwnsOrb) {
+        while (shellOwnsOrb) {
+            value = java.time.ZonedDateTime.now()
+            kotlinx.coroutines.delay(60_000)
+        }
+    }.value
+    val homeDate = homeClock.toLocalDate()
+    val showWeather = shellOwnsOrb && onOpenZone6HomeDestination != null &&
+        (homeStartDraft != null || homeStartLayout.greeting == HomeGreeting.WEATHER || HomeStart.WEATHER in homeStartLayout.starts)
+    val weatherSource = androidx.compose.runtime.produceState<com.halo.app.everyday.collectors.CollectorState?>(null, showWeather) {
+        if (!showWeather) {
+            value = null
+            return@produceState
+        }
+        try {
+            com.halo.app.di.ManualDependencyGraph.collectorRepository.observe().collect { sources ->
+                value = sources.firstOrNull { source ->
+                    source.source.kind == com.halo.app.everyday.collectors.CollectorKind.WEATHER &&
+                        source.source.selected && source.source.enabled && !source.source.muted
+                }
+            }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            value = null
+        }
+    }.value
+    val weather = weatherSource?.snapshot?.takeIf { homeClock.toInstant() < it.expiresAt }
+        ?.payload?.let { it as? com.halo.app.everyday.collectors.CollectorPayload.Weather }?.fact
+        ?.let { fact -> fact.temperatureC?.let { HomeWeather(fact.place.name, it) } }
+    LaunchedEffect(shellOwnsOrb, startPreferences) {
+        if (shellOwnsOrb && onOpenZone6HomeDestination != null) {
+            try {
+                homeStartSnapshot = startPreferences.load()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                homeStartSnapshot = null
+            }
+        }
+    }
+    fun editHomeStarts() {
+        if (layoutKept) return
+        val snapshot = homeStartSnapshot ?: return
+        focusManager.clearFocus()
+        homeStartSaveError = false
+        homeStartDraft = snapshot.current
+    }
+    val savedHomeStarts = homeStartSnapshot
+    val draftHomeStarts = homeStartDraft
+    if (savedHomeStarts != null && draftHomeStarts != null) {
+        HomeStartEditor(draftHomeStarts, savedHomeStarts.current, savedHomeStarts.restorable(), homeDate, weather,
+            savingHomeStarts, homeStartSaveError, onChange = { homeStartDraft = it; homeStartSaveError = false },
+            onDismiss = { homeStartDraft = null },
+            onApply = {
+                if (!savingHomeStarts) {
+                    savingHomeStarts = true
+                    scope.launch {
+                        try {
+                            homeStartSnapshot = startPreferences.apply(savedHomeStarts, draftHomeStarts)
+                            homeStartDraft = null
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                            throw cancelled
+                        } catch (_: Exception) {
+                            homeStartSaveError = true
+                        } finally {
+                            savingHomeStarts = false
+                        }
+                    }
+                }
+            })
+    }
     DisposableEffect(lifecycleOwner, viewModel, shellOwnsOrb) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -368,6 +450,41 @@ fun HomeScreen(
     var modeMenuExpanded by remember { mutableStateOf(false) }
     var quickAction by remember { mutableStateOf<String?>(null) }
     var quickValue by remember { mutableStateOf("") }
+    var startingBriefRead by remember { mutableStateOf(false) }
+    val openHomeStart: (HomeStart) -> Unit = { start ->
+        val graph = com.halo.app.di.ManualDependencyGraph
+        val routes = com.halo.app.ui.everyday.EverydayRoutes
+        when (start) {
+            HomeStart.TODAY -> onOpenZone6HomeDestination?.invoke(routes.ORGANIZER)
+            HomeStart.NOTE -> onStartNote?.invoke()
+            HomeStart.STUDY -> onOpenZone6HomeDestination?.invoke("study")
+            HomeStart.CAMERA -> imagePicker.launch("image/*")
+            HomeStart.TIMER -> onOpenZone6HomeDestination?.invoke("${routes.ORGANIZER}?createKind=TIMER")
+            HomeStart.WEATHER -> onOpenZone6HomeDestination?.invoke(
+                weatherSource?.source?.id?.let { routes.source(it) } ?: routes.SOURCES)
+            HomeStart.BRIEF -> if (!startingBriefRead) {
+                startingBriefRead = true
+                scope.launch {
+                    try {
+                        (context.applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap()
+                        graph.collectorBootstrap.ensureInitialized()
+                        val brief = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            graph.briefService.observeLatestVisible().first()
+                                ?: graph.briefService.build(com.halo.app.everyday.briefing.BriefPeriod.ON_DEMAND)
+                        }
+                        graph.briefReadAloud.read(brief.id)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        onOpenZone6HomeDestination?.invoke(routes.BRIEF)
+                    } finally {
+                        startingBriefRead = false
+                    }
+                }
+            }
+            HomeStart.DRAW -> onOpenZone6HomeDestination?.invoke("studio")
+        }
+    }
     var showInboxCapture by rememberSaveable { mutableStateOf(false) }
     if (showInboxCapture) com.halo.app.ui.screens.notebook.InboxCaptureDialog { showInboxCapture = false }
     val researchPrompt = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_tool_research_prompt)
@@ -479,43 +596,45 @@ fun HomeScreen(
             else -> com.halo.app.R.string.action_wait
         }), "attach" to if (importingSource) androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_importing) else changingLabel,
             "new-chat" to changingLabel, "tools" to changingLabel))
+    val composerContext: @Composable () -> Unit = {
+        if (importingSource) {
+            androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth())
+            Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_importing), style = MaterialTheme.typography.bodySmall)
+        }
+        // H03: selected sources remain visible without opening the attachment sheet.
+        // A single horizontally scrollable row avoids clipping the pinned composer
+        // at 200% font scale, and a tap opens source actions/privacy.
+        if (contextChips.isNotEmpty()) Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            contextChips.forEach { chip ->
+                androidx.compose.material3.InputChip(
+                    selected = true,
+                    onClick = { showContext = true },
+                    modifier = Modifier.widthIn(max = 260.dp).heightIn(min = 48.dp),
+                    trailingIcon = {
+                        IconButton(onClick = { viewModel.removeContext(chip.focus.category) }, modifier = Modifier.size(48.dp)) {
+                            Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
+                                androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_remove_attachment, chip.title), Modifier.size(18.dp))
+                        }
+                    },
+                    label = {
+                        Text(chip.title, maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    }
+                )
+            }
+        }
+    }
     val homeComposer: @Composable () -> Unit = {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = if (shellOwnsOrb) 0.dp else 6.dp)
             .background(MaterialTheme.colorScheme.surfaceContainerLow, androidx.compose.foundation.shape.RoundedCornerShape(26.dp)).padding(if (shellOwnsOrb) 2.dp else 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (importingSource) {
-                androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth())
-                Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_attach_importing), style = MaterialTheme.typography.bodySmall)
+            if (!shellOwnsOrb) {
+                composerContext()
+                ComposerDraftNotice(viewModel, draftKey)
             }
-            // H03: selected sources remain visible without opening the attachment sheet.
-            // A single horizontally scrollable row avoids clipping the pinned composer
-            // at 200% font scale, and a tap opens source actions/privacy.
-            if (contextChips.isNotEmpty()) Row(
-                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                contextChips.forEach { chip ->
-                    androidx.compose.material3.InputChip(
-                        selected = true,
-                        onClick = { showContext = true },
-                        modifier = Modifier.widthIn(max = 260.dp).heightIn(min = 48.dp),
-                        trailingIcon = {
-                            IconButton(onClick = { viewModel.removeContext(chip.focus.category) }, modifier = Modifier.size(48.dp)) {
-                                Icon(androidx.compose.ui.res.painterResource(com.halo.app.R.drawable.halo_ic_close),
-                                    androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_remove_attachment, chip.title), Modifier.size(18.dp))
-                            }
-                        },
-                        label = {
-                            Text(chip.title, maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                        }
-                    )
-                }
-            }
-            if (shellOwnsOrb) HomeComposerNotice(homeComposerNotice(
-                providerNeedsAttention || connectionNeedsAttention, submission, draftKey,
-                active = isListening || isSpeechProcessing || isSpeaking || isActiveSession || presentation.needsReview))
-            ComposerDraftNotice(viewModel, draftKey)
             HaloComposer(
                 draftIdentity = draftKey, draftRevision = drafts[draftKey]?.revision ?: 0L,
                 readAcknowledgedDraft = { viewModel.composerDrafts.value[draftKey] },
@@ -544,7 +663,8 @@ fun HomeScreen(
                     else -> "Talk"
                 }),
                 showStop = isActiveSession || submission.busy || isListening || isSpeechProcessing || isSpeaking,
-                onAttach = { focusManager.clearFocus(); showContext = true },
+                onAttach = if (shellOwnsOrb && keyboardVisible) null
+                    else ({ focusManager.clearFocus(); showContext = true }),
                 onTools = { focusManager.clearFocus(); toolGroup = HomeToolGroup.CREATE.name; toolEntry = null
                     viewModel.refreshToolCatalog(); showActions = true },
             )
@@ -555,6 +675,9 @@ fun HomeScreen(
     if (shellOwnsOrb) {
         com.halo.app.ui.presence.BindShellUtilityBand(homeOwner, content = homeComposer)
         val todayLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_your_day)
+        val editLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_start_edit)
+        val showMeLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_start_show_me)
+        val pageGuidance = com.halo.app.ui.zone6.LocalHaloPageGuidance.current
         com.halo.app.ui.presence.BindShellPageActions(homeOwner, buildList {
             add(com.halo.app.ui.presence.ShellPageAction("attach", "Attach", HaloGlyph.FILE,
                 enabled = !changingConversation && !importingSource) { focusManager.clearFocus(); showContext = true })
@@ -585,8 +708,15 @@ fun HomeScreen(
             add(com.halo.app.ui.presence.ShellPageAction("clear-chat", "Clear conversation", HaloGlyph.TRASH,
                 enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing) { confirmClear = true })
             if (daily.items.isNotEmpty()) add(com.halo.app.ui.presence.ShellPageAction("today", todayLabel, HaloGlyph.HOME) { showToday = true })
-
-
+            if (onOpenZone6HomeDestination != null) {
+                add(com.halo.app.ui.presence.ShellPageAction("edit-home", editLabel, HaloGlyph.APPEARANCE,
+                    enabled = !layoutKept && homeStartSnapshot != null && !changingConversation && !isListening && !isSpeechProcessing,
+                    onInvoke = ::editHomeStarts))
+                add(com.halo.app.ui.presence.ShellPageAction("show-me", showMeLabel, HaloGlyph.QUESTION,
+                    enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing) {
+                    if (pageGuidance != null) pageGuidance.showControls() else com.halo.app.ui.zone6.Zone6GuideReplay.replay()
+                })
+            }
         })
         if (modeMenuExpanded) androidx.compose.material3.AlertDialog(
             onDismissRequest = { modeMenuExpanded = false },
@@ -612,9 +742,17 @@ fun HomeScreen(
             accent = MaterialTheme.colorScheme.primaryContainer, apricot = MaterialTheme.colorScheme.tertiary),
         contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
-        if (shellOwnsOrb && !keyboardVisible) com.halo.app.ui.zone5.Zone5PageHeading(uiText("Home"),
-            subtitle = androidx.compose.ui.res.stringResource(com.halo.app.R.string.zone5_home_purpose),
-            modifier = Modifier.padding(horizontal = 20.dp))
+        if (shellOwnsOrb && !keyboardVisible) {
+            val canEditHome = !layoutKept && onOpenZone6HomeDestination != null && homeStartSnapshot != null &&
+                !changingConversation && !isListening && !isSpeechProcessing
+            com.halo.app.ui.zone5.Zone5PageHeading(uiText("Home"),
+                subtitle = androidx.compose.ui.res.stringResource(com.halo.app.R.string.zone5_home_purpose),
+                modifier = Modifier.padding(horizontal = 20.dp).then(
+                    if (canEditHome) homeHeadingEdit(::editHomeStarts) else Modifier))
+            if (layoutKept) Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.layout_kept),
+                Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         // Standalone hosts retain local controls; the app shell projects them into Halo Zone.
         if (!shellOwnsOrb && (!shortScreen || !keyboardVisible)) Box(Modifier.fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = if (shortScreen) 4.dp else 12.dp)) {
@@ -643,6 +781,21 @@ fun HomeScreen(
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(feedScroll)
             .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            if (shellOwnsOrb && !keyboardVisible && currentTurns.isEmpty() &&
+                pendingQuestion == null && responseText.isBlank() && !isActiveSession &&
+                !isListening && !isSpeechProcessing && onOpenZone6HomeDestination != null) {
+                HomeGreetingLine(homeStartLayout.greeting, homeDate, weather)
+                HomeStartButtons(homeStartLayout, enabled = { start ->
+                    when (start) {
+                        HomeStart.NOTE -> onStartNote != null
+                        HomeStart.BRIEF -> !startingBriefRead && !isSpeaking
+                        else -> true
+                    }
+                }, onOpen = openHomeStart)
+            }
+            if (chatProvider?.connection == com.halo.app.ai.ProviderConnectionState.OFFLINE) {
+                com.halo.app.ui.zone6.Zone6OfflineLine(uiText("Online answers are unavailable · saved work stays on this phone"))
+            }
             // Page earlier content without hiding turns based on equal answer text.
             if (currentTurns.size > visibleTurnCount) TextButton(onClick = {
                 followLatest = false
@@ -659,7 +812,10 @@ fun HomeScreen(
                             turn.conversationId, turn.id, turn.metadata["interactionId"], turn.metadata["requestId"],
                             turn.assistantText, ResponsePresentationSource.COMMITTED_CONVERSATION)) }) else null,
                         onEdit = if (canEditMessage && turn.userText.isNotBlank()) ({ prepareEarlierQuestion(turn.userText) }) else null,
-                        canRead = canEditMessage)
+                        canRead = canEditMessage,
+                        origin = homeAnswerOrigin(providerRows.firstOrNull {
+                            it.descriptor.providerId == turn.metadata["providerId"]
+                        }?.descriptor?.location))
                 }
             }
             pendingQuestion?.let { HomeTranscriptMessage("${submission.interactionId}:pending", it, user = true) }
@@ -747,18 +903,18 @@ fun HomeScreen(
             }
             if (homeShouldShowThinkingSkeleton(uiState.sessionState, if (priorSavedReply) "" else responseText,
                     presentation.needsReview)) HomeThinkingSkeleton()
-            HomeAutoReadAnswers(uiState, responseText, isActiveSession)
+            HomeAutoReadAnswers(uiState, responseText, isActiveSession, submission)
             if (responseText.isNotBlank() && !priorSavedReply) {
                 HomeResponseCard(uiState, responseText, isActiveSession,
-                    cloudReply = cloudHandoffProviderId(
-                        uiState.presentedIdentity?.providerId,
-                        providerRows.associate { it.descriptor.providerId to it.descriptor.location }
-                    ) != null,
+                    origin = homeAnswerOrigin(providerRows.firstOrNull {
+                        it.descriptor.providerId == uiState.presentedIdentity?.providerId
+                    }?.descriptor?.location, walkedNativePath = uiState.nativeReceiptCopy != null),
                     onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
                     onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) },
                     onEdit = if (canEditMessage) currentTurns.firstOrNull { it.id == uiState.presentedIdentity?.turnId }
                         ?.userText?.takeIf(String::isNotBlank)?.let { question -> ({ prepareEarlierQuestion(question) }) } else null)
-            } else if (currentTurns.isEmpty() && pendingQuestion == null && canSend && !presentation.needsReview && !submission.needsRecovery && textInput.isBlank()) {
+            } else if (currentTurns.isEmpty() && pendingQuestion == null && canSend && !presentation.needsReview &&
+                !submission.needsRecovery && textInput.isBlank() && !(shellOwnsOrb && onOpenZone6HomeDestination != null)) {
                 HomeWelcome(compact = true, onDraft = { updateDraft(it); composerFocusRequester.requestFocus() })
             }
             uiState.rejectionNotice?.let { notice ->
@@ -841,8 +997,8 @@ fun HomeScreen(
             if (showTaskDetails && !showActivePlan) uiState.longTaskProgress?.let {
                 HomeTaskProgress(it)
             }
-            if(!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                nextActions.forEach { action -> TextButton(onClick={ viewModel.performNextAction(action) }) { Text(contextualNextActionLabel(action.kind)) } }
+            if (!isActiveSession && !isListening && !isSpeechProcessing && !isSpeaking) {
+                HomeNextForYou(nextActions, onPick = { viewModel.performNextAction(it) })
             }
 
 
@@ -859,7 +1015,23 @@ fun HomeScreen(
                 Text(if (unseenReply) uiText("New reply ↓") else androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_return_to_current))
             }
         }
-        if (!shellOwnsOrb) homeComposer()
+        if (shellOwnsOrb) Column(
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (!keyboardVisible) {
+                composerContext()
+                HomeComposerNotice(homeComposerNotice(
+                    providerNeedsAttention || connectionNeedsAttention, submission, draftKey,
+                    active = isListening || isSpeechProcessing || isSpeaking || isActiveSession || presentation.needsReview,
+                ))
+                if (providerNeedsAttention || connectionNeedsAttention) TextButton(
+                    onClick = { chatProviderId?.let(onOpenProvider) ?: viewModel.navigateToIntelligence() },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                ) { Text(uiText("Set up answers")) }
+            }
+            ComposerDraftNotice(viewModel, draftKey)
+        } else homeComposer()
         // H04: forms are screen-level overlays, independent of chat scrolling.
         quickAction?.let { action ->
             val command = if (action == "Timer") {

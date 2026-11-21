@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="th.css"><script src="icons.js"></script><script src="z6.js"></script><script src="th.js"></script>
+<style>.gridA{display:grid;grid-template-columns:150px repeat(6,1fr);gap:22px 18px;align-items:center}
+.gridA .h{font:600 16px Sora;color:var(--t2)}.gridA .c{display:flex;flex-direction:column;align-items:center;gap:10px;font:600 14px Atk;color:var(--t2)}
+.panel{border-radius:28px;padding:26px 28px;border:1px solid rgba(250,250,244,.08)}
+.hs2{position:relative;border-radius:40px;overflow:hidden;width:390px;height:520px;flex:none}
+.apps{position:absolute;left:30px;right:30px;bottom:40px;display:grid;grid-template-columns:repeat(4,1fr);gap:22px 0;justify-items:center}
+.apps .c{display:flex;flex-direction:column;align-items:center;gap:6px;font:500 13px Atk;color:#fff}
+.gen{width:62px;height:62px;border-radius:30%;}
+.styles{display:grid;grid-template-columns:120px repeat(3,1fr);gap:16px 20px;align-items:center}
+.sp{border-radius:22px;padding:14px 12px;display:flex;gap:2px;flex-wrap:nowrap;overflow:hidden}
+</style></head><body><div id="root"></div><script>
+const q=new URLSearchParams(location.search).get('b')||'2';
+const wm=`<div class="wm">hal<svg viewBox="0 0 240 240" style="width:30px;height:30px;margin-top:4px"><path d="M197.32 87.18A84 84 0 1 1 152.82 42.68" stroke="#0CF2BA" stroke-width="30" stroke-linecap="round" fill="none"/></svg></div>`;
+const KS=Object.keys(ACC);
+if(q=='2'){
+ const grid=`<div class="panel" style="background:#0b0838"><div class="gridA"><div></div>${KS.map(k=>`<div class="h" style="text-align:center">${ANAME[k]}</div>`).join('')}
+ <div class="h">Dark looks</div>${KS.map(k=>`<div class="c">${appIcon('dark',k,104)}</div>`).join('')}
+ <div class="h">Light looks</div>${KS.map(k=>`<div class="c">${appIcon('light',k,104)}</div>`).join('')}
+ <div class="h">Launcher shapes</div>${[['circle','MINT'],['squircle','LILAC'],['rounded','SAGE']].map(([s,k])=>`<div class="c">${appIcon('dark',k,84,s)}${s}</div>`).join('')}<div class="c">${appIcon('mono','MINT',84)}System themed</div><div class="c">${appIcon('light','CORAL',84,'circle')}circle · light</div><div></div>
+ </div></div>`;
+ const T=TONES.dark.SLATE;
+ const home=`<div class="hs2" style="background:radial-gradient(90% 60% at 80% 10%,#2b4a6a,transparent 60%),linear-gradient(160deg,#1a2a3a,#0b1220)">
+ <div style="position:absolute;top:30px;left:30px;right:30px;font:300 64px/1 Sora;color:#fff;letter-spacing:-.04em">9:41<div style="font:500 16px Atk;margin-top:8px;opacity:.8">Friday, 20 November</div></div>
+ <div class="apps">${['Phone','Messages','halo','Camera','Maps','Photos','Clock','Files'].map(n=>`<div class="c">${n=='halo'?appIcon('dark','BLUE',62):`<div class="gen" style="background:${{Phone:'#3a6',Messages:'#38c',Camera:'#555',Maps:'#2a8',Photos:'#c84',Clock:'#333',Files:'#36a'}[n]}"></div>`}${n}</div>`).join('')}</div></div>`;
+ document.getElementById('root').innerHTML=`<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · Make it yours · 2 / 3</div><h1>The app icon follows your look</h1>
+ <p>Twelve adaptive icons — every accent on Night Ink or Cream — with the canonical open ring and a soft glow in the accent. halo switches its home-screen icon when you Apply a new look. System themed icons (Android 13+) use the monochrome ring.</p></div>${wm}</div>
+ <div style="display:flex;gap:40px;align-items:flex-start">${grid}<div class="pcol">${home}<div class="pl">On the home screen<small>Slate Blue look → Blue on Night Ink</small></div></div></div>
+ <div class="notes"><div class="note"><b>Matches automatically</b><p>“Match look” is the default: dark looks get Night Ink, light looks get Cream, in your accent.</p></div>
+ <div class="note"><b>Or pick one</b><p>Classic (Mint on Night Ink), any accent, Light, or System themed — stays put whatever the look.</p></div>
+ <div class="note"><b>Same ring everywhere</b><p>Gap at 1–2 o’clock, thick stroke, inside the launcher safe zone for circle, squircle and rounded masks.</p></div>
+ <div class="note"><b>Honest switching</b><p>Android may move the icon on some launchers when it changes. halo says so before Apply.</p></div></div></div>`;
+}
+if(q=='3'){
+ const N=['home','notebook','notifications','devices','settings','draw','study','memory','canvas','mic'];
+ const looks=[[1,'MINT','NATURAL'],[1,'SAGE','PAPER'],[0,'LILAC','WARM'],[0,'CORAL','COOL']];
+ const grid=`<div class="styles"><div></div>${[['line','Line','calm outline in your accent'],['spot','Spot','ink outline + an accent “halo” dot'],['tile','Tile','glyph on a soft accent tile']].map(([s,n,d])=>`<div><div style="font:600 20px Sora">${n}</div><div style="color:var(--t2);font-size:15px">${d}</div></div>`).join('')}
+ ${looks.map(([dk,a,t])=>`<div class="h" style="font:600 15px Sora;color:var(--t2)">${dk?'Dark':'Light'} ${ANAME[a]}<br><span style="font:500 13px Atk">${TNAME[t]}</span></div>${['line','spot','tile'].map(s=>`<div class="sp th ${dk?'':'lt'}" style="${themeVars(dk,a,t)};background:${TONES[dk?'dark':'light'][t][0]};border:1px solid var(--line)">${N.map(n=>icon(n,s,22)).join('')}</div>`).join('')}`).join('')}</div>`;
+ document.getElementById('root').innerHTML=`<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · Make it yours · 3 / 3</div><h1>Icons that follow your theme</h1>
+ <p>The 140-icon halo set, in three styles, painted from your look’s accent and tone. Meaning colours never change: Apricot = needs you, red = error. Tool identity stays in the shape and name, not only the colour.</p></div>${wm}</div>${grid}
+ <div class="notes"><div class="note"><b>Line (default)</b><p>The current outline icons in the accent ink — lightest and calmest.</p></div>
+ <div class="note"><b>Spot</b><p>Outline in your text colour with a small accent dot — a quiet echo of the halo ring.</p></div>
+ <div class="note"><b>Tile</b><p>Glyph on a soft accent tile — easiest to spot, good for large text and low vision.</p></div>
+ <div class="note"><b>Contrast checked</b><p>Every style keeps icons ≥ 3:1 against its background in all 60 looks; higher-contrast mode drops tints to solid ink.</p></div></div></div>`;
+}
+</script></body></html>

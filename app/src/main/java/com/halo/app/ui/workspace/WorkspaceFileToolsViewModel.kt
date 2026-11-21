@@ -109,7 +109,9 @@ internal class WorkspaceFileToolsViewModel(val tools: WorkspaceFileTools, initia
         observation?.cancel(); selectedId = null; savedState["fileToolsObject"] = null
         mutable.value = WorkspaceFileToolsState()
     }
-    fun create(title: String, format: WorkspaceTextFormat) = operation(FileToolOperation.CREATE) { observe(tools.text.create(title, format).id, true) }
+    fun create(title: String, format: WorkspaceTextFormat, text: String = "") = operation(FileToolOperation.CREATE) {
+        observe(tools.text.create(title, format, text).id, true)
+    }
     fun importFile(uri: Uri) = operation(FileToolOperation.IMPORT) { observe(tools.files.importFile(uri).objectId.value, true) }
     fun importText(file: WorkspaceFile) = operation(FileToolOperation.IMPORT) {
         observe(tools.text.import(file.objectId.value, requireNotNull(file.version)).id, true)

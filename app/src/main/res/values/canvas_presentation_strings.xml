@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="canvas_presentation_board">Board</string>
+    <string name="canvas_presentation_list">List</string>
+    <string name="canvas_presentation_show_board">Show board</string>
+    <string name="canvas_presentation_show_list">Board as a list</string>
+    <string name="canvas_presentation_linked_to">Linked to %1$s</string>
+    <string name="canvas_presentation_linked_from">Linked from %1$s</string>
+    <string name="canvas_presentation_card_changed">This card changed. Close and open it again.</string>
+</resources>

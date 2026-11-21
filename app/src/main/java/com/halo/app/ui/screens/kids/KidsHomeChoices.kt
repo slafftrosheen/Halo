@@ -14,6 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +29,7 @@ import com.halo.app.ui.presence.HaloSignalPresentation
 import com.halo.app.ui.zone5.Zone5Icon
 import com.halo.app.ui.zone5.Zone5ActionButton
 import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
 
 internal enum class KidsDestination { HOME, ASK, LEARN, CREATE }
 
@@ -63,8 +67,10 @@ internal fun KidsHomeChoices(
 internal fun KidsChoice(title: String, icon: Int, modifier: Modifier = Modifier,
     subtitle: String? = null, highlighted: Boolean = false, enabled: Boolean = true,
     onClick: () -> Unit) {
-    val choice = rememberKidsSpokenChoice(uiText(title), onClick)
+    val choice = rememberKidsSpokenChoice(uiText(title), onChoose = onClick)
+    val confirm = stringResource(R.string.kids_choice_tap_again)
     Surface(onClick = choice.onClick, enabled = enabled, modifier = modifier.heightIn(min = 76.dp)
+        .semantics { if (choice.heard) stateDescription = confirm }
         .haloTrace(highlighted, MaterialTheme.colorScheme.primary, corner = 26.dp, lapOnAppear = true),
         shape = HaloShapes.hero,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -90,6 +96,8 @@ internal fun KidsChoice(title: String, icon: Int, modifier: Modifier = Modifier,
                 subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 14.sp, lineHeight = 20.sp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
+            if (choice.heard) HaloIcon(HaloGlyph.SPEAK, null, Modifier.size(22.dp),
+                tint = MaterialTheme.colorScheme.primary)
         }
     }
 }

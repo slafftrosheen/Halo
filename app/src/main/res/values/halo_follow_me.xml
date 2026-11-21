@@ -1,0 +1,21 @@
+<resources>
+    <string name="follow_me_title">Follow me</string>
+    <string name="follow_me_help">Use Halo on a nearby watch to see an answer there. Voice questions from paired glasses keep their usual audio route.</string>
+    <string name="follow_me_enabled_detail">Send the next chat answer to the watch when its Halo app is open nearby.</string>
+    <string name="follow_me_watch_approvals">Approve on watch</string>
+    <string name="follow_me_watch_approvals_detail">Allow read-only confirmations on the watch. Review actions that change or share anything on this phone.</string>
+    <string name="follow_me_watch_settings">Turn on nearby watch interaction in Voice settings to use the watch here.</string>
+    <string name="follow_me_devices">Devices</string>
+    <string name="follow_me_open_devices">Manage devices</string>
+    <string name="follow_me_phone">This phone</string>
+    <string name="follow_me_glasses">Glasses</string>
+    <string name="follow_me_phone_detail">Full answers and action reviews</string>
+    <string name="follow_me_watch_detail">Chat replies and read-only confirmations</string>
+    <string name="follow_me_glasses_detail">Audio from a verified voice session</string>
+    <string name="follow_me_empty">Open the Halo app on a nearby paired watch, or connect supported glasses in Devices.</string>
+    <string name="follow_me_ready">Ready</string>
+    <string name="follow_me_in_use">In use</string>
+    <string name="follow_me_needs_a_look">Needs a look</string>
+    <string name="follow_me_delivered_to">Sent to %1$s</string>
+    <string name="follow_me_speaking_on">Speaking through %1$s</string>
+</resources>

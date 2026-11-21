@@ -1,0 +1,28 @@
+--- a/app/src/main/java/com/halo/app/ui/mini/HaloNearby.kt
++++ b/app/src/main/java/com/halo/app/ui/mini/HaloNearby.kt
+@@
+-internal fun nearbyBackground(width: Int, height: Int, density: Float, colour: Int, outlineColour: Int? = null): Bitmap {
++internal fun nearbyBackground(width: Int, height: Int, density: Float, colour: Int, outlineColour: Int? = null,
++    radiusDp: Float = 20f, glow: Int? = null): Bitmap {
+@@
+-    canvas.drawRoundRect(bounds, 20*density, 20*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
++    canvas.drawRoundRect(bounds, radiusDp*density, radiusDp*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+         color = colour
+         shader = LinearGradient(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(),
+             intArrayOf(androidx.core.graphics.ColorUtils.blendARGB(colour, contrast, .04f), colour),
+             null, Shader.TileMode.CLAMP)
+     })
+-    canvas.drawRoundRect(bounds, 20*density, 20*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
++    // Zone 6: soft accent glow in the top-right corner (the "halo" of the widget)
++    glow?.let { g ->
++        val r = 150 * density
++        canvas.save(); canvas.clipPath(android.graphics.Path().apply { addRoundRect(bounds, radiusDp*density, radiusDp*density, android.graphics.Path.Direction.CW) })
++        canvas.drawCircle(bitmap.width.toFloat(), 0f, r, Paint(Paint.ANTI_ALIAS_FLAG).apply {
++            shader = android.graphics.RadialGradient(bitmap.width.toFloat(), 0f, r,
++                androidx.core.graphics.ColorUtils.setAlphaComponent(g, 46), android.graphics.Color.TRANSPARENT, Shader.TileMode.CLAMP) })
++        canvas.restore()
++    }
++    canvas.drawRoundRect(bounds, radiusDp*density, radiusDp*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+         color = outlineColour ?: androidx.core.graphics.ColorUtils.blendARGB(colour, contrast, .16f)
+         style = Paint.Style.STROKE; strokeWidth = density
+     })

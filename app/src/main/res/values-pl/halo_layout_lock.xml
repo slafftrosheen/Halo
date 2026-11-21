@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="layout_keep">Zachowaj układ</string>
+    <string name="layout_unlock">Odblokuj układ</string>
+    <string name="layout_phone_lock">Potwierdź blokadę telefonu, aby zmienić to ustawienie.</string>
+    <string name="layout_lock_unavailable">Sprawdź blokadę ekranu telefonu i spróbuj ponownie.</string>
+    <string name="layout_kept">Układ jest zachowany.</string>
+    <string name="layout_setup_other">Skonfiguruj dla kogoś innego</string>
+    <string name="layout_read_replies">Czytaj odpowiedzi na głos</string>
+</resources>

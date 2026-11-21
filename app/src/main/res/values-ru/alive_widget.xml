@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_widget_title">Добавить виджет</string>
+    <string name="alive_widget_size">Размер</string>
+    <string name="alive_widget_auto">Автоматически</string>
+    <string name="alive_widget_small">Маленький</string>
+    <string name="alive_widget_wide">Широкий</string>
+    <string name="alive_widget_tall">Высокий</string>
+    <string name="alive_widget_size_explanation">Этот параметр меняет объём информации. Размер виджета определяет лаунчер.</string>
+    <string name="alive_widget_motion">Анимация виджета</string>
+    <string name="alive_widget_match">Под мой стиль</string>
+    <string name="alive_widget_pin_requested">Подтвердите размещение на главном экране.</string>
+    <string name="alive_widget_pin_unavailable">Добавьте виджет Halo через меню виджетов лаунчера.</string>
+    <string name="alive_widget_installed">Ваши виджеты</string>
+    <string name="alive_widget_preview_error">Не удалось открыть предпросмотр виджета.</string>
+</resources>

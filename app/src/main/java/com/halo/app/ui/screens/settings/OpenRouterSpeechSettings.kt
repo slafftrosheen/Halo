@@ -5,12 +5,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.language.uiText
-import com.halo.app.ui.components.HaloTextField
-import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.providers.openrouter.OpenRouterSpeechProvider
 import kotlinx.coroutines.*
 
@@ -24,13 +25,19 @@ import kotlinx.coroutines.*
     var voicesExpanded by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
+    val output = remember { Graph.haloSpeechOutputCoordinator }
+    val outputTest by output.outputTest.collectAsStateWithLifecycle()
+    var previewId by remember { mutableStateOf<String?>(null) }
+    val activeTest = outputTest.transactionId != null && outputTest.outcome in setOf("Preparing", "Route verified · Playing")
+    val ownTest = previewId != null && previewId == outputTest.transactionId
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     LaunchedEffect(provider) { withContext(Dispatchers.IO) { provider.reloadConfigurationNow() } }
-    HaloSettingsSection(uiText("OpenRouter speech")) {
+    HaloSettingsSection(androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_voices_online_title)) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(uiText("Uses your saved OpenRouter key. No ElevenLabs key is needed. Speech is charged to your OpenRouter account."))
-            if (!state.configured) Text(uiText("Add your OpenRouter key in AI services."))
+            if (!state.configured) Text(uiText("Add your key in AI services."))
+            Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_voices_from_list), style = MaterialTheme.typography.bodySmall)
             com.halo.app.ui.components.CloudModeResolution()
             OutlinedButton(enabled = !busy && mode == com.halo.app.ai.PrivacyMode.CLOUD, onClick = {
                 busy = true
@@ -43,7 +50,7 @@ import kotlinx.coroutines.*
             }) { Text(uiText(if (busy) "Working..." else "Load speech models")) }
             Box {
                 OutlinedButton(enabled = !busy && state.models.isNotEmpty(), onClick = { expanded = true }) {
-                    Text(state.models.firstOrNull { it.id == model }?.name ?: model ?: uiText("Choose a speech model"))
+                    Text(state.models.firstOrNull { it.id == model }?.name ?: uiText("Choose a speech model"))
                 }
                 DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
                     state.models.forEach { choice -> DropdownMenuItem(text = { Text(choice.name) }, onClick = {
@@ -62,14 +69,13 @@ import kotlinx.coroutines.*
                         voice = supported; voicesExpanded = false
                     }) }
                 }
-            } else HaloTextField(voice, { voice = it.take(200) }, label = { Text(uiText("Voice name")) },
-                kind = VoiceFieldKind.SHORT, singleLine = true)
+            } else if (model != null) Text(uiText("No voices are listed for this model."), style = MaterialTheme.typography.bodySmall)
             Text(uiText("Choose a voice supported by this model. Voice names differ between models."), style = MaterialTheme.typography.bodySmall)
             model?.takeIf { it.matches(Regex("[a-zA-Z0-9_.:-]+/[a-zA-Z0-9_.:-]+")) }?.let { id ->
                 TextButton(onClick = { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
                     android.net.Uri.parse("https://openrouter.ai/$id"))) }) { Text(uiText("Model voices and pricing")) }
             }
-            Button(enabled = !busy && voice.isNotBlank() && (supportedVoices.isEmpty() || voice in supportedVoices) && state.models.any { it.id == model } && mode == com.halo.app.ai.PrivacyMode.CLOUD,
+            Button(enabled = !busy && voice.isNotBlank() && voice in supportedVoices && state.models.any { it.id == model } && mode == com.halo.app.ai.PrivacyMode.CLOUD,
                 onClick = {
                     val selectedModel = model ?: return@Button
                     val selectedVoice = voice
@@ -87,6 +93,21 @@ import kotlinx.coroutines.*
                         finally { busy = false }
                     }
                 }) { Text(uiText("Use OpenRouter speech")) }
+            if (state.configured && model != null && state.modelId == model && state.voiceId == voice && voice.isNotBlank()) {
+                OutlinedButton(onClick = {
+                    previewId = output.testOutput(com.halo.sdk.runtime.SpeechOutputTarget.Phone, "Phone speaker",
+                        phrase = "Halo voice test.", previewProviderId = provider.metadata.id,
+                        previewModelId = model, previewVoiceId = voice)
+                }, enabled = !busy && !activeTest && mode == com.halo.app.ai.PrivacyMode.CLOUD,
+                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_voices_play_test))
+                }
+            }
+            if (ownTest) {
+                Text(uiText(outputTest.outcome), style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                if (activeTest) TextButton(onClick = output::stopOutputTest) { Text(uiText("Stop")) }
+            }
             notice?.let { Text(uiText(it)) }
         }
     }

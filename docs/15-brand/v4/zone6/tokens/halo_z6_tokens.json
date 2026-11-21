@@ -1,0 +1,241 @@
+{
+ "name": "halo Zone 6 · Calm Dock, alive",
+ "version": "6.0.0",
+ "date": "2026-11-20",
+ "supersedes": "docs/design/halo-zone5/design-tokens.json (layout + motion sections); colour primitives unchanged",
+ "layout": {
+  "workFraction": 0.75,
+  "dockFraction": 0.25,
+  "measure": "usable window after status/navigation insets",
+  "referenceViewportDp": {
+   "width": 390,
+   "height": 788
+  },
+  "dock": {
+   "heightDp": 197,
+   "topRadiusDp": 30,
+   "horizonLine": "1dp accent gradient, 0→70%→0 alpha, glow 12dp",
+   "layer1_place": {
+    "topDp": 8,
+    "heightDp": 44,
+    "iconTileDp": 36,
+    "iconTileRadiusDp": 12,
+    "title": "Sora 15sp/600",
+    "status": "Atkinson 13sp",
+    "nextChip": {
+     "heightDp": 44,
+     "maxCount": 1
+    }
+   },
+   "layer2_actions": {
+    "topDp": 58,
+    "heightDp": 52,
+    "maxVisible": 4,
+    "radiusDp": 16,
+    "gapDp": 8,
+    "label": "Atkinson 14sp/600",
+    "icon": 21,
+    "primaryMax": 1,
+    "primaryFlex": 1.25,
+    "variants": [
+     "buttons",
+     "composer",
+     "segmented+buttons"
+    ]
+   },
+   "layer3_nav": {
+    "bottomDp": 4,
+    "heightDp": 76,
+    "columns": [
+     "Home",
+     "Workspace",
+     "RING",
+     "Activity",
+     "Places"
+    ],
+    "ringColumnDp": 96,
+    "indicator": {
+     "wDp": 56,
+     "wSelectedDp": 64,
+     "hDp": 32,
+     "radiusDp": 16
+    },
+    "label": "Atkinson 12.5sp/600",
+    "ringVisualDp": 56,
+    "ringCaption": "Atkinson 13sp/600"
+   }
+  },
+  "island": {
+   "insetDp": 10,
+   "topDp": 4,
+   "bottomAboveNavDp": 82,
+   "radiusDp": 26,
+   "edge": "1dp accent @45% + 4dp halo @6%",
+   "states": [
+    "listening",
+    "working",
+    "needsYou",
+    "done",
+    "error"
+   ],
+   "contentInsetDp": [
+    24,
+    14
+   ]
+  },
+  "compactKeyboard": {
+   "rowHeightDp": 76,
+   "composerHeightDp": 52,
+   "ringDp": 48,
+   "send": "filled accent 42dp"
+  },
+  "largeText": {
+   "fromFontScale": 1.4,
+   "dockHeight": "content-sized (≈262dp at 2.0)",
+   "actionsVisible": 2,
+   "lastAction": "All actions",
+   "nav": [
+    "Home",
+    "RING",
+    "Places"
+   ]
+  },
+  "kids": {
+   "background": "#FFF3EA",
+   "ink": "#160E1C",
+   "buttonHeightDp": 56,
+   "ringDp": 60,
+   "ringGradient": [
+    "#0CF2BA",
+    "#FF9F6B"
+   ],
+   "nav": [
+    "Home",
+    "RING",
+    "Learn"
+   ],
+   "maxChoices": 3,
+   "bodySp": 18
+  },
+  "targets": {
+   "adultMinDp": 48,
+   "preferredDp": 52,
+   "kidsMinDp": 56,
+   "gapDp": 8
+  }
+ },
+ "semantics": {
+  "accent": "listening, working, selection, primary action (follows Appearance accent)",
+  "apricot #FF9F6B (light ink #C25E1F)": "needs you only — approvals, waiting, official alerts",
+  "danger #FF8FA3 (light #A82948)": "errors only, always with a fix",
+  "amber #F4C56A (light #805100)": "out-of-date data / hints"
+ },
+ "ringCaptions": {
+  "idle": "Talk",
+  "listening": "Listening",
+  "working": "Working",
+  "needsYou": "Waiting for you",
+  "speaking": "Tap to stop",
+  "done": "Talk",
+  "kids": "Talk"
+ },
+ "places": [
+  {
+   "id": "home",
+   "label": "Home",
+   "inNav": true
+  },
+  {
+   "id": "workspace",
+   "label": "Workspace",
+   "inNav": true
+  },
+  {
+   "id": "activity",
+   "label": "Activity",
+   "inNav": true,
+   "badge": "needs-you count"
+  },
+  {
+   "id": "devices",
+   "label": "Devices",
+   "inNav": false
+  },
+  {
+   "id": "settings",
+   "label": "Settings",
+   "inNav": false
+  },
+  {
+   "id": "widgets",
+   "label": "Widgets",
+   "inNav": false,
+   "note": "in-app hub for home-screen widgets + sources; HaloScreen removed"
+  }
+ ],
+ "motion": {
+  "spring": {
+   "stiffness": 380,
+   "dampingRatio": 0.62,
+   "cssEquivalent": "cubic-bezier(.34,1.56,.64,1) 600ms"
+  },
+  "emphasized": {
+   "cssEquivalent": "cubic-bezier(.2,0,0,1)"
+  },
+  "pressScale": 0.96,
+  "pressMs": 100,
+  "dockSpringOutMs": 600,
+  "dockStaggerMs": 40,
+  "islandMorphMs": 550,
+  "panelFadeMs": 280,
+  "panelDelayMs": 120,
+  "placesOpenMs": 600,
+  "placesStaggerMs": 40,
+  "edgeBreatheMs": 2400,
+  "ringIdleBreatheMs": 4800,
+  "listenPulseMs": 1100,
+  "rippleMs": 1800,
+  "workingShimmerMs": 1400,
+  "needGlowMs": 2400,
+  "receiptBloomMs": 1200,
+  "receiptBloomRepeats": 2,
+  "rotation": "only one refresh lap or THINKING; never decorative spin",
+  "reducedMotion": "no springs/overshoot; 150ms cross-fades; static Lottie end frames; edge light static at 60%",
+  "haptics": {
+   "ringTap": "CONTEXT_CLICK",
+   "listenStart": "VIRTUAL_KEY",
+   "needsYou": "CONFIRM (once)",
+   "done": "CONFIRM",
+   "error": "REJECT"
+  }
+ },
+ "final_7_0": {
+  "sheet": {
+   "gapAboveDockDp": 8,
+   "cornerDp": 30,
+   "maxHeightDp": 420,
+   "scrim": "#030122 @55%",
+   "minRowDp": 48
+  },
+  "loading": {
+   "skeletonAfterMs": 400,
+   "sentenceAfterMs": 3000
+  },
+  "offline": {
+   "tone": "#B6DFE2",
+   "neverRed": true
+  },
+  "empty": {
+   "ringStroke": "5.8% of size",
+   "maxStarts": 3
+  },
+  "checkup": {
+   "needsYou": "#FF9F6B",
+   "passed": "#0CF2BA"
+  },
+  "defaults": {
+   "hubName": "Widgets & sources",
+   "yourDayNewsLine": false
+  }
+ }
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_view_title">View</string>
+    <string name="alive_view_easy">Easy</string>
+    <string name="alive_view_standard">Standard</string>
+    <string name="alive_view_compact">Compact</string>
+    <string name="alive_easy_text">Text size</string>
+    <string name="alive_easy_read">Read aloud</string>
+    <string name="alive_easy_volume">Volume</string>
+    <string name="alive_easy_brain">Who helps me</string>
+    <string name="alive_easy_night">Night</string>
+    <string name="alive_easy_all">All settings</string>
+</resources>

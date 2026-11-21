@@ -8,13 +8,18 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 
 object OpenMeteoParser {
     /** Only city-scale coordinates and requested weather fields leave the device. */
-    fun endpoint(place: WeatherPlace): String = "https://api.open-meteo.com/v1/forecast".toHttpUrl().newBuilder()
+    fun endpoint(place: WeatherPlace): String = endpoint(place, withWind = true)
+
+    internal fun oldEndpoint(place: WeatherPlace): String = endpoint(place, withWind = false)
+
+    private fun endpoint(place: WeatherPlace, withWind: Boolean): String = "https://api.open-meteo.com/v1/forecast".toHttpUrl().newBuilder()
         .addQueryParameter("latitude", "%.2f".format(java.util.Locale.ROOT, place.latitude))
         .addQueryParameter("longitude", "%.2f".format(java.util.Locale.ROOT, place.longitude))
-        .addQueryParameter("current", "temperature_2m,weather_code")
+        .addQueryParameter("current", if (withWind) "temperature_2m,weather_code,wind_speed_10m" else "temperature_2m,weather_code")
         .addQueryParameter("daily", "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max")
         .addQueryParameter("timezone", place.zoneId).addQueryParameter("forecast_days", "5")
-        .addQueryParameter("timeformat", "unixtime").addQueryParameter("temperature_unit", "celsius").build().toString()
+        .addQueryParameter("timeformat", "unixtime").addQueryParameter("temperature_unit", "celsius")
+        .apply { if (withWind) addQueryParameter("wind_speed_unit", "kmh") }.build().toString()
 
     fun parse(bytes: ByteArray, place: WeatherPlace): WeatherFact {
         require(bytes.size <= CollectorRefreshPolicy.MAX_BODY_BYTES)
@@ -45,9 +50,10 @@ object OpenMeteoParser {
         }
         val temperature = current?.number("temperature_2m", -100.0, 80.0)
         val code = current?.number("weather_code", 0.0, 99.0)?.toInt()
+        val wind = if (units?.optString("wind_speed_10m") == "km/h") current?.number("wind_speed_10m", 0.0, 600.0) else null
         require(days.zipWithNext().all { (first, second) -> first.date < second.date })
         require(temperature != null || days.isNotEmpty()) { "Weather response has no forecast or current observation" }
-        return WeatherFact(place, observed, temperature, code, days)
+        return WeatherFact(place, observed, temperature, code, days, windKph = wind)
     }
     private fun JSONObject.number(key: String, min: Double, max: Double): Double? =
         if (isNull(key)) null else getDouble(key).also { require(it.isFinite() && it in min..max) }

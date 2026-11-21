@@ -109,7 +109,9 @@ internal fun Zone5Icon(iconId: String, fallback: HaloGlyph, modifier: Modifier =
     }
     val renderedInk = ink.copy(alpha = ink.alpha * LocalContentColor.current.alpha)
     if (resource == null) HaloIcon(fallback, null, modifier, tint = renderedInk)
-    else Icon(painterResource(resource), contentDescription = null, modifier = modifier, tint = renderedInk)
+    else com.halo.app.ui.icons.HaloIconTreatment(fallback, modifier, renderedInk) { styled, tint ->
+        Icon(painterResource(resource), contentDescription = null, modifier = styled, tint = tint)
+    }
 }
 
 /** One merged, wrapping target; no independent icon click or decorative action. */

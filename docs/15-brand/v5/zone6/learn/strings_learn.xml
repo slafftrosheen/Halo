@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="learn_step_choose">Choose</string><string name="learn_step_look">Look</string><string name="learn_step_try">Try</string><string name="learn_step_help">Help</string><string name="learn_step_keep">Keep</string>
+    <string name="learn_size_pictures">Pictures</string><string name="learn_size_simple">Simple</string><string name="learn_size_full">Full</string>
+    <string name="learn_make_simpler">Make it simpler</string>
+    <string name="learn_start_title">What shall we learn?</string>
+    <string name="learn_door_practise">Keep practising</string><string name="learn_door_topic">Learn a topic</string><string name="learn_door_homework">My homework or notes</string>
+    <string name="learn_explain_q">How should halo explain?</string>
+    <string name="learn_check_words">Is this what it says?</string>
+    <string name="learn_starter_think">I think the answer is…</string><string name="learn_starter_because">because…</string><string name="learn_starter_unsure">I’m not sure</string>
+    <string name="learn_almost">Almost</string><string name="learn_right">You got it</string>
+    <string name="learn_help_note">Help is always there. Using it never lowers your level.</string>
+    <string name="learn_keep_note">Nothing goes into practice until you tap Keep.</string>
+    <string name="kids_tap_hint">Tap once to hear · tap again to go</string>
+    <string name="kids_help_together">Let’s do it together</string>
+    <string name="kids_share_grownup">Sharing needs a grown-up — they unlock with the phone’s lock.</string>
+</resources>

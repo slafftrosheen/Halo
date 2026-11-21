@@ -396,6 +396,9 @@ interface StudyDao {
     @Query("SELECT * FROM study_attempts WHERE submissionKey = :submissionKey LIMIT 1")
     suspend fun findAttemptBySubmissionKey(submissionKey: String): StudyAttemptEntity?
 
+    @Query("SELECT COUNT(*) FROM study_attempts a JOIN study_sessions s ON s.id = a.sessionId WHERE s.learnerLevel IN ('PRIMARY', 'EARLY_PRIMARY') AND s.lifecycle IN ('ACTIVE', 'COMPLETED') AND a.submittedAtEpochMs >= :from AND a.submittedAtEpochMs < :until")
+    fun observeChildAttemptCount(from: Long, until: Long): kotlinx.coroutines.flow.Flow<Int>
+
     @Query("SELECT * FROM study_attempts WHERE sessionId = :sessionId ORDER BY submittedAtEpochMs ASC")
     fun observeAttempts(sessionId: String): kotlinx.coroutines.flow.Flow<List<StudyAttemptEntity>>
 

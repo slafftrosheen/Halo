@@ -8,8 +8,10 @@ import com.halo.app.ui.components.HaloScreenOverflow
 @Composable
 internal fun StudyLessonOverflow(enabled: Boolean, expanded: Boolean, onExpandedChange: (Boolean) -> Unit,
     canListen: Boolean, canSave: Boolean, completed: Boolean, onDetails: () -> Unit,
-    onListen: () -> Unit, onSaveNotes: () -> Unit, onFinish: () -> Unit, onDelete: () -> Unit) {
-    HaloScreenOverflow(listOf(
+    onListen: () -> Unit, onSaveNotes: () -> Unit, onFinish: () -> Unit, onDelete: () -> Unit,
+    onEditLearningView: (() -> Unit)? = null) {
+    HaloScreenOverflow(listOfNotNull(
+        onEditLearningView?.let { HaloOverflowAction(uiText("How you learn"), onClick = it) },
         HaloOverflowAction(uiText("Sources and progress"), onClick = onDetails),
         HaloOverflowAction(uiText("Listen, then explain"), canListen, onListen),
         HaloOverflowAction(uiText("Save study notes to Workspace"), canSave, onSaveNotes),

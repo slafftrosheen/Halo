@@ -1,0 +1,72 @@
+<!doctype html><html><head><meta charset="utf-8"><title>halo · Calm Dock prototype</title><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="m.css"><link rel="stylesheet" href="r.css"><script src="icons.js"></script><script src="z6.js"></script><script src="m.js"></script><script src="r.js"></script>
+<style>body{min-height:100vh;display:flex;align-items:center;justify-content:center;gap:90px;background:radial-gradient(50% 60% at 30% 50%,rgba(12,242,186,.08),transparent),#04021f}
+#app{position:relative}#app .phone *{cursor:default}#app .tab,#app .ocell,#app .tile,#app .trow,#app .sg,#app .act,#app .btn,#app .frow,#app .sgc,#app .kc{cursor:pointer}
+.side{width:560px}.side .k{font:700 14px Atk;letter-spacing:.14em;text-transform:uppercase;color:var(--mint)}.side h1{font:600 48px/1.08 Sora;letter-spacing:-.03em;margin:14px 0}
+.side p{font-size:20px;line-height:1.5;color:var(--t2)}.side ul{margin-top:20px;list-style:none;font-size:19px;line-height:1.9}.side li:before{content:"○ ";color:var(--mint)}
+.toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);padding:10px 16px;border-radius:14px;background:#1d1a6b;border:1px solid rgba(12,242,186,.4);font:600 14px Atk;z-index:80;opacity:0;transition:opacity .3s;white-space:nowrap}
+.toast.on{opacity:1}
+.press{transform:scale(.96);transition:transform .1s}
+</style></head><body>
+<div id="app"></div>
+<div class="side"><div class="k">halo · new look · prototype</div><h1>Tap through the Calm Dock</h1><p>A working sketch of the new look. Everything in the dock responds.</p>
+<ul><li>Tap the ring — talk, watch it work, then approve</li><li>Hold the ring, or tap Places</li><li>Workspace → Tools → open any tool</li><li>Activity: switch Needs you · Running · Done</li><li>Places → Devices, Settings, Widgets</li><li>HaloStudio → More: see an error with its fix</li></ul></div>
+<script>
+const app=document.getElementById('app');
+const HOMEPL={icon:'home',t:'Chat',s:'Private · on this phone',cls:'home'};
+const PAGES={
+ home:()=>({html:`<div class="phone M st-idle pre" id="ph"><div class="wall"></div>${sb}<div class="work"><div class="wh">${W.home()}</div><div class="wd">${W.draft()}</div></div>${zoneM('home','idle')}<div class="edge"></div><div class="gb"></div></div>`,flow:1}),
+ library:()=>({html:ph(S.library,{place:{icon:'notebook',t:'Library',s:'42 things · all saved'},seg:[['list_view','Library',1],['tool','Tools']],acts:[['add','New',1]],nav:'work'})}),
+ tools:()=>({html:ph(S.tools,{place:{icon:'tool',t:'Tools',s:'5 tools · pick one'},seg:[['list_view','Library'],['tool','Tools',1]],acts:[['history','Recent']],nav:'work'})}),
+ studio:()=>({html:ph(W.studio(),{place:{icon:'draw',t:'Poster draft',s:'HaloStudio · '+ok('Saved')},next:['guide_me','Next: add a title'],acts:[['add','Add',1],['draw','Draw'],['group','Layers'],['more','More']],nav:'work',
+   island:{cls:'err',r1:`<div class="bd">${I('failure')}</div><div><div class="tt">Couldn’t export as JPEG</div><div class="ts">Your draft is safe · the image is too large</div></div>`,r2:`<div class="btn" data-a="idle">Smaller size</div><div class="btn p" data-a="exported">Export PNG</div>`}})}),
+ notes:()=>({html:ph(S.notes,{place:{icon:'notebook',t:'Market list',s:'HaloNotes · '+ok('Saved')},next:['speaker','Read it back'],acts:[['heading','Format',1],['add','Insert'],['speaker','Listen'],['more','More']],nav:'work'})}),
+ study:()=>({html:ph(S.study,{place:{icon:'study',t:'Photosynthesis',s:'HaloStudy · step 2 of 5'},acts:[['check','Check',1],['guide_me','Hint'],['explain','Explain'],['more','More']],nav:'work'})}),
+ memory:()=>({html:ph(S.memory,{place:{icon:'memory',t:'Memory',s:'24 things · 1 to review'},next:['review','Review 1'],acts:[['add','Add',1],['search','Find'],['sources','Sources'],['more','More']],nav:'work'})}),
+ canvas:()=>({html:ph(S.canvas,{place:{icon:'canvas',t:'Shop ideas',s:'HaloCanvas · '+ok('Saved')},acts:[['add','Add card',1],['link','Connect'],['grid_view','Arrange'],['more','More']],nav:'work'})}),
+ activity:()=>({html:ph(S.activity,{place:{icon:'notifications',t:'Activity',s:'2 need you · 1 running'},seg:[['approval','Needs you',1,'2'],['retry','Running'],['check','Done']],nav:'act'})}),
+ devices:()=>({html:ph(S.devices,{place:{icon:'devices',t:'Devices',s:'2 ready · 1 saved'},acts:[['add_device','Add device',1],['check','Test'],['more','More']],nav:'places'})}),
+ settings:()=>({html:ph(S.settings,{place:{icon:'settings',t:'Settings',s:'Everything is working'},acts:[['search','Find a setting',1],['appearance','Look'],['guide_me','Help']],nav:'places'})}),
+ widgets:()=>({html:ph(`<div class="ttl">Widgets</div><div class="sub">What halo gathers for your home screen</div>`+[['cloud','Weather · Riga','Clock & weather · Your day','9:38'],['sources','News · Latvia, World, Tech','Headlines · Brief','9:30'],['notifications','Official alerts','Your day · Brief','1 new'],['task','Your organiser','Upcoming · Tasks · Alarms','Live'],['activity','halo activity & notes','Your day · Brief','Live']].map(([i,t,s,st])=>`<div class="frow"><div class="fi okk">${I(i)}</div><div><b>${t}</b><span>${s}</span></div><span style="margin-left:auto;color:var(--mint);font:600 13px Atk">${st}</span></div>`).join(''),
+   {place:{icon:'widget',t:'Widgets',s:'6 on home screen · '+ok('sources fresh')},acts:[['add','Add widget',1],['sources','Sources'],['retry','Refresh']],nav:'places'})}),
+};
+const placesSheet=`<div class="sheet glass" id="sheet"><div class="grab"></div><div class="sh">Places<small>hold the ring · or tap Places</small></div><div class="tiles">${tiles('')}</div><div class="prof">${I('privacy')}Private mode — everything stays on this phone<div class="t"></div></div></div>`;
+let page='home',timers=[];
+function clearT(){timers.forEach(clearTimeout);timers=[]}
+function after(ms,f){timers.push(setTimeout(f,ms))}
+function phEl(){return app.querySelector('.phone')}
+function setState(s){const p=phEl();['st-idle','st-nav','st-listen','st-work','st-need','st-done','st-err'].forEach(c=>p.classList.remove(c));p.classList.add('st-'+s);
+ const cap=p.querySelector('.ocell .cap'); if(cap) cap.textContent=CAP[s]||'Talk';}
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;phEl().appendChild(e);requestAnimationFrame(()=>e.classList.add('on'));setTimeout(()=>{e.classList.remove('on');setTimeout(()=>e.remove(),400)},1600)}
+function go(p){clearT();page=p;app.innerHTML=PAGES[p]().html;const ph0=phEl();if(!ph0.querySelector('.sheet'))ph0.insertAdjacentHTML('beforeend',placesSheet);
+ if(!ph0.classList.contains('pre')) ph0.classList.add('pre'); requestAnimationFrame(()=>requestAnimationFrame(()=>ph0.classList.remove('pre')));}
+function talk(){const p=phEl();
+ if(page!=='home'){ toast('Listening… (the full voice flow is on Home)');return}
+ if(p.classList.contains('st-idle')){setState('listen');after(2600,()=>setState('work'));after(5600,()=>setState('need'))}
+ else if(p.classList.contains('st-listen')||p.classList.contains('st-work')){clearT();setState('idle')}}
+let holdT=null,held=false;
+app.addEventListener('pointerdown',e=>{const o=e.target.closest('.ocell');if(o){held=false;holdT=setTimeout(()=>{held=true;setState('nav')},550)}
+ const b=e.target.closest('.act,.btn,.tab,.tile,.sg,.trow');if(b){b.classList.add('press');setTimeout(()=>b.classList.remove('press'),120)}});
+app.addEventListener('pointerup',()=>clearTimeout(holdT));
+app.addEventListener('click',e=>{
+ const p=phEl(), t=e.target;
+ if(p.classList.contains('st-nav')){const tile=t.closest('.tile');if(tile){const n=tile.querySelector('b').textContent.toLowerCase();go({home:'home',workspace:'library',activity:'activity',devices:'devices',settings:'settings',widgets:'widgets'}[n]);return}
+   if(!t.closest('.sheet')&&!t.closest('.ocell')){setState('idle');return}}
+ if(t.closest('.ocell')){if(held){held=false;return} talk();return}
+ const tab=t.closest('.tab');if(tab){const n=tab.textContent.trim().toLowerCase().replace(/\d/g,'');
+   if(n.startsWith('places')){setState(p.classList.contains('st-nav')?'idle':'nav');return}
+   go({home:'home',workspace:'library',activity:'activity'}[n]||'home');return}
+ const sg=t.closest('.sg');if(sg){const n=sg.textContent.trim().toLowerCase();if(n.startsWith('tools'))go('tools');else if(n.startsWith('library'))go('library');else{p.querySelectorAll('.sg').forEach(x=>x.classList.remove('on'));sg.classList.add('on')}return}
+ const tr=t.closest('.trow');if(tr){go({halostudio:'studio',halonotes:'notes',halostudy:'study',halomemory:'memory',halocanvas:'canvas'}[tr.querySelector('b').textContent.toLowerCase()]);return}
+ const fr=t.closest('.frow');if(fr&&page==='library'){const s=fr.querySelector('span').textContent;go(s.includes('Studio')?'studio':s.includes('Notes')?'notes':s.includes('Study')?'study':s.includes('Canvas')?'canvas':'notes');return}
+ const btn=t.closest('.btn');if(btn){const l=btn.textContent.trim();
+   if(l.includes('Stop')){clearT();setState('idle');return}
+   if(l.includes('Not now')){setState('idle');toast('Kept as a draft — nothing sent');return}
+   if(l.includes('Send to Anna')){setState('done');after(3200,()=>setState('idle'));return}
+   if(l.includes('Undo')){setState('idle');toast('Undone');return}
+   if(l.includes('Export PNG')){setState('idle');toast('Exported as PNG · saved to Library');return}
+   if(l.includes('Smaller')){setState('idle');toast('Exported smaller JPEG');return}
+   if(l.includes('Open calendar')){setState('idle');return}}
+ const a=t.closest('.act');if(a){if(page==='studio'&&a.textContent.trim()==='More'){setState('err');return} toast(a.textContent.trim()+' — opens here')}
+});
+go('home');
+</script></body></html>

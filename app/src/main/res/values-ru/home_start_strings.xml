@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_start_edit">Настроить эту страницу</string>
+    <string name="home_start_show_me">Покажи мне</string>
+    <string name="home_start_title">Ваша главная</string>
+    <string name="home_start_instructions">Выберите до четырёх быстрых действий. Перетащите, чтобы изменить порядок.</string>
+    <string name="home_start_add">Добавить</string>
+    <string name="home_start_greeting">Строка приветствия</string>
+    <string name="home_start_greeting_weather">День и погода</string>
+    <string name="home_start_greeting_day">Только день</string>
+    <string name="home_start_greeting_off">Выкл.</string>
+    <string name="home_start_day_with_weather">%1$s · %2$s %3$d °C</string>
+    <string name="home_start_today">Что сегодня?</string>
+    <string name="home_start_note">Создать заметку</string>
+    <string name="home_start_study">Научиться новому</string>
+    <string name="home_start_camera">Что это?</string>
+    <string name="home_start_timer">Таймер</string>
+    <string name="home_start_weather">Погода</string>
+    <string name="home_start_brief">Прочитать мою сводку</string>
+    <string name="home_start_draw">Рисовать</string>
+    <string name="home_start_move_up">Переместить выше</string>
+    <string name="home_start_move_down">Переместить ниже</string>
+    <string name="home_start_remove">Убрать %1$s</string>
+    <string name="home_start_restore">Вернуть как было</string>
+    <string name="home_start_save_error">Не удалось сохранить настройки главной. Попробуйте ещё раз.</string>
+    <string name="home_start_undo">Отменить</string>
+    <string name="home_start_done">Готово</string>
+</resources>

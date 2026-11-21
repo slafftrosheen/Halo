@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <group android:name="breathe" android:pivotX="24" android:pivotY="24">
+        <path android:name="ring" android:pathData="M37.0,10.0 A19,19 0,1 0,42.9,22.0"
+            android:strokeColor="#FF24C49B" android:strokeWidth="3.4" android:strokeLineCap="round" />
+    </group>
+</vector>

@@ -7,18 +7,23 @@ import com.halo.cognition.language.InteractionId
 import com.halo.runtime.cognition.agent.*
 import com.halo.runtime.cognition.routine.*
 import com.halo.runtime.cognition.tools.*
+import com.halo.app.privacy.HaloPauseOwner
+import com.halo.app.privacy.HaloPausedCancellation
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.time.Instant
 
-class RoutineExecutor(private val db: AppDatabase, private val repository: RoomRoutineRepository,
+class RoutineExecutor internal constructor(private val db: AppDatabase, private val repository: RoomRoutineRepository,
     private val coordinator: AgentRunCoordinator, private val store: AgentRunStore,
     private val registry: ToolRegistry, val environmentSnapshot: suspend () -> AutomationEnvironmentSnapshot,
     private val attention: com.halo.runtime.cognition.attention.AttentionController,
     private val currentlyAllowed: (String) -> Boolean,
     private val resources: () -> ToolResourceCoordinator,
-    private val publishScreenResult: suspend (Routine, RoutineRunState, Int) -> Unit = { _, _, _ -> }) {
+    private val publishScreenResult: suspend (Routine, RoutineRunState, Int) -> Unit = { _, _, _ -> },
+    private val pause: HaloPauseOwner? = null) {
     private val policy = DefaultToolAutomationPolicy(registry::descriptor)
     fun actionDescriptors() = routineActionDescriptors(registry)
     fun grantSummary(r: Routine): String {
@@ -102,6 +107,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
     suspend fun runResult(id: String) = repository.runResult(id)
     suspend fun execute(occurrence: RoutineOccurrence): String? = execute(occurrence, null)
     private suspend fun execute(occurrence: RoutineOccurrence, trial: Routine?): String? {
+        if (pause?.isPaused() == true) return "Halo is paused"
         val id = occurrence.routineId
         val manual = occurrence.source == RoutineOccurrenceSource.MANUAL
         if (id.value in occurrence.causalRoutineIds) return "Blocked: causal routine cycle"
@@ -111,7 +117,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
         // The run and occurrence claim commit together. A crashed/duplicate claim is never resumed:
         // routine runs carry RunRecoveryPolicy.NO_RESUME (RUNTIME-018).
         val routine = db.withTransaction {
-            if (repository.dao.run(identity) != null) return@withTransaction null
+            if (pause?.isPaused() == true || repository.dao.run(identity) != null) return@withTransaction null
             val r = trial ?: repository.get(id) ?: return@withTransaction null
             if(occurrence.routineRevision != null && r.updatedAt != occurrence.routineRevision) return@withTransaction null
             if (!manual && !r.enabled) return@withTransaction null
@@ -154,7 +160,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                     currentDefinition != null && currentDefinition.grantDigest == routine.grantDigest && currentDefinition.updatedAt == routine.updatedAt &&
                     (manual || currentDefinition.enabled)
             }.getOrDefault(false)
-            val selectedDelivery = if(validDeliveryGrant && state != RoutineRunState.CANCELLED) routine.delivery else RoutineDeliveryPolicy.SilentActivity
+            val selectedDelivery = if(pause?.isPaused() != true && validDeliveryGrant && state != RoutineRunState.CANCELLED) routine.delivery else RoutineDeliveryPolicy.SilentActivity
             val channel = when(val d = selectedDelivery) {
                 RoutineDeliveryPolicy.AndroidNotification -> com.halo.runtime.cognition.attention.DeliveryChannel.AndroidNotification
                 RoutineDeliveryPolicy.InAppWhenForeground -> com.halo.runtime.cognition.attention.DeliveryChannel.InApp
@@ -205,6 +211,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
             coordinator.transition(runId, AgentRunState.EXECUTING)
             val output = mutableListOf<String>()
             routine.actions.forEachIndexed { index, action ->
+                pause?.requireActive()
                 val current = trial ?: repository.get(id)
                 if (current == null || (!manual && !current.enabled) || current.updatedAt != routine.updatedAt) {
                     finish(RoutineRunState.CANCELLED, "Routine changed or disabled"); return "Cancelled"
@@ -240,7 +247,9 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                         finish(RoutineRunState.INTERRUPTED, "Execution already claimed; completion unknown"); return "Interrupted"
                     }
                     withContext(RunToolScope(runId, targetIsLocal = true)) {
-                        registry.executeAuthorized(ToolAuthorization.Authorized(call))
+                        val authorized = ToolAuthorization.Authorized(call)
+                        if (pause != null) pause.whileActive { registry.executeAuthorized(authorized) }
+                        else registry.executeAuthorized(authorized)
                     }
                 } finally { lease.release() }
                 android.util.Log.i("HALO_ROUTINE_ACTION", "tool=${action.toolId} index=$index status=${result.javaClass.simpleName}")
@@ -306,6 +315,7 @@ class RoutineExecutor(private val db: AppDatabase, private val repository: RoomR
                 if(run?.state?.isTerminal == true) repository.dao.deliveryEvidence(identity, "COMPLETION_UNKNOWN")
                 else repository.dao.finishRun(identity, if (unknown) "INTERRUPTED" else "CANCELLED", completed, routine.actions.size, System.currentTimeMillis(), "Routine execution cancelled")
             }
+            if (e is HaloPausedCancellation && currentCoroutineContext().isActive) return "Halo is paused"
             throw e
         }
         catch (e: Exception) {

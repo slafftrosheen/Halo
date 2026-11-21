@@ -150,7 +150,7 @@ class StudyReaderRecoveryTest {
             val session=repository.createSession(listOf("source"),7,StudyLanguagePreferences(),"Learn")
             val narrator=Narrator()
             val resolver=StudySourceResolver { _,_ -> ResolvedStudySource.Text("source","7","Source",
-                listOf(StudyPassage("First. Second.",StudySourceLocator.NoteBlocks(1,1))),14,SourceCoverage.FULL) }
+                listOf(StudyPassage("First. Still the first paragraph.\n\nSecond.",StudySourceLocator.NoteBlocks(1,1))),41,SourceCoverage.FULL) }
             val vm=StudyViewModel(session.id,StudyUseCases(repository,narration=narrator,sourceResolver=resolver))
             store.put("reader",vm)
             jobs += vm.viewModelScope.coroutineContext.job

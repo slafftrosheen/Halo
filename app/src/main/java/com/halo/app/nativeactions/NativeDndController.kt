@@ -10,11 +10,11 @@ import android.service.notification.Condition
 import android.service.notification.ZenPolicy
 
 /** Explicit app-owned rule only. Never changes the global interruption filter or another owner's rules. */
-internal class NativeDndController(private val context: Context) {
+internal class NativeDndController(private val context: Context, private val focus: Boolean = false, private val bedside: Boolean = false) {
     data class Result(val acknowledged: Boolean, val details: String)
     private val manager = context.getSystemService(NotificationManager::class.java)
-    private val preferences = context.getSharedPreferences("native_dnd", Context.MODE_PRIVATE)
-    private val conditionId = Uri.Builder().scheme("condition").authority(context.packageName).appendPath("halo-dnd").build()
+    private val preferences = context.getSharedPreferences(when { bedside -> "native_bedside_dnd"; focus -> "native_focus_dnd"; else -> "native_dnd" }, Context.MODE_PRIVATE)
+    private val conditionId = Uri.Builder().scheme("condition").authority(context.packageName).appendPath(when { bedside -> "halo-bedside"; focus -> "halo-focus"; else -> "halo-dnd" }).build()
     private val configuration = ComponentName(context, NativeDndSettingsActivity::class.java)
 
     internal fun owns(rule: AutomaticZenRule): Boolean = Build.VERSION.SDK_INT >= 29 && rule.owner == null &&
@@ -33,8 +33,21 @@ internal class NativeDndController(private val context: Context) {
         }
         if (id == null && !enabled) return@synchronized Result(true, "No matching Halo-managed Do Not Disturb rule exists; no rule was changed. Other rules may remain active.")
         if (id == null) {
-            id = manager.addAutomaticZenRule(AutomaticZenRule("Halo", null, configuration,
-                conditionId, ZenPolicy.Builder().build(), NotificationManager.INTERRUPTION_FILTER_PRIORITY, true))
+            val policy = ZenPolicy.Builder().apply {
+                if (focus || bedside) {
+                    disallowAllSounds()
+                    allowAlarms(true)
+                    allowCalls(ZenPolicy.PEOPLE_TYPE_STARRED)
+                    allowMessages(ZenPolicy.PEOPLE_TYPE_STARRED)
+                }
+            }.build()
+            val name = when {
+                bedside -> context.getString(com.halo.app.R.string.halo_bedside_title)
+                focus -> context.getString(com.halo.app.R.string.halo_focus_title)
+                else -> "halo"
+            }
+            id = manager.addAutomaticZenRule(AutomaticZenRule(name, null, configuration,
+                conditionId, policy, NotificationManager.INTERRUPTION_FILTER_PRIORITY, true))
             check(!id.isNullOrBlank()) { "Android did not create a Halo rule" }
         }
         preferences.edit().putString("ruleId", id).apply()

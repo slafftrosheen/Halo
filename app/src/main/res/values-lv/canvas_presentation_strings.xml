@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="canvas_presentation_board">Tāfele</string>
+    <string name="canvas_presentation_list">Saraksts</string>
+    <string name="canvas_presentation_show_board">Parādīt tāfeli</string>
+    <string name="canvas_presentation_show_list">Tāfele sarakstā</string>
+    <string name="canvas_presentation_linked_to">Saite uz %1$s</string>
+    <string name="canvas_presentation_linked_from">Saite no %1$s</string>
+    <string name="canvas_presentation_card_changed">Kartīte ir mainījusies. Aizver un atver to vēlreiz.</string>
+</resources>

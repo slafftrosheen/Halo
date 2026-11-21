@@ -20,6 +20,14 @@ class HomeAutoReadTrackerTest {
         assertFalse(tracker.observe("one", "new", false, true))
     }
 
+    @Test fun aCommittedTextSubmissionCanArriveWithoutAnObservableBusyFrame() {
+        val tracker = HomeAutoReadTracker()
+        tracker.observe("one", "old", false, true)
+        assertTrue(tracker.observe("one", "new", false, true, completedSubmission = true))
+        assertFalse(tracker.observe("one", "new", false, true, completedSubmission = true))
+        assertFalse(HomeAutoReadTracker().observe("one", "restored", false, true, completedSubmission = true))
+    }
+
     @Test fun switchingOrFailureDisarmsThePreviousGeneration() {
         val tracker = HomeAutoReadTracker()
         tracker.observe("one", "old", true, true)

@@ -17,7 +17,7 @@ object WearSurfaceCodec {
             val confirmation = surface.content as? InteractionContent.Confirmation
             if (confirmation != null) {
                 val detail = listOfNotNull(confirmation.subject, confirmation.detail, confirmation.risk?.summary).joinToString("\n")
-                json.put("prompt", detail.take(1500)).put("canConfirm", detail.length <= 1500)
+                json.put("prompt", if (canConfirm(surface)) detail else "").put("canConfirm", canConfirm(surface))
             }
             val choice = surface.content as? InteractionContent.Choice
             if (choice != null) {
@@ -31,7 +31,10 @@ object WearSurfaceCodec {
     }
     fun canConfirm(surface: InteractionSurface): Boolean {
         val confirmation = surface.content as? InteractionContent.Confirmation ?: return false
-        return listOfNotNull(confirmation.subject, confirmation.detail, confirmation.risk?.summary).joinToString("\n").length <= 1500
+        val risk = confirmation.risk ?: return false
+        return risk.level == InteractionRiskLevel.READ_ONLY &&
+            !surface.presentation.requiresForegroundAttention &&
+            listOfNotNull(confirmation.subject, confirmation.detail, risk.summary).joinToString("\n").length <= 1500
     }
     fun response(bytes: ByteArray): InteractionResponse {
         require(bytes.size <= 4096)

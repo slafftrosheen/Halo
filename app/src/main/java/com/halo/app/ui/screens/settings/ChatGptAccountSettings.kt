@@ -17,28 +17,74 @@ import kotlinx.coroutines.*
     val mode by Graph.privacyModes.mode.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var failure by remember { mutableStateOf(false) }
+    var disconnectRevision by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(owner) {
+        try { withContext(Dispatchers.IO) { owner.account.load() } }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { failure = true }
+    }
+    val providerId = com.halo.providers.openai.ChatGptSubscriptionProvider.ID
+    val canFetch = account.connected && account.subscriptionAccess && !operation.busy &&
+        mode == com.halo.app.ai.PrivacyMode.CLOUD
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(uiText("Sign in with ChatGPT to use eligible subscription models. OpenAI controls your account limits. This connection does not use API credits."))
+        Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_account_title), style = MaterialTheme.typography.titleLarge)
+        Text(uiText("Eligible subscription models follow your ChatGPT account limits."))
         com.halo.app.ui.components.CloudModeResolution()
-        Text(uiText(if (account.connected) "ChatGPT account connected" else "No ChatGPT account connected"))
-        if (account.connected && !account.subscriptionAccess) Text(uiText("Signed in, but ChatGPT did not grant subscription access to this account."))
+        val status = when {
+            !account.connected -> androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_account_none)
+            account.displayName.isNullOrBlank() -> uiText("ChatGPT account connected")
+            else -> androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_account_connected, account.displayName.orEmpty())
+        }
+        Surface(shape = MaterialTheme.shapes.large,
+            color = if (account.connected && !account.subscriptionAccess) MaterialTheme.colorScheme.tertiaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerHigh) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(status, style = MaterialTheme.typography.titleMedium)
+                if (account.connected && account.subscriptionAccess)
+                    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_account_access_ok))
+                if (account.connected && !account.subscriptionAccess)
+                    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_account_no_access))
+            }
+        }
         if (operation.busy) {
-            LinearProgressIndicator(Modifier.fillMaxWidth())
-            TextButton(onClick = owner::cancel) { Text(uiText("Cancel")) }
+            com.halo.app.ui.zone6.Zone6DelayedLoading(true)
+            TextButton(onClick = owner::cancel, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Cancel")) }
         } else {
-            Button(enabled = mode == com.halo.app.ai.PrivacyMode.CLOUD, onClick = {
+            if (!account.subscriptionAccess) Button(enabled = mode == com.halo.app.ai.PrivacyMode.CLOUD, onClick = {
                 failure = runCatching { owner.start() }.isFailure
-            }) { Text(uiText("Sign in with ChatGPT")) }
-            if (account.connected) TextButton(onClick = {
-                val version = account.revision
-                scope.launch {
-                    try { withContext(Dispatchers.IO) { owner.disconnect(version) }; failure = false }
-                    catch (cancelled: CancellationException) { throw cancelled }
-                    catch (_: Exception) { failure = true }
+            }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(uiText(if (account.connected) "Sign in again" else "Sign in with ChatGPT"))
+            }
+            if (account.connected) {
+                Button(enabled = canFetch, onClick = { Graph.providerControlRepository.refreshModels(providerId) },
+                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.z6_account_fetch_models))
                 }
-            }) { Text(uiText("Disconnect ChatGPT")) }
+                TextButton({ disconnectRevision = account.revision }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Disconnect ChatGPT…"), color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
         operation.message?.let { Text(uiText(it)) }
         if (failure) Text(uiText("Account settings changed or are unavailable. Try again."), color = MaterialTheme.colorScheme.error)
+    }
+    disconnectRevision?.let { revision ->
+        AlertDialog(onDismissRequest = { disconnectRevision = null },
+            title = { Text(uiText("Disconnect ChatGPT?")) },
+            text = { Text(uiText("This removes the account connection from halo.")) },
+            confirmButton = {
+                TextButton(onClick = {
+                    disconnectRevision = null
+                    scope.launch {
+                        try { withContext(Dispatchers.IO) { owner.disconnect(revision) }; failure = false }
+                        catch (cancelled: CancellationException) { throw cancelled }
+                        catch (_: Exception) { failure = true }
+                    }
+                }, enabled = account.revision == revision) {
+                    Text(uiText("Disconnect"), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = { TextButton({ disconnectRevision = null }) { Text(uiText("Cancel")) } },
+        )
     }
 }

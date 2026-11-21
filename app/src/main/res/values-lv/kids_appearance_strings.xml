@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kids_sky_picker">Izvēlies savas debesis</string>
+    <string name="kids_sky_tap_help">Pieskaries, lai dzirdētu nosaukumu, un pieskaries vēlreiz, lai izvēlētos.</string>
+    <string name="kids_choice_tap_again">Pieskaries vēlreiz, lai izvēlētos</string>
+    <string name="kids_sky_stars">Zvaigznes</string>
+    <string name="kids_sky_sea">Jūra</string>
+    <string name="kids_sky_garden">Dārzs</string>
+    <string name="kids_sky_moon">Mēness</string>
+    <string name="kids_sky_allowed">Pieejamās debesis</string>
+    <string name="kids_learn_size">Mācību skats</string>
+    <string name="kids_learn_pictures">Attēli</string>
+    <string name="kids_learn_simple">Vienkāršs</string>
+    <string name="kids_motion">Kustība</string>
+    <string name="kids_motion_gentle">Maiga</string>
+    <string name="kids_motion_still">Bez kustības</string>
+    <string name="kids_read_automatically">Automātiski lasīt izvēles un atbildes</string>
+    <string name="kids_more_explanation">Rādīt visu skaidrojumu</string>
+    <string name="kids_less_explanation">Rādīt pirmo daļu</string>
+</resources>

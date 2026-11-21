@@ -134,9 +134,12 @@ fun HaloTheme(
             val density = androidx.compose.ui.platform.LocalDensity.current
             androidx.compose.runtime.CompositionLocalProvider(
                 LocalHaloPalette provides palette,
+                LocalHaloVisualOverride provides visual,
                 LocalHaloAccentInk provides brandAccent(darkTheme, palette.accent).ink,
                 androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density,
-                    effectiveFontScale(density.fontScale, fontScale)), content = content)
+                    effectiveFontScale(density.fontScale,
+                        if (visual.viewMode == HaloViewMode.EASY) maxOf(fontScale, 1.15f) else fontScale)),
+                content = content)
         }
     )
 }

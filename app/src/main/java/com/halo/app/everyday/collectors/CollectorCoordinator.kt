@@ -19,10 +19,12 @@ class CollectorCoordinator(
     private val policy: RemoteDispatchPolicy,
     private val clock: Clock = Clock.systemUTC(),
     private val enrich: suspend (CollectorReservation, CollectorPayload) -> CollectorPayload = { _, payload -> payload },
+    private val allowRefresh: () -> Boolean = { true },
 ) {
     private val locks = ConcurrentHashMap<String, Mutex>()
     private val jobs = ConcurrentHashMap<String, Job>()
     fun cancel(sourceId: String) { jobs[sourceId]?.cancel(CancellationException("Source refresh cancelled")) }
+    internal fun cancelAll() { jobs.values.toList().forEach { it.cancel(CancellationException("Halo paused")) } }
 
     suspend fun refresh(sourceId: String, manual: Boolean = false): CollectorState? = refreshDetailed(sourceId, manual).state
     suspend fun refreshDetailed(sourceId: String, manual: Boolean = false, expectedVersion: Long? = null): CollectorRefreshReceipt {
@@ -30,13 +32,14 @@ class CollectorCoordinator(
         return locks.getOrPut(sourceId) { Mutex() }.withLock {
             val current = repository.state(sourceId) ?: return@withLock CollectorRefreshReceipt(null, false)
             if(expectedVersion!=null && current.source.version!=expectedVersion) throw CollectorConflict("Source changed before refresh admission")
-            if (!current.source.enabled || !current.source.selected) return@withLock CollectorRefreshReceipt(current, false)
+            if (!allowRefresh() || !current.source.enabled || !current.source.selected) return@withLock CollectorRefreshReceipt(current, false)
             var reservation: CollectorReservation? = null
             var deferred: CollectorAttempt? = null
             val failedByPolicy = AtomicBoolean(false)
             supervisorScope {
                 val transfer = async(start = CoroutineStart.LAZY) {
-                    val categories = if (current.source.kind == CollectorKind.WEATHER) setOf(RemoteDataCategory.LOCATION) else setOf(RemoteDataCategory.ACCOUNT_METADATA)
+                    if (!allowRefresh()) return@async
+                    val categories = if (current.source.kind.usesCityCoordinates) setOf(RemoteDataCategory.LOCATION) else setOf(RemoteDataCategory.ACCOUNT_METADATA)
                     val job = currentCoroutineContext().job
                     val authority = if (current.source.external) policy.acquire(RemoteDispatchRequest(PUBLIC_COLLECTOR_OWNER,
                         RemoteOperation.CONNECTED_SERVICE, categories), revision, recordActivity = false, cancel = {

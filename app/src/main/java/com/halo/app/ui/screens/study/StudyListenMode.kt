@@ -31,7 +31,14 @@ internal fun StudyListenMode(state: StudyUiState, model: StudyViewModel, onDismi
                     Text("${index + 1}/${chapters.size}", style = MaterialTheme.typography.labelLarge)
                     Text(uiText(chapter.stage.guidance), style = MaterialTheme.typography.titleMedium)
                     Text(chapter.text, style = MaterialTheme.typography.bodyLarge)
-                    HaloReadAloud(chapter.text, label = "Read chapter aloud")
+                    val sources = chapter.sourceObjectIds?.toSet()
+                    val privateSpeech = LocalPrivateSpeech.current || sources == null
+                    CompositionLocalProvider(LocalPrivateSpeech provides privateSpeech) {
+                        HaloReadAloud(chapter.text, label = "Read chapter aloud",
+                            category = if (sources.isNullOrEmpty()) com.halo.sdk.provider.RemoteDataCategory.TEXT
+                                else com.halo.sdk.provider.RemoteDataCategory.WORKSPACE,
+                            sourceIds = sources.orEmpty())
+                    }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { VoiceFieldCancellation.stop(); selected = index - 1 }, enabled = index > 0,
                             modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Previous chapter")) }

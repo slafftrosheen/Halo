@@ -1,0 +1,42 @@
+/* themed overrides: every accent-tinted surface follows var(--mint)/var(--acc) */
+.th .tab.on .ind{background:color-mix(in srgb,var(--mint) 16%,transparent);color:var(--mint)}
+.th .next{background:color-mix(in srgb,var(--mint) 8%,transparent)}.th .next svg{color:var(--mint)}
+.th .next:before{background:conic-gradient(from 0deg,var(--mint),color-mix(in srgb,var(--mint) 10%,transparent) 30%,color-mix(in srgb,var(--mint) 10%,transparent) 70%,var(--mint))}
+.th .act.p,.th .sg.on,.th .segw span.on,.th .keep{background:var(--mint);color:var(--onacc);box-shadow:0 0 22px color-mix(in srgb,var(--mint) 30%,transparent)}
+.th .pi.home,.th .srw .ic2,.th .ic3,.th .sgc .ti,.th .fi.okk{background:color-mix(in srgb,var(--mint) 13%,transparent);color:var(--mint)}
+.th .horizon{background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.th .orb .glow{background:radial-gradient(closest-side,color-mix(in srgb,var(--acc) 40%,transparent),color-mix(in srgb,var(--acc) 18%,transparent) 55%,transparent)}
+.th .wall{background:radial-gradient(120% 60% at 85% 0%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 60%),var(--ink)}
+.th .glass{background:linear-gradient(180deg,color-mix(in srgb,var(--s2) 88%,transparent),color-mix(in srgb,var(--s1) 96%,transparent))}
+.th .ps .ok,.th .okt,.th .chkc,.th .choice em{color:var(--mint)}
+.th .tgl.on{background:var(--mint)}.th .tgl.on:after{background:var(--onacc)}
+.th .swt.on i{box-shadow:0 0 0 3px var(--ink),0 0 0 5px var(--mint)}
+.th .choice.on{border-color:var(--mint);background:color-mix(in srgb,var(--mint) 6%,transparent)}
+.th .msg{background:var(--s2)}.th .card,.th .grp,.th .sgc,.th .trow{background:color-mix(in srgb,var(--s1) 70%,transparent)}
+.th .rc{background:color-mix(in srgb,var(--mint) 12%,transparent);color:var(--mint)}
+.th .sb .r i{background:var(--cream)}.th .gb{background:color-mix(in srgb,var(--cream) 50%,transparent)}
+.lt.th .glass{background:linear-gradient(180deg,rgba(255,255,255,.88),color-mix(in srgb,var(--s2) 90%,#fff))}
+/* app icon */
+.appi{position:relative;overflow:hidden;flex:none;box-shadow:0 8px 22px rgba(0,0,0,.35)}.appi svg{display:block}
+/* icon styles */
+.ist{position:relative;display:inline-grid;place-items:center;width:40px;height:40px;color:var(--cream)}
+.ist.line{color:var(--mint)}
+.ist.spot i{position:absolute;width:15px;height:15px;border-radius:50%;background:color-mix(in srgb,var(--acc) 55%,transparent);right:7px;top:6px}
+.ist.spot{color:var(--cream)}
+.ist.tl{border-radius:13px;background:color-mix(in srgb,var(--mint) 15%,transparent);color:var(--mint)}
+/* customisation pieces */
+.preset{border-radius:20px;overflow:hidden;border:1.5px solid var(--line);background:var(--s1)}
+.preset.on{border-color:var(--mint);box-shadow:0 0 0 3px color-mix(in srgb,var(--mint) 25%,transparent)}
+.preset .pv{height:66px;position:relative}.preset .pv .pd{position:absolute;left:8px;right:8px;bottom:6px;height:22px;border-radius:9px}
+.preset .pv .pr{position:absolute;right:10px;top:8px;width:26px;height:26px}
+.preset .pl2{padding:7px 10px 9px;font:600 13px Atk;color:var(--cream);display:flex;align-items:center;gap:6px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.tonechips{display:flex;gap:6px;padding:8px 0}.tonechips span{flex:1;height:52px;border-radius:14px;border:1.5px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:600 12px Atk;color:var(--t2)}
+.tonechips span i{width:24px;height:12px;border-radius:4px;display:block}
+.tonechips span.on{border-color:var(--mint);color:var(--cream)}
+.iconrow{display:flex;gap:7px;padding:10px 0}.iconrow .opt2{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:16px;border:1.5px solid var(--line);font:600 12.5px Atk;color:var(--t2)}
+.iconrow .opt2.on{border-color:var(--mint);color:var(--cream);background:color-mix(in srgb,var(--mint) 6%,transparent)}
+.iconrow .opt2 .icn{display:flex;gap:2px}
+.mini3{display:flex;gap:2px}
+
+.iconrow .opt2 .icn .ist{width:32px;height:32px}.iconrow .opt2 .icn .ist.tl{border-radius:10px}.iconrow .opt2 .icn .ist.spot i{width:12px;height:12px;right:4px;top:3px}

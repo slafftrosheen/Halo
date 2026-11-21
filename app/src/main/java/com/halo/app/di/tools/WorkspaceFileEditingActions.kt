@@ -30,7 +30,8 @@ class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolE
         "background" to enumeration(CanvasStitchBackground.entries.map { it.name })), emptyList())
     private val editFields = schema(mapOf("text" to text(200000), "start" to integer(0, 200000), "end" to integer(0, 200000),
         "expectedText" to text(200000), "replacement" to text(200000), "row" to integer(0, 999), "column" to integer(0, 63),
-        "index" to integer(0, 1000), "value" to text(16000)), emptyList())
+        "index" to integer(0, 1000), "value" to text(16000),
+        "header" to mapOf("type" to "boolean"), "descending" to mapOf("type" to "boolean")), emptyList())
     private fun definition(name: String, description: String, fields: Map<String, Any>, required: List<String> = fields.keys.toList()) =
         ToolDefinition(name, name, description, schema(fields, required))
     override fun definitions() = listOf(
@@ -41,8 +42,14 @@ class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolE
         definition("halo_text_import", "Create an editable copy from an exact imported UTF-8 TXT/Markdown/CSV version. Pin the source; preserve original bytes and permissions. Unsupported encodings are rejected.", mapOf("objectId" to id, "version" to version)),
         definition("halo_text_get", "Read a bounded chunk of a local literal file document, its exact revision/format and total length. Chunk offsets are UTF-16 code units; truncated output is not the whole document.",
             mapOf("noteId" to id, "offset" to integer(0, 200000), "length" to integer(1, 4000)), listOf("noteId")),
+        definition("halo_sheets_analyze", "Calculate a total, highest or lowest literal value in one CSV column at its exact source revision. Optional rowText selects matching rows; returned matched indices are zero-based. No provider computation or edits.",
+            mapOf("noteId" to id, "revision" to revision, "column" to integer(0, 63), "header" to mapOf("type" to "boolean"),
+                "calculation" to enumeration(SheetCalculation.entries.map { it.name }), "rowText" to text(120)),
+            listOf("noteId", "revision", "column", "header", "calculation")),
+        definition("halo_sheets_delete", "Delete one row or column from the exact current CSV revision. This is a hard stop and always requires user approval. Indices are zero-based.",
+            mapOf("noteId" to id, "revision" to revision, "axis" to enumeration(listOf("ROW", "COLUMN")), "index" to integer(0, 999))),
         definition("halo_text_edit", "Edit the exact observed local document revision. replace_range also requires matching expectedText; CSV row/column/cell edits use zero-based indices. Undo/redo refer only to bounded live-session history and also require the exact revision. Stale writes never refresh or replay.",
-            mapOf("noteId" to id, "revision" to revision, "operation" to enumeration(listOf("replace", "replace_range", "set_cell", "insert_row", "delete_row", "insert_column", "delete_column", "undo", "redo")), "fields" to editFields)),
+            mapOf("noteId" to id, "revision" to revision, "operation" to enumeration(listOf("replace", "replace_range", "set_cell", "insert_row", "add_row", "sort_rows", "insert_column", "undo", "redo")), "fields" to editFields)),
         definition("halo_text_export", "Export an exact local document/note revision as a new managed UTF-8 file with durable source links. Ordinary rich notes allow explicit TXT/Markdown projection, not guessed CSV conversion.",
             mapOf("noteId" to id, "revision" to revision, "format" to format)),
         definition("halo_image_transform", "Transform/convert an exact image into a new local PNG/JPEG. Original is retained. Crop coordinates use thousandths and cannot combine with squareCrop.",
@@ -98,6 +105,28 @@ class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolE
                     val end = minOf(current.text.length, offset + length)
                     success(document(current).put("offset", offset).put("text", current.text.substring(offset, end)).put("totalChars", current.text.length).put("hasMore", end < current.text.length))
                 }
+                "halo_sheets_analyze" -> {
+                    exact(setOf("noteId", "revision", "column", "header", "calculation"), setOf("rowText"))
+                    val current = tools.text.current(id("noteId"), number("revision").toLong())
+                    require(current.format == WorkspaceTextFormat.CSV)
+                    val answer = WorkspaceCsv.parse(current.text).calculate(number("column", 0, 63),
+                        args["header"] as Boolean, SheetCalculation.valueOf(string("calculation")),
+                        if ("rowText" in args) string("rowText") else "")
+                    success(document(current).put("calculation", answer.operation.name)
+                        .put("value", answer.value?.stripTrailingZeros()?.toPlainString() ?: JSONObject.NULL)
+                        .put("matchingRows", JSONArray(answer.matchingRows.take(100)))
+                        .put("matchingRowsTruncated", answer.matchingRows.size > 100)
+                        .put("numbersCount", answer.numbers.size))
+                }
+                "halo_sheets_delete" -> {
+                    exact(setOf("noteId", "revision", "axis", "index"))
+                    val command = when (string("axis")) {
+                        "ROW" -> WorkspaceCsvCommand.DeleteRow(number("index", 0, WorkspaceCsv.MAX_ROWS - 1))
+                        "COLUMN" -> WorkspaceCsvCommand.DeleteColumn(number("index", 0, WorkspaceCsv.MAX_COLUMNS - 1))
+                        else -> error("Choose a row or a column")
+                    }
+                    success(document(tools.text.editCsv(id("noteId"), number("revision").toLong(), command)))
+                }
                 "halo_text_edit" -> {
                     exact(setOf("noteId", "revision", "operation", "fields")); val note = id("noteId"); val revision = number("revision").toLong(); val fields = objectFields(args["fields"])
                     fun fields(vararg keys: String) = require(fields.keys == keys.toSet())
@@ -111,10 +140,11 @@ class WorkspaceFileEditingActions(private val tools: WorkspaceFileTools) : ToolE
                         else -> {
                             val command = when (string("operation")) {
                                 "set_cell" -> { fields("row", "column", "value"); WorkspaceCsvCommand.SetCell(index("row"), index("column"), value("value")) }
+                                "add_row" -> { fields(); WorkspaceCsvCommand.AddRow }
+                                "sort_rows" -> { fields("column", "header", "descending")
+                                    WorkspaceCsvCommand.SortRows(index("column"), fields["header"] as Boolean, fields["descending"] as Boolean) }
                                 "insert_row" -> { fields("index"); WorkspaceCsvCommand.InsertRow(index("index")) }
-                                "delete_row" -> { fields("index"); WorkspaceCsvCommand.DeleteRow(index("index")) }
                                 "insert_column" -> { fields("index"); WorkspaceCsvCommand.InsertColumn(index("index")) }
-                                "delete_column" -> { fields("index"); WorkspaceCsvCommand.DeleteColumn(index("index")) }
                                 else -> error("Unsupported edit")
                             }; tools.text.editCsv(note, revision, command)
                         }

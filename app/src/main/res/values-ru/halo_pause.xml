@@ -1,0 +1,11 @@
+<resources>
+    <string name="halo_pause_title">Приостановить halo</string>
+    <string name="halo_pause_status">На паузе</string>
+    <string name="halo_pause_ready">halo работает</string>
+    <string name="halo_pause_resume">Возобновить работу halo</string>
+    <string name="halo_pause_explain">Пауза останавливает прослушивание, обучение и задачи помощника. Сохранённые будильники и таймеры продолжат звонить.</string>
+    <string name="halo_pause_until">На паузе до %1$s</string>
+    <string name="halo_pause_half_hour">30 минут</string>
+    <string name="halo_pause_one_hour">1 час</string>
+    <string name="halo_pause_tomorrow">До завтра</string>
+</resources>

@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="m.css"><script src="icons.js"></script><script src="z6.js"></script><script src="m.js"></script></head>
+<body><div id="root"></div><script>
+const b=new URLSearchParams(location.search).get('b')||'1';
+const wm=`<div class="wm">hal<svg viewBox="0 0 240 240" style="width:30px;height:30px;margin-top:4px"><path d="M197.32 87.18A84 84 0 1 1 152.82 42.68" stroke="#0CF2BA" stroke-width="30" stroke-linecap="round" fill="none"/></svg></div>`;
+const B={
+'1':{k:'Mixed direction · 1 / 2 · structure',t:'Calm Dock, alive',p:'A’s clear three-layer dock — where you are, what you can do, where you can go — with the ring always labelled. More becomes Places: Home, Workspace, Activity, Devices, Settings and Widgets in one sheet of big live tiles that spring out of the ring. Screen is gone — its organiser, news and clocks live on your home screen.',
+ ph:[['home','idle',{split:1},'Home','the message box lives in the dock'],['studio','idle',{},'Working in a tool','4 big labelled buttons'],['studio','nav',{},'Places','5 places + Widgets, from the ring'],['kids','idle',{kid:1},'Kids','56dp buttons, 2 places, warm light']],
+ n:[['From A · clarity','Place, state and next step in words. Buttons look like buttons. Home · Workspace · Activity · Places never hide.'],['From B · spring','Buttons and Places tiles spring out of the ring and fold back into it — you see where they come from.'],['Nothing buried','Places shows every destination plus Widgets (add or set up home-screen widgets), the current one marked, and live status (“2 need you”, “Glasses · ready”).'],['Kids, same grammar','Same dock, bigger: 56dp buttons, a 64dp ring warmed to Apricot, only Home and Learn.']]},
+'2':{k:'Mixed direction · 2 / 2 · a task, start to finish',t:'The dock changes shape with halo',p:'From C: when halo listens, works or needs you, the dock lifts into a floating island that shows only what matters now. The ring and places stay put underneath, so you never lose your way.',
+ ph:[['home','listen',{},'1 · Listening','live words, Stop, soft edge light'],['home','work',{},'2 · Working','real steps, one Stop, progress shimmer'],['draft','need',{},'3 · Needs you','Apricot island, button names the action'],['home','done',{},'4 · Done','receipt blooms once, Undo right there']],
+ n:[['From C · shape = state','Dock → island. Mint edge while listening or working, Apricot only when halo needs you.'],['Always a way out','Every state has one obvious action: Stop, Send to Anna, Undo. The ring caption says what is happening.'],['Truthful','Steps show real progress; “Added” appears only after the calendar confirms. Nothing is sent until you tap.'],['Calm after','The island settles back into the dock and your buttons spring back out of the ring.']]}};
+const d=B[b];
+document.getElementById('root').innerHTML=`<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · ${d.k}</div><h1>${d.t}</h1><p>${d.p}</p></div>${wm}</div>
+<div class="phones">${d.ph.map(([s,st,o,l,sm])=>`<div class="pcol">${phoneM(s,st,o)}<div class="pl">${l}<small>${sm}</small></div></div>`).join('')}</div>
+<div class="notes">${d.n.map(([h,p])=>`<div class="note"><b>${h}</b><p>${p}</p></div>`).join('')}</div></div>`;
+</script></body></html>

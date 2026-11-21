@@ -91,7 +91,7 @@ object OrganizerRecurrence {
             return OrganizerOccurrence(record.copy(title = exception?.replacementTitle ?: record.title,
                 details = exception?.replacementDetails ?: record.details, location = exception?.replacementLocation ?: record.location,
                 sourceUrl = if (exception?.sourceUrlOverride != null) exception.sourceUrlOverride.takeIf { it.isNotEmpty() } else record.sourceUrl), original, start, end,
-                exception?.disposition == OccurrenceDisposition.COMPLETED)
+                exception?.disposition == OccurrenceDisposition.COMPLETED, replacement?.allDay ?: time.allDay)
         }
         val rows = mutableListOf<OrganizerOccurrence>()
         for (slot in slots(time, record.repeat, deviceZone)) {

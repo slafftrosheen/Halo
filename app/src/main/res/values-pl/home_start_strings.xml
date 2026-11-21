@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_start_edit">Edytuj tę stronę</string>
+    <string name="home_start_show_me">Pokaż mi</string>
+    <string name="home_start_title">Twój ekran główny</string>
+    <string name="home_start_instructions">Wybierz maksymalnie cztery skróty. Przeciągnij, aby zmienić kolejność.</string>
+    <string name="home_start_add">Dodaj</string>
+    <string name="home_start_greeting">Wiersz powitania</string>
+    <string name="home_start_greeting_weather">Dzień i pogoda</string>
+    <string name="home_start_greeting_day">Tylko dzień</string>
+    <string name="home_start_greeting_off">Wyłączone</string>
+    <string name="home_start_day_with_weather">%1$s · %2$s %3$d °C</string>
+    <string name="home_start_today">Co dziś w planie?</string>
+    <string name="home_start_note">Utwórz notatkę</string>
+    <string name="home_start_study">Naucz się czegoś</string>
+    <string name="home_start_camera">Co to jest?</string>
+    <string name="home_start_timer">Minutnik</string>
+    <string name="home_start_weather">Pogoda</string>
+    <string name="home_start_brief">Przeczytaj moje podsumowanie</string>
+    <string name="home_start_draw">Rysuj</string>
+    <string name="home_start_move_up">Przenieś wyżej</string>
+    <string name="home_start_move_down">Przenieś niżej</string>
+    <string name="home_start_remove">Usuń %1$s</string>
+    <string name="home_start_restore">Przywróć poprzedni układ</string>
+    <string name="home_start_save_error">Nie udało się zapisać ekranu głównego. Spróbuj ponownie.</string>
+    <string name="home_start_undo">Cofnij</string>
+    <string name="home_start_done">Gotowe</string>
+</resources>

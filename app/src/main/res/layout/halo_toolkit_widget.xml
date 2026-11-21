@@ -1,0 +1,60 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/toolkit_widget_background" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="fitXY" android:importantForAccessibility="no" />
+    <LinearLayout android:id="@+id/toolkit_widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:gravity="center_vertical" android:orientation="vertical" android:padding="12dp">
+        <LinearLayout android:id="@+id/toolkit_widget_header" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/toolkit_widget_title" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:fontFamily="@font/sora_variable" android:textSize="12sp" android:maxLines="1"
+                android:ellipsize="end" android:textColor="@color/everyday_widget_metadata" />
+            <ImageView android:id="@+id/toolkit_widget_orb" android:layout_width="16dp" android:layout_height="16dp"
+                android:importantForAccessibility="no" android:src="@drawable/ic_halo_brand_halo" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/toolkit_widget_week" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="4dp" android:visibility="gone">
+            <TextView android:id="@+id/toolkit_widget_day1" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:gravity="center" android:fontFamily="@font/sora_variable" android:textSize="12sp"
+                android:maxLines="3" android:layout_marginHorizontal="1dp" android:paddingVertical="2dp" />
+            <TextView android:id="@+id/toolkit_widget_day2" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:gravity="center" android:fontFamily="@font/sora_variable" android:textSize="12sp"
+                android:maxLines="3" android:layout_marginHorizontal="1dp" android:paddingVertical="2dp" />
+            <TextView android:id="@+id/toolkit_widget_day3" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:gravity="center" android:fontFamily="@font/sora_variable" android:textSize="12sp"
+                android:maxLines="3" android:layout_marginHorizontal="1dp" android:paddingVertical="2dp" />
+            <TextView android:id="@+id/toolkit_widget_day4" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:gravity="center" android:fontFamily="@font/sora_variable" android:textSize="12sp"
+                android:maxLines="3" android:layout_marginHorizontal="1dp" android:paddingVertical="2dp" />
+            <TextView android:id="@+id/toolkit_widget_day5" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:gravity="center" android:fontFamily="@font/sora_variable" android:textSize="12sp"
+                android:maxLines="3" android:layout_marginHorizontal="1dp" android:paddingVertical="2dp" />
+            <TextView android:id="@+id/toolkit_widget_day6" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:gravity="center" android:fontFamily="@font/sora_variable" android:textSize="12sp"
+                android:maxLines="3" android:layout_marginHorizontal="1dp" android:paddingVertical="2dp" />
+            <TextView android:id="@+id/toolkit_widget_day7" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:gravity="center" android:fontFamily="@font/sora_variable" android:textSize="12sp"
+                android:maxLines="3" android:layout_marginHorizontal="1dp" android:paddingVertical="2dp" />
+        </LinearLayout>
+        <ImageView android:id="@+id/toolkit_widget_ring" android:layout_width="60dp" android:layout_height="60dp"
+            android:layout_gravity="center_horizontal" android:importantForAccessibility="no" android:visibility="gone" />
+        <TextView android:id="@+id/toolkit_widget_value" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:fontFamily="@font/sora_variable"
+            android:textSize="18sp" android:maxLines="2" android:ellipsize="end" android:textColor="@color/everyday_widget_text" />
+        <Chronometer android:id="@+id/toolkit_widget_countdown" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:fontFamily="@font/sora_variable" android:textSize="18sp"
+            android:maxLines="1" android:visibility="gone" />
+        <TextView android:id="@+id/toolkit_widget_marks" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:fontFamily="@font/atkinson_hyperlegible_next_variable"
+            android:textSize="16sp" android:maxLines="3" android:visibility="gone" />
+        <TextView android:id="@+id/toolkit_widget_detail" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:fontFamily="@font/atkinson_hyperlegible_next_variable"
+            android:textSize="12sp" android:maxLines="2" android:ellipsize="end" android:visibility="gone" />
+        <TextView android:id="@+id/toolkit_widget_status" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:fontFamily="@font/atkinson_hyperlegible_next_variable"
+            android:textSize="13sp" android:maxLines="2" android:ellipsize="end" android:textColor="@color/everyday_widget_metadata" />
+        <TextView android:id="@+id/toolkit_widget_dots" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:fontFamily="@font/atkinson_hyperlegible_next_variable"
+            android:textSize="14sp" android:gravity="center" android:maxLines="1" android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

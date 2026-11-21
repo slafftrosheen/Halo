@@ -103,6 +103,13 @@ internal fun HaloComposer(
             }),
         )
     }
+    val attachButton: @Composable () -> Unit = {
+        onAttach?.let { attach ->
+            IconButton(onClick = attach, modifier = Modifier.size(48.dp)) {
+                Icon(painterResource(R.drawable.halo_ic_add), uiText("Attach"), Modifier.size(24.dp))
+            }
+        }
+    }
     var showSurfaceSwitcher by remember { mutableStateOf(false) }
     val actions: @Composable RowScope.() -> Unit = {
         surfaceSwitcher?.takeUnless { shellOwnsOrb }?.let { switcher ->
@@ -116,11 +123,7 @@ internal fun HaloComposer(
             }
         }
 
-        onAttach?.takeUnless { shellOwnsOrb }?.let { action ->
-            IconButton(onClick = action, modifier = Modifier.size(48.dp)) {
-                Icon(painterResource(R.drawable.halo_ic_add), uiText("Attach"), Modifier.size(24.dp))
-            }
-        }
+        if (!shellOwnsOrb || !compact) attachButton()
         onTools?.takeUnless { shellOwnsOrb }?.let { action ->
             Box {
                 if (!compact && androidx.compose.ui.platform.LocalDensity.current.fontScale < 1.5f) {
@@ -166,6 +169,7 @@ internal fun HaloComposer(
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (shellOwnsOrb && compact) Box { attachButton() }
             // Keep the field at the same composition position when the IME changes window height.
             field(Modifier.weight(1f))
             if (compact) actions()

@@ -1260,9 +1260,9 @@ class StudyViewModel(
     private fun openReader(text: String, label: String, passageId: String, sourceRevision: Long?, sourceVersion: String? = sourceRevision?.toString()): Boolean {
         readerSelectionGeneration++
         if(explanationHandoff != null) cancelTurn("Reading selection changed")
-        val segments = SentenceSegmenter.ranges(text)
-        val sentences = segments.map { it.text }
-        if (sentences.isEmpty()) {
+        val segments = com.halo.sdk.provider.SpeechParagraphs.sections(text.take(120_000), packParagraphs = false).take(400).toList()
+        val sections = segments.map { it.text }
+        if (sections.isEmpty()) {
             mutableUiState.value = mutableUiState.value.copy(notice = "There is nothing to read")
             return false
         }
@@ -1272,17 +1272,22 @@ class StudyViewModel(
         }
         val state = mutableUiState.value
         state.reader?.let { study.stopNarration("Reader reopened") }
+        val savedOffset = sourceVersion?.let { version ->
+            readerStorage?.getString("study_reader_offset:$passageId:$version")?.toIntOrNull()
+                ?: readerStorage?.getString("study_reader:$passageId:$version")?.toIntOrNull()
+                    ?.let { SentenceSegmenter.ranges(text).getOrNull(it)?.start }
+        } ?: 0
         val reader = ReaderState(
             sourceLabel = label,
-            sentences = sentences,
+            sentences = sections,
             passageId = passageId,
             sourceRevision = sourceRevision,
             sourceVersion = sourceVersion,
             offsets = segments.map { it.start },
             speed = readerStorage?.getString("study_reader_speed")?.toDoubleOrNull()?.coerceIn(0.6,1.5) ?: 1.0,
-            index = if(sourceVersion != null) readerStorage?.getString("study_reader:$passageId:$sourceVersion")?.toIntOrNull()?.coerceIn(0,sentences.lastIndex) ?: 0 else 0,
+            index = segments.indexOfLast { it.start <= savedOffset }.coerceAtLeast(0),
         )
-        mutableUiState.value = state.copy(reader = reader, notice = if(segments.last().end < text.trimEnd().length) "Reading is limited to the first 400 sentences; the remaining source is not narrated" else null)
+        mutableUiState.value = state.copy(reader = reader, notice = if (segments.last().end < text.trimEnd().length) "Only the first part of this source can be read aloud." else null)
         speakCurrentSentence(reader)
         return true
     }
@@ -1297,7 +1302,11 @@ class StudyViewModel(
         } else speakCurrentSentence(reader)
     }
     private fun rememberReader(reader: ReaderState) {
-        reader.sourceVersion?.let { readerStorage?.putString("study_reader:${reader.passageId}:$it",reader.index.toString()) }
+        reader.sourceVersion?.let { version ->
+            reader.offsets.getOrNull(reader.index)?.let { offset ->
+                readerStorage?.putString("study_reader_offset:${reader.passageId}:$version", offset.toString())
+            }
+        }
     }
     fun setReaderSpeed(speed: Double) {
         val reader=mutableUiState.value.reader ?: return

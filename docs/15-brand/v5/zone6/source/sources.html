@@ -1,0 +1,72 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="z6.css"><link rel="stylesheet" href="m.css"><link rel="stylesheet" href="wg.css"><script src="icons.js"></script><script src="z6.js"></script><script src="m.js"></script>
+<style>
+.flow{position:relative;width:1010px;height:830px}
+.colh{font:700 13px Atk;letter-spacing:.12em;text-transform:uppercase;color:var(--t2);margin-bottom:12px}
+.src{display:flex;align-items:center;gap:10px;height:46px;padding:0 14px;border-radius:14px;background:rgba(250,250,244,.06);border:1px solid var(--line);font:600 14px Atk;margin-bottom:8px;width:250px}
+.src svg{width:18px;height:18px;color:var(--mint)}.src small{margin-left:auto;font:500 12.5px Atk;color:var(--t2)}
+.src.loc svg{color:var(--blue)}.src.al svg{color:var(--ap)}
+.hub{position:absolute;left:330px;top:300px;width:200px;text-align:center}
+.hub .rw{width:120px;height:120px;margin:0 auto;position:relative}
+.hub .rw:before{content:"";position:absolute;inset:-30%;border-radius:50%;background:radial-gradient(closest-side,rgba(12,242,186,.3),transparent)}
+.hub b{font:600 17px Sora;display:block;margin-top:14px}.hub span{font-size:14px;color:var(--t2);line-height:1.4;display:block;margin-top:6px}
+.lines{position:absolute;inset:0;pointer-events:none}
+.outw{position:absolute;left:610px;top:0;width:400px}
+.ow{display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;border-radius:16px;background:linear-gradient(180deg,rgba(26,22,98,.8),rgba(10,7,52,.9));border:1px solid rgba(250,250,244,.12);margin-bottom:9px;font:600 15px Sora}
+.ow svg{width:20px;height:20px;color:var(--mint)}.ow small{margin-left:auto;font:500 12.5px Atk;color:var(--t2)}
+.wsec{font:600 13px Atk;color:var(--t2);margin:14px 0 6px;letter-spacing:.04em}
+.srow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.srow .ic{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(12,242,186,.1);color:var(--mint);flex:none}.srow .ic svg{width:20px;height:20px}
+.srow .tx b{font-weight:600;display:block}.srow .tx span{font-size:13px;color:var(--t2)}
+.srow .st{margin-left:auto;font:600 12.5px Atk;color:var(--mint);display:flex;align-items:center;gap:4px}.srow .st svg{width:14px;height:14px}
+.srow .st.w{color:var(--ap)}
+</style></head><body>
+<div class="boardpg"><div class="bh"><div><div class="k">halo · new look · sources → widgets</div><h1>Everything you follow, gathered on your phone</h1>
+<p>halo fetches every source you choose — weather, news, official alerts, calendars, plus your own organiser, notes and activity — and lays it out in widgets. Time and date are always there; the rest appears only when a source has delivered.</p></div></div>
+<div style="display:flex;gap:60px;align-items:flex-start" id="main"></div>
+<div class="notes">
+<div class="note"><b>One place to manage</b><p>The Widgets page lists every source with its real status — “Updated 9:38”, “Paused”, “Can’t reach” — and which widgets it feeds.</p></div>
+<div class="note"><b>Your day in halo</b><p>The big widget joins it all: weather, the next event, open tasks, alerts and what halo did for you — one calm glance.</p></div>
+<div class="note"><b>Freshness, honestly</b><p>Every widget shows when its data arrived. Stale data says so; nothing is shown as live when it isn’t.</p></div>
+<div class="note"><b>Alerts stand out — gently</b><p>Official warnings use Apricot and rise to the top of Your day. Everything else stays calm.</p></div></div>
+</div>
+<script>
+const wr=(w,c='#0CF2BA')=>`<svg viewBox="0 0 240 240" style="width:${w}px;height:${w}px;display:block"><path d="M197.32 87.18A84 84 0 1 1 152.82 42.68" stroke="${c}" stroke-width="22" stroke-linecap="round" fill="none"/></svg>`;
+const ask=`<div class="askr">${wr(20)}</div>`;
+// in-app Widgets page
+W.widgets=()=>`<div class="ttl">Widgets</div><div class="sub">What halo gathers for your home screen</div>
+ <div class="wsec">FROM THE WEB</div>
+ <div class="srow"><div class="ic">${I('cloud')}</div><div class="tx"><b>Weather · Riga</b><span>Clock & weather · Your day</span></div><div class="st">${I('check')}9:38</div></div>
+ <div class="srow"><div class="ic">${I('sources')}</div><div class="tx"><b>News · Latvia, World, Tech</b><span>Headlines · Brief</span></div><div class="st">${I('check')}9:30</div></div>
+ <div class="srow"><div class="ic" style="background:rgba(255,159,107,.14);color:var(--ap)">${I('notifications')}</div><div class="tx"><b>Official alerts</b><span>Your day · Brief</span></div><div class="st w">1 new</div></div>
+ <div class="srow"><div class="ic">${I('calendar')}</div><div class="tx"><b>Public holidays · Latvia</b><span>Upcoming</span></div><div class="st">${I('check')}Today</div></div>
+ <div class="wsec">ON THIS PHONE</div>
+ <div class="srow"><div class="ic" style="background:rgba(182,223,226,.12);color:var(--blue)">${I('task')}</div><div class="tx"><b>Your organiser</b><span>Upcoming · Tasks · Alarms</span></div><div class="st">${I('check')}Live</div></div>
+ <div class="srow"><div class="ic" style="background:rgba(182,223,226,.12);color:var(--blue)">${I('activity')}</div><div class="tx"><b>halo activity & notes</b><span>Your day · Brief</span></div><div class="st">${I('check')}Live</div></div>`;
+function zoneW(){return `<div class="zone"><div class="zbg glass"></div><div class="navbg glass"></div><div class="horizon"></div>
+ <div class="pn idle"><div class="r1"><div class="place"><div class="pi home">${I('widget')}</div><div><div class="pt">Widgets</div><div class="ps">6 on home screen · <span class="ok">${I('check')}</span>sources fresh</div></div></div></div>
+ <div class="r2"><div class="act p">${I('add')}Add widget</div><div class="act">${I('sources')}Sources</div><div class="act">${I('retry')}Refresh</div></div></div>
+ <div class="nav"><div class="tab"><div class="ind">${I('home')}</div>Home</div><div class="tab"><div class="ind">${I('notebook')}</div>Workspace</div>
+ <div class="ocell">${orb()}<div class="cap">Talk</div></div><div class="tab"><div class="ind">${I('notifications')}<span class="badge">2</span></div>Activity</div><div class="tab on"><div class="ind">${I('grid_view')}</div>Places</div></div></div>`}
+const phoneW=`<div class="pcol"><div class="phone M st-idle"><div class="wall"></div>${sb}<div class="work">${W.widgets()}</div>${zoneW()}<div class="edge"></div><div class="gb"></div></div><div class="pl">Widgets page in halo<small>reached from Places</small></div></div>`;
+const S1=[['cloud','Weather','Riga'],['sources','News feeds','LV · World · Tech'],['notifications','Official alerts','','al'],['calendar','Public calendar','holidays']];
+const S2=[['task','Organiser','events · tasks · alarms'],['notebook','Workspace','notes'],['activity','halo activity','what halo did'],['notifications','Notifications','that matter'],['devices','Devices','glasses · battery']];
+const OUT=[['calendar','Clock & weather','4×3'],['sources','Headlines','4×3'],['calendar','Upcoming','4×2'],['task','Tasks','4×2'],['timer','Alarms & timers','4×2'],['read_mode','Brief','4×2 · read aloud'],['widget','Your day in halo','4×4 · everything']];
+const flow=`<div><div class="flow">
+ <div style="position:absolute;left:0;top:0"><div class="colh">From the web</div>${S1.map(([i,n,s,c])=>`<div class="src ${c||''}">${I(i)}${n}<small>${s}</small></div>`).join('')}
+ <div class="colh" style="margin-top:22px">On this phone</div>${S2.map(([i,n,s])=>`<div class="src loc">${I(i)}${n}<small>${s}</small></div>`).join('')}</div>
+ <div class="hub"><div class="rw">${wr(120)}</div><b>halo gathers</b><span>on your phone, on a schedule you set — then fills the widgets</span></div>
+ <div class="outw"><div class="colh">Home-screen widgets</div>${OUT.map(([i,n,s])=>`<div class="ow">${I(i)}${n}<small>${s}</small></div>`).join('')}
+ <div class="colh" style="margin-top:20px">Your day in halo · 4×4</div>
+ <div class="wg c4x4" style="--cw:100px;--ch:68px;width:400px;height:auto">
+  <div class="hd">${I('widget')}Your day in halo ${ask}</div>
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px"><div class="big" style="font-size:52px">9:41</div><div style="text-align:right"><div class="mid" style="font-size:18px">3° · cloudy</div><div class="sm">Fri 20 Nov · Riga</div></div></div>
+  <div class="pill ap" style="margin-top:10px">${I('notifications')}Frost warning tonight · Official</div>
+  <div class="wl" style="margin-top:6px"><span class="t">10:30</span>Coffee at Miera iela<span class="x">next</span></div>
+  <div class="wl"><span class="ck"></span>Call the framer<span class="x">+2 tasks</span></div>
+  <div class="wl"><span style="width:22px;display:grid;place-items:center;color:var(--mint)">${I('check')}</span>halo added 3 events<span class="x">8:12</span></div>
+  <div class="sm" style="margin-top:8px">Updated 9:38 · from 6 sources</div></div></div>
+ <svg class="lines" viewBox="0 0 1010 830" fill="none">${[...Array(9)].map((_,k)=>{const y=k<4?51+k*54:311+(k-4)*54;return `<path d="M262 ${y} C 320 ${y}, 320 360, 372 360" stroke="rgba(12,242,186,.28)" stroke-width="1.5"/>`}).join('')}
+ ${[...Array(7)].map((_,k)=>{const y=54+k*59;return `<path d="M488 360 C 550 360, 550 ${y}, 610 ${y}" stroke="rgba(12,242,186,.35)" stroke-width="1.5"/>`}).join('')}</svg>
+</div></div>`;
+document.getElementById('main').innerHTML=phoneW+flow;
+</script></body></html>

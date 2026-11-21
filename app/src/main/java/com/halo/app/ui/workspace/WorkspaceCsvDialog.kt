@@ -31,6 +31,21 @@ internal fun WorkspaceCsvDialog(document: WorkspaceTextDocument, busy: Boolean, 
     if (selected != null) {
         var value by remember(selected) { mutableStateOf(selected.value) }
         var limit by remember(selected) { mutableStateOf(false) }
+        var deleting by remember(selected) { mutableStateOf<WorkspaceCsvCommand?>(null) }
+        val command = deleting
+        if (command != null) {
+            val label = stringResource(if (command is WorkspaceCsvCommand.DeleteRow) R.string.file52_delete_row else R.string.file52_delete_column)
+            StudioAlertDialog(onDismissRequest = { if (!busy) deleting = null }, title = { Text(label) },
+                text = {
+                    Text(stringResource(R.string.file52_cell_position, selected.row + 1, selected.column + 1))
+                    if (error) Text(stringResource(R.string.file52_error), color = MaterialTheme.colorScheme.error)
+                },
+                confirmButton = { TextButton({
+                    onEdit(selected.revision, command) { deleting = null; cell = null }
+                }, enabled = !busy && selected.revision == document.revision) { Text(label) } },
+                dismissButton = { TextButton({ deleting = null }, enabled = !busy) { Text(stringResource(android.R.string.cancel)) } })
+            return
+        }
         StudioAlertDialog(onDismissRequest = { if (!busy) cell = null }, title = { Text(stringResource(R.string.file52_edit_cell)) }, text = {
             Column(Modifier.heightIn(max = 540.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.file52_cell_position, selected.row + 1, selected.column + 1))
@@ -41,9 +56,9 @@ internal fun WorkspaceCsvDialog(document: WorkspaceTextDocument, busy: Boolean, 
                 if (error) Text(stringResource(R.string.file52_error), color = MaterialTheme.colorScheme.error)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = { onEdit(selected.revision, WorkspaceCsvCommand.InsertRow(selected.row), { cell = null }) }, enabled = !busy) { Text(stringResource(R.string.file52_insert_row)) }
-                    TextButton(onClick = { onEdit(selected.revision, WorkspaceCsvCommand.DeleteRow(selected.row), { cell = null }) }, enabled = !busy && (table?.rows?.size ?: 0) > 1) { Text(stringResource(R.string.file52_delete_row)) }
+                    TextButton(onClick = { deleting = WorkspaceCsvCommand.DeleteRow(selected.row) }, enabled = !busy && (table?.rows?.size ?: 0) > 1) { Text(stringResource(R.string.file52_delete_row)) }
                     TextButton(onClick = { onEdit(selected.revision, WorkspaceCsvCommand.InsertColumn(selected.column), { cell = null }) }, enabled = !busy) { Text(stringResource(R.string.file52_insert_column)) }
-                    TextButton(onClick = { onEdit(selected.revision, WorkspaceCsvCommand.DeleteColumn(selected.column), { cell = null }) }, enabled = !busy && (table?.rows?.maxOfOrNull { it.size } ?: 0) > 1) { Text(stringResource(R.string.file52_delete_column)) }
+                    TextButton(onClick = { deleting = WorkspaceCsvCommand.DeleteColumn(selected.column) }, enabled = !busy && (table?.rows?.maxOfOrNull { it.size } ?: 0) > 1) { Text(stringResource(R.string.file52_delete_column)) }
                 }
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             }

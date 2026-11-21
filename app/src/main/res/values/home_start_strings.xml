@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_start_edit">Edit this page</string>
+    <string name="home_start_show_me">Show me</string>
+    <string name="home_start_title">Your Home</string>
+    <string name="home_start_instructions">Choose up to four starts. Drag to reorder.</string>
+    <string name="home_start_add">Add instead</string>
+    <string name="home_start_greeting">Greeting line</string>
+    <string name="home_start_greeting_weather">Day + weather</string>
+    <string name="home_start_greeting_day">Just the day</string>
+    <string name="home_start_greeting_off">Off</string>
+    <string name="home_start_day_with_weather">%1$s · %2$s %3$d °C</string>
+    <string name="home_start_today">What’s on today?</string>
+    <string name="home_start_note">Start a note</string>
+    <string name="home_start_study">Learn something</string>
+    <string name="home_start_camera">What’s this?</string>
+    <string name="home_start_timer">Timer</string>
+    <string name="home_start_weather">Weather</string>
+    <string name="home_start_brief">Read my brief</string>
+    <string name="home_start_draw">Draw</string>
+    <string name="home_start_move_up">Move up</string>
+    <string name="home_start_move_down">Move down</string>
+    <string name="home_start_remove">Remove %1$s</string>
+    <string name="home_start_restore">Put back how it was</string>
+    <string name="home_start_save_error">Home could not be saved. Try again.</string>
+    <string name="home_start_undo">Undo</string>
+    <string name="home_start_done">Done</string>
+</resources>

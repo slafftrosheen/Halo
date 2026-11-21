@@ -38,13 +38,14 @@ internal fun SourceSettings(model: SourcesViewModel, state: SourcesPageState, so
             state.error?.let { EverydayMessage(it, true) }
             if (invalid) EverydayMessage("Check the source name, public HTTPS address, language and refresh interval.", true)
             OutlinedTextField(title, { title = it.take(200) }, enabled = !state.busy, label = { Text(uiText("Source name")) }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(publisher, { publisher = it.take(200) }, enabled = !state.busy, label = { Text(uiText("Publisher")) }, modifier = Modifier.fillMaxWidth())
-            if (source.external && source.kind != CollectorKind.WEATHER) OutlinedTextField(url, { url = it.take(4096) }, enabled = !state.busy,
+            val air = source.kind == CollectorKind.AIR_QUALITY
+            OutlinedTextField(publisher, { publisher = it.take(200) }, enabled = !state.busy && !air, label = { Text(uiText("Publisher")) }, modifier = Modifier.fillMaxWidth())
+            if (source.external && !source.kind.usesCityCoordinates) OutlinedTextField(url, { url = it.take(4096) }, enabled = !state.busy,
                 label = { Text(uiText("Public HTTPS feed address")) }, modifier = Modifier.fillMaxWidth())
-            if (source.kind == CollectorKind.WEATHER) {
+            if (source.kind.usesCityCoordinates) {
                 Text(cityName.orEmpty(), style = MaterialTheme.typography.titleMedium)
                 Text(cityZone.orEmpty())
-                TextButton({ picker = true }, enabled = !state.busy) { Text(uiText("Choose weather city")) }
+                TextButton({ picker = true }, enabled = !state.busy) { Text(uiText(if (air) "Choose air & pollen city" else "Choose weather city")) }
                 Text(uiText("City coordinates are sent to Open-Meteo only when this selected source refreshes in Power."), style = MaterialTheme.typography.bodySmall)
             }
             EverydayToggle(uiText("Include in selected sources"), selected, !state.busy) { selected = it }
@@ -65,8 +66,13 @@ internal fun SourceSettings(model: SourcesViewModel, state: SourcesPageState, so
             Text(uiText("Local keeps saved information without internet requests. Android may delay background refreshes to save battery."), style = MaterialTheme.typography.bodySmall)
             Button({
                 val value = runCatching {
-                    val place = if (source.kind == CollectorKind.WEATHER) WeatherPlace(requireNotNull(cityName), requireNotNull(latitude), requireNotNull(longitude), requireNotNull(cityZone)) else null
-                    source.copy(title = title.trim(), publisher = publisher.trim(), endpoint = if (place != null) OpenMeteoParser.endpoint(place) else url.takeIf { source.external },
+                    val place = if (source.kind.usesCityCoordinates) WeatherPlace(requireNotNull(cityName), requireNotNull(latitude), requireNotNull(longitude), requireNotNull(cityZone)) else null
+                    val endpoint = when {
+                        air && place != null -> OpenMeteoAirQuality.endpoint(place)
+                        place != null -> OpenMeteoParser.endpoint(place)
+                        else -> url.takeIf { source.external }
+                    }
+                    source.copy(title = title.trim(), publisher = publisher.trim(), endpoint = endpoint,
                         place = place, language = language.trim(), refreshMinutes = cadence.toInt(), selected = selected, enabled = enabled, muted = muted,
                         childApproved = child, category = SourceCategory.valueOf(category))
                 }.getOrNull()

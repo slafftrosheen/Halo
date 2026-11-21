@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_view_title">Skats</string>
+    <string name="alive_view_easy">Vienkāršs</string>
+    <string name="alive_view_standard">Standarta</string>
+    <string name="alive_view_compact">Kompakts</string>
+    <string name="alive_easy_text">Teksta lielums</string>
+    <string name="alive_easy_read">Lasīt skaļi</string>
+    <string name="alive_easy_volume">Skaļums</string>
+    <string name="alive_easy_brain">Kas man palīdz</string>
+    <string name="alive_easy_night">Nakts</string>
+    <string name="alive_easy_all">Visi iestatījumi</string>
+</resources>

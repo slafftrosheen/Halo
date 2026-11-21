@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English only; keys ready for -lv / -ru / -pl. -->
+<resources>
+<string name="look_title">Make it yours</string>
+<string name="look_subtitle">Pick a look, then fine-tune. Nothing changes until you Apply.</string>
+<string name="look_preset_night_mint">Night Mint</string>
+<string name="look_preset_paper_sage">Paper Sage</string>
+<string name="look_preset_slate_blue">Slate Blue</string>
+<string name="look_preset_warm_rose">Warm Rose</string>
+<string name="look_preset_cool_lilac">Cool Lilac</string>
+<string name="look_preset_coral_day">Coral Day</string>
+<string name="look_colours">Colours</string>
+<string name="look_icons">Icons &amp; app icon</string>
+<string name="look_motion">Motion, text &amp; feel</string>
+<string name="look_app_icon">App icon on your home screen</string>
+<string name="look_app_icon_match">Match look</string>
+<string name="look_app_icon_classic">Classic</string>
+<string name="look_app_icon_light">Light</string>
+<string name="look_app_icon_system">System</string>
+<string name="look_app_icon_note">The app icon follows your look. Your launcher may take a moment to update, and on some phones the icon moves.</string>
+<string name="look_icon_style">Icons in halo</string>
+<string name="look_icon_line">Line</string>
+<string name="look_icon_spot">Spot</string>
+<string name="look_icon_tile">Tile</string>
+<string name="look_motion_full">Full</string>
+<string name="look_motion_gentle">Gentle</string>
+<string name="look_motion_still">Still</string>
+<string name="look_haptics">Haptics</string>
+<string name="look_haptics_detail">Small taps on the ring and buttons</string>
+<string name="look_edge_light">Edge light</string>
+<string name="look_edge_light_detail">Glow around the screen while halo listens</string>
+<string name="look_labels">Button labels</string>
+<string name="look_labels_always">Always</string>
+<string name="look_labels_selected">Selected only</string>
+<string name="look_dark_only">Dark only — your light look stays as it is.</string>
+<string name="look_light_only">Light only — your dark look stays as it is.</string>
+<string name="look_apply">Apply</string>
+</resources>

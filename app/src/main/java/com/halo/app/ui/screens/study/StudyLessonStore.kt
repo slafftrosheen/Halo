@@ -27,6 +27,8 @@ data class StudyRecoveryState(val draft: String = "", val submissionKey: String?
 /** Bounded local lesson history, independent of notebook sources and graded attempts. */
 class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
     private val recoveryMutex = Mutex()
+    private val journeyChanges = MutableStateFlow(0)
+    internal val widgetJourneyRevision: kotlinx.coroutines.flow.StateFlow<Int> = journeyChanges
     private fun deletedKey(id: String) = "study_deleted_v1_$id"
     private fun requireWritable(id: String) { check(!storage.getBoolean(deletedKey(id), false)) { "Study session was deleted" } }
     private fun recoveryKey(id: String) = "study_recovery_v1_$id"
@@ -180,7 +182,7 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
     }
     suspend fun saveJourney(id: String, journey: LearningJourney) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
         requireWritable(id)
-        readSavedJourney(id)
+        val previousStage = readSavedJourney(id)?.stage
         val key = "study_journey_v1_$id"
         val encoded = JSONObject()
             .put("stage", journey.stage.name).put("prior", journey.priorKnowledge.take(2000))
@@ -209,6 +211,7 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
         require(encoded.length <= 200_000) { "Learning progression exceeds its supported storage size" }
         storage.putString(key, encoded)
         check(storage.getString(key) == encoded) { "Study progression was not confirmed in local storage" }
+        if (previousStage != journey.stage) journeyChanges.update { it + 1 }
     } }
     private fun snapshot(id: String) = listOf(key(id), "study_journey_v1_$id", recoveryKey(id)).associateWith { storage.getString(it) }
     private fun fingerprint(id: String, values: Map<String, String?>): String {

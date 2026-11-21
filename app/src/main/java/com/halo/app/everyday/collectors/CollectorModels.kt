@@ -3,7 +3,10 @@ package com.halo.app.everyday.collectors
 import java.time.Duration
 import java.time.Instant
 
-enum class CollectorKind { LOCAL_ORGANIZER, LOCAL_WORKSPACE, LOCAL_ACTIVITY, LOCAL_NOTIFICATIONS, LOCAL_DEVICE, FEED, WEATHER, ALERTS, PUBLIC_CALENDAR }
+enum class CollectorKind {
+    LOCAL_ORGANIZER, LOCAL_WORKSPACE, LOCAL_ACTIVITY, LOCAL_NOTIFICATIONS, LOCAL_DEVICE, FEED, WEATHER, ALERTS, PUBLIC_CALENDAR, AIR_QUALITY;
+    val usesCityCoordinates: Boolean get() = this == WEATHER || this == AIR_QUALITY
+}
 enum class SourceCategory { PERSONAL, LATVIA, WORLD, SCIENCE, TECHNOLOGY, WEATHER, OFFICIAL, CALENDAR, CUSTOM }
 enum class CollectorAttemptState { NEVER, FETCHING, CURRENT, NOT_MODIFIED, LOCAL_ONLY, OFFLINE, DISABLED, BACKOFF, QUOTA, FAILED, CANCELLED }
 
@@ -32,14 +35,14 @@ data class CollectorSource(
     val childApproved: Boolean = false,
     val version: Long = 1,
 ) {
-    val external: Boolean get() = kind in setOf(CollectorKind.FEED, CollectorKind.WEATHER, CollectorKind.ALERTS, CollectorKind.PUBLIC_CALENDAR)
+    val external: Boolean get() = kind.usesCityCoordinates || kind in setOf(CollectorKind.FEED, CollectorKind.ALERTS, CollectorKind.PUBLIC_CALENDAR)
     init {
         require(id.matches(Regex("[A-Za-z0-9_.:-]{1,160}")))
         require(title.isNotBlank() && title.length <= 200 && publisher.isNotBlank() && publisher.length <= 200)
         require(language.matches(Regex("[a-z]{2,3}(-[A-Za-z0-9]{2,8})*")))
         require(refreshMinutes in 15..1440 && version > 0)
         require(!external || !endpoint.isNullOrBlank())
-        require(kind != CollectorKind.WEATHER || place != null)
+        require(!kind.usesCityCoordinates || place != null)
         require(endpoint == null || endpoint.length <= 4096)
     }
 }
@@ -50,7 +53,19 @@ data class ArticleFact(val id: String, val title: String, val text: String, val 
 data class WeatherDay(val date: java.time.LocalDate, val maximumC: Double?, val minimumC: Double?,
     val precipitationProbability: Int?, val weatherCode: Int?)
 data class WeatherFact(val place: WeatherPlace, val observedAt: Instant?, val temperatureC: Double?, val weatherCode: Int?,
-    val days: List<WeatherDay>, val attribution: String = "Open-Meteo", val attributionUrl: String = "https://open-meteo.com/")
+    val days: List<WeatherDay>, val attribution: String = "Open-Meteo", val attributionUrl: String = "https://open-meteo.com/",
+    val windKph: Double? = null)
+enum class PollenSpecies(val parameter: String, val label: String) {
+    ALDER("alder_pollen", "Alder"), BIRCH("birch_pollen", "Birch"), GRASS("grass_pollen", "Grass"),
+    MUGWORT("mugwort_pollen", "Mugwort"), OLIVE("olive_pollen", "Olive"), RAGWEED("ragweed_pollen", "Ragweed"),
+}
+data class AirQualityFact(
+    val place: WeatherPlace,
+    val europeanAqi: Int?,
+    val pollen: Map<PollenSpecies, Double>,
+    val observedAt: Instant,
+    val attribution: String = "Open-Meteo · CAMS ENSEMBLE",
+)
 data class WarningFact(val id: String, val title: String, val text: String, val area: String?, val severity: String?,
     val onset: Instant?, val expires: Instant?, val url: String?, val publisher: String)
 data class LocalFact(val id: String, val kind: String, val title: String, val summary: String,
@@ -59,6 +74,7 @@ data class LocalFact(val id: String, val kind: String, val title: String, val su
 sealed interface CollectorPayload {
     data class Articles(val items: List<ArticleFact>) : CollectorPayload
     data class Weather(val fact: WeatherFact) : CollectorPayload
+    data class AirQuality(val value: AirQualityFact) : CollectorPayload
     data class Warnings(val items: List<WarningFact>) : CollectorPayload
     data class Calendar(val preview: com.halo.app.everyday.organizer.CalendarImportPreview) : CollectorPayload
     data class Local(val items: List<LocalFact>) : CollectorPayload

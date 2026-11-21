@@ -65,6 +65,25 @@ internal fun LazyListScope.collectorContent(state: CollectorState, itemId: Strin
             }
             item { Text(fact.attribution, style = MaterialTheme.typography.labelLarge); Text(fact.attributionUrl, style = MaterialTheme.typography.bodySmall) }
         }
+        is CollectorPayload.AirQuality -> item {
+            val air = payload.value
+            val number = java.text.NumberFormat.getNumberInstance(locale).apply { maximumFractionDigits = 1 }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(air.place.name, style = MaterialTheme.typography.headlineMedium)
+                val index = air.europeanAqi
+                Text(if (index == null) uiText("Air quality unavailable")
+                    else uiText("European AQI %s · %s", number.format(index), uiText(europeanAqiLabel(index))),
+                    style = MaterialTheme.typography.titleLarge)
+                Text(uiText("Forecast time %1\$s", stamp(air.observedAt, ZoneId.of(air.place.zoneId))), style = MaterialTheme.typography.bodySmall)
+                Text(uiText("Pollen"), style = MaterialTheme.typography.titleMedium)
+                if (air.pollen.isEmpty()) Text(uiText("Pollen data is unavailable for this city or season."))
+                air.pollen.entries.sortedByDescending { it.value }.forEach { (species, amount) ->
+                    Text(uiText("%s · %s grains/m³", uiText(species.label), number.format(amount)))
+                }
+                Text(air.attribution, style = MaterialTheme.typography.labelLarge)
+                Text(OpenMeteoAirQuality.ATTRIBUTION_URL, style = MaterialTheme.typography.bodySmall)
+            }
+        }
         is CollectorPayload.Warnings -> {
             val warnings = payload.items.filter { it.expires == null || it.expires > now }
             if (warnings.isEmpty()) item { Text(uiText("No unexpired notices in the saved snapshot. This does not confirm that no warnings exist.")) }

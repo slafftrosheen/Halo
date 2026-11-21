@@ -11,9 +11,11 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
@@ -23,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import com.halo.app.R
 import com.halo.app.language.uiText
@@ -33,6 +36,7 @@ import com.halo.app.ui.zone5.zone5ActionIconId
 import com.halo.app.ui.zone5.workspaceMenuFamilies
 import com.halo.app.ui.zone5.workspaceMenuGroup
 import com.halo.app.ui.zone5.WorkspaceMenuGroup
+import com.halo.app.ui.zone6.*
 
 /** Transient host presentation. Domain, navigation and privacy authorities remain at the caller. */
 internal class HaloZone5Navigation(
@@ -47,6 +51,9 @@ internal class HaloZone5Navigation(
     val kids: Boolean = false,
     val guidanceTargetVisible: Boolean = false,
     val compactUtilityIncludesStatus: Boolean = false,
+    val zone6: Boolean = false,
+    val attentionCount: Int = 0,
+    val composer: Boolean = false,
 )
 internal val LocalHaloZone5Navigation = staticCompositionLocalOf<HaloZone5Navigation?> { null }
 
@@ -60,6 +67,24 @@ internal fun HaloZone5OrbLauncher(
     actionPins: com.halo.app.ui.theme.ActionPinSettings = com.halo.app.ui.theme.ActionPinSettings(),
     onActionPins: (suspend (String, List<String>, List<String>) -> Unit)? = null,
 ) {
+    val routeFamily = navigation.route?.substringBefore('?')
+    val pauseContext = LocalContext.current
+    val paused by remember(pauseContext) { com.halo.app.privacy.HaloPauseOwner.get(pauseContext).state }.collectAsStateWithLifecycle()
+    val pausedLabel = stringResource(R.string.halo_pause_status)
+    val recording = if (routeFamily == "record") {
+        com.halo.app.nativeactions.EverydayWidgetRecording.active.collectAsStateWithLifecycle().value
+    } else false
+    val focusActive = if (routeFamily == "focus") {
+        val context = LocalContext.current
+        val state = remember(context) { com.halo.app.ui.toolkit.HaloFocusOwner.get(context).state }
+        state.collectAsStateWithLifecycle().value?.left()?.let { it > 0L } == true
+    } else false
+    val shownSignal = when {
+        paused.paused -> signal.copy(state = HaloSignalState.STOPPED, label = pausedLabel, glyph = HaloGlyph.PAUSE,
+            artwork = null, conditionGlyph = null, activityLevel = 0f, reducedMotion = true)
+        recording -> signal.copy(state = HaloSignalState.CAPTURING, label = "Recording", glyph = HaloGlyph.RECORD)
+        else -> signal
+    }
     val targetSize = if (navigation.kids) 56.dp else 48.dp
     val listedActions = actions.filterNot { it.id.endsWith(".back") || it.title == "Back" && it.glyph == HaloGlyph.PREVIOUS }
     // One disclosure owner, two intentionally separate lists.
@@ -95,7 +120,15 @@ internal fun HaloZone5OrbLauncher(
             opener = source; disclosure = list; navigation.onDisclosureChanged(true)
         }
     }
+    val coach = LocalHaloPageGuidance.current
+    val gestures = HaloGesture.forRoute(navigation.route)
     val latestOpen by rememberUpdatedState(open)
+    val latestCoach by rememberUpdatedState(coach)
+    val teachDock = HaloGesture.DOCK_SWIPE in gestures
+    if (teachDock) {
+        BindHaloGestureAlternative(HaloGesture.DOCK_SWIPE) { open("menu", "orb") }
+        BindHaloGestureAlternative(HaloGesture.RING_HOLD) { open("menu", "orb") }
+    }
     fun act(effect: () -> Unit) {
         close(false)
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) effect()
@@ -133,16 +166,28 @@ internal fun HaloZone5OrbLauncher(
         onDispose { lifecycle.removeObserver(observer) }
     }
     androidx.activity.compose.BackHandler(disclosure != null) { close() }
-    val menuLabel = stringResource(R.string.zone5_menu)
+    val menuLabel = if (navigation.zone6) uiText("Places") else stringResource(R.string.zone5_menu)
     val actionsLabel = stringResource(R.string.zone5_all_actions)
-    val primary = uiText(when (interaction.primary) {
+    val primary = if (paused.paused) stringResource(R.string.halo_pause_title)
+    else if (routeFamily == "private_chat") uiText("Close")
+    else if (recording) uiText("Stop recording") else uiText(when (interaction.primary) {
         HaloOrbPrimary.TALK -> "Talk"
         HaloOrbPrimary.FINISH -> "Send voice"
         HaloOrbPrimary.STOP -> "Stop"
         HaloOrbPrimary.INTERRUPT -> "Interrupt reply and talk"
         HaloOrbPrimary.REVIEW -> "Review"
     })
-    val caption = uiText(when (interaction.primary) {
+    val caption = if (paused.paused) pausedLabel
+    else if (recording) uiText("Recording")
+    else if (routeFamily == "private_chat" && signal.state == HaloSignalState.IDLE) uiText("Private")
+    else if (routeFamily == "focus" && signal.state == HaloSignalState.IDLE) stringResource(R.string.halo_focus_title)
+    else if (navigation.zone6) uiText(when (signal.state) {
+        HaloSignalState.LISTENING, HaloSignalState.CAPTURING -> "Listening"
+        HaloSignalState.THINKING, HaloSignalState.ACTING -> "Working"
+        HaloSignalState.WAITING -> "Waiting for you"
+        HaloSignalState.SPEAKING -> "Tap to stop"
+        else -> "Talk"
+    }) else uiText(when (interaction.primary) {
         HaloOrbPrimary.FINISH -> "Send"
         HaloOrbPrimary.INTERRUPT -> "Talk"
         else -> when (interaction.primary) {
@@ -151,13 +196,19 @@ internal fun HaloZone5OrbLauncher(
             else -> "Review"
         }
     })
-    val activityDescription = uiText(signal.label)
-    val menuAction = stringResource(R.string.zone5_open_menu)
+    val activityDescription = uiText(shownSignal.label)
+    val menuAction = if (navigation.zone6) uiText("Open Places") else stringResource(R.string.zone5_open_menu)
     val flatLabels = LocalDensity.current.fontScale >= 1.4f
-    val gesture = orbModifier.focusRequester(orbFocus).pointerInput(Unit) {
+    val gesture = orbModifier.focusRequester(orbFocus).pointerInput(teachDock) {
         var drag = 0f
         detectVerticalDragGestures(onDragStart = { drag = 0f }, onDragCancel = { drag = 0f },
-            onDragEnd = { if (drag < -24.dp.toPx()) latestOpen("menu", "orb"); drag = 0f }) { change, amount ->
+            onDragEnd = {
+                if (drag < -24.dp.toPx()) {
+                    latestOpen("menu", "orb")
+                    if (teachDock) latestCoach?.gestureUsed(HaloGesture.DOCK_SWIPE)
+                }
+                drag = 0f
+            }) { change, amount ->
             drag += amount
             // Consumption cancels the face's pending click, including a failed/downward menu drag.
             change.consume()
@@ -173,7 +224,131 @@ internal fun HaloZone5OrbLauncher(
             Text(actionsLabel, textAlign = TextAlign.Center)
         }
     }
-    if (navigation.compact || navigation.inlineControls) {
+    if (navigation.zone6) {
+        val interactions = remember { MutableInteractionSource() }
+        val reduce by com.halo.app.ui.theme.rememberReducedMotion()
+        val visual = com.halo.app.ui.theme.rememberVisualPreferences()
+        val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+        val chosen = zone6SelectedPlace(navigation.route, navigation.kids)
+        var showReceipt by remember(signal.state, signal.label) { mutableStateOf(signal.state == HaloSignalState.SUCCESS) }
+        LaunchedEffect(signal.state, signal.label) {
+            if (signal.state == HaloSignalState.SUCCESS) {
+                kotlinx.coroutines.delay(2400)
+                showReceipt = false
+            }
+        }
+        val activeState = showReceipt || signal.state in setOf(HaloSignalState.LISTENING, HaloSignalState.CAPTURING, HaloSignalState.THINKING,
+            HaloSignalState.ACTING, HaloSignalState.WAITING, HaloSignalState.SPEAKING, HaloSignalState.ERROR, HaloSignalState.OFFLINE)
+        LaunchedEffect(signal.state) {
+            if (visual.haptics && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) when (signal.state) {
+                HaloSignalState.WAITING, HaloSignalState.SUCCESS -> haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.Confirm)
+                HaloSignalState.ERROR -> haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.Reject)
+                else -> Unit
+            }
+        }
+        val face: @Composable () -> Unit = {
+            Column(gesture.widthIn(min = size, max = if (flatLabels) 148.dp else 94.dp).zone6GuideOutline(Zone6GuideTarget.RING)
+                .haloGuideControl("ring").haloGestureAnchor(HaloGesture.RING_HOLD)
+                .combinedClickable(interactionSource = interactions, indication = null, role = Role.Button,
+                    onClickLabel = primary, onClick = {
+                        act {
+                            if (visual.haptics) haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.ContextClick)
+                            when {
+                                paused.paused -> navigation.onNavigate("pause")
+                                routeFamily == "private_chat" -> pageProjection?.invoke("page.private_chat.close")
+                                recording -> pageProjection?.invoke("page.record.primary")
+                                else -> onPrimary(interaction.primary)
+                            }
+                        }
+                    }, onLongClick = {
+                        open("menu", "orb")
+                        if (teachDock) coach?.gestureUsed(HaloGesture.RING_HOLD)
+                    })
+                .semantics(mergeDescendants = true) { testTag = "zone6-ring"; contentDescription = primary },
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                HaloSignalFace(shownSignal, Modifier.clearAndSetSemantics { }, size = size, zone5 = true,
+                    kids = navigation.kids, interactionSource = interactions)
+                if (!(navigation.compact && navigation.composer)) Text(caption, style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center, modifier = Modifier.clearAndSetSemantics { })
+            }
+        }
+        if (navigation.compact && navigation.composer) face()
+        else BoxWithConstraints(Modifier.fillMaxWidth().semantics { isTraversalGroup = true }) {
+            val wide = maxWidth >= Zone6DockTokens.wide && !flatLabels && !navigation.kids
+            val workspaceSlot = if (navigation.kids || wide) "notebook" else
+                com.halo.app.ui.zone6.rememberZone6PageSetting(com.halo.app.ui.zone6.WORKSPACE_DOCK_KEY).value
+                    ?.takeIf { it in com.halo.app.ui.zone6.workspaceDockRoutes } ?: "notebook"
+            val labelsAlways = visual.buttonLabels == com.halo.app.ui.theme.HaloButtonLabels.ALWAYS || flatLabels
+            val tab: @Composable (String) -> Unit = { route ->
+                val place = navigation.destinations.firstOrNull { it.route == route }
+                    ?: com.halo.app.ui.shell.ShellOrbCatalog.workspaceDestinations(navigation.kids).firstOrNull { it.route == route }
+                if (place != null) {
+                    val (icon, glyph) = zone6PlaceGlyph(route)
+                    val activeTool = if (routeFamily == "screen/organizer") "planner" else routeFamily
+                    val selected = if (navigation.destinations.any { it.route == route }) route == chosen else activeTool == route
+                    Zone6Tab(if (route == "study") "Learn" else place.title,
+                        glyph, icon, selected = selected, count = if (route == "activity") navigation.attentionCount else 0,
+                        modifier = Modifier.fillMaxWidth().alpha(if (focusActive && !selected) .76f else 1f),
+                        onClick = { act { navigation.onNavigate(route) } },
+                        showLabel = labelsAlways || selected)
+                }
+            }
+            val places: @Composable () -> Unit = {
+                Zone6Tab("Places", HaloGlyph.TOOL, "action_tools", disclosure == "menu", 0,
+                    modifier = Modifier.fillMaxWidth().focusRequester(menuFocus).haloGuideControl("places"),
+                    onClick = { if (disclosure == "menu") close() else open("menu", "menu") })
+            }
+            if (navigation.compact) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f)) {
+                        Zone6ActionRow(listedActions, pageProjection?.owner?.routeFamily, true, navigation.kids,
+                            disclosure == "actions", onMore = { if (disclosure == "actions") close() else open("actions", "actions") },
+                            onAction = { action -> act { onAction(action) } }, moreModifier = Modifier.focusRequester(actionsFocus),
+                            reducedMotion = reduce || signal.reducedMotion)
+                    }
+                    face()
+                    Box(Modifier.widthIn(min = 48.dp, max = 108.dp)) { places() }
+                }
+                return@BoxWithConstraints
+            }
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (activeState && !navigation.compact) Zone6LiveIsland(signal, interaction, reduce || signal.reducedMotion,
+                    onPrimary = { act { onPrimary(interaction.primary) } }, onStop = { act(onStop) },
+                    more = if (listedActions.isNotEmpty() && signal.state in setOf(HaloSignalState.ERROR, HaloSignalState.OFFLINE))
+                        ({ open("actions", "orb") }) else null)
+                else if (!navigation.composer) {
+                    Zone6ActionRow(listedActions, pageProjection?.owner?.routeFamily, navigation.compact, navigation.kids,
+                        disclosure == "actions", onMore = { if (disclosure == "actions") close() else open("actions", "actions") },
+                        onAction = { action -> act { onAction(action) } }, moreModifier = Modifier.focusRequester(actionsFocus),
+                        reducedMotion = reduce || signal.reducedMotion)
+                } else if (hasActionDisclosure && !navigation.compact && listedActions.size > 1 && disclosure == "actions") {
+                    actionListControl(Modifier.align(Alignment.End))
+                }
+                Row(Modifier.fillMaxWidth().zone6GuideOutline(Zone6GuideTarget.NAVIGATION), horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    if (!navigation.compact) {
+                        Box(Modifier.weight(1f)) { tab("home") }
+                        if (!flatLabels && !navigation.kids) Box(Modifier.weight(1f)) { tab(workspaceSlot) }
+                        if (wide) Box(Modifier.weight(1f)) { tab("devices") }
+                    } else Spacer(Modifier.weight(1f))
+                    Box(contentAlignment = Alignment.Center) { face() }
+                    when {
+                        navigation.kids -> Box(Modifier.weight(1f)) { tab("study") }
+                        wide -> {
+                            Box(Modifier.weight(1f)) { tab("activity") }
+                            Box(Modifier.weight(1f)) { tab("settings") }
+                            Box(Modifier.weight(1f)) { tab("screen/sources") }
+                        }
+                        else -> {
+                            if (!flatLabels && !navigation.compact) Box(Modifier.weight(1f)) { tab("activity") }
+                            Box(Modifier.weight(1f)) { places() }
+                        }
+                    }
+                }
+            }
+        }
+    } else if (navigation.compact || navigation.inlineControls) {
         val interactions = remember { MutableInteractionSource() }
         val orbAndCaption: @Composable () -> Unit = {
             Column(gesture.widthIn(min = if (navigation.compact) targetSize else size, max = if (flatLabels) 180.dp else 112.dp)
@@ -258,13 +433,38 @@ internal fun HaloZone5OrbLauncher(
     if (size <= 48.dp) Text(caption, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
     }
     }
-    if (disclosure != null) LocalizedMaterialBottomSheet(onDismissRequest = { close() },
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    val sheetContent: @Composable ColumnScope.() -> Unit = {
         Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(when (disclosure) { "menu" -> stringResource(R.string.zone5_navigation); "help" -> stringResource(R.string.zone5_help_title); "pins" -> stringResource(R.string.zone5_pins_choose); else -> actionsLabel },
-                style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
+            if (!navigation.zone6) Text(when (disclosure) {
+                "menu" -> stringResource(R.string.zone5_navigation)
+                "help" -> stringResource(R.string.zone5_help_title)
+                "pins" -> stringResource(R.string.zone5_pins_choose)
+                else -> actionsLabel
+            }, style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
+            if (navigation.zone6 && coach != null && disclosure in setOf("menu", "actions", "help")) {
+                val guideTitle = stringResource(if (rememberHaloTouchExploration()) R.string.coach_explore else R.string.coach_show)
+                if (disclosure == "actions" || disclosure == "menu" && navigation.composer) {
+                    pageProjection.editPageAction()?.takeIf { it.enabled }?.let { editor ->
+                        TextButton(onClick = { act { pageProjection?.invoke(editor.id) } },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = targetSize)) {
+                            Text(stringResource(R.string.coach_edit_page), Modifier.weight(1f))
+                        }
+                    }
+                }
+                TextButton(onClick = { act(coach::showControls) }, modifier = Modifier.fillMaxWidth().heightIn(min = targetSize)) {
+                    Text(guideTitle, Modifier.weight(1f))
+                }
+                if (gestures.isNotEmpty()) TextButton(onClick = { act(coach::showGestures) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = targetSize)) {
+                    Text(stringResource(R.string.coach_watch), Modifier.weight(1f))
+                }
+            }
             if (disclosure == "menu") {
+                if (navigation.zone6) com.halo.app.ui.zone6.Zone6PlacesLayout(navigation.destinations,
+                    zone6SelectedPlace(navigation.route, navigation.kids), navigation.attentionCount, navigation.kids) {
+                    act { navigation.onNavigate(it) }
+                } else {
                 val selected = when {
                     navigation.destinations.any { it.route == "study" } &&
                         (navigation.route?.startsWith("study") == true || navigation.route?.startsWith("notebook/study/") == true) -> "study"
@@ -298,18 +498,22 @@ internal fun HaloZone5OrbLauncher(
                             Text(stringResource(R.string.zone5_workspace_group), Modifier.weight(1f))
                             Zone5Icon(if (instrumentsExpanded) "action_up" else "action_down", HaloGlyph.NEXT, Modifier.size(24.dp))
                         }
-                        if (instrumentsExpanded) com.halo.app.ui.shell.ShellOrbCatalog.workspaceDestinations(navigation.kids).forEach { instrument ->
-                            val icon = when (instrument.route) {
-                                "studio" -> "tool_studio"; "study" -> "tool_study"; "notebook/memory" -> "tool_memory"
-                                "canvases" -> "tool_canvas"; else -> "tool_notes"
-                            }
+                        val shelf = com.halo.app.ui.zone6.rememberZone6PageSetting(com.halo.app.ui.toolkit.HaloToolkit.SHELF)
+                        if (instrumentsExpanded) com.halo.app.ui.toolkit.HaloToolkit.pinned(shelf.value).forEach { instrument ->
+                            val (icon, glyph) = com.halo.app.ui.zone6.zone6PlaceGlyph(instrument.route)
                             TextButton(onClick = { act { navigation.onNavigate(instrument.route) } },
                                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp).heightIn(min = targetSize)) {
-                                Zone5Icon(icon, instrument.glyph, Modifier.size(24.dp))
+                                Zone5Icon(icon, glyph, Modifier.size(24.dp))
                                 Spacer(Modifier.width(12.dp))
-                                Text(com.halo.app.ui.zone5.workspaceInstrumentName(icon, uiText(instrument.title)), Modifier.weight(1f))
+                                Text(stringResource(instrument.title), Modifier.weight(1f))
                             }
                         }
+                    }
+                }
+                }
+                if (navigation.zone6 && navigation.composer && listedActions.isNotEmpty()) {
+                    TextButton(onClick = { disclosure = "actions" }, modifier = Modifier.heightIn(min = targetSize)) {
+                        Text(uiText("Chat actions"))
                     }
                 }
                 HorizontalDivider()
@@ -391,7 +595,17 @@ internal fun HaloZone5OrbLauncher(
                 }
             }
             if (interaction.canStop) OutlinedButton(onClick = { act(onStop) }, modifier = Modifier.fillMaxWidth().heightIn(min = targetSize)) { Text(uiText("Stop")) }
-            TextButton(onClick = { close() }, modifier = Modifier.heightIn(min = targetSize)) { Text(uiText("Close")) }
+            if (!navigation.zone6) TextButton(onClick = { close() }, modifier = Modifier.heightIn(min = targetSize)) { Text(uiText("Close")) }
         }
+    }
+    if (disclosure != null) {
+        if (navigation.zone6) Zone6ButtonSheet(when (disclosure) {
+            "menu" -> menuLabel
+            "help" -> stringResource(R.string.zone5_help_title)
+            "pins" -> stringResource(R.string.zone5_pins_choose)
+            else -> uiText("More")
+        }, onDismiss = { close() }, content = sheetContent)
+        else LocalizedMaterialBottomSheet(onDismissRequest = { close() },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), content = sheetContent)
     }
 }

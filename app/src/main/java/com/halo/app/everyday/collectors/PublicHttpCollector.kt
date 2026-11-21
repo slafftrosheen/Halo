@@ -21,21 +21,29 @@ class PublicHttpCollector(
     private val clock: Clock = Clock.systemUTC(),
     private val zone: () -> ZoneId = { ZoneId.systemDefault() },
 ) : Collector {
-    init { require(kind in setOf(CollectorKind.FEED, CollectorKind.WEATHER, CollectorKind.ALERTS, CollectorKind.PUBLIC_CALENDAR)) }
-    private val client = baseClient.withRemoteDispatchPolicy(policy, publicGetRedirects = true) { request ->
+    init { require(kind.usesCityCoordinates || kind in setOf(CollectorKind.FEED, CollectorKind.ALERTS, CollectorKind.PUBLIC_CALENDAR)) }
+    private val transport = if (kind == CollectorKind.AIR_QUALITY) baseClient.newBuilder()
+        .dns(CollectorUrlPolicy.dns(baseClient.dns)).proxy(java.net.Proxy.NO_PROXY).cookieJar(CookieJar.NO_COOKIES)
+        .authenticator(Authenticator.NONE).proxyAuthenticator(Authenticator.NONE).cache(null).build() else baseClient
+    private val client = transport.withRemoteDispatchPolicy(policy, publicGetRedirects = kind != CollectorKind.AIR_QUALITY) { request ->
         RemoteDispatchRequest(PUBLIC_COLLECTOR_OWNER, RemoteOperation.CONNECTED_SERVICE,
             request.tag(CollectorRequestScope::class.java)?.categories ?: setOf(RemoteDataCategory.ACCOUNT_METADATA))
     }
     override suspend fun fetch(source: CollectorSource, cached: CollectorSnapshot?): CollectorFetchResult = coroutineScope {
         require(source.kind == kind && source.external && source.selected && source.enabled) { "Select and enable this source before fetching it" }
-        val url = CollectorUrlPolicy.validate(requireNotNull(source.endpoint))
+        val savedEndpoint = requireNotNull(source.endpoint)
+        if (kind == CollectorKind.AIR_QUALITY) require(savedEndpoint == OpenMeteoAirQuality.endpoint(requireNotNull(source.place)))
+        val upgradedWeatherEndpoint = source.place?.takeIf { kind == CollectorKind.WEATHER && savedEndpoint == OpenMeteoParser.oldEndpoint(it) }
+            ?.let(OpenMeteoParser::endpoint)
+        val url = CollectorUrlPolicy.validate(upgradedWeatherEndpoint ?: savedEndpoint)
         val revision = RemoteDispatchContext.provenance.get()?.revision ?: RemoteDispatchContext.intent.get()?.revision ?: policy.revision
-        val categories = if (kind == CollectorKind.WEATHER) setOf(RemoteDataCategory.LOCATION) else setOf(RemoteDataCategory.ACCOUNT_METADATA)
+        val categories = if (kind.usesCityCoordinates) setOf(RemoteDataCategory.LOCATION) else setOf(RemoteDataCategory.ACCOUNT_METADATA)
         val request = Request.Builder().url(url).get().header("User-Agent", "Halo/Everyday")
-            .header("Accept", when (kind) { CollectorKind.WEATHER -> "application/json"; CollectorKind.PUBLIC_CALENDAR -> "text/calendar"; else -> "application/atom+xml, application/rss+xml, application/xml, text/xml" })
+            .header("Accept", when (kind) { CollectorKind.WEATHER, CollectorKind.AIR_QUALITY -> "application/json"; CollectorKind.PUBLIC_CALENDAR -> "text/calendar"; else -> "application/atom+xml, application/rss+xml, application/xml, text/xml" })
             .tag(RemoteRequestRevision::class.java, RemoteRequestRevision(revision))
             .tag(CollectorRequestScope::class.java, CollectorRequestScope(categories))
-        val cache = cached?.takeIf { it.sourceId == source.id && it.sourceVersion == source.version }
+        val cache = cached?.takeIf { it.sourceId == source.id && it.sourceVersion == source.version &&
+            (upgradedWeatherEndpoint == null || it.effectiveUrl == url.toString()) }
         cache?.etag?.takeIf(::safeValidator)?.let { request.header("If-None-Match", it) }
         cache?.lastModified?.takeIf(::safeValidator)?.let { request.header("If-Modified-Since", it) }
         val call = client.newCall(request.build())
@@ -91,6 +99,7 @@ class PublicHttpCollector(
                     CollectorKind.ALERTS -> CollectorPayload.Warnings(FeedParser.parse(response.bytes, source.copy(endpoint = response.url)).warnings
                         .filter { it.expires == null || it.expires > clock.instant() })
                     CollectorKind.WEATHER -> CollectorPayload.Weather(OpenMeteoParser.parse(response.bytes, requireNotNull(source.place)))
+                    CollectorKind.AIR_QUALITY -> CollectorPayload.AirQuality(OpenMeteoAirQuality.parse(response.bytes, requireNotNull(source.place)))
                     CollectorKind.PUBLIC_CALENDAR -> CollectorPayload.Calendar(OrganizerIcs.preview(response.bytes, source.id, zone(), clock.instant()).also {
                         require(it.records.size <= CollectorRefreshPolicy.MAX_ITEMS) { "This public calendar is too large; choose a narrower calendar feed" }
                     })

@@ -44,9 +44,15 @@ internal object CollectorCodec {
                 .put("revision", item.revision).put("at", item.occurredAt?.toEpochMilli()) })) }
             is CollectorPayload.Weather -> { put("type", "weather"); val fact = payload.fact
                 put("place", place(fact.place)); put("observed", fact.observedAt?.toEpochMilli()); put("temperature", fact.temperatureC)
-                put("code", fact.weatherCode); put("attribution", fact.attribution); put("attributionUrl", fact.attributionUrl)
+                put("code", fact.weatherCode); put("attribution", fact.attribution); put("attributionUrl", fact.attributionUrl); put("windKph", fact.windKph)
                 put("days", array(fact.days.map { day -> JSONObject().put("date", day.date.toString()).put("max", day.maximumC)
                     .put("min", day.minimumC).put("rain", day.precipitationProbability).put("code", day.weatherCode) })) }
+            is CollectorPayload.AirQuality -> {
+                val air = payload.value
+                put("type", "air_quality"); put("place", place(air.place)); put("aqi", air.europeanAqi)
+                put("observed", air.observedAt.toEpochMilli()); put("attribution", air.attribution)
+                put("pollen", JSONObject().apply { air.pollen.forEach { (species, amount) -> put(species.name, amount) } })
+            }
             is CollectorPayload.Calendar -> { put("type", "calendar"); put("records", JSONArray(payload.preview.records.map(OrganizerCodec::encode)))
                 put("exceptions", JSONArray(payload.preview.exceptions.map(OrganizerCodec::encode)))
                 put("issues", array(payload.preview.issues.map { issue -> JSONObject().put("item", issue.item).put("uid", issue.uid)
@@ -68,7 +74,11 @@ internal object CollectorCodec {
                 item.getString("title"), item.getString("summary"), item.getString("route"), item.text("revision"), item.instant("at")) })
             "weather" -> CollectorPayload.Weather(WeatherFact(place(json.getJSONObject("place")), json.instant("observed"), json.number("temperature"), json.integer("code"),
                 json.getJSONArray("days").rows(16).map { day -> WeatherDay(LocalDate.parse(day.getString("date")), day.number("max"), day.number("min"), day.integer("rain"), day.integer("code")) },
-                json.getString("attribution"), json.getString("attributionUrl")))
+                json.getString("attribution"), json.getString("attributionUrl"), json.number("windKph")))
+            "air_quality" -> CollectorPayload.AirQuality(AirQualityFact(place(json.getJSONObject("place")), json.integer("aqi"),
+                json.getJSONObject("pollen").let { pollen ->
+                    buildMap { PollenSpecies.entries.forEach { species -> pollen.number(species.name)?.let { put(species, it) } } }
+                }, requireNotNull(json.instant("observed")), json.getString("attribution")))
             "calendar" -> CollectorPayload.Calendar(CalendarImportPreview(
                 json.getJSONArray("records").let { values -> require(values.length() <= 100); (0 until values.length()).map { OrganizerCodec.decode(values.getString(it)) } },
                 json.getJSONArray("exceptions").let { values -> require(values.length() <= 2000); (0 until values.length()).map { OrganizerCodec.override(values.getString(it)) } },

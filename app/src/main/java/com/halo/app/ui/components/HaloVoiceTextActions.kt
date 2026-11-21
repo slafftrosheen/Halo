@@ -42,6 +42,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.di.ManualDependencyGraph
+import com.halo.app.ui.zone6.BindHaloGestureAlternative
+import com.halo.app.ui.zone6.HaloGesture
+import com.halo.app.ui.zone6.LocalHaloPageGuidance
+import com.halo.app.ui.zone6.haloGestureAnchor
+import com.halo.app.ui.zone6.haloGuideControl
 import com.halo.app.language.uiText
 import com.halo.app.ui.fx.haloTrace
 import com.halo.sdk.runtime.SpeechOutputFallback
@@ -70,6 +75,7 @@ fun HaloVoiceTextActions(
     allowDictation: Boolean = true,
     allowLongDictation: Boolean = false,
     guideDictation: Boolean = false,
+    teachNoteDictation: Boolean = false,
     dictationRequest: Long = 0,
     onRequestConsumed: () -> Unit = {},
     onCommand: ((String) -> Unit)? = null,
@@ -86,6 +92,8 @@ fun HaloVoiceTextActions(
     readRequest: Long = 0,
     onReadRequestConsumed: () -> Unit = {},
     showReadAction: Boolean = true,
+    readCategory: com.halo.sdk.provider.RemoteDataCategory = com.halo.sdk.provider.RemoteDataCategory.WORKSPACE,
+    readSourceIds: Set<String> = emptySet(),
     fieldContent: (@Composable (@Composable () -> Unit) -> Unit)? = null,
 ) {
     // Design previews have no Android speech host. Keep the editable field available
@@ -146,7 +154,15 @@ fun HaloVoiceTextActions(
                     if(spokenId==requestId) spokenId=null
                     return@launch
                 }
-                reader.start(requestId, content, requiredProviderId, cloudApproved, language)
+                val provenance = if (cloudApproved) withContext(Dispatchers.IO) {
+                    com.halo.app.audio.readingProvenance(readCategory, readSourceIds)
+                } else null
+                reader.start(requestId, content, requiredProviderId, provenance != null, language,
+                    remoteProvenance = provenance,
+                    beforeSentence = {
+                        provenance == null || readSourceIds.isEmpty() ||
+                            com.halo.app.audio.readingProvenance(readCategory, readSourceIds) == provenance
+                    })
             } catch(cancelled: CancellationException) { throw cancelled }
             catch(_: Exception) {
                 error="Reading aloud is unavailable with the current voice settings."
@@ -384,15 +400,23 @@ fun HaloVoiceTextActions(
                 val micEnabled = enabled && (phase == "RECORDING" || (phase == "IDLE" && localReady))
                 val canGuide = guideDictation && phase == "IDLE" && micEnabled &&
                     ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-                val label = uiText(if (phase == "RECORDING") "Finish speaking" else "Speak instead of typing")
+                val coach = if (teachNoteDictation) LocalHaloPageGuidance.current else null
+                if (coach != null && phase == "IDLE" && micEnabled && canGuide)
+                    BindHaloGestureAlternative(HaloGesture.NOTES_DICTATE) { requestSpeech(true) }
+                val label = uiText(if (phase == "RECORDING") "Finish speaking" else
+                    if (teachNoteDictation) "Dictate" else "Speak instead of typing")
+                val noteGuide = if (coach != null) Modifier.haloGestureAnchor(HaloGesture.NOTES_DICTATE).haloGuideControl("dictate") else Modifier
                 if (fieldContent != null) Box(
-                    Modifier.size(if (kidsPrivate) 72.dp else 48.dp)
+                    Modifier.size(if (kidsPrivate) 72.dp else 48.dp).then(noteGuide)
                         .haloTrace(canGuide, MaterialTheme.colorScheme.primary, lapOnAppear = true)
                         .semantics { contentDescription = label }
                         .combinedClickable(enabled = micEnabled, role = Role.Button,
                             onClickLabel = label,
                             onLongClickLabel = if (allowLongDictation) uiText("Long dictation") else null,
-                            onLongClick = if (allowLongDictation) ({ requestSpeech(true) }) else null,
+                            onLongClick = if (allowLongDictation) ({
+                                requestSpeech(true)
+                                if (canGuide) coach?.gestureUsed(HaloGesture.NOTES_DICTATE)
+                            }) else null,
                             onClick = { requestSpeech(false) }),
                     contentAlignment = Alignment.Center,
                 ) { HaloIcon(if (phase == "RECORDING") HaloGlyph.STOP else HaloGlyph.LISTEN, null) }

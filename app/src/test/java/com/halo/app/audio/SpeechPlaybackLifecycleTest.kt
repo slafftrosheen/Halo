@@ -118,6 +118,22 @@ class SpeechPlaybackLifecycleTest {
             assertTrue(playing.terminals().single() is TtsCancelled)
         } finally { playing.close() }
     }
+    @Test fun routedPlaybackPreservesTheProviderFailureBeforeAudioStarts() = runBlocking {
+        val rejection = SpeechProviderException(SpeechErrorCode.AUTHENTICATION_FAILED, "Fixture HTTP 401")
+        val provider = object : Provider("fixture") {
+            override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech = throw rejection
+        }
+        val playback = RoutedSpeechPlaybackProvider(ApplicationProvider.getApplicationContext<Context>(), provider,
+            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build())
+        val evidence = SpeechRouteEvidence(false, null, null, null, mode = SpeechRouteMode.SYSTEM_DEFAULT)
+        val request = SpeechRequest("Test phrase")
+        val result = playback.synthesizeRoutedRequests(request, flowOf(request), evidence, provider = provider,
+            onStarted = { fail("Silence must not be reported as playback") })
+
+        assertTrue(result is RoutedPlaybackResult.Failed)
+        assertEquals(SpeechErrorCode.AUTHENTICATION_FAILED,
+            ((result as RoutedPlaybackResult.Failed).cause as? SpeechProviderException)?.code)
+    }
     @Test fun oneTimeOutputTestUsesRoutedOwnerAndHumanConfirmationIsSeparate() = runBlocking {
         val f = Fixture(CompletableDeferred(), systemDefault = true)
         try {

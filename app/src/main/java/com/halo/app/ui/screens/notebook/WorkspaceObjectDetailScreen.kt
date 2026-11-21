@@ -500,7 +500,7 @@ private fun MemoryDetailCard(detail: MemoryDetailUi, busy: Boolean, onEdit: () -
     HaloWorkspaceCard {
         Text(copy.kind, style = MaterialTheme.typography.labelMedium)
         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
-        com.halo.app.ui.components.HaloReadAloud(item.record.content)
+        com.halo.app.ui.components.HaloReadAloud(item.record.content, category = com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
         if (item.stale) Text(uiText("Needs review · This memory may be outdated."))
         Text(uiText("Why Halo remembers this"), style = MaterialTheme.typography.titleMedium)
         Text(copy.origin)

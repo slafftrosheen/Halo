@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="note_look_title">Твои заметки</string>
+    <string name="note_look_paper">Бумага</string>
+    <string name="note_look_plain">Без разметки</string>
+    <string name="note_look_lined">В линейку</string>
+    <string name="note_look_grid">В клетку</string>
+    <string name="note_look_letters">Шрифт</string>
+    <string name="note_look_easy_read">Легко читать</string>
+    <string name="note_look_book">Книжный</string>
+    <string name="note_look_round">Округлый</string>
+    <string name="note_look_spacing">Межстрочный интервал</string>
+    <string name="note_look_normal">Обычный</string>
+    <string name="note_look_roomy">Шире</string>
+    <string name="note_look_extra">Очень широкий</string>
+    <string name="note_look_easy_view">Крупный текст заметок</string>
+    <string name="note_look_dictation">Показывать кнопки диктовки</string>
+    <string name="note_look_read_back">Прочитать вслух</string>
+    <string name="note_look_read_controls">Показывать кнопки озвучивания</string>
+    <string name="note_look_preview">Список покупок\nРастения, карточки и блокнот</string>
+</resources>

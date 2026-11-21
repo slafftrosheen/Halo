@@ -1,6 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -9,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
 import com.halo.app.ui.zone5.Zone5Icon
 import com.halo.app.language.uiText
@@ -17,8 +19,10 @@ import com.halo.app.ui.icons.HaloIcon
 
 /** Compact utility band. Editing gestures and durable action owners stay in their page. */
 @Composable
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 internal fun ToolZoneHeader(title: String, onBack: () -> Unit, enabled: Boolean = true,
-    onTitleClick: (() -> Unit)? = null, subtitle: String? = null, trailing: @Composable RowScope.() -> Unit = {}) {
+    onTitleClick: (() -> Unit)? = null, subtitle: String? = null,
+    onTitleLongClick: (() -> Unit)? = null, trailing: @Composable RowScope.() -> Unit = {}) {
     val density = LocalDensity.current
     val identityTarget = if (onTitleClick != null && com.halo.app.ui.presence.LocalHaloZone5Navigation.current?.kids == true) 56.dp else 48.dp
     val hosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
@@ -34,9 +38,14 @@ internal fun ToolZoneHeader(title: String, onBack: () -> Unit, enabled: Boolean 
         }
     }
     val identity: @Composable (Modifier) -> Unit = { modifier ->
+        val rename = uiText("Rename")
+        val edit = stringResource(com.halo.app.R.string.alive_tool_edit_page)
         Box(modifier.heightIn(min = identityTarget).then(
-            if (onTitleClick != null) Modifier.clickable(enabled = enabled, role = Role.Button,
-                onClickLabel = uiText("Rename"), onClick = onTitleClick)
+            if (onTitleLongClick != null) Modifier.combinedClickable(enabled = enabled, role = Role.Button,
+                onClickLabel = if (onTitleClick != null) rename else edit,
+                onLongClickLabel = edit, onLongClick = onTitleLongClick, onClick = onTitleClick ?: onTitleLongClick)
+            else if (onTitleClick != null) Modifier.clickable(enabled = enabled, role = Role.Button,
+                onClickLabel = rename, onClick = onTitleClick)
             else Modifier), contentAlignment = Alignment.CenterStart) {
             Column {
                 Text(title, modifier = Modifier.semantics { heading() }, style = MaterialTheme.typography.titleSmall,

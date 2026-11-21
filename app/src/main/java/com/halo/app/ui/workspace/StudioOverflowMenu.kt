@@ -9,7 +9,8 @@ import com.halo.app.ui.components.HaloScreenOverflow
 @Composable
 internal fun StudioOverflowMenu(busy: Boolean, hasUnsavedChanges: Boolean,
     onBackground: () -> Unit, onPresets: () -> Unit, onSaveAs: () -> Unit, onVersions: () -> Unit,
-    onDiscard: () -> Unit, onExportPng: () -> Unit, onExportJpeg: () -> Unit) {
+    onDiscard: () -> Unit, onExportPng: () -> Unit, onExportJpeg: () -> Unit, onCustomize: (() -> Unit)? = null) {
+    val customizationLabel = stringResource(R.string.alive_studio_look)
     HaloScreenOverflow(listOf(
         HaloOverflowAction(stringResource(R.string.studio_background), onClick = onBackground),
         HaloOverflowAction(stringResource(R.string.studio_presets), onClick = onPresets),
@@ -18,5 +19,5 @@ internal fun StudioOverflowMenu(busy: Boolean, hasUnsavedChanges: Boolean,
         HaloOverflowAction(stringResource(R.string.studio_export_png), onClick = onExportPng),
         HaloOverflowAction(stringResource(R.string.studio_export_jpeg), onClick = onExportJpeg),
         HaloOverflowAction(stringResource(R.string.studio_discard), hasUnsavedChanges, onDiscard),
-    ), enabled = !busy)
+    ) + listOfNotNull(onCustomize?.let { HaloOverflowAction(customizationLabel, onClick = it) }), enabled = !busy)
 }

@@ -33,12 +33,23 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
     var parentQuery by rememberSaveable { mutableStateOf("") }
     var noteQuery by rememberSaveable { mutableStateOf("") }
     var discard by rememberSaveable { mutableStateOf(false) }
+    var advanced by rememberSaveable(draft.base.id) { mutableStateOf(false) }
     val change: (OrganizerDraft) -> Unit = { if (!state.busy) onDraft(it) }
     EverydaySheet(onDismiss = { if (!state.busy) discard = true }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(uiText(if (draft.creating) "Add item" else if (draft.occurrence != null) "Edit this occurrence" else if (draft.base.repeat != null) "Edit entire series" else "Edit item"), style = MaterialTheme.typography.headlineSmall)
-            Text(uiText(organizerKindLabel(draft.base.kind)), style = MaterialTheme.typography.labelLarge)
+            Text(uiText(if (draft.spokenReview) "Check your reminder" else if (draft.creating) "Add item" else if (draft.occurrence != null) "Edit this occurrence" else if (draft.base.repeat != null) "Edit entire series" else "Edit item"), style = MaterialTheme.typography.headlineSmall)
             state.error?.let { EverydayMessage(it, true) }
+            if (draft.spokenReview && !advanced) {
+                PlannerReminderReview(draft, locale, !state.busy, change)
+                TextButton({ advanced = true }, enabled = !state.busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("More reminder settings"))
+                }
+            } else {
+            if (draft.spokenReview) {
+                TextButton({ advanced = false }, enabled = !state.busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(uiText("Back to reminder review"))
+                }
+            } else Text(uiText(organizerKindLabel(draft.base.kind)), style = MaterialTheme.typography.labelLarge)
             OutlinedTextField(draft.title, { change(draft.copy(title = it.take(200))) }, enabled = !state.busy,
                 label = { Text(uiText("Title")) }, modifier = Modifier.fillMaxWidth(), singleLine = true, isError = draft.title.isBlank())
             OutlinedTextField(draft.details, { change(draft.copy(details = it.take(16000))) }, enabled = !state.busy,
@@ -56,6 +67,12 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
                 EverydayDateField(uiText("Start date"), draft.date, !state.busy) { change(draft.copy(date = it)) }
                 if (!draft.allDay) OutlinedTextField(draft.time, { change(draft.copy(time = it.take(8))) }, enabled = !state.busy,
                     label = { Text(uiText("Time · HH:mm")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                if (!draft.allDay && draft.base.kind == OrganizerKind.EVENT && draft.occurrence == null) {
+                    OutlinedTextField(draft.leaveLead, { change(draft.copy(leaveLead = it.filter(Char::isDigit).take(5))) },
+                        enabled = !state.busy, label = { Text(uiText("Leave before · minutes, optional")) },
+                        supportingText = { Text(uiText("Shows a departure time in Planner.")) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true)
+                }
                 if (draft.hasEnd) {
                     EverydayDateField(uiText(if (draft.allDay) "End date · first day after the event" else "End date"), draft.endDate, !state.busy) { change(draft.copy(endDate = it)) }
                     if (!draft.allDay) OutlinedTextField(draft.endTime, { change(draft.copy(endTime = it.take(8))) }, enabled = !state.busy,
@@ -89,9 +106,9 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
                     }
                     if (!draft.creating) EverydayToggle(uiText("Reset individual occurrence changes if the series schedule changes"), draft.resetOccurrences, !state.busy) { change(draft.copy(resetOccurrences = it)) }
                 }
-                if (draft.base.kind !in setOf(OrganizerKind.ALARM, OrganizerKind.REMINDER) && draft.occurrence == null) {
-                    EverydayToggle(uiText("Notify me"), draft.notify, !state.busy) { change(draft.copy(notify = it)) }
-                    if (draft.notify) OutlinedTextField(draft.lead, { change(draft.copy(lead = it.take(5))) }, enabled = !state.busy,
+                if (draft.base.kind != OrganizerKind.ALARM && draft.occurrence == null) {
+                    if (draft.base.kind != OrganizerKind.REMINDER) EverydayToggle(uiText("Notify me"), draft.notify, !state.busy) { change(draft.copy(notify = it)) }
+                    if (draft.notify || draft.base.kind == OrganizerKind.REMINDER) OutlinedTextField(draft.lead, { change(draft.copy(notify = true, lead = it.take(5))) }, enabled = !state.busy,
                         label = { Text(uiText("Minutes before · 0–10080")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 }
             }
@@ -125,6 +142,7 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
                     TextButton({ change(draft.copy(links = draft.links - id)) }, enabled = !state.busy) { Text(uiText("Remove link")) }
                 }
                 Text(uiText("Related items stay in their original instrument. Removing a link does not delete them."), style = MaterialTheme.typography.bodySmall)
+            }
             }
             Button(onSave, enabled = !state.busy && draft.title.isNotBlank(), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Save")) }
             TextButton({ discard = true }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Cancel")) }

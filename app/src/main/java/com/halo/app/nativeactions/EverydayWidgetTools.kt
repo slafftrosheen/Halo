@@ -28,11 +28,14 @@ class EverydayWidgetTools(private val context: Context,private val requireCurren
                 // Resolve configured source/item choices using current local authority; a config never grants access.
                 val snapshot=readEverydaySnapshot(context)
                 config.recordId?.let {id -> require(snapshot.records.any {it.id==id && it.deletedAt==null})}
-                listOfNotNull(config.sourceId?.let {it to if(kind==EverydayCardKind.HEADLINES) com.halo.app.everyday.collectors.CollectorKind.FEED else com.halo.app.everyday.collectors.CollectorKind.WEATHER},
+                listOfNotNull(config.sourceId?.let {it to everydayWidgetMainSourceKind(kind)},
                     config.headlineSourceId?.let {it to com.halo.app.everyday.collectors.CollectorKind.FEED}).forEach { (id,kind) ->
                     require(snapshot.sources.any {it.source.id==id && it.source.kind==kind && it.source.selected && it.source.enabled && !it.source.muted})
                 }
-                val saved=store.save(id,version.takeIf {it>0},config,allowed=requireCurrent)
+                val saved=store.save(id,version.takeIf {it>0},config) {
+                    requireCurrent()
+                    com.halo.app.ui.theme.HaloLayoutLock.get(context).requireUnlocked()
+                }
                 val painted=EverydayWidgetPainter.paint(context,listOf(id))
                 runCatching {EverydayWidgetUpdates.maintain(context)}
                 JSONObject().put("id",id).put("version",saved.version).put("saved",true).put("painted",painted).put("humanViewed",false)
@@ -43,6 +46,7 @@ class EverydayWidgetTools(private val context: Context,private val requireCurren
                 val manager=AppWidgetManager.getInstance(context)
                 require(manager.isRequestPinAppWidgetSupported)
                 requireCurrent()
+                com.halo.app.ui.theme.HaloLayoutLock.get(context).requireUnlocked()
                 JSONObject().put("requested",manager.requestPinAppWidget(ComponentName(context,provider),null,null))
                     .put("placed",false).put("receipt","REQUESTED")
             }

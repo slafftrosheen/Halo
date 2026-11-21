@@ -7,3 +7,5 @@
 # 15-brand
 
 Index and documentation for the 15-brand domain.
+
+Latest handoff: [8.0 design reference](v5/README.md).

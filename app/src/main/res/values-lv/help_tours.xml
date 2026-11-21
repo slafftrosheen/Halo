@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="help_tour_chooser">Parādi, kā viss darbojas</string>
+    <string name="help_tour_home">Sākums un vadības josla</string>
+    <string name="help_tour_talk">Saruna ar halo</string>
+    <string name="help_tour_studio">HaloStudio</string>
+    <string name="help_tour_notes">HaloNotes</string>
+    <string name="help_tour_canvas">HaloCanvas</string>
+    <string name="help_tour_learn">Mācības</string>
+    <string name="help_tour_seen">Apskatīts</string>
+    <string name="help_tour_replay">Atkārtot</string>
+    <string name="help_tour_step">%1$d. solis no %2$d</string>
+    <string name="help_tour_exit">Iziet no tūres</string>
+    <string name="help_tour_place">Vadības josla rāda, kur atrodies un ko halo dara.</string>
+    <string name="help_tour_places_title">Sadaļas</string>
+    <string name="help_tour_places">Sadaļās var atvērt bibliotēku, ierīces un iestatījumus.</string>
+    <string name="help_tour_ring_title">Sarunas aplis</string>
+    <string name="help_tour_ring">Pieskaries aplim, lai runātu. Turi to nospiestu, lai atvērtu sadaļas.</string>
+    <string name="help_tour_input_title">Rakstīt ziņojumu</string>
+    <string name="help_tour_input">Izmanto ziņas lauku, ja vēlies rakstīt, nevis runāt.</string>
+    <string name="help_tour_actions_title">Šīs lapas darbības</string>
+    <string name="help_tour_actions">Šeit pieejamas darbības: %1$s. Ja poga nav redzama, atver Vairāk.</string>
+</resources>

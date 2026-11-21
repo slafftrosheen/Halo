@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_tool_edit_page">Edit this page</string>
+    <string name="alive_tool_restore">Put back how it was</string>
+    <string name="alive_tool_save_failed">Could not save the look. Try again.</string>
+    <string name="alive_studio_look">Your Studio</string>
+    <string name="alive_studio_artboard">Artboard</string>
+    <string name="alive_studio_plain">Plain</string>
+    <string name="alive_studio_dots">Dots</string>
+    <string name="alive_studio_grid">Grid</string>
+    <string name="alive_studio_favourites">Dock favourites</string>
+    <string name="alive_studio_favourites_limit">Choose up to four.</string>
+    <string name="alive_studio_left">Left-handed layout</string>
+    <string name="alive_studio_snap">Snap zoom to fit</string>
+    <string name="alive_studio_names">Name tools while I draw</string>
+    <string name="alive_studio_words">Words</string>
+    <string name="alive_studio_picture">Picture</string>
+    <string name="alive_canvas_look">Your boards</string>
+    <string name="alive_canvas_colors">Card colours</string>
+    <string name="alive_canvas_by_kind">By kind</string>
+    <string name="alive_canvas_by_me">By me</string>
+    <string name="alive_canvas_one">One colour</string>
+    <string name="alive_canvas_links">Links</string>
+    <string name="alive_canvas_curved">Curved</string>
+    <string name="alive_canvas_straight">Straight</string>
+    <string name="alive_canvas_dotted">Dotted</string>
+    <string name="alive_canvas_snap">Snap cards to grid</string>
+    <string name="alive_canvas_list">Open as a list</string>
+    <string name="alive_canvas_one_color">Board colour</string>
+    <string name="alive_canvas_card_color">Colour of the selected card</string>
+    <string name="alive_canvas_mint">Mint</string>
+    <string name="alive_canvas_lilac">Lilac</string>
+    <string name="alive_canvas_pink">Pink</string>
+    <string name="alive_canvas_apricot">Peach</string>
+    <string name="alive_canvas_neutral">Neutral</string>
+    <string name="alive_mini_look">Your mini halo</string>
+    <string name="alive_mini_size">Bubble size</string>
+    <string name="alive_mini_small">Small</string>
+    <string name="alive_mini_medium">Medium</string>
+    <string name="alive_mini_large">Large</string>
+    <string name="alive_mini_side">Screen edge</string>
+    <string name="alive_mini_left">Left</string>
+    <string name="alive_mini_right">Right</string>
+    <string name="alive_mini_hide">Hide in full-screen apps</string>
+    <string name="alive_mini_hide_restricted">Android requires access to app usage to detect games and video apps.</string>
+    <string name="alive_mini_usage">Open app usage access</string>
+</resources>

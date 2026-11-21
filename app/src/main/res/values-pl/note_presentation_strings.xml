@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="note_look_title">Twoje notatki</string>
+    <string name="note_look_paper">Papier</string>
+    <string name="note_look_plain">Gładki</string>
+    <string name="note_look_lined">W linie</string>
+    <string name="note_look_grid">W kratkę</string>
+    <string name="note_look_letters">Litery</string>
+    <string name="note_look_easy_read">Czytelne</string>
+    <string name="note_look_book">Książkowe</string>
+    <string name="note_look_round">Zaokrąglone</string>
+    <string name="note_look_spacing">Odstęp między wierszami</string>
+    <string name="note_look_normal">Zwykły</string>
+    <string name="note_look_roomy">Większy</string>
+    <string name="note_look_extra">Największy</string>
+    <string name="note_look_easy_view">Większy tekst notatek</string>
+    <string name="note_look_dictation">Pokaż przyciski dyktowania</string>
+    <string name="note_look_read_back">Przeczytaj na głos</string>
+    <string name="note_look_read_controls">Pokaż przyciski czytania</string>
+    <string name="note_look_preview">Lista zakupów\nRośliny, kartki i notes</string>
+</resources>

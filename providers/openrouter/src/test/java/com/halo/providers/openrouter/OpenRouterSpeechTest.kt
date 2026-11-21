@@ -3,6 +3,7 @@ package com.halo.providers.openrouter
 import com.halo.sdk.provider.*
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.toList
 import okhttp3.mockwebserver.*
 import org.json.JSONObject
 import org.junit.Assert.*
@@ -33,7 +34,10 @@ class OpenRouterSpeechTest {
         val disk = Memory().apply { putString(OpenRouterSpeechProvider.KEY, "fixture-key") }
         val provider = OpenRouterSpeechProvider(disk, { error("PCM must not reach MP3 decoder") }, baseUrl = server.url("/").toString())
         try {
-            for (model in listOf("google/gemini-3.8-flash-lite-tts", "google/gemini-3.8-flash-tts", "google/gemini-3.1-flash-tts-preview")) {
+            for (model in listOf(
+                "google/gemini-3.8-flash-lite-tts", "google/gemini-3.8-flash-tts", "google/gemini-3.1-flash-tts-preview",
+                "google/gemini-2.5-flash-tts", "google/gemini-2.5-pro-tts",
+            )) {
                 val bytes = byteArrayOf(0, 0, -1, 127, 0, -128)
                 server.enqueue(MockResponse().setHeader("Content-Type", "audio/pcm").setBody(okio.Buffer().write(bytes)))
                 val result = provider.synthesizeToPcm(SpeechRequest("Hello", modelId = model, voiceId = "Kore"))
@@ -41,6 +45,19 @@ class OpenRouterSpeechTest {
                 assertEquals(24000, result.sampleRateHz); assertEquals(1, result.channelCount)
                 assertEquals(PcmEncoding.SIGNED_16_LE, result.encoding); assertArrayEquals(bytes, result.chunks.single())
             }
+        } finally { provider.close(); server.shutdown() }
+    }
+
+    @Test fun streamsShortParagraphsTogetherWithoutIndividualSentenceRequests() = runBlocking {
+        val server = MockWebServer().apply { start() }
+        val disk = Memory().apply { putString(OpenRouterSpeechProvider.KEY, "fixture-key") }
+        val provider = OpenRouterSpeechProvider(disk, { pcm }, baseUrl = server.url("/").toString())
+        try {
+            val input = "First sentence. Still the first paragraph.\n\nThis is the second paragraph."
+            server.enqueue(MockResponse().setHeader("Content-Type", "audio/mpeg").setBody("fixture"))
+            assertEquals(1, provider.streamPcm(SpeechRequest(input, modelId = "vendor/speech", voiceId = "A")).toList().size)
+            assertEquals(1, server.requestCount)
+            assertEquals(input, JSONObject(server.takeRequest().body.readUtf8()).getString("input"))
         } finally { provider.close(); server.shutdown() }
     }
 

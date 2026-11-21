@@ -44,6 +44,7 @@ fun HaloNearbyControls() {
                     HaloIcon(HaloGlyph.HALO, null, Modifier.size(22.dp)); Spacer(Modifier.width(8.dp))
                     Text(uiText("Open Mini Halo"))
                 }
+                MiniAppearanceEntry()
             }
         }
         HaloSettingsSection(uiText("On your home screen")) {

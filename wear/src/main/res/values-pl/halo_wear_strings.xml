@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wear_phone_unavailable">Telefon z Halo jest niedostępny w pobliżu</string>
+    <string name="wear_expired">Czas na odpowiedź minął</string>
+    <string name="wear_connected">Halo · Połączono z telefonem</string>
+    <string name="wear_no_interaction">Brak oczekujących działań</string>
+    <string name="wear_yes">Tak</string>
+    <string name="wear_no">Nie</string>
+    <string name="wear_review_on_phone">Sprawdź tę prośbę o potwierdzenie na telefonie.</string>
+    <string name="wear_open_on_phone">Otwórz na telefonie</string>
+</resources>

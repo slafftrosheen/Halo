@@ -45,7 +45,9 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
     private val foregroundLeases = java.util.concurrent.ConcurrentHashMap<String, com.halo.app.audio.HaloAudioForegroundService.Lease>()
 
     override suspend fun begin(invocation: HostInvocation) = lifecycle.withLock {
+        ManualDependencyGraph.haloPause.requireActive()
         withContext(Dispatchers.IO) { ManualDependencyGraph.runtime.start() }
+        ManualDependencyGraph.haloPause.requireActive()
         currentInteractionId = invocation.interactionId
         ManualDependencyGraph.conversationStore.awaitReady()
         originatingConversationId = ManualDependencyGraph.conversationStore.activeConversationId()
@@ -60,11 +62,13 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
     }
 
     override suspend fun attachScreen(interactionId: String, snapshot: ScreenContextSnapshot) {
+        ManualDependencyGraph.haloPause.requireActive()
         ManualDependencyGraph.assistantContextRepository.put(interactionId, snapshot)
         ManualDependencyGraph.eventBus.publish(ScreenContextCaptured(interactionId, snapshot))
     }
 
     override suspend fun attachScreenshot(interactionId: String, bitmap: Bitmap) {
+        ManualDependencyGraph.haloPause.requireActive()
         val screen = ManualDependencyGraph.assistantContextRepository.screenFor(interactionId)
             ?: throw com.halo.sdk.runtime.multimodal.MediaAcquisitionException(com.halo.sdk.runtime.multimodal.MediaFailure.POLICY_BLOCKED)
         if (screen.packageName == null || com.halo.host.android.accessibility.AccessibilitySafetyPolicy.isPackageBlocked(screen.packageName) ||
@@ -132,7 +136,7 @@ class HaloAssistantRuntimeBridge(private val context: Context) : AssistantRuntim
     }
 
     override suspend fun startListening(interactionId: String, inputDeviceId: Int?): Boolean = lifecycle.withLock {
-        if (currentInteractionId != interactionId) return@withLock false
+        if (currentInteractionId != interactionId || ManualDependencyGraph.isHaloPaused()) return@withLock false
         withContext(Dispatchers.IO) {
             val route = audioResolver.resolve(inputDeviceId)
             ManualDependencyGraph.hostGraph.androidInteractionAudioManager.prepareInteractionRoute(interactionId, route)

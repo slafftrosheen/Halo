@@ -1,6 +1,8 @@
 package com.halo.app.learning
 
 import com.halo.app.data.AppDatabase
+import com.halo.app.privacy.HaloPauseOwner
+import com.halo.app.privacy.HaloPausedCancellation
 import com.halo.app.data.memory.*
 import com.halo.runtime.cognition.agent.*
 import com.halo.runtime.cognition.memory.*
@@ -13,12 +15,13 @@ import kotlinx.coroutines.flow.*
 import java.time.Instant
 
 /** Bounded terminal-run observer. All work follows durable response commit; root action truth never changes. */
-class ReflectionCoordinator(private val db: AppDatabase,private val store: AgentRunStore,private val learning: PersonalLearningRepository,
+class ReflectionCoordinator internal constructor(private val db: AppDatabase,private val store: AgentRunStore,private val learning: PersonalLearningRepository,
     private val preferences: ()->LearningPreferences,private val environment: suspend ()->AutomationEnvironmentSnapshot,
     private val busy: ()->Boolean,private val activeRuns: Flow<List<AgentRun>>,private val model: ReflectionModel,
     private val procedures: LearnedProcedureStore,private val descriptor: (String)->ToolDescriptor?,
     private val publish: suspend (com.halo.sdk.runtime.PersonalReflectionCompleted)->Unit = {},
-    private val capabilityPatterns: suspend (List<Episode>)->List<CapabilityPattern> = { emptyList() }) {
+    private val capabilityPatterns: suspend (List<Episode>)->List<CapabilityPattern> = { emptyList() },
+    private val pause: HaloPauseOwner? = null) {
     private val builder=EpisodeBuilder()
     suspend fun observe(): Unit = coroutineScope {
         launch { learning.pending.collect { PersonalMemoryDiagnostics.pending(it.map { row -> row.kind }) } }
@@ -30,7 +33,14 @@ class ReflectionCoordinator(private val db: AppDatabase,private val store: Agent
             ids.forEach { id ->
                 if(learning.dao.reflection("run:$id") != null) return@forEach
                 val run=store.get(AgentRunId(id)) ?: return@forEach
-                try { process(run) } catch(cancelled: CancellationException) { throw cancelled }
+                try {
+                    if (pause == null) process(run) else pause.whileActive { process(run) }
+                } catch (paused: HaloPausedCancellation) {
+                    currentCoroutineContext().ensureActive()
+                    if (learning.dao.reflection("run:$id") != null) {
+                        learning.dao.status("run:$id","SKIPPED","NONE",System.currentTimeMillis())
+                    }
+                } catch(cancelled: CancellationException) { throw cancelled }
                 catch(_: Exception) { learning.dao.status("run:$id","FAILED","DETERMINISTIC",System.currentTimeMillis()) }
             }
         }

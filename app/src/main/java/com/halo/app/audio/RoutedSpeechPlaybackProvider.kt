@@ -24,7 +24,7 @@ sealed interface RoutedPlaybackResult {
     data class Completed(val durationMs: Long, val endpointId: Int, val evidence: SpeechRouteEvidence? = null) : RoutedPlaybackResult
     data object RouteLost : RoutedPlaybackResult
     data object Cancelled : RoutedPlaybackResult
-    data class Failed(val reason: String) : RoutedPlaybackResult
+    data class Failed(val reason: String, val cause: Exception? = null) : RoutedPlaybackResult
 }
 
 data class AuthoritativeSpeechRouteLease(
@@ -412,7 +412,7 @@ class RoutedSpeechPlaybackProvider(context: Context, private val ttsProvider: co
             return when {
                 stopped.get() -> RoutedPlaybackResult.Cancelled
                 routeLost.get() -> RoutedPlaybackResult.RouteLost
-                else -> RoutedPlaybackResult.Failed(error.message ?: "Audio playback failed")
+                else -> RoutedPlaybackResult.Failed(error.message ?: "Audio playback failed", cause = error)
             }
         } finally {
             val current = track

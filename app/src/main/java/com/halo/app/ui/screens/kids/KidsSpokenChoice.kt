@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 private object SpokenChoiceSelection {
-    val selected = MutableStateFlow<String?>(null)
+    val selected = MutableStateFlow<Any?>(null)
     val epoch = MutableStateFlow(-1L)
     var ticket = 0L
 }
@@ -19,9 +19,11 @@ internal data class KidsSpokenChoice(val onClick: () -> Unit, val heard: Boolean
 
 /** Only reversible content choices use this helper. TalkBack always keeps its own interaction model. */
 @Composable
-internal fun rememberKidsSpokenChoice(label: String, onChoose: () -> Unit): KidsSpokenChoice {
-    val enabled = if (androidx.compose.ui.platform.LocalInspectionMode.current) false
-        else Graph.kidsPreferences.preReader.collectAsStateWithLifecycle().value
+internal fun rememberKidsSpokenChoice(label: String, alwaysRead: Boolean = false, onChoose: () -> Unit): KidsSpokenChoice {
+    val settings = if (androidx.compose.ui.platform.LocalInspectionMode.current) null
+        else Graph.kidsPreferences.appearance.collectAsStateWithLifecycle().value
+    val enabled = settings != null && (alwaysRead || (settings.preReader && settings.readAloud))
+    val choice = remember(label) { Any() }
     val context = LocalContext.current
     val accessibility = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
     var talkBack by remember(accessibility) { mutableStateOf(accessibility?.isTouchExplorationEnabled == true) }
@@ -35,7 +37,15 @@ internal fun rememberKidsSpokenChoice(label: String, onChoose: () -> Unit): Kids
     val armedEpoch by SpokenChoiceSelection.epoch.collectAsStateWithLifecycle()
     val action by rememberUpdatedState(onChoose)
     val scope = rememberCoroutineScope()
-    val heard = enabled && !talkBack && selected == label && armedEpoch == epoch
+    DisposableEffect(choice) {
+        onDispose {
+            if (SpokenChoiceSelection.selected.value === choice) {
+                SpokenChoiceSelection.ticket += 1
+                SpokenChoiceSelection.selected.value = null
+            }
+        }
+    }
+    val heard = enabled && !talkBack && selected === choice && armedEpoch == epoch
     return KidsSpokenChoice(onClick = {
         if (!enabled || talkBack || heard) {
             SpokenChoiceSelection.ticket += 1
@@ -44,7 +54,7 @@ internal fun rememberKidsSpokenChoice(label: String, onChoose: () -> Unit): Kids
             action()
         } else {
             val ticket = ++SpokenChoiceSelection.ticket
-            SpokenChoiceSelection.selected.value = label
+            SpokenChoiceSelection.selected.value = choice
             SpokenChoiceSelection.epoch.value = -1L
             scope.launch {
                 val requested = readKidsText("kids-choice:$ticket", label)

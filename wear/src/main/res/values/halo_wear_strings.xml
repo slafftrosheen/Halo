@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wear_phone_unavailable">Halo phone unavailable nearby</string>
+    <string name="wear_expired">Interaction expired</string>
+    <string name="wear_connected">Halo · Connected to phone</string>
+    <string name="wear_no_interaction">No pending interaction</string>
+    <string name="wear_yes">Yes</string>
+    <string name="wear_no">No</string>
+    <string name="wear_review_on_phone">Review this confirmation on your phone.</string>
+    <string name="wear_open_on_phone">Open on phone</string>
+</resources>

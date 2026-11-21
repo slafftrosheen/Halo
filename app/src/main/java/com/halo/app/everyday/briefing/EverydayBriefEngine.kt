@@ -83,6 +83,7 @@ object EverydayBriefEngine {
                         "halo://sources/${source.id}/weather", if ((today?.precipitationProbability ?: 0) >= 60) 15 else 0,
                         weather.observedAt, weather.attributionUrl, values)
                 }
+                is CollectorPayload.AirQuality -> Unit
                 is CollectorPayload.Warnings -> payload.items.filter { it.expires == null || it.expires > input.now }.forEach { item ->
                     facts += BriefFact("${source.id}:warning:${item.id}", BriefFactKind.WARNING, item.title, item.text.take(500), source.id,
                         fingerprint(item.title, item.text, item.severity.orEmpty(), item.expires?.toString().orEmpty()),

@@ -14,6 +14,7 @@ import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.presentation.*
 import com.halo.app.ui.mini.*
+import com.halo.app.ui.everyday.EverydayRoutes
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -42,37 +43,73 @@ object EverydayWidgetViews {
         Intent(context,EverydayWidgetConfigurationActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,id)
             .setData(Uri.parse("halo://configure-widget/$id")),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-    fun views(context: Context,instance: EverydayWidgetInstance,snapshot: EverydaySnapshot,options: Bundle,unavailable: Boolean = false): RemoteViews {
+    internal fun views(context: Context,instance: EverydayWidgetInstance,snapshot: EverydaySnapshot,options: Bundle,unavailable: Boolean = false, transition: WidgetTransition? = null): RemoteViews {
+        if (com.halo.app.privacy.HaloPauseOwner.get(context).isPaused()) return haloPausedWidget(context, instance.id)
+        val expanded = instance.config.kind in EverydayToolkitWidgets.launcherKinds
+        val lockHost = options.getInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY) ==
+            android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD
+        val minWidth = if (expanded) 84 else 120
+        val minHeight = if (expanded) 52 else 96
         fun sized(width: Int,height: Int): RemoteViews = if(unavailable) render(context,instance,snapshot,width,height,
             locale=context.resources.configuration.locales[0],appFontScale=runCatching { Graph.assistantPreferences.state.value.fontScale }.getOrDefault(context.resources.configuration.fontScale),
-            label={com.halo.app.language.resolveUiText(context.resources,it)},unavailable=true)
-        else render(context,instance,snapshot,width,height)
+            label={com.halo.app.language.resolveUiText(context.resources,it)},unavailable=true,lockHost=lockHost)
+        else {
+            val current = render(context,instance,snapshot,width,height,lockHost=lockHost)
+            val level = EverydayWidgetMotion.level(context, instance.config.widgetMotion, snapshot.kids)
+            if (transition == null || lockHost || level == com.halo.app.ui.theme.HaloLookMotion.STILL) current else {
+                val scheme = EverydayWidgetAppearance.scheme(context, instance.config)
+                EverydayWidgetMotion.wrap(context, current, transition, level, scheme.onSurface.toArgb(), scheme.primary.toArgb())
+            }
+        }
         if(android.os.Build.VERSION.SDK_INT>=31) {
             @Suppress("DEPRECATION")
             val sizes=options.getParcelableArrayList<android.util.SizeF>(AppWidgetManager.OPTION_APPWIDGET_SIZES).orEmpty()
-                .filter { it.width.isFinite() && it.height.isFinite() && it.width>=120 && it.height>=96 }.distinct().take(4)
+                .filter { it.width.isFinite() && it.height.isFinite() && it.width>=minWidth && it.height>=minHeight }.distinct().take(4)
             if(sizes.isNotEmpty()) return RemoteViews(sizes.associateWith { sized(it.width.toInt(),it.height.toInt()) })
         }
-        val width=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,240).coerceIn(120,1000)
-        val height=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,240).coerceIn(96,1000)
-        val maxWidth=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH,width).coerceIn(120,1000)
-        val maxHeight=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,height).coerceIn(96,1000)
+        val width=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,240).coerceIn(minWidth,1000)
+        val height=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,240).coerceIn(minHeight,1000)
+        val maxWidth=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH,width).coerceIn(minWidth,1000)
+        val maxHeight=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,height).coerceIn(minHeight,1000)
         return if(maxWidth>width || maxHeight>height) RemoteViews(sized(maxWidth,height),sized(width,maxHeight)) else sized(width,height)
+    }
+
+
+    private fun RemoteViews.showClockMotion(context: Context, instance: EverydayWidgetInstance,
+        snapshot: EverydaySnapshot, width: Int, scale: Float, selected: Boolean, accent: Int) {
+        val visible = selected && width >= 240 && scale < 1.3f &&
+            EverydayWidgetMotion.level(context, instance.config.widgetMotion, snapshot.kids) == com.halo.app.ui.theme.HaloLookMotion.FULL
+        setViewVisibility(R.id.everyday_widget_clock_motion, if (visible) View.VISIBLE else View.GONE)
+        if (visible) {
+            val padding = (26 * context.resources.displayMetrics.density).toInt()
+            setViewPadding(R.id.everyday_widget_clock, 0, 0, padding, 0)
+            if (android.os.Build.VERSION.SDK_INT >= 31) setColorStateList(R.id.everyday_widget_clock_motion,
+                "setIndeterminateTintList", android.content.res.ColorStateList.valueOf(accent))
+        } else setViewPadding(R.id.everyday_widget_clock, 0, 0, 0, 0)
     }
 
     internal fun render(context: Context,instance: EverydayWidgetInstance,snapshot: EverydaySnapshot,width: Int,height: Int,
         locale: Locale = Locale.forLanguageTag(Graph.appLanguagePreferences.language.value.tag),
         appFontScale: Float = Graph.assistantPreferences.state.value.fontScale,
-        label: (String)->String = {context.nativeUi(it)},unavailable: Boolean = false): RemoteViews {
+        label: (String)->String = {context.nativeUi(it)},unavailable: Boolean = false, preview: Boolean = false,
+        lockHost: Boolean = false): RemoteViews {
         val face=if(unavailable) EverydayCardFace(label("Halo widget"),label("Open Halo to load this widget"),emptyList(),
             label("Saved information is unavailable"),EverydayTarget.Organizer)
         else EverydayCards.project(instance.config,snapshot,locale,externalHost=true,text=label)
-        val scheme=nearbyScheme(context,when(instance.config.theme) { "LIGHT" -> false;"DARK" -> true;else -> null })
+        val scheme=EverydayWidgetAppearance.scheme(context,instance.config)
         val density=context.resources.displayMetrics.density
         val scale=maxOf(context.resources.configuration.fontScale,appFontScale)
         val ratio=scale/context.resources.configuration.fontScale
-        val rootOpen=if(unavailable) MiniHaloEntry.pending(context,8700+instance.id,"home") else pending(context,instance,"open",face.target)
-        val configOpen=configure(context,instance.id)
+        val rootOpen=if(preview) null else if(unavailable) MiniHaloEntry.pending(context,8700+instance.id,"home") else pending(context,instance,"open",face.target)
+        val configOpen=if(preview) null else configure(context,instance.id)
+        if (instance.config.kind in EverydayToolkitWidgets.launcherKinds) {
+            val localized = context.createConfigurationContext(android.content.res.Configuration(context.resources.configuration)
+                .apply { setLocale(locale) })
+            return EverydayToolkitWidgetViews.render(localized, instance, snapshot, face, width, height, lockHost,
+                preview, unavailable, locale, ratio, label) { target ->
+                if (unavailable) configOpen else pending(context, instance, "open", target)
+            }
+        }
         val hasClock=!unavailable && instance.config.kind in setOf(EverydayCardKind.CLOCK,EverydayCardKind.CLOCK_WEATHER,EverydayCardKind.DASHBOARD)
         val zone=instance.config.zoneId?.let(ZoneId::of) ?: snapshot.zone
         val rowIds=listOf(R.id.everyday_widget_row1,R.id.everyday_widget_row2,R.id.everyday_widget_row3)
@@ -88,6 +125,7 @@ object EverydayWidgetViews {
         val status=if(face.observedAt==null) face.status else listOfNotNull(label(if(snapshot.power) "Power" else "Local"),
             label(if(face.stale) "Cached" else "Saved"),if(face.lastRefreshFailed) label("Last refresh failed") else null,
             face.attribution,face.observedAt.let { (if(face.oldestSelected) label("Oldest saved")+" · " else "")+stamp(it) }).joinToString(" · ")
+        val presentation = Zone6WidgetFace.present(context, instance, face, snapshot, locale, unavailable)
         val cityLabel=instance.config.cityLabel.ifBlank { if(instance.config.zoneId==null) label("Phone time zone") else zone.id }
         val clockLabelHeight=if(hasClock) measure(cityLabel,16f)+8 else 0
         val candidates=face.rows.filterIndexed { index,row -> !row.personal && !(index==0 && instance.config.kind in setOf(EverydayCardKind.CLOCK,EverydayCardKind.CLOCK_WEATHER)) }.map { row ->
@@ -99,7 +137,8 @@ object EverydayWidgetViews {
                 else -> row.detail
             }
             row.copy(title=title,detail=detail)
-        }
+        }.let { if (instance.config.widgetSize == null || instance.config.kind in setOf(EverydayCardKind.CLOCK, EverydayCardKind.CLOCK_WEATHER)) it
+            else it.take(instance.config.widgetSize.rowLimit) }
         val clockSp=if(width>=220 && scale<1.5f) 32f else 20f
         val valueSp=if(hasClock) clockSp else 20f
         val clock24=android.text.format.DateFormat.is24HourFormat(context)
@@ -113,19 +152,20 @@ object EverydayWidgetViews {
             else -> 0
         }
         val dateHeight=measure("2233-12-31",16f)+8
-        var remaining=height-32-measure(status,14f)-8
+        var remaining=height-32-measure(presentation.freshness,13f)-8
         val required=(if(headline) 0 else valueHeight+8)+mandatoryRows+(if(hasClock) dateHeight+clockLabelHeight else 0)
         val minimal=remaining<required
         val layout=if(locale.language=="ru") R.layout.halo_everyday_widget_ru else R.layout.halo_everyday_widget
         val views=RemoteViews(context.packageName,layout)
-        val physicalWidth=(width*density).coerceAtLeast(1f)
-        val physicalHeight=(height*density).coerceAtLeast(1f)
-        val bitmapScale=minOf(1f,512f/physicalWidth,512f/physicalHeight)
-        views.setImageViewBitmap(R.id.everyday_widget_background,nearbyBackground(ceil(physicalWidth*bitmapScale).toInt(),
-            ceil(physicalHeight*bitmapScale).toInt(),density*bitmapScale,scheme.surfaceContainerLow.toArgb(),scheme.outlineVariant.toArgb()))
+        views.showClockMotion(context, instance, snapshot, width, scale, !preview && hasClock && !minimal, scheme.primary.toArgb())
+        views.setImageViewBitmap(R.id.everyday_widget_background,
+            EverydayWidgetAppearance.background(context, instance.config, scheme, width, height))
         views.setOnClickPendingIntent(R.id.everyday_widget_root,rootOpen)
         // Let the clickable container aggregate its live TextClock children, rather than caching a spoken time.
         views.setContentDescription(R.id.everyday_widget_root,null)
+        listOf(R.id.everyday_widget_ask, R.id.everyday_widget_alert, R.id.everyday_widget_configure).forEach {
+            views.setViewVisibility(it, View.GONE)
+        }
         if(minimal && !unavailable && instance.config.kind==EverydayCardKind.CLOCK) {
             val fixed=instance.config.zoneId!=null
             val origin=if(fixed) measure(cityLabel,16f)+8 else 0
@@ -136,6 +176,7 @@ object EverydayWidgetViews {
                 views.setViewVisibility(R.id.everyday_widget_header,View.GONE)
                 (rowIds+listOf(R.id.everyday_widget_value,R.id.everyday_widget_status,R.id.everyday_widget_configure)).forEach {views.setViewVisibility(it,View.GONE)}
                 views.setViewVisibility(R.id.everyday_widget_clock,View.VISIBLE)
+                views.showClockMotion(context, instance, snapshot, width, scale, !preview, scheme.primary.toArgb())
                 views.setTextViewTextSize(R.id.everyday_widget_clock,android.util.TypedValue.COMPLEX_UNIT_SP,clockSp*ratio)
                 views.setTextColor(R.id.everyday_widget_clock,scheme.onSurface.toArgb())
                 views.setString(R.id.everyday_widget_clock,"setTimeZone",instance.config.zoneId)
@@ -175,14 +216,29 @@ object EverydayWidgetViews {
             views.setOnClickPendingIntent(R.id.everyday_widget_root,if(unavailable) configOpen else rootOpen)
             return views
         }
-        val headerHeight=maxOf(48,measure(face.title,18f,true,width-80))
+        val showAsk = !preview && !unavailable && !snapshot.kids && width >= 180
+        val headerHeight = maxOf(48, measure(face.title, 14f, availableWidth = width - if (showAsk) 110 else 62))
         val showHeader=remaining>=required+headerHeight
         if(showHeader) remaining-=headerHeight
         views.setViewVisibility(R.id.everyday_widget_header,if(showHeader) View.VISIBLE else View.GONE)
-        views.setImageViewBitmap(R.id.everyday_widget_orb,nearbyOrb(context,(32*density).toInt(),scheme=scheme))
+        views.setImageViewBitmap(R.id.everyday_widget_orb,nearbyOrb(context,(18*density).toInt(),scheme=scheme))
         views.setTextViewText(R.id.everyday_widget_title,face.title)
-        views.setTextViewTextSize(R.id.everyday_widget_title,android.util.TypedValue.COMPLEX_UNIT_SP,18f*ratio)
-        views.setTextColor(R.id.everyday_widget_title,scheme.onSurface.toArgb())
+        views.setTextViewTextSize(R.id.everyday_widget_title,android.util.TypedValue.COMPLEX_UNIT_SP,14f*ratio)
+        views.setTextColor(R.id.everyday_widget_title,scheme.onSurfaceVariant.toArgb())
+        if (showHeader && showAsk) {
+            views.setViewVisibility(R.id.everyday_widget_ask, View.VISIBLE)
+            views.setOnClickPendingIntent(R.id.everyday_widget_ask, MiniHaloEntry.pending(context, 9100 + instance.id,
+                "mini_halo", presentation.askDraft))
+            views.setContentDescription(R.id.everyday_widget_ask, presentation.askDescription)
+        }
+        val alert = presentation.alert
+        val alertHeight = alert?.let { maxOf(36, measure(it, 14f, availableWidth = width - 54)) + 8 }
+        if (alert != null && alertHeight != null && remaining >= required + alertHeight) {
+            views.setViewVisibility(R.id.everyday_widget_alert, View.VISIBLE)
+            views.setTextViewText(R.id.everyday_widget_alert, alert)
+            views.setTextViewTextSize(R.id.everyday_widget_alert, android.util.TypedValue.COMPLEX_UNIT_SP, 14f * ratio)
+            remaining -= alertHeight
+        }
         val showValue=!headline
         views.setViewVisibility(R.id.everyday_widget_value,if(showValue && !hasClock) View.VISIBLE else View.GONE)
         views.setViewVisibility(R.id.everyday_widget_clock,if(showValue && hasClock) View.VISIBLE else View.GONE)
@@ -217,23 +273,31 @@ object EverydayWidgetViews {
                 views.setTextViewText(id,listOf(row!!.title,row.detail).filter(String::isNotBlank).joinToString("\n"))
                 views.setTextColor(id,scheme.onSurface.toArgb())
                 views.setTextViewTextSize(id,android.util.TypedValue.COMPLEX_UNIT_SP,16f*ratio)
-                views.setOnClickPendingIntent(id,pending(context,instance,"row:$index",row.target ?: face.target))
+                if (!preview) views.setOnClickPendingIntent(id,pending(context,instance,"row:$index",row.target ?: face.target))
             }
         }
-        views.setTextViewText(R.id.everyday_widget_status,status)
+        views.setTextViewText(R.id.everyday_widget_status,presentation.freshness)
         views.setViewVisibility(R.id.everyday_widget_status,View.VISIBLE)
-        views.setTextViewTextSize(R.id.everyday_widget_status,android.util.TypedValue.COMPLEX_UNIT_SP,14f*ratio)
-        views.setTextColor(R.id.everyday_widget_status,scheme.onSurfaceVariant.toArgb())
-        val configureText=label("Configure widget")
-        views.setTextViewText(R.id.everyday_widget_configure,configureText)
-        views.setTextViewTextSize(R.id.everyday_widget_configure,android.util.TypedValue.COMPLEX_UNIT_SP,16f*ratio)
-        views.setTextColor(R.id.everyday_widget_configure,scheme.primary.toArgb())
-        views.setViewVisibility(R.id.everyday_widget_configure,if(remaining>=maxOf(48,measure(configureText,16f))) View.VISIBLE else View.GONE)
-        views.setOnClickPendingIntent(R.id.everyday_widget_configure,configOpen)
+        views.setTextViewTextSize(R.id.everyday_widget_status,android.util.TypedValue.COMPLEX_UNIT_SP,13f*ratio)
+        val amber = if (androidx.core.graphics.ColorUtils.calculateLuminance(scheme.surface.toArgb()) < .5)
+            0xFFF4C56A.toInt() else 0xFF805100.toInt()
+        views.setTextColor(R.id.everyday_widget_status, if (presentation.stale) amber else scheme.onSurfaceVariant.toArgb())
+        views.setContentDescription(R.id.everyday_widget_status, listOf(presentation.freshness, status)
+            .filter(String::isNotBlank).distinct().joinToString(" · "))
+        val fix = presentation.fix
+        if (!preview && fix != null && remaining >= 54 && measure(fix, 15f, availableWidth = width - 64) <= 46) {
+            views.setTextViewText(R.id.everyday_widget_configure,fix)
+            views.setTextViewTextSize(R.id.everyday_widget_configure,android.util.TypedValue.COMPLEX_UNIT_SP,15f*ratio)
+            views.setTextColor(R.id.everyday_widget_configure,scheme.primary.toArgb())
+            views.setViewVisibility(R.id.everyday_widget_configure, View.VISIBLE)
+            views.setOnClickPendingIntent(R.id.everyday_widget_configure,
+                if (unavailable) configOpen else MiniHaloEntry.pending(context, 9300 + instance.id, EverydayRoutes.SOURCES))
+        }
         return views
     }
 
     fun unavailable(context: Context,id: Int): RemoteViews {
+        if (com.halo.app.privacy.HaloPauseOwner.get(context).isPaused()) return haloPausedWidget(context, id)
         val locale=runCatching { Locale.forLanguageTag(Graph.appLanguagePreferences.language.value.tag) }.getOrDefault(context.resources.configuration.locales[0])
         val localized=context.createConfigurationContext(android.content.res.Configuration(context.resources.configuration).apply { setLocale(locale) })
         val kind=EverydayWidgetProviders.kind(context,id) ?: EverydayCardKind.CLOCK

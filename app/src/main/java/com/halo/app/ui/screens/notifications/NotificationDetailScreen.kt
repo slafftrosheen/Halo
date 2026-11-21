@@ -62,7 +62,8 @@ fun NotificationDetailScreen(model: NotificationDetailViewModel, onBack: () -> U
             Text(DateTimeFormatter.ofPattern("EEE, d MMM · HH:mm").withZone(ZoneId.systemDefault()).format(row.postedAt), style = MaterialTheme.typography.labelMedium)
             Text(uiText(if (row.active) "Active" else "Ended"))
             row.body?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-            com.halo.app.ui.components.HaloReadAloud(listOfNotNull(row.title, row.body).joinToString("\n"))
+            com.halo.app.ui.components.HaloReadAloud(listOfNotNull(row.title, row.body).joinToString("\n"),
+                category = com.halo.sdk.provider.RemoteDataCategory.RECENT_EVENTS)
             if (!state.connected) Text(uiText("Notification access is not currently connected"))
             val reply = row.reply as? ReplyCapability.Available
             if (reply != null) TextButton(onClick = { model.composing.value = true }, enabled = !busy) { Text(reply.label) }

@@ -362,7 +362,7 @@ class HomeViewModel(
         lastVoiceResponseConversation.value != null && lastVoiceResponseConversation.value == conversations?.activeConversationId(),
         voiceStartAllowed())
 
-    private fun voiceStartAllowed() = homeVoiceStartAllowed(cognitiveSession.state.value,
+    private fun voiceStartAllowed() = !ManualDependencyGraph.isHaloPaused() && homeVoiceStartAllowed(cognitiveSession.state.value,
         snapshotManager.snapshot.value.speech, textSubmission.value.busy, _conversationChanging.value, _listeningRequested.value)
     fun recordDailyAction(action: com.halo.app.daily.DailyAssistantAction) { dailyController?.recordAction(action) }
 
@@ -884,6 +884,7 @@ class HomeViewModel(
     }
     fun submitText(text: String) = submitTextInternal(text)
     private fun submitTextInternal(text: String, exactDraft: ComposerDraftIdentity? = null, exactConversation: String? = null) {
+        if (ManualDependencyGraph.isHaloPaused()) { captureMessage.value = "Halo is paused"; return }
         if (_conversationChanging.value) return
         val normalized = text.trim()
         val interactionId = UUID.randomUUID().toString()
@@ -1219,6 +1220,7 @@ class HomeViewModel(
     }
 
     fun toggleListening() {
+        if (ManualDependencyGraph.isHaloPaused()) { captureMessage.value = "Halo is paused"; return }
         val conversationAtTap = conversations?.activeConversationId()
         val shouldStart = !_listeningRequested.value
         if (shouldStart) synchronized(voiceModeLock) {
@@ -1230,7 +1232,7 @@ class HomeViewModel(
         _listeningRequested.value = shouldStart
         viewModelScope.launch {
             voiceInputCommands.runIfCurrent(ticket, allowed = {
-                !shouldStart || (!_conversationChanging.value && speechAvailability.value && microphonePermission.value &&
+                !shouldStart || (!ManualDependencyGraph.isHaloPaused() && !_conversationChanging.value && speechAvailability.value && microphonePermission.value &&
                     conversations?.activeConversationId() == conversationAtTap)
             }, onDenied = ::rejectQueuedVoiceStart) {
                 val command = if (shouldStart) StartListeningWithActivation(SpeechActivationKind.EXPLICIT_USER, conversationAtTap) else StopListening
@@ -1257,6 +1259,7 @@ class HomeViewModel(
     fun startListening() = startListeningIfCurrent(null)
 
     private fun startListeningIfCurrent(voiceGeneration: Long?, commandTicket: Long? = null) {
+        if (ManualDependencyGraph.isHaloPaused()) return
         if (_conversationChanging.value) return
         val conversationAtTap = conversations?.activeConversationId()
         val ticket = commandTicket ?: voiceInputCommands.supersede()
@@ -1307,6 +1310,7 @@ class HomeViewModel(
 
     /** Starts a user-visible foreground session; every later capture is tied to a completed reply. */
     fun requestVoiceModeStart() {
+        if (ManualDependencyGraph.isHaloPaused()) return
         if (_conversationChanging.value) return
         _voiceModeStartRequested.value = true
         _voiceModeStartRequestId.value += 1

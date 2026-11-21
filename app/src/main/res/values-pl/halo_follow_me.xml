@@ -1,0 +1,21 @@
+<resources>
+    <string name="follow_me_title">Podążaj za mną</string>
+    <string name="follow_me_help">Otwórz Halo na pobliskim zegarku, aby zobaczyć tam odpowiedź. Pytania głosowe ze sparowanych okularów nadal korzystają z ich połączenia audio.</string>
+    <string name="follow_me_enabled_detail">Wysyła następną odpowiedź na zegarek, jeśli jest na nim otwarte Halo.</string>
+    <string name="follow_me_watch_approvals">Zatwierdzaj na zegarku</string>
+    <string name="follow_me_watch_approvals_detail">Zatwierdzaj na zegarku działania polegające wyłącznie na odczycie. Działania, które coś zmieniają lub udostępniają, sprawdzaj na telefonie.</string>
+    <string name="follow_me_watch_settings">Aby użyć zegarka, włącz obsługę pobliskiego zegarka w ustawieniach głosu.</string>
+    <string name="follow_me_devices">Urządzenia</string>
+    <string name="follow_me_open_devices">Zarządzaj urządzeniami</string>
+    <string name="follow_me_phone">Ten telefon</string>
+    <string name="follow_me_glasses">Okulary</string>
+    <string name="follow_me_phone_detail">Pełne odpowiedzi i przegląd działań</string>
+    <string name="follow_me_watch_detail">Odpowiedzi i potwierdzenia odczytu</string>
+    <string name="follow_me_glasses_detail">Dźwięk ze zweryfikowanej sesji głosowej</string>
+    <string name="follow_me_empty">Otwórz Halo na pobliskim sparowanym zegarku lub połącz obsługiwane okulary w sekcji Urządzenia.</string>
+    <string name="follow_me_ready">Gotowe</string>
+    <string name="follow_me_in_use">W użyciu</string>
+    <string name="follow_me_needs_a_look">Do sprawdzenia</string>
+    <string name="follow_me_delivered_to">Wysłano do %1$s</string>
+    <string name="follow_me_speaking_on">Odtwarzanie przez %1$s</string>
+</resources>

@@ -523,11 +523,11 @@ class NoteEditorViewModel(
         } else dispatch(DocumentCommand.InsertBlock(state.blocks.lastOrNull()?.id, NoteBlockType.PARAGRAPH, text.take(12000)))
     }
 
-    fun insertBlock(afterBlockId: String?, type: NoteBlockType = NoteBlockType.PARAGRAPH) {
+    fun insertBlock(afterBlockId: String?, type: NoteBlockType = NoteBlockType.PARAGRAPH, text: String = "") {
         val indent = afterBlockId
             ?.let { id -> mutableUiState.value.blocks.firstOrNull { it.id == id }?.indent }
             ?: 0
-        dispatch(DocumentCommand.InsertBlock(afterBlockId, type, indent = indent))
+        dispatch(DocumentCommand.InsertBlock(afterBlockId, type, text = text, indent = indent))
     }
 
     fun updateBlock(blockId: String, text: String) = dispatch(DocumentCommand.SetText(blockId, text))

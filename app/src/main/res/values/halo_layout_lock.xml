@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="layout_keep">Keep this layout</string>
+    <string name="layout_unlock">Unlock layout</string>
+    <string name="layout_phone_lock">Confirm your phone lock to change this setting.</string>
+    <string name="layout_lock_unavailable">Check that your phone has a screen lock, then try again.</string>
+    <string name="layout_kept">This layout is kept.</string>
+    <string name="layout_setup_other">Set up for someone else</string>
+    <string name="layout_read_replies">Read replies aloud</string>
+</resources>

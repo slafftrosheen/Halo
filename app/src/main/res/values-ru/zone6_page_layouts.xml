@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="page_layout_edit">Настроить эту страницу</string>
+    <string name="page_layout_restore">Вернуть как было</string>
+    <string name="page_layout_error">Не удалось сохранить вид. Закройте панель и попробуйте снова.</string>
+    <string name="page_places_search">Поиск раздела</string>
+    <string name="page_places_no_matches">Разделы не найдены. Введите другое название.</string>
+    <string name="page_places_show_less">Показать меньше</string>
+    <string name="page_places_show_all">Все разделы</string>
+    <string name="page_places_arrange">Настроить разделы</string>
+    <string name="page_places_arrange_help">Нажмите и перетащите название или используйте кнопки «Вверх» и «Вниз». Скрытые разделы доступны через поиск.</string>
+    <string name="page_places_up">Вверх</string>
+    <string name="page_places_down">Вниз</string>
+    <string name="page_places_visibility">Показывать «%1$s» в разделах</string>
+    <string name="page_workspace_slot">Кнопка «Пространство» на панели</string>
+    <string name="page_library_list">Список</string>
+    <string name="page_library_pictures">Большие картинки</string>
+    <string name="page_library_layout">Вид библиотеки</string>
+    <string name="page_library_by_tool">По инструменту</string>
+    <string name="page_activity_layout">Группировка действий</string>
+    <string name="page_activity_day">По дням</string>
+    <string name="page_activity_app">По приложениям</string>
+    <string name="page_activity_phone_app">Приложение телефона</string>
+    <string name="page_activity_multiple_apps">Несколько приложений</string>
+    <string name="page_memory_layout">Вид памяти</string>
+    <string name="page_memory_simple">Краткие записи</string>
+    <string name="page_memory_details">Показывать подробности</string>
+    <string name="page_memory_review_forget">Проверить или забыть</string>
+    <string name="page_memory_intro_title">halo предлагает, вы решаете</string>
+    <string name="page_memory_intro_body">Предложения ждут здесь. Halo запоминает только то, что вы проверили и подтвердили кнопкой «Запомнить».</string>
+    <string name="page_devices_layout">Ваши устройства</string>
+    <string name="page_devices_layout_help">Выберите сохранённое устройство, чтобы изменить отображаемое имя и значок.</string>
+    <string name="page_devices_name">Имя в Halo</string>
+    <string name="page_devices_default_icon">Исходный значок</string>
+    <string name="page_devices_glasses">Очки</string>
+    <string name="page_devices_robot">Робот</string>
+    <string name="page_devices_watch">Часы</string>
+    <string name="page_devices_other">Другое устройство</string>
+    <string name="page_devices_add">Добавить устройство</string>
+    <string name="page_devices_step_prepare">Зарядите устройство и держите его рядом с телефоном.</string>
+    <string name="page_devices_step_pair">Включите устройство и следуйте его инструкции по сопряжению.</string>
+    <string name="page_devices_step_find">Нажмите «Найти», затем выберите своё устройство из списка.</string>
+    <string name="page_devices_step">%1$d. %2$s</string>
+    <string name="page_devices_find">Найти</string>
+</resources>

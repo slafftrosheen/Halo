@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.LinearGradient
+import android.graphics.RadialGradient
 import android.graphics.Shader
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.luminance
@@ -18,7 +19,7 @@ import com.halo.app.ui.shell.HaloScreenCatalog
 import com.halo.app.ui.theme.*
 
 /** Native hosts read the same stored profiles as Compose; call on an IO worker. */
-internal fun nearbyScheme(context: Context, darkOverride: Boolean? = null): androidx.compose.material3.ColorScheme {
+internal fun nearbyScheme(context: Context, darkOverride: Boolean? = null, matchLook: Boolean = true): androidx.compose.material3.ColorScheme {
     val appearance = context.getSharedPreferences("halo_appearance", Context.MODE_PRIVATE).getString("mode", "SYSTEM")
     val dark = darkOverride ?: when (appearance) { "DARK" -> true; "LIGHT" -> false
         else -> context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES }
@@ -26,7 +27,7 @@ internal fun nearbyScheme(context: Context, darkOverride: Boolean? = null): andr
     val prefix = if (dark) "dark" else "light"
     val accent = runCatching { HaloAccent.valueOf(preferences.getString("$prefix.accent", "MINT")!!) }.getOrDefault(HaloAccent.MINT)
     val tone = runCatching { HaloTone.valueOf(preferences.getString("$prefix.tone", "NATURAL")!!) }.getOrDefault(HaloTone.NATURAL)
-    return haloColorScheme(dark, HaloPalette(accent, tone)).let { colors ->
+    return haloColorScheme(dark, if (matchLook) HaloPalette(accent, tone) else HaloPalette()).let { colors ->
         if (context.getSharedPreferences("halo_visual_options", Context.MODE_PRIVATE).getBoolean("contrast",false))
             colors.copy(onSurfaceVariant = colors.onSurface, outline = colors.onSurface.copy(alpha=.72f), outlineVariant = colors.onSurface.copy(alpha=.38f))
         else colors
@@ -47,18 +48,24 @@ internal fun nearbyOrb(context: Context, size: Int, floating: Boolean = false,
     return bitmap
 }
 
-internal fun nearbyBackground(width: Int, height: Int, density: Float, colour: Int, outlineColour: Int? = null): Bitmap {
+internal fun nearbyBackground(width: Int, height: Int, density: Float, colour: Int, outlineColour: Int? = null,
+                              radiusDp: Float = 20f, glow: Int? = null): Bitmap {
     val contrast = if (androidx.core.graphics.ColorUtils.calculateLuminance(colour) < .5) android.graphics.Color.WHITE else android.graphics.Color.BLACK
     val bitmap = Bitmap.createBitmap(width.coerceIn(1, 1200), height.coerceIn(1, 1200), Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val bounds = RectF(density / 2, density / 2, bitmap.width - density / 2, bitmap.height - density / 2)
-    canvas.drawRoundRect(bounds, 20*density, 20*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    canvas.drawRoundRect(bounds, radiusDp*density, radiusDp*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = colour
         shader = LinearGradient(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat(),
             intArrayOf(androidx.core.graphics.ColorUtils.blendARGB(colour, contrast, .04f), colour),
             null, Shader.TileMode.CLAMP)
     })
-    canvas.drawRoundRect(bounds, 20*density, 20*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    if (glow != null) canvas.drawRoundRect(bounds, radiusDp*density, radiusDp*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        shader = RadialGradient(bounds.right * .84f, bounds.top, maxOf(bounds.width() * .64f, 1f),
+            intArrayOf(androidx.core.graphics.ColorUtils.setAlphaComponent(glow, 42), android.graphics.Color.TRANSPARENT),
+            null, Shader.TileMode.CLAMP)
+    })
+    canvas.drawRoundRect(bounds, radiusDp*density, radiusDp*density, Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = outlineColour ?: androidx.core.graphics.ColorUtils.blendARGB(colour, contrast, .16f)
         style = Paint.Style.STROKE; strokeWidth = density
     })

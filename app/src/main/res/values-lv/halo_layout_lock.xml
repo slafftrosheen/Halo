@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="layout_keep">Saglabāt izkārtojumu</string>
+    <string name="layout_unlock">Atbloķēt izkārtojumu</string>
+    <string name="layout_phone_lock">Apstiprini tālruņa slēdzeni, lai mainītu iestatījumu.</string>
+    <string name="layout_lock_unavailable">Pārbaudi tālruņa ekrāna bloķēšanu un mēģini vēlreiz.</string>
+    <string name="layout_kept">Izkārtojums ir saglabāts.</string>
+    <string name="layout_setup_other">Iestatīt kādam citam</string>
+    <string name="layout_read_replies">Lasīt atbildes skaļi</string>
+</resources>

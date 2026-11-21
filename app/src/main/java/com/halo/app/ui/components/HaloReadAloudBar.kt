@@ -15,7 +15,7 @@ import com.halo.app.ui.fx.rememberHaloReducedMotion
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 
-/** Real sentence/word ranges only. Pausing resumes from the start of the current sentence. */
+/** Verified word ranges when available. Pausing resumes from the start of the current section. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HaloReadAloudBar(allowVoiceSettings: Boolean = true, onVoiceSettings: () -> Unit) {
@@ -33,7 +33,7 @@ fun HaloReadAloudBar(allowVoiceSettings: Boolean = true, onVoiceSettings: () -> 
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 com.halo.app.ui.fx.HaloReadAloudFx(current.playing, Modifier.size(24.dp))
-                Text(uiText(if (current.limited) "Read first part aloud" else "Read aloud") + " · ${current.index + 1}/${current.sentences.size}",
+                Text(uiText(if (current.limited) "Read first part aloud" else "Read aloud") + " · ${current.index + 1}/${current.sections.size}",
                     style = MaterialTheme.typography.labelLarge)
             }
             val highlight = MaterialTheme.colorScheme.primary.copy(alpha = .18f)
@@ -51,13 +51,13 @@ fun HaloReadAloudBar(allowVoiceSettings: Boolean = true, onVoiceSettings: () -> 
             current.notice?.let { Text(uiText(it), style = MaterialTheme.typography.bodySmall) }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = { controller.sentence(-1) }, enabled = current.index > 0,
-                    modifier = Modifier.size(target)) { HaloIcon(HaloGlyph.PREVIOUS, uiText("Previous sentence")) }
+                    modifier = Modifier.size(target)) { HaloIcon(HaloGlyph.PREVIOUS, uiText("Previous section")) }
                 TextButton(onClick = controller::toggle, modifier = Modifier.heightIn(min = target)) {
                     HaloIcon(if (current.playing || current.preparing) HaloGlyph.PAUSE else HaloGlyph.PLAY, null)
                     Text(uiText(if (current.preparing) "Cancel voice preparation" else if (current.playing) "Pause reading" else "Resume reading"))
                 }
-                IconButton(onClick = { controller.sentence(1) }, enabled = current.index < current.sentences.lastIndex,
-                    modifier = Modifier.size(target)) { HaloIcon(HaloGlyph.NEXT, uiText("Next sentence")) }
+                IconButton(onClick = { controller.sentence(1) }, enabled = current.index < current.sections.lastIndex,
+                    modifier = Modifier.size(target)) { HaloIcon(HaloGlyph.NEXT, uiText("Next section")) }
                 TextButton(onClick = controller::stop, modifier = Modifier.heightIn(min = target)) { Text(uiText("Stop")) }
                 TextButton(onClick = { speeds = !speeds }, modifier = Modifier.heightIn(min = target)) { Text("${current.speed}×") }
                 if (allowVoiceSettings) TextButton(onClick = onVoiceSettings, modifier = Modifier.heightIn(min = target)) { Text(uiText("Voice")) }
@@ -72,7 +72,10 @@ fun HaloReadAloudBar(allowVoiceSettings: Boolean = true, onVoiceSettings: () -> 
 }
 
 @Composable
-fun HaloReadAloud(text: String, enabled: Boolean = true, label: String? = null, compact: Boolean = false) {
+fun HaloReadAloud(text: String, enabled: Boolean = true, label: String? = null, compact: Boolean = false,
+    category: com.halo.sdk.provider.RemoteDataCategory = com.halo.sdk.provider.RemoteDataCategory.WORKSPACE,
+    sourceIds: Set<String> = emptySet()) {
     HaloVoiceTextActions(text = "", onText = {}, allowDictation = false,
-        readText = text, enabled = enabled, readActionLabel = label, compactRead = compact)
+        readText = text, enabled = enabled, readActionLabel = label, compactRead = compact,
+        readCategory = category, readSourceIds = sourceIds)
 }

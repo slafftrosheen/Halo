@@ -15,6 +15,7 @@ internal object EverydayWidgetTargets {
             is EverydayTarget.Clock -> { put("type","clock-zone");put("zone",target.zoneId);put("label",target.label) }
             is EverydayTarget.Source -> { put("type","source"); put("id",target.id); put("version",target.version); put("revision",target.revision); put("article",target.articleId) }
             is EverydayTarget.Brief -> { put("type","brief"); put("id",target.id) }
+            is EverydayTarget.WidgetTool -> { put("type", "widget-tool"); put("tool", target.tool.name) }
             is EverydayTarget.Create -> { put("type","create"); put("kind",target.kind.name) }
         }
     }.toString()
@@ -30,6 +31,7 @@ internal object EverydayWidgetTargets {
             "clock-zone" -> EverydayTarget.Clock(java.time.ZoneId.of(json.getString("zone")).id,json.getString("label").also { require(it.length<=120) })
             "source" -> EverydayTarget.Source(id(),json.getLong("version"),optional("revision"),optional("article"))
             "brief" -> EverydayTarget.Brief(id().also { require(it.matches(Regex("[a-f0-9]{64}"))) })
+            "widget-tool" -> EverydayTarget.WidgetTool(EverydayWidgetTool.valueOf(json.getString("tool")))
             "create" -> EverydayTarget.Create(OrganizerKind.valueOf(json.getString("kind")))
             else -> error("Unknown widget target")
         }
@@ -43,6 +45,9 @@ suspend fun resolveEverydayWidgetEntry(context: android.content.Context, id: Int
     val target = EverydayWidgetTargets.decode(payload)
     val snapshot = readEverydaySnapshot(context)
     val face = EverydayCards.project(current.config,snapshot,java.util.Locale.getDefault(),externalHost = true)
-    require(target == face.target || face.rows.any { it.target == target })
+    val stackTargets = if (kind == EverydayCardKind.SMART_STACK) EverydayToolkitWidgets.stackKinds(snapshot).map {
+        EverydayCards.project(current.config.copy(kind = it), snapshot, java.util.Locale.getDefault(), externalHost = true).target
+    } else emptyList()
+    require(target == face.target || face.rows.any { it.target == target } || target in stackTargets)
     return target.route()
 }

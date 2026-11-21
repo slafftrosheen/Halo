@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tasks widget with update transitions. Keep every existing id from the 6.2 layout; this only wraps the list in a flipper. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/halo_widget_glass" android:padding="14dp">
+    <ViewFlipper android:id="@+id/halo_tasks_flipper"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:inAnimation="@anim/halo_row_in_up" android:outAnimation="@anim/halo_row_out_up">
+        <include layout="@layout/halo_widget_tasks_state_current" />
+        <include layout="@layout/halo_widget_tasks_state_struck" />
+        <include layout="@layout/halo_widget_tasks_state_next" />
+    </ViewFlipper>
+</FrameLayout>

@@ -5,13 +5,15 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 /** Transient app policy; never rewrites the user's provider, model, roles or routing preferences. */
-class ParentControlledAiRouter(
+class ParentControlledAiRouter internal constructor(
     private val delegate: AiProviderRouter,
     private val remoteAllowed: () -> Boolean,
     private val policyChanges: Flow<Boolean>,
     private val profiles: PrivacyModeStore? = null,
+    private val pause: com.halo.app.privacy.HaloPauseOwner? = null,
 ) : AiProviderRouter by delegate {
     override val remoteDispatchRevision: Long? get() = profiles?.revision
+    private suspend fun <T> inActiveWork(block: suspend () -> T): T = if (pause == null) block() else pause.whileActive(block)
     private fun constrained(workload: AiWorkloadSpec) = workload.copy(allowRemote = workload.allowRemote && remoteAllowed(),
         allowFallback = workload.allowFallback && (profiles == null || profiles.mode.value == PrivacyMode.PRIVATE ||
             profiles.profile(PrivacyMode.CLOUD).localFallback))
@@ -47,15 +49,21 @@ class ParentControlledAiRouter(
                 throw AiProviderException(AiErrorType.PROVIDER_UNAVAILABLE,
                     "The Power profile does not select this provider. Review Mode profiles.")
         }
+        // Native capability and runtime reporting interfaces remain visible to local callers.
         if (target.model.executionLocation == AiExecutionLocation.ON_DEVICE) return target
         requireRemote()
         val original = target.provider
         val provider = object : AiInferenceProvider by original {
-            override suspend fun generate(request: AiRequest, context: AiContext): AiResponse =
-                withProfileIntent(target, intentRevision, request, context) { whilePermitted { original.generate(request, context) } }
-            override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = channelFlow {
+            override suspend fun generate(request: AiRequest, context: AiContext): AiResponse = inActiveWork {
                 withProfileIntent(target, intentRevision, request, context) {
-                    whilePermitted { original.stream(request, context).collect { send(it) } }
+                    whilePermitted { original.generate(request, context) }
+                }
+            }
+            override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = channelFlow {
+                inActiveWork {
+                    withProfileIntent(target, intentRevision, request, context) {
+                        whilePermitted { original.stream(request, context).collect { send(it) } }
+                    }
                 }
             }
         }
@@ -93,10 +101,12 @@ class ParentControlledAiRouter(
     override suspend fun resolveExecutionTarget(request: AiRequest): AiExecutionTarget =
         resolveExecutionTarget(request, AiWorkloadSpec())
     override suspend fun resolveExecutionTarget(request: AiRequest, workload: AiWorkloadSpec): AiExecutionTarget {
+        pause?.requireActive()
         val revision = profiles?.revision
         return resolveWithGuidance { guarded(delegate.resolveExecutionTarget(request, constrained(workload)), workload, revision) }
     }
     override suspend fun resolveFallbackExecutionTarget(request: AiRequest, workload: AiWorkloadSpec, failedProviderId: String): AiExecutionTarget? {
+        pause?.requireActive()
         val revision = profiles?.revision
         val effective = constrained(workload)
         if (!effective.allowFallback) return null
@@ -107,15 +117,16 @@ class ParentControlledAiRouter(
     }
     override suspend fun resolvePinnedExecutionTarget(request: AiRequest, workload: AiWorkloadSpec,
         providerId: String, modelId: String): AiExecutionTarget {
+        pause?.requireActive()
         val revision = profiles?.revision
         return resolveWithGuidance { guarded(delegate.resolvePinnedExecutionTarget(request, constrained(workload), providerId, modelId), workload, revision) }
     }
     override suspend fun getEligibleProvider(request: AiRequest): AiProvider = resolveExecutionTarget(request).provider
     override suspend fun execute(request: AiRequest, context: AiContext): AiResponse = execute(request, AiWorkloadSpec(), context)
-    override suspend fun execute(request: AiRequest, workload: AiWorkloadSpec, context: AiContext): AiResponse {
+    override suspend fun execute(request: AiRequest, workload: AiWorkloadSpec, context: AiContext): AiResponse = inActiveWork {
         val intentRevision = profiles?.revision
         val effective = constrained(workload)
-        return if (profiles != null) {
+        if (profiles != null) {
             val target = resolveExecutionTarget(request, effective)
             val pinned = effective.copy(pinnedTarget = AiModelRef(target.providerId, target.modelId))
             if (target.model.executionLocation == AiExecutionLocation.ON_DEVICE) delegate.execute(request, pinned, context)

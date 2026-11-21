@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="help_tour_chooser">Pokaż, jak to działa</string>
+    <string name="help_tour_home">Ekran główny i pasek</string>
+    <string name="help_tour_talk">Rozmowa z halo</string>
+    <string name="help_tour_studio">HaloStudio</string>
+    <string name="help_tour_notes">HaloNotes</string>
+    <string name="help_tour_canvas">HaloCanvas</string>
+    <string name="help_tour_learn">Nauka</string>
+    <string name="help_tour_seen">Obejrzano</string>
+    <string name="help_tour_replay">Powtórz</string>
+    <string name="help_tour_step">Krok %1$d z %2$d</string>
+    <string name="help_tour_exit">Zakończ samouczek</string>
+    <string name="help_tour_place">Pasek pokazuje, gdzie jesteś i co robi halo.</string>
+    <string name="help_tour_places_title">Miejsca</string>
+    <string name="help_tour_places">W Miejscach otworzysz bibliotekę, urządzenia i ustawienia.</string>
+    <string name="help_tour_ring_title">Pierścień rozmowy</string>
+    <string name="help_tour_ring">Dotknij pierścienia, aby mówić. Przytrzymaj, aby otworzyć Miejsca.</string>
+    <string name="help_tour_input_title">Napisz wiadomość</string>
+    <string name="help_tour_input">Użyj pola wiadomości, gdy wolisz pisać niż mówić.</string>
+    <string name="help_tour_actions_title">Działania na tej stronie</string>
+    <string name="help_tour_actions">Tutaj są dostępne działania: %1$s. Jeśli przycisku nie widać, otwórz Więcej.</string>
+</resources>

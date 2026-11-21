@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="coach_show">Покажи мне</string>
+    <string name="coach_explore">Изучить этот экран</string>
+    <string name="coach_watch">Посмотри, потом попробуй</string>
+    <string name="coach_again">Ещё раз</string>
+    <string name="coach_alternative">Сделай за меня</string>
+    <string name="coach_got_it">Понятно</string>
+    <string name="coach_read_all">Прочитать всё</string>
+    <string name="coach_stop_showing">Скрыть подсказки</string>
+    <string name="coach_control_hint">«%1$s» доступно на этой странице. Другие действия находятся в меню «Ещё».</string>
+    <string name="coach_talk">Поговорить с halo</string>
+    <string name="coach_places">Открыть разделы</string>
+    <string name="coach_page_actions">Другие действия</string>
+    <string name="coach_ring_hold">Удерживайте кольцо</string>
+    <string name="coach_ring_hold_body">Удерживайте кольцо, чтобы открыть разделы. Короткое нажатие начинает разговор с halo.</string>
+    <string name="coach_dock_swipe">Проведите вверх от кольца</string>
+    <string name="coach_dock_swipe_body">Коснитесь кольца и проведите вверх, чтобы открыть разделы.</string>
+    <string name="coach_studio_move">Перемещение по холсту</string>
+    <string name="coach_studio_move_body">Перетащите холст, чтобы его переместить. Сведите или разведите пальцы, чтобы изменить масштаб.</string>
+    <string name="coach_note_dictate">Удерживайте для диктовки</string>
+    <string name="coach_note_dictate_body">Удерживайте микрофон для длинной диктовки. Проверьте слова перед добавлением в заметку.</string>
+    <string name="coach_canvas_link">Проведите от карточки к карточке</string>
+    <string name="coach_canvas_link_body">В режиме связей проведите от одной карточки к другой. Проверьте связь перед сохранением.</string>
+    <string name="coach_kids_demos">Показы жестов</string>
+    <string name="coach_kids_demo_body">Нажми, чтобы услышать название, и нажми ещё раз, чтобы выбрать.</string>
+    <string name="coach_edit_page">Настроить эту страницу</string>
+    <string name="coach_practice_reminder">Напоминание о повторении в 18:00</string>
+    <string name="coach_practice_reminder_body">Напоминать только о карточках, которые пора повторить.</string>
+    <string name="coach_practice_due">Пора повторить учебные карточки.</string>
+</resources>

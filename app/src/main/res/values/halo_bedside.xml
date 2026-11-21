@@ -1,0 +1,18 @@
+<resources>
+    <color name="halo_bedside_ink">#CE9368</color>
+    <string name="halo_bedside_title">Halo Bedside</string>
+    <string name="halo_bedside_close">Close</string>
+    <string name="halo_bedside_settings">Screen saver settings</string>
+    <string name="halo_bedside_loading">Reading tomorrow’s saved information</string>
+    <string name="halo_bedside_unavailable">Tomorrow’s information is unavailable</string>
+    <string name="halo_bedside_no_alarm">No alarm tomorrow</string>
+    <string name="halo_bedside_alarm">Alarm %1$s</string>
+    <string name="halo_bedside_no_weather">No saved forecast</string>
+    <string name="halo_bedside_weather">Rain %1$s tomorrow</string>
+    <string name="halo_bedside_weather_saved">Saved rain forecast %1$s</string>
+    <string name="halo_bedside_summary">%1$s · %2$s</string>
+    <string name="halo_bedside_whisper">Tap twice to talk quietly</string>
+    <string name="halo_bedside_whisper_action">Open Halo voice</string>
+    <string name="halo_bedside_quiet">Quiet notifications while the screen saver is on</string>
+    <string name="halo_bedside_quiet_access">Open Do Not Disturb access</string>
+</resources>

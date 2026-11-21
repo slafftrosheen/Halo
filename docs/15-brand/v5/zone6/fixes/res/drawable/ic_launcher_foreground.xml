@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo · Classic app icon foreground (replaces the repo's version, whose gap was centred ~29°, near 2:30).
+     Canonical open ring: arc starts at 22.5°, sweeps 315°, gap centred at 45° (between 1 and 2 o'clock). Inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+  <path android:pathData="M75.25,45.20A23,23 0,1 1,62.80 32.75" android:strokeColor="#0CF2BA" android:strokeWidth="9" android:strokeLineCap="round" android:fillColor="#00000000"/>
+</vector>

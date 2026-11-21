@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="page_layout_edit">Edit this page</string>
+    <string name="page_layout_restore">Put back how it was</string>
+    <string name="page_layout_error">The layout could not be saved. Close this panel and try again.</string>
+    <string name="page_places_search">Find a place</string>
+    <string name="page_places_no_matches">No places match. Try a different name.</string>
+    <string name="page_places_show_less">Show fewer</string>
+    <string name="page_places_show_all">All places</string>
+    <string name="page_places_arrange">Arrange Places</string>
+    <string name="page_places_arrange_help">Hold and drag a name, or use the Up and Down buttons. Hidden places stay in search.</string>
+    <string name="page_places_up">Up</string>
+    <string name="page_places_down">Down</string>
+    <string name="page_places_visibility">Show %1$s in Places</string>
+    <string name="page_workspace_slot">Workspace button in the dock</string>
+    <string name="page_library_list">List</string>
+    <string name="page_library_pictures">Big pictures</string>
+    <string name="page_library_layout">Library layout</string>
+    <string name="page_library_by_tool">By tool</string>
+    <string name="page_activity_layout">Group activity</string>
+    <string name="page_activity_day">By day</string>
+    <string name="page_activity_app">By app</string>
+    <string name="page_activity_phone_app">Phone app</string>
+    <string name="page_activity_multiple_apps">Several apps</string>
+    <string name="page_memory_layout">Memory layout</string>
+    <string name="page_memory_simple">Simple memories</string>
+    <string name="page_memory_details">Show details</string>
+    <string name="page_memory_review_forget">Review or forget</string>
+    <string name="page_memory_intro_title">halo suggests, you decide</string>
+    <string name="page_memory_intro_body">Suggestions wait here. Halo remembers one only after you review it and choose Remember.</string>
+    <string name="page_devices_layout">Your devices</string>
+    <string name="page_devices_layout_help">Choose a saved device to edit its display name and icon.</string>
+    <string name="page_devices_name">Name in Halo</string>
+    <string name="page_devices_default_icon">Default icon</string>
+    <string name="page_devices_glasses">Glasses</string>
+    <string name="page_devices_robot">Robot</string>
+    <string name="page_devices_watch">Watch</string>
+    <string name="page_devices_other">Other device</string>
+    <string name="page_devices_add">Add a device</string>
+    <string name="page_devices_step_prepare">Charge the device and keep it close to this phone.</string>
+    <string name="page_devices_step_pair">Turn on the device and follow its pairing instructions.</string>
+    <string name="page_devices_step_find">Choose Find it, then select your device from the results.</string>
+    <string name="page_devices_step">%1$d. %2$s</string>
+    <string name="page_devices_find">Find it</string>
+</resources>

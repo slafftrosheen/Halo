@@ -1,5 +1,11 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.ui.zone6.Choose
+import com.halo.app.ui.zone6.WORKSPACE_DOCK_DEFAULT
+import com.halo.app.ui.zone6.WORKSPACE_DOCK_KEY
+import com.halo.app.ui.zone6.editZone6PageOnHold
+import com.halo.app.ui.zone6.rememberZone6PageSetting
+
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
@@ -79,6 +85,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -137,6 +144,25 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     val shellHosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
     var workspaceView by rememberSaveable { mutableStateOf("library") }
     val showLibrary = workspaceView == "library"
+    val easy = com.halo.app.ui.theme.rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
+    val libraryViewSetting = rememberZone6PageSetting("library.view")
+    val libraryDefault = if (easy) "pictures" else "list"
+    val workspaceSlot = rememberZone6PageSetting(WORKSPACE_DOCK_KEY)
+    var pageEditPreview by remember(workspaceView) { mutableStateOf<String?>(null) }
+    val setting = if (showLibrary) libraryViewSetting else workspaceSlot
+    val defaultView = if (showLibrary) libraryDefault else WORKSPACE_DOCK_DEFAULT
+    val pageView = pageEditPreview ?: setting.value ?: defaultView
+    val editPage = { pageEditPreview = pageView }
+    val editPageLabel = stringResource(R.string.page_layout_edit)
+    val deviceLabel = uiText("Workspace")
+    val slotChoices = listOf(WORKSPACE_DOCK_DEFAULT to deviceLabel) +
+        com.halo.app.ui.shell.ShellOrbCatalog.workspaceDestinations(false).map { it.route to uiText(it.title) }
+    if (pageEditPreview != null) {
+        val choices = if (showLibrary) listOf("list" to stringResource(R.string.page_library_list),
+            "pictures" to stringResource(R.string.page_library_pictures)) else slotChoices
+        setting.Choose(defaultView, stringResource(if (showLibrary) R.string.page_library_layout else R.string.page_workspace_slot),
+            choices, pageView, { pageEditPreview = it }, { pageEditPreview = null })
+    }
     val libraryList = androidx.compose.foundation.lazy.rememberLazyListState()
     val toolsList = androidx.compose.foundation.lazy.rememberLazyListState()
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
@@ -179,7 +205,8 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
     var importFile by rememberSaveable { mutableStateOf(false) }
     var showLocalSearch by rememberSaveable { mutableStateOf(false) }
     BindNotebookLibrary(librarySession, viewModel, libraryVisible = showLibrary && !sortMenu && !batchMenu &&
-        !confirmTrash && !showWorkingSet && !showNewCollection && !showDeleteCollection && !showInboxCapture && !showLocalSearch)
+        !confirmTrash && !showWorkingSet && !showNewCollection && !showDeleteCollection && !showInboxCapture && !showLocalSearch &&
+        pageEditPreview == null)
     val libraryActions = when {
         !showLibrary -> emptyList()
         selecting -> listOf(
@@ -231,6 +258,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 put("page.notebook.selection-actions", stringResource(R.string.zone5_select_first))
             }
         }), libraryActions + listOf(
+                ShellPageAction("page.notebook.layout", editPageLabel, HaloGlyph.SETTINGS, !selecting && !mutating, editPage),
                 ShellPageAction("page.notebook.view-library", "Library", HaloGlyph.FILE, !showLibrary) { selectView(true) },
                 ShellPageAction("page.notebook.view-tools", "Tools", HaloGlyph.TOOL, showLibrary) { selectView(false) }))
     BackHandler(enabled = !showLibrary) { workspaceView = "library" }
@@ -244,8 +272,14 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
         LazyColumn(state = toolsList, modifier = Modifier.fillMaxSize()
             .background(com.halo.app.ui.theme.haloWorkspaceBackground()).padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            if (!zoneTabs) item("workspace-heading") { WorkspaceHeadingAndTabs(false, selectView) }
-            item("workspace-tools") { WorkspaceToolsList(onOpenStudy, { viewModel.openMemoryHub() }, onOpenStudio, onOpenFileTools, onOpenCanvasLibrary,onOpenEveryday) }
+            if (!zoneTabs) item("workspace-heading") { WorkspaceHeadingAndTabs(false, selectView, editPage) }
+            item("workspace-tools") {
+                WorkspaceToolsList(onOpenStudy, { viewModel.openMemoryHub() }, onOpenStudio, onOpenFileTools,
+                    onOpenCanvasLibrary, onOpenEveryday, easy = easy, onEdit = editPage)
+                TextButton(onClick = editPage, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.page_workspace_slot))
+                }
+            }
             item("workspace-bottom") { Spacer(Modifier.height(12.dp)) }
         }
         return
@@ -347,7 +381,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (!zoneTabs) item(key = "workspace-heading") { WorkspaceHeadingAndTabs(true, selectView) }
+        if (!zoneTabs) item(key = "workspace-heading") { WorkspaceHeadingAndTabs(true, selectView, editPage) }
         if (!shellHosted) item(key = "standalone-actions") {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 libraryActions.forEach { action -> TextButton(onClick = action.onInvoke, enabled = action.enabled) { Text(uiText(action.title)) } }
@@ -417,12 +451,18 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Box {
                     TextButton(onClick = { sortMenu = true },
-                        modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText(state.sort.label)) }
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(if (state.sort == NotebookSort.TOOL) stringResource(R.string.page_library_by_tool) else uiText(state.sort.label))
+                    }
                     DropdownMenu(sortMenu, { sortMenu = false }) {
                         NotebookSort.entries.forEach { sort -> DropdownMenuItem(
-                            text = { Text(uiText(sort.label)) },
+                            text = { Text(if (sort == NotebookSort.TOOL) stringResource(R.string.page_library_by_tool) else uiText(sort.label)) },
                             onClick = { viewModel.setSort(sort); sortMenu = false }) }
                     }
+                }
+                TextButton(onClick = editPage, enabled = !selecting && !mutating,
+                    modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(if (pageView == "pictures") R.string.page_library_pictures else R.string.page_library_list))
                 }
                 TextButton(onClick = { selecting = !selecting; viewModel.clearSelection() }, enabled = selecting || canUseSelection,
                     modifier = Modifier.heightIn(min = 48.dp)) {
@@ -476,10 +516,20 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
 
         if (!state.isLoaded && !state.loadError) {
             item(key = "loading") {
-                HaloProgressPresentation(uiText("Loading your library…"))
+                com.halo.app.ui.zone6.Zone6DelayedLoading(loading = true)
             }
         } else if (!state.loadError && visibleItems.isEmpty() && state.everyday.isEmpty() && !state.everydayError && state.filter !in listOf(NotebookFilter.MEMORY, NotebookFilter.INBOX)) {
             item(key = "empty") {
+                if (state.query.isBlank() && state.filter == NotebookFilter.ALL && state.selectedCollectionId == null) {
+                    com.halo.app.ui.zone6.Zone6RingEmptyState(
+                        stringResource(R.string.z6_empty_library_t), stringResource(R.string.z6_empty_library_p), HaloGlyph.NOTE,
+                        if (mutating) emptyList() else listOf(
+                            com.halo.app.ui.zone6.Zone6Start(uiText("Start a note"), HaloGlyph.NOTE, viewModel::createNote),
+                            com.halo.app.ui.zone6.Zone6Start(uiText("Import"), HaloGlyph.FILE) { importFile = true; showInboxCapture = true },
+                            com.halo.app.ui.zone6.Zone6Start(uiText("Make a canvas"), HaloGlyph.TOOL, viewModel::createCanvas),
+                        ),
+                    )
+                } else {
                 NotebookEmptyGuidance(state.query, state.filter, state.selectedCollectionId != null, !mutating,
                     viewModel::createNote, viewModel::createCanvas) {
                     viewModel.setQuery(""); viewModel.setFilter(NotebookFilter.ALL); viewModel.selectCollection(null)
@@ -491,6 +541,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                         Spacer(Modifier.width(8.dp)); Text(uiText("Import"))
                     }
                 }
+                }
             }
         } else if (showLibrary) {
             items(notebookItemsForSurface(visibleItems, showLibrary),
@@ -500,6 +551,7 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                     enabled = canUseSelection, onCheckedChange = { viewModel.toggleSelection(item.objectRef.id.value) })
                 WorkspaceObjectRow(
                     item = item,
+                    bigPictures = pageView == "pictures" && !selecting,
                     selected = item.objectRef.id.value in state.workingSet,
                     favorite = item.objectRef.id.value in state.favorites,
                     collections = collectionChoices,
@@ -733,6 +785,7 @@ internal fun WorkspaceObjectRow(
     onMultiSelect: (() -> Unit)? = null,
     selectedCollectionName: String? = null,
     onRestore: (() -> Unit)? = null,
+    bigPictures: Boolean = false,
 ) {
     val row = item.objectRef
     var menuExpanded by remember(row.id.value) { mutableStateOf(false) }
@@ -747,7 +800,9 @@ internal fun WorkspaceObjectRow(
         shape = com.halo.app.ui.design.HaloShapes.control,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
     ) {
-        Row(
+        Column {
+            if (bigPictures) LibraryPicture(row)
+            Row(
             Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -828,6 +883,28 @@ internal fun WorkspaceObjectRow(
                     }
                 }
             }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryPicture(row: WorkspaceObject) {
+    val file by produceState<com.halo.app.data.workspace.WorkspaceFile?>(null, row.id, row.updatedAt) {
+        if (row.type in setOf(WorkspaceObjectType.MEDIA, WorkspaceObjectType.FILE, WorkspaceObjectType.ARTIFACT)) {
+            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                try { com.halo.app.di.ManualDependencyGraph.workspaceFileRepository.getFile(row.id) }
+                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { null }
+            }?.takeIf { it.mimeType.startsWith("image/") || it.mimeType == "application/pdf" }
+        }
+    }
+    val preview = file
+    Surface(color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.fillMaxWidth().height(118.dp)) {
+        if (preview != null) CanvasLocalFileThumbnail(preview, Modifier.fillMaxSize().padding(6.dp))
+        else Box(contentAlignment = Alignment.Center) {
+            Icon(painterResource(workspaceIconResource(row)), contentDescription = null,
+                modifier = Modifier.size(52.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
         }
     }
 }

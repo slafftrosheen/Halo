@@ -1,0 +1,32 @@
+<!-- halo 7.4 · launch fix. Paste inside <application>, replacing the current MainActivity launcher filter.
+     Why: in 6.4 the launcher filter moved to icon aliases. If MainActivity is disabled, or no alias carries
+     MAIN/LAUNCHER on first run, the app has no icon and cannot be opened.
+
+     Rules
+     1. MainActivity stays enabled and exported. It keeps deep links and other filters, but NOT MAIN/LAUNCHER.
+     2. The Classic alias is the only alias enabled in the manifest. It carries MAIN/LAUNCHER.
+     3. Every other icon alias (Match look / Night* / Cream*) ships android:enabled="false".
+     4. On first run HaloAppIconSwitcherSafe switches Classic → the Match-look alias (the default look),
+        turning the new one on BEFORE turning the old one off. It never disables the last launcher. -->
+<activity
+    android:name=".MainActivity"
+    android:enabled="true"
+    android:exported="true"
+    android:launchMode="singleTask">
+    <!-- keep your existing deep-link / VIEW / ASSIST filters here; remove MAIN + LAUNCHER -->
+</activity>
+
+<activity-alias
+    android:name=".icon.Classic"
+    android:targetActivity=".MainActivity"
+    android:enabled="true"
+    android:exported="true"
+    android:icon="@mipmap/ic_launcher"
+    android:roundIcon="@mipmap/ic_launcher_round"
+    android:label="@string/app_name">
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+</activity-alias>
+<!-- then the 12 aliases from look/manifest/AndroidManifest.icon-aliases.xml, all enabled="false" -->

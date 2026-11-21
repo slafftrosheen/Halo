@@ -6,6 +6,11 @@ object ConversationSemantics {
     fun commandText(text: String): String = text.trim().replaceFirst(requestPrefix, "").trimEnd('.', '!', '?')
     private val modelOnly = Regex("\\b(?:don['’]?t|do not) (?:search|use tools)\\b|answer from your model", RegexOption.IGNORE_CASE)
     private val explanation = Regex("^(?:how|why|what|who|when|where|explain|describe|tell me (?:about|how)|write|translate|summari[sz]e|give me|help me brainstorm)\\b", RegexOption.IGNORE_CASE)
+    private val explicitTool = Regex(
+        "^(?:(?:use|call|run)\\s+(?:the\\s+)?|(?:используй|вызови|izmanto|użyj)\\s+)" +
+            "(?:halo_[a-z0-9_]{1,123}\\b|halo\\s+(?:[a-z0-9-]+\\s+){0,6}tools?\\b)",
+        RegexOption.IGNORE_CASE
+    )
     private val workspace = Regex("^(?:find|search|use|read|look up) my (?:notes?|notebook|documents?|files?|memories)\\b", RegexOption.IGNORE_CASE)
     // Explicit requests for saved personal context need owner reads before a summary.
     // These cues only select the tool route; they never grant access or supply action slots.
@@ -19,7 +24,7 @@ object ConversationSemantics {
         RegexOption.IGNORE_CASE
     )
     private val savedContext = Regex(
-        "^(?:read|review|summari[sz]e|compare|analy[sz]e)\\s+(?:all\\s+)?(?:my|saved|selected|these)\\s+" +
+        "^(?:read|review|summari[sz]e|compare|analy[sz]e)\\s+(?:all\\s+)?(?:my|saved|selected|these)\\s+(?:saved\\s+)?" +
             "(?:sources|articles|feeds|notifications|notes|documents|files|memories)\\b|" +
             "^(?:прочитай|обобщи|суммируй|сравни)\\s+(?:мои|сохранённые|сохраненные|выбранные)\\s+(?:источники|статьи|уведомления|заметки|документы)\\b|" +
             "^(?:izlasi|apkopo|salīdzini)\\s+(?:manus|manas|saglabātos|atlasītos)\\s+(?:avotus|rakstus|paziņojumus|piezīmes|dokumentus)\\b|" +
@@ -99,6 +104,7 @@ object ConversationSemantics {
         if (answerFromModel(text) || isExplanation(text)) return null
         val command = commandText(text)
         return when {
+            explicitTool.containsMatchIn(command) -> ToolActionReason.EXPLICIT_TOOL_REQUEST
             needsSavedContext(command) -> ToolActionReason.WORKSPACE_LOOKUP
             workspaceWrite.containsMatchIn(command) -> ToolActionReason.ACTION_INTENT
             appWorkflow.containsMatchIn(command) -> ToolActionReason.SCREEN_OPERATION

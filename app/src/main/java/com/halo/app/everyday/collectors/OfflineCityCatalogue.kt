@@ -38,6 +38,30 @@ class OfflineCityCatalogue(private val openAsset: () -> InputStream) {
         } }.thenByDescending { it.city.population }.thenBy { it.city.name }.thenBy { it.city.id }).take(limit).map { it.city }
     }
     suspend fun get(id: String): OfflineCity? = load().firstOrNull { it.city.id == id }?.city
+
+    /** Approximate city for explicitly selected photo metadata. No device-location access. */
+    suspend fun nearest(latitude: Double, longitude: Double, limitKm: Double = 30.0): OfflineCity? =
+        withContext(Dispatchers.Default) {
+            require(latitude.isFinite() && latitude in -90.0..90.0 && longitude.isFinite() && longitude in -180.0..180.0)
+            require(limitKm in 1.0..50.0)
+            val latitudeRadians = Math.toRadians(latitude)
+            val boundary = kotlin.math.sin(limitKm / (2.0 * 6371.0))
+            var bestDistance = boundary * boundary
+            var best: OfflineCity? = null
+            load().forEachIndexed { index, entry ->
+                if (index % 128 == 0) ensureActive()
+                val city = entry.city
+                val nextLatitude = Math.toRadians(city.latitude)
+                val north = kotlin.math.sin((nextLatitude - latitudeRadians) / 2)
+                val east = kotlin.math.sin(Math.toRadians(city.longitude - longitude) / 2)
+                val distance = north * north + kotlin.math.cos(latitudeRadians) * kotlin.math.cos(nextLatitude) * east * east
+                if (distance < bestDistance) {
+                    bestDistance = distance
+                    best = city
+                }
+            }
+            best
+        }
     private suspend fun load(): List<Entry> = entries ?: lock.withLock {
         entries ?: withContext(Dispatchers.IO) {
             val loaded = mutableListOf<Entry>()

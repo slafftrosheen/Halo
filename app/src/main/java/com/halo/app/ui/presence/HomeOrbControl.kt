@@ -49,10 +49,21 @@ fun HomeOrbControl(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
     val transcribing = ui.speechProcessing || ui.runtimeState == HaloRuntimeState.Recognizing
     val interaction = haloOrbInteraction(ui.inputStatus.capturing, starting || ui.speechActive, transcribing,
         ui.runtimeState == HaloRuntimeState.Speaking, busy, review)
+    val receipt = ui.toolReceipt?.takeIf { evidence ->
+        evidence.kind == com.halo.app.ui.screens.home.HomeToolReceiptKind.CONFIRMED &&
+            evidence.interactionId != null && evidence.interactionId == ui.presentedIdentity?.interactionId
+    }
     val signal = haloOrbInputPresentation(ui.sessionState.toSignalPresentation(fallback = ui.runtimeState),
-        ui.inputStatus.capturing, starting || ui.speechActive, transcribing).copy(detail = null).let {
-        if (review) it.copy(state = HaloSignalState.WAITING, glyph = HaloGlyph.APPROVAL, label = "Needs your review",
-            artwork = PresenceArtwork.APPROVAL_REQUIRED, conditionGlyph = HaloGlyph.APPROVAL) else it
+        ui.inputStatus.capturing, starting || ui.speechActive, transcribing).copy(detail = null).let { projected ->
+        when {
+            review -> projected.copy(state = HaloSignalState.WAITING, glyph = HaloGlyph.APPROVAL, label = "Needs your review",
+                artwork = PresenceArtwork.APPROVAL_REQUIRED, conditionGlyph = HaloGlyph.APPROVAL)
+            projected.state == HaloSignalState.WAITING && interaction.primary != HaloOrbPrimary.REVIEW ->
+                projected.copy(state = HaloSignalState.THINKING, glyph = HaloGlyph.THINK, label = "Preparing", artwork = null)
+            projected.state == HaloSignalState.SUCCESS && receipt == null -> HaloSignalPresentation(label = "Ready")
+            projected.state == HaloSignalState.SUCCESS -> projected.copy(label = "Confirmed")
+            else -> projected
+        }
     }
     HaloOrbLauncher(signal, interaction, shortcuts, preferences::setOrbShortcuts,
         onPrimary = { primary -> when (primary) {

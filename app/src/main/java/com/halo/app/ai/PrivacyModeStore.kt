@@ -44,6 +44,9 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
 
     /** Additional existing parental authority, composed once; never persisted as consent. */
     var remoteAllowed: () -> Boolean = { false }
+    internal var allowDispatch: () -> Boolean = { true }
+
+    internal fun revokeActiveDispatch() = synchronized(lock) { revoke() }
     var configuredProviders: () -> Set<String> = { emptySet() }
     private fun configured(id: String): Boolean = id in SHIPPED_TRANSPORTS || id in configuredProviders()
 
@@ -65,7 +68,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
     internal fun activeProfile(): ModeProfile = synchronized(lock) { snapshot.profile(snapshot.active) }
     internal fun activeMode(): PrivacyMode = synchronized(lock) { snapshot.active }
     internal fun permitsRemoteCategories(provenance: RemoteDispatchProvenance): Boolean = synchronized(lock) {
-        !activating && snapshot.active == PrivacyMode.CLOUD && snapshot.sharingAcknowledged &&
+        !activating && allowDispatch() && snapshot.active == PrivacyMode.CLOUD && snapshot.sharingAcknowledged &&
             provenance.revision == snapshot.revision && snapshot.powerProfile.enabledRemoteCategories().containsAll(provenance.categories)
     }
     internal fun effectiveContextPolicy(): AiContextPolicy = synchronized(lock) {
@@ -204,7 +207,7 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
         return try { permitsChecked(request, expectedRevision) } catch (_: Exception) { false }
     }
     private fun permitsChecked(request: RemoteDispatchRequest, expectedRevision: Long): Boolean {
-        if (activating || snapshot.active != PrivacyMode.CLOUD || !snapshot.sharingAcknowledged ||
+        if (activating || !allowDispatch() || snapshot.active != PrivacyMode.CLOUD || !snapshot.sharingAcknowledged ||
             snapshot.revision != expectedRevision || !remoteAllowed() || !configured(request.providerId)) return false
         val profile = snapshot.powerProfile
         val feature = when (request.operation) {

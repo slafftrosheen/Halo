@@ -75,6 +75,7 @@ class AppearancePreferences(
     suspend fun setActionPinsPersisted(family: String, expected: List<String>, ids: List<String>) = withContext(ioDispatcher) {
         initialLoad.await()
         writes.withLock {
+            HaloLayoutLock.get(appContext).requireUnlocked()
             check(mutableActionPins.value.families[family].orEmpty() == expected) { "Action pins changed" }
             val next = mutableActionPins.value.families.toMutableMap().apply {
                 if (ids.isEmpty()) remove(family) else put(family, ids.toList())
@@ -96,6 +97,7 @@ class AppearancePreferences(
     }
 
     fun setOrbShortcuts(shortcuts: Set<com.halo.app.ui.presence.HaloOrbShortcut>) {
+        if (HaloLayoutLock.get(appContext).state.value) return
         val bounded = shortcuts.toSet()
         val generation = shortcutGeneration.incrementAndGet()
         mutableOrbShortcuts.value = bounded
@@ -109,6 +111,7 @@ class AppearancePreferences(
     }
 
     fun setMode(mode: AppearanceMode) {
+        if (HaloLayoutLock.get(appContext).state.value) return
         // The initial SYSTEM value is only a placeholder until disk has loaded.
         if (initialLoad.isCompleted && mutableMode.value == mode) return
 
@@ -136,6 +139,7 @@ class AppearancePreferences(
     suspend fun setModePersisted(mode: AppearanceMode) = withContext(ioDispatcher) {
         initialLoad.await()
         writes.withLock {
+            HaloLayoutLock.get(appContext).requireUnlocked()
             check(preferences().edit().putString(KEY_MODE, mode.name).commit()) { "Could not persist Halo appearance mode" }
             synchronized(modeMutations) {
                 mutationGeneration.incrementAndGet()
@@ -159,6 +163,7 @@ class AppearancePreferences(
     ) = withContext(ioDispatcher) {
         initialLoad.await()
         writes.withLock {
+            HaloLayoutLock.get(appContext).requireUnlocked()
             val originalDisk = preferences().getString(KEY_MODE, null)
             val before = synchronized(modeMutations) {
                 check(mutableMode.value == expectedMode) { "Appearance changed; review the current choices" }

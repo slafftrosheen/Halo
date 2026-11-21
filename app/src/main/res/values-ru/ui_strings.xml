@@ -4802,4 +4802,311 @@
     <string name="ui_a242d11b47ee" formatted="false">"Поиск доступных действий"</string>
     <string name="ui_1763ec4aca04" formatted="false">"Обзор дня"</string>
     <string name="ui_587943da5e6f" formatted="false">"Прочитать сохранённое изображение источника"</string>
+    <string name="ui_eb5cfb73677d" formatted="false">"Разделы"</string>
+    <string name="ui_90a90a48e23d" formatted="false">"Доброе утро"</string>
+    <string name="ui_d325e1bbfd1c" formatted="false">"Добрый день"</string>
+    <string name="ui_15a421e4cf76" formatted="false">"Добрый вечер"</string>
+    <string name="ui_8f84e2685423" formatted="false">"Что сегодня?"</string>
+    <string name="ui_8d0ba5826696" formatted="false">"Создать заметку"</string>
+    <string name="ui_a16cb91f0312" formatted="false">"Что это?"</string>
+    <string name="ui_cb8d46381f4a" formatted="false">"Виджеты и источники"</string>
+    <string name="ui_3a439f1856aa" formatted="false">"Помощь и проверка"</string>
+    <string name="ui_8ba35bb80dda" formatted="false">"Действия в чате"</string>
+    <string name="ui_c05434032f47" formatted="false">"Предпросмотр изменений"</string>
+    <string name="ui_7dbda3bb5411" formatted="false">"Нажмите на вариант или произнесите его номер."</string>
+    <string name="ui_dc484cdf2b27" formatted="false">"Произнесите номер"</string>
+    <string name="ui_27d21150ed82" formatted="false">"Приостановить halo"</string>
+    <string name="ui_8eac9402d815" formatted="false">"halo на паузе"</string>
+    <string name="ui_20872de95c81" formatted="false">"Следуй за мной"</string>
+    <string name="ui_38581d183b73" formatted="false">"Планировщик"</string>
+    <string name="ui_86b0d9b2865f" formatted="false">"Открыть планировщик"</string>
+    <string name="ui_0fc63b56b1b7" formatted="false">"Вид планировщика"</string>
+    <string name="ui_91279280d8b0" formatted="false">"Настройки простого вида"</string>
+    <string name="ui_db451136da1e" formatted="false">"Настроить планировщик"</string>
+    <string name="ui_e3868f65dcf7" formatted="false">"Вид на неделю"</string>
+    <string name="ui_d42462263a8b" formatted="false">"Простой вид · только сегодня"</string>
+    <string name="ui_95655e8f2bf9" formatted="false">"Выберите день, чтобы увидеть планы. Добавьте дело голосом, затем проверьте время и повтор перед сохранением."</string>
+    <string name="ui_82f601d85536" formatted="false">"Ваши планы на этом телефоне."</string>
+    <string name="ui_a40fd711ff7b" formatted="false">"На этот день ничего не запланировано."</string>
+    <string name="ui_31aadc7f3ac3" formatted="false">"Свободное время"</string>
+    <string name="ui_3ae7f14b7896" formatted="false">"Время с %1$s до %2$s свободно."</string>
+    <string name="ui_135b8779a3a1" formatted="false">"Выйти заранее · минуты, необязательно"</string>
+    <string name="ui_af06a83f4770" formatted="false">"Время выхода появится в планировщике."</string>
+    <string name="ui_cd885ae10b20" formatted="false">"Выйти в %1$s"</string>
+    <string name="ui_c0f8bbcd4176" formatted="false">"Предыдущая неделя"</string>
+    <string name="ui_21fbde19cfb0" formatted="false">"Следующая неделя"</string>
+    <string name="ui_a711f636e6c3" formatted="false">"1 запланированное дело"</string>
+    <string name="ui_76f185d1ce9f" formatted="false">"Запланировано дел: %1$d"</string>
+    <string name="ui_3743a0cb9a0b" formatted="false">"Добавить голосом"</string>
+    <string name="ui_1d3093f27d6b" formatted="false">"Прочитать мой план на день"</string>
+    <string name="ui_fce45a69288a" formatted="false">"Скажите halo, о чём и когда напомнить. Перед сохранением напоминание можно изменить."</string>
+    <string name="ui_dd34917b154e" formatted="false">"Каждый четверг вечером напоминай мне вынести мусор."</string>
+    <string name="ui_7dfcd2ad89f3" formatted="false">"О чём вам напомнить?"</string>
+    <string name="ui_5ded6845709d" formatted="false">"Проверить напоминание"</string>
+    <string name="ui_27c051a6564f" formatted="false">"Проверьте напоминание"</string>
+    <string name="ui_61ae5ba68fb9" formatted="false">"Другие настройки напоминания"</string>
+    <string name="ui_79f1a101d9bd" formatted="false">"Вернуться к проверке напоминания"</string>
+    <string name="ui_290db31ff529" formatted="false">"Каждую неделю · %1$s"</string>
+    <string name="ui_eb272bae1c89" formatted="false">"На этом телефоне в заданное время"</string>
+    <string name="ui_9137516eb047" formatted="false">"На этом телефоне за %1$s мин"</string>
+    <string name="ui_3515e29e1b63" formatted="false">"Введите название"</string>
+    <string name="ui_3aec36bbe993" formatted="false">"Напомнить"</string>
+    <string name="ui_96dbedeca7df" formatted="false">"Начало"</string>
+    <string name="ui_048f0d0f2289" formatted="false">"halo предложил время %1$s. Чтобы изменить его, нажмите «Когда»."</string>
+    <string name="ui_d5961e2cebc3" formatted="false">"halo понял «%2$s» как %1$s. Чтобы изменить время, нажмите «Когда»."</string>
+    <string name="ui_ee7ce69dec98" formatted="false">"halo предложил дату начала. Чтобы изменить её, нажмите «Начало»."</string>
+    <string name="ui_3580392ebdf4" formatted="false">"Об этой сохранённой статье:"</string>
+    <string name="ui_5b10b4ab3c56" formatted="false">"Добавить город для данных о воздухе и пыльце"</string>
+    <string name="ui_787aecf31add" formatted="false">"Нет интернета · сохранённая информация доступна"</string>
+    <string name="ui_ab87cef98e3e" formatted="false">"Прочитай мне"</string>
+    <string name="ui_d6bd8c0aeee8" formatted="false">"Документ"</string>
+    <string name="ui_2c16368aaa6d" formatted="false">"Сохранить бумагу"</string>
+    <string name="ui_8fe147696fbf" formatted="false">"Перевести"</string>
+    <string name="ui_5757007c79c2" formatted="false">"Загружается языковой пакет по Wi-Fi"</string>
+    <string name="ui_a2e3c24f189f" formatted="false">"Перевод на этом телефоне"</string>
+    <string name="ui_3ef493b9a158" formatted="false">"Языковой пакет недоступен. Подключитесь к Wi-Fi и попробуйте снова."</string>
+    <string name="ui_e7d2bf38853a" formatted="false">"Не удалось перевести текст. Попробуйте ещё раз."</string>
+    <string name="ui_7ff2a79db085" formatted="false">"Попроси взрослого выбрать источник распознавания."</string>
+    <string name="ui_c0218905017d" formatted="false">"Камера готовится. Попробуйте через мгновение."</string>
+    <string name="ui_31dec21fbd14" formatted="false">"Рассматриваю внимательно"</string>
+    <string name="ui_0be3ad5c1244" formatted="false">"Не двигайте телефон — идёт чтение"</string>
+    <string name="ui_f84a025a8b85" formatted="false">"Не совсем уверен. Попробуй поднести телефон чуть ближе."</string>
+    <string name="ui_73ddd33492a5" formatted="false">"Текст не найден. Попробуйте добавить свет или поднести телефон ближе."</string>
+    <string name="ui_12fe8c665036" formatted="false">"Не удалось прочитать этот кадр. Попробуйте ещё раз."</string>
+    <string name="ui_68c372dd7ab1" formatted="false">"Документ сохраняется"</string>
+    <string name="ui_4ebe3a42be57" formatted="false">"Не удалось сохранить документ. Попробуйте ещё раз."</string>
+    <string name="ui_b3a4c2cd1dae" formatted="false">"Лупа"</string>
+    <string name="ui_05e2017a7a91" formatted="false">"HaloScan"</string>
+    <string name="ui_e317ce8426e7" formatted="false">"Онлайн-источник, одобренный взрослым"</string>
+    <string name="ui_4c3edc075faa" formatted="false">"Похоже, это %s!"</string>
+    <string name="ui_e18835ef2f6c" formatted="false">"Разрешить доступ к камере"</string>
+    <string name="ui_a3ce3188d00d" formatted="false">"Снять документ"</string>
+    <string name="ui_9d057a586a74" formatted="false">"Сохранить документ"</string>
+    <string name="ui_e8555d4ee069" formatted="false">"Открыть документ"</string>
+    <string name="ui_897321f3c8a6" formatted="false">"Послушать"</string>
+    <string name="ui_d36feef04807" formatted="false">"Посмотреть ещё раз"</string>
+    <string name="ui_59816d1ed72f" formatted="false">"Снять текст"</string>
+    <string name="ui_36f07fcf1892" formatted="false">"Скачать языковой пакет"</string>
+    <string name="ui_206f3c576939" formatted="false">"Послушать перевод"</string>
+    <string name="ui_509b1035c55f" formatted="false">"Зафиксировать кадр"</string>
+    <string name="ui_b76c42cb4bf3" formatted="false">"Покажи мне"</string>
+    <string name="ui_133fc35187bd" formatted="false">"Просто наведите телефон."</string>
+    <string name="ui_f188f626529a" formatted="false">"Разрешите доступ к камере, чтобы навести HaloScan на страницу или предмет."</string>
+    <string name="ui_3610f4a9d310" formatted="false">"Масштаб %s×"</string>
+    <string name="ui_c579b8f4ba81" formatted="false">"Выделенные слова помогут проверить надпись."</string>
+    <string name="ui_218197693424" formatted="false">"С языка"</string>
+    <string name="ui_f4b06ef6d3c8" formatted="false">"На язык"</string>
+    <string name="ui_0cf4d8722910" formatted="false">"Для загрузки языкового пакета нужен Wi-Fi. Снимок и текст остаются на этом телефоне."</string>
+    <string name="ui_966680e57d7d" formatted="false">"Нажмите на надпись, чтобы её услышать."</string>
+    <string name="ui_53c5206a46a0" formatted="false">"Похоже, это %s."</string>
+    <string name="ui_0ada13e458a6" formatted="false">"Документ сохранён во «Входящих»."</string>
+    <string name="ui_336bc7bbed78" formatted="false">"Обработано онлайн"</string>
+    <string name="ui_80a768ced792" formatted="false">"Возобновить камеру"</string>
+    <string name="ui_de2b814aeb96" formatted="false">"Новое сканирование"</string>
+    <string name="ui_415a8336713e" formatted="false">"Высокий контраст"</string>
+    <string name="ui_d6915875decb" formatted="false">"Простой режим"</string>
+    <string name="ui_63a9bd4f8fd2" formatted="false">"Открыть в блокноте"</string>
+    <string name="ui_4f4a15242e89" formatted="false">"Стандартное управление"</string>
+    <string name="ui_2ea7457308f5" formatted="false">"Наведи камеру на знакомый предмет. Нажми «Что это?», чтобы узнать, что найдёт halo."</string>
+    <string name="ui_6c9b43e248e4" formatted="false">"Наведите телефон на мелкий текст. Увеличьте его ползунком и зафиксируйте кадр. Нажмите «Читать», чтобы распознать слова."</string>
+    <string name="ui_2d95ffef69d6" formatted="false">"Наведите камеру на страницу. Выберите «Читать», «Документ», «Перевести» или «Что это?» и нажмите жёлтую кнопку."</string>
+    <string name="ui_fe6951113784" formatted="false">"Попробовать"</string>
+    <string name="ui_7fe187df734d" formatted="false">"Использовать одобренный онлайн-источник?"</string>
+    <string name="ui_cc97a30d2aeb" formatted="false">"Этот снимок будет отправлен в %s — онлайн-источник, который выбрал взрослый."</string>
+    <string name="ui_351df0d7378a" formatted="false">"онлайн-источник"</string>
+    <string name="ui_2b7a94cb3ae8" formatted="false">"Посмотреть онлайн"</string>
+    <string name="ui_2705f89b68ce" formatted="false">"Снятый кадр"</string>
+    <string name="ui_06cc3b14a4df" formatted="false">"Камера недоступна"</string>
+    <string name="ui_6893f4b66076" formatted="false">"Предпросмотр камеры"</string>
+    <string name="ui_9f91161f4343" formatted="false">"лист"</string>
+    <string name="ui_dc9c5edb8b2d" formatted="false">"дерево"</string>
+    <string name="ui_7a5179eecc0f" formatted="false">"птица"</string>
+    <string name="ui_c06b0cfe0cc5" formatted="false">"цветок"</string>
+    <string name="ui_77af778b51ab" formatted="false">"кошка"</string>
+    <string name="ui_cd6357efdd96" formatted="false">"собака"</string>
+    <string name="ui_92719fe0cf8c" formatted="false">"книга"</string>
+    <string name="ui_e9de08263f4a" formatted="false">"мяч"</string>
+    <string name="ui_3a7bd3e2360a" formatted="false">"яблоко"</string>
+    <string name="ui_350a770c0ec9" formatted="false">"камень"</string>
+    <string name="ui_b474a99a2705" formatted="false">"рыба"</string>
+    <string name="ui_8fced00b6ce2" formatted="false">"радуга"</string>
+    <string name="ui_b6e797dd8fdc" formatted="false">"Лист помогает растению превращать солнечный свет в питательные вещества."</string>
+    <string name="ui_3b89d2ed8300" formatted="false">"Когда дерево растёт, у него появляются новые листья и ветви."</string>
+    <string name="ui_0a7292dad2fd" formatted="false">"У птиц есть перья."</string>
+    <string name="ui_10b34175c0f7" formatted="false">"У некоторых цветов после цветения образуются семена."</string>
+    <string name="ui_a3bd56e805b6" formatted="false">"Книга может рассказать историю картинками и словами."</string>
+    <string name="ui_e4ef9438211b" formatted="false">"Радуга может появиться, когда солнечный свет проходит через капли воды."</string>
+    <string name="ui_971445964bda" formatted="false">"Рассмотри форму и цвета повнимательнее."</string>
+    <string name="ui_a659b60d246d" formatted="false">"Немецкий"</string>
+    <string name="ui_3411059cb8e0" formatted="false">"Испанский"</string>
+    <string name="ui_7458199fe97a" formatted="false">"Французский"</string>
+    <string name="ui_6f424303fa12" formatted="false">"Украинский"</string>
+    <string name="ui_b493d48364af" formatted="false">"банан"</string>
+    <string name="ui_d29af8a2e160" formatted="false">"велосипед"</string>
+    <string name="ui_25cdb46d8d21" formatted="false">"лодка"</string>
+    <string name="ui_fcfd075cbe36" formatted="false">"бабочка"</string>
+    <string name="ui_2b2961a431b2" formatted="false">"машина"</string>
+    <string name="ui_3d7eb3d3dab1" formatted="false">"стул"</string>
+    <string name="ui_d8198efa3604" formatted="false">"часы"</string>
+    <string name="ui_56681010b753" formatted="false">"облако"</string>
+    <string name="ui_2d2370db2447" formatted="false">"утка"</string>
+    <string name="ui_74fa5327cc0f" formatted="false">"лягушка"</string>
+    <string name="ui_9209526aaa61" formatted="false">"фрукт"</string>
+    <string name="ui_23eeb69c681d" formatted="false">"сад"</string>
+    <string name="ui_d081f5e40298" formatted="false">"гитара"</string>
+    <string name="ui_fd62862b6dc2" formatted="false">"лошадь"</string>
+    <string name="ui_9e78b43ea00e" formatted="false">"луна"</string>
+    <string name="ui_5ef2c394d5b6" formatted="false">"гриб"</string>
+    <string name="ui_1d78e018e405" formatted="false">"пианино"</string>
+    <string name="ui_96044d9734b6" formatted="false">"растение"</string>
+    <string name="ui_d37d96b42ad4" formatted="false">"кролик"</string>
+    <string name="ui_4a69f19c8c26" formatted="false">"море"</string>
+    <string name="ui_ce635c4eabff" formatted="false">"ракушка"</string>
+    <string name="ui_a746222f09d8" formatted="false">"снег"</string>
+    <string name="ui_0d4fc4a78d37" formatted="false">"стол"</string>
+    <string name="ui_116f54c41d04" formatted="false">"поезд"</string>
+    <string name="ui_74dd730b5c36" formatted="false">"черепаха"</string>
+    <string name="ui_1b2fffea95f7" formatted="false">"Мой день"</string>
+    <string name="ui_100ec1bc78a4" formatted="false">"Предстоит"</string>
+    <string name="ui_75420330e532" formatted="false">"Попроси взрослого добавить картинки для твоего дня."</string>
+    <string name="ui_eb633895c5da" formatted="false">"Не удалось сохранить отметку. Попробуй ещё раз."</string>
+    <string name="ui_096ddd8b0dc9" formatted="false">"Послушать мой план"</string>
+    <string name="ui_0d21bd52022c" formatted="false">"Онлайн"</string>
+    <string name="ui_6e2683f2ddca" formatted="false">"Не удалось сохранить источник распознавания фото."</string>
+    <string name="ui_222a8d9fdfa8" formatted="false">"Настроить картинки для «Моего дня»"</string>
+    <string name="ui_9f9715684660" formatted="false">"Выберите источник распознавания"</string>
+    <string name="ui_9fc69cd49baa" formatted="false">"Выберите источник распознавания знакомых предметов. Список для распознавания на телефоне входит в halo."</string>
+    <string name="ui_3c360b1658c7" formatted="false">"Для онлайн-распознавания нужны облачная модель Vision, режим Power и разрешения на отправку изображений и обработку медиа."</string>
+    <string name="ui_5584a1808e36" formatted="false">"Проверить онлайн-источник"</string>
+    <string name="ui_84d35fd59f90" formatted="false">"Отключить распознавание"</string>
+    <string name="ui_61e302add34c" formatted="false">"Разрешить онлайн-распознавание фото?"</string>
+    <string name="ui_45cccd02059c" formatted="false">"После подтверждения снимка ребёнком halo отправит его в %s (%s), чтобы распознать знакомый предмет. Эту возможность можно выключить здесь в любое время."</string>
+    <string name="ui_4255a5b9b94d" formatted="false">"Разрешить этот источник"</string>
+    <string name="ui_4058365da297" formatted="false">"Добавить картинку"</string>
+    <string name="ui_a6b148b34930" formatted="false">"Не удалось сохранить «Мой день»."</string>
+    <string name="ui_badc532511b7" formatted="false">"Картинка и время"</string>
+    <string name="ui_913d33c7fd39" formatted="false">"Завтрак"</string>
+    <string name="ui_6cd2e331855d" formatted="false">"Школа"</string>
+    <string name="ui_39de4731eedc" formatted="false">"Рисование"</string>
+    <string name="ui_1b4e390dcd79" formatted="false">"Ванна"</string>
+    <string name="ui_216713d08860" formatted="false">"Ужин"</string>
+    <string name="ui_57f8d39329f2" formatted="false">"Время спать"</string>
+    <string name="ui_bd737a3f8f1e" formatted="false">"Источник для «Что это?»"</string>
+    <string name="ui_b4604359e70b" formatted="false">"Сканированный документ.pdf"</string>
+    <string name="ui_bbe54d8faf07" formatted="false">"Добавить решения и задачи"</string>
+    <string name="ui_72683535cab1" formatted="false">"Разрешите доступ к микрофону для записи."</string>
+    <string name="ui_07ddee803e73" formatted="false">"Подключение к экрану изменилось. Выберите экран ещё раз."</string>
+    <string name="ui_ec9457d02d79" formatted="false">"Не удалось включить субтитры на экране."</string>
+    <string name="ui_7872b3e9188e" formatted="false">"Показ субтитров остановлен. Чтобы продолжить, выберите экран ещё раз."</string>
+    <string name="ui_b10f1d9766cc" formatted="false">"Не удалось сохранить заметки. Попробуйте ещё раз."</string>
+    <string name="ui_8d449f137a14" formatted="false">"Не удалось сохранить запись. Попробуйте ещё раз."</string>
+    <string name="ui_c13b07c9991f" formatted="false">"Не удалось воспроизвести запись."</string>
+    <string name="ui_6abc22ff4172" formatted="false">"Не удалось включить микрофон телефона. Закройте другие приложения, использующие микрофон, и попробуйте ещё раз."</string>
+    <string name="ui_ad0a51a721c8" formatted="false">"Не удалось загрузить модели распознавания говорящих. Проверьте подключение и настройки загрузок."</string>
+    <string name="ui_30ba702eee51" formatted="false">"Решения"</string>
+    <string name="ui_7920330ff1a7" formatted="false">"Удалить эту запись?"</string>
+    <string name="ui_059314a1a3f6" formatted="false">"Будет загружено около 28 МБ моделей. Аудио и метки говорящих остаются на этом телефоне. Включите режим Power и разрешите загрузку моделей."</string>
+    <string name="ui_1f1c30368462" formatted="false">"Завершение записи"</string>
+    <string name="ui_448c3bdb235b" formatted="false">"Загрузить модели для меток говорящих"</string>
+    <string name="ui_0dafbd087c78" formatted="false">"halo record"</string>
+    <string name="ui_5c99c45c1f19" formatted="false">"Сохранить заметки"</string>
+    <string name="ui_c595ebde39c8" formatted="false">"Сохранить запись"</string>
+    <string name="ui_e2f05d66fc31" formatted="false">"Сохранение заметок"</string>
+    <string name="ui_1604e61812ed" formatted="false">"Сохранение записи"</string>
+    <string name="ui_e3fb1f8cc05a" formatted="false">"Буквы обозначают предполагаемых говорящих в этой записи."</string>
+    <string name="ui_584f8e89daa9" formatted="false">"Субтитры в реальном времени"</string>
+    <string name="ui_7667137a943a" formatted="false">"Для субтитров нужна установленная локальная модель распознавания речи. Запись звука может продолжаться."</string>
+    <string name="ui_0c153d1b9ccb" formatted="false">"Новая запись"</string>
+    <string name="ui_02b9ed80daed" formatted="false">"Звук не сохранён. Поднесите телефон ближе и попробуйте ещё раз."</string>
+    <string name="ui_3e6ce84402bf" formatted="false">"Не удалось создать сводку на телефоне. Вы можете внести решения и задачи из расшифровки."</string>
+    <string name="ui_9f0cc833900d" formatted="false">"Включение микрофона"</string>
+    <string name="ui_67e0ddff71f2" formatted="false">"Воспроизвести запись"</string>
+    <string name="ui_1abb498c7c8a" formatted="false">"Подготовить напоминание"</string>
+    <string name="ui_d5572321b95f" formatted="false">"Подготовить сводку"</string>
+    <string name="ui_fbc5a83bb7c3" formatted="false">"Подготовка сводки на этом телефоне"</string>
+    <string name="ui_4c5e3e42e379" formatted="false">"Записать разговор"</string>
+    <string name="ui_80e8dd1a5a05" formatted="false">"Идёт запись"</string>
+    <string name="ui_aca16ffe4cbc" formatted="false">"Запись сохранена во входящих."</string>
+    <string name="ui_aeb3eba8a655" formatted="false">"Заметки по записи"</string>
+    <string name="ui_b35c75e53ab3" formatted="false">"Инструменты записи приостановлены или недоступны."</string>
+    <string name="ui_0c2b37538fe2" formatted="false">"Просмотреть запись"</string>
+    <string name="ui_1478adea4460" formatted="false">"Сверьте черновик с записью."</string>
+    <string name="ui_6d17fce741aa" formatted="false">"Показывать субтитры в реальном времени"</string>
+    <string name="ui_a9e0c7058512" formatted="false">"Говорящий"</string>
+    <string name="ui_700440b9d203" formatted="false">"Метки говорящих будут доступны в следующей записи."</string>
+    <string name="ui_247af3a7c88b" formatted="false">"В этой записи метки говорящих недоступны."</string>
+    <string name="ui_09e46741888d" formatted="false">"Модели распознавания говорящих установлены на этом телефоне."</string>
+    <string name="ui_30756af0134e" formatted="false">"Начать запись"</string>
+    <string name="ui_7ec716e5abe2" formatted="false">"Выключить субтитры на экране"</string>
+    <string name="ui_3d591e826d54" formatted="false">"Остановить запись"</string>
+    <string name="ui_bd8a446cfef8" formatted="false">"Нажмите «Начать запись». Звук остаётся на этом телефоне. На подключённом экране можно включить субтитры. Нажмите «Остановить запись», чтобы прослушать или сохранить её."</string>
+    <string name="ui_a812687d6a8b" formatted="false">"Микрофон отключился. Прослушайте звук, записанный до отключения."</string>
+    <string name="ui_721164f0dc70" formatted="false">"Расшифровка"</string>
+    <string name="ui_2eccf68f1fda" formatted="false">"Говорящий не определён"</string>
+    <string name="ui_131a2b810f88" formatted="false">"Голосовая запись.wav"</string>
+    <string name="ui_d42c7d52fe13" formatted="false">"Субтитры в очках"</string>
+    <string name="ui_bd3fed4aebe7" formatted="false">"Выберите подключённый экран для показа субтитров."</string>
+    <string name="ui_9f05256f927f" formatted="false">"Подключите очки, которые Android распознаёт как внешний экран. Подключения Bluetooth для звука недостаточно для показа субтитров."</string>
+    <string name="ui_a88c90b92699" formatted="false">"На экране показана другая карточка. Закройте её в разделе «Устройства», чтобы включить субтитры."</string>
+    <string name="ui_600f1a573fdc" formatted="false">"Показывать субтитры на экране %1$s?"</string>
+    <string name="ui_6020ef647f63" formatted="false">"Пользователи этого экрана могут увидеть слова из записи. halo отправляет субтитры только пока запись открыта. Убедитесь, что все участники разговора согласны."</string>
+    <string name="ui_fe597a324fd8" formatted="false">"Субтитры отправляются на экран %1$s"</string>
+    <string name="ui_1b634345a3d0" formatted="false">"HaloRecord · Ожидание речи"</string>
+    <string name="ui_6920ef3de830" formatted="false">"Показывать субтитры"</string>
+    <string name="ui_f05e840e0069" formatted="false">"Альбом"</string>
+    <string name="ui_5c387ffb0ba0" formatted="false">"День, который хочется запомнить"</string>
+    <string name="ui_62c6f88f63e2" formatted="false">"Фото · %s"</string>
+    <string name="ui_c8dec36eb47d" formatted="false">"Некоторые фото не удалось добавить. Выберите доступные фото и повторите."</string>
+    <string name="ui_6157bbdadb35" formatted="false">"Фото сохранены. Не удалось обновить совпадения по лицам."</string>
+    <string name="ui_53cd794ec92b" formatted="false">"Не удалось добавить эти фото."</string>
+    <string name="ui_a7b796a0d8e8" formatted="false">"Не удалось открыть альбом."</string>
+    <string name="ui_14aa9444c6b7" formatted="false">"Не удалось открыть выбор фото."</string>
+    <string name="ui_605dc0626e9b" formatted="false">"Не удалось создать этот MP4 на телефоне. Повторите попытку."</string>
+    <string name="ui_8f052537970c" formatted="false">"Попроси взрослого открыть альбом."</string>
+    <string name="ui_1563955eed73" formatted="false">"Не удалось открыть меню отправки видео."</string>
+    <string name="ui_a8196528a0b2" formatted="false">"Видео сохранено в рабочей области."</string>
+    <string name="ui_bea153b4ede2" formatted="false">"Не удалось сохранить это видео."</string>
+    <string name="ui_5db49dfb02b6" formatted="false">"Проверить перед отправкой семье"</string>
+    <string name="ui_abc1dfd6f9bf" formatted="false">"Выбрать фото"</string>
+    <string name="ui_40acf06bced9" formatted="false">"Создать историю"</string>
+    <string name="ui_12c7612021e3" formatted="false">"Не удалось воспроизвести видео."</string>
+    <string name="ui_1a928245ce6d" formatted="false">"Создаём видео на телефоне"</string>
+    <string name="ui_6318fb9012f9" formatted="false">"Воспроизвести историю"</string>
+    <string name="ui_56cf81a8af5d" formatted="false">"Тихая музыка"</string>
+    <string name="ui_9889551ac7e1" formatted="false">"Изменить текст"</string>
+    <string name="ui_2429174fd72b" formatted="false">"Сохранить видео"</string>
+    <string name="ui_6ac7b387e42d" formatted="false">"Открыть видео"</string>
+    <string name="ui_84aeba7f1108" formatted="false">"День рождения бабушки прошлым летом"</string>
+    <string name="ui_32746ae21124" formatted="false">"Выберите фото, чтобы искать по датам, словам, ближайшим городам и добавленным людям."</string>
+    <string name="ui_e140da2ffa8e" formatted="false">"Подходящих фото нет. Попробуйте имя, дату или слово."</string>
+    <string name="ui_bc11be8c1339" formatted="false">"Дата неизвестна"</string>
+    <string name="ui_02d7d5755787" formatted="false">"Поиск выполняется на этом телефоне."</string>
+    <string name="ui_1e03d526ef14" formatted="false">"Искать голосом"</string>
+    <string name="ui_982bf05820dd" formatted="false">"Поблизости · %s"</string>
+    <string name="ui_6fd71e293604" formatted="false">"Похожие лица · %s"</string>
+    <string name="ui_f54e5dbb30e3" formatted="false">"Имена, места и слова"</string>
+    <string name="ui_151f3c0c1453" formatted="false">"Использовать фото для поиска людей"</string>
+    <string name="ui_6aa93ffd9055" formatted="false">"Не удалось сохранить имена и места для фото."</string>
+    <string name="ui_60c44020ef58" formatted="false">"Выберите фото для альбома. Чтобы найти ближайшие города по данным о месте съёмки, выберите исходные файлы, в которых есть эти данные."</string>
+    <string name="ui_83903f747448" formatted="false">"Выбор фото"</string>
+    <string name="ui_f91542ee4f8f" formatted="false">"Исходные файлы"</string>
+    <string name="ui_c697162b02f1" formatted="false">"Добавить человека для поиска"</string>
+    <string name="ui_8e1c64f75b7b" formatted="false">"Выбранное фото для сравнения"</string>
+    <string name="ui_208a63cae258" formatted="false">"Выберите чёткое фото одного человека и введите имя, которым вы его называете. halo ищет похожие лица в альбоме на этом телефоне. Человека можно удалить в любое время."</string>
+    <string name="ui_cbf18c1999ad" formatted="false">"Имя человека"</string>
+    <string name="ui_cc6d5c5672eb" formatted="false">"Человек добавлен. Введите его имя, чтобы найти совпадения."</string>
+    <string name="ui_527a479be947" formatted="false">"Выберите чёткое фото, на котором виден один человек."</string>
+    <string name="ui_71dcf1ebd969" formatted="false">"Не удалось найти похожие лица на этом телефоне."</string>
+    <string name="ui_670b096936b5" formatted="false">"Найти похожие лица"</string>
+    <string name="ui_586b960e2051" formatted="false">"Поиск людей"</string>
+    <string name="ui_c97c8c806fc0" formatted="false">"Откройте чёткое фото одного человека, чтобы добавить его для поиска."</string>
+    <string name="ui_fb093a2584c1" formatted="false">"Не удалось удалить человека из поиска."</string>
+    <string name="ui_94d65c0bc52b" formatted="false">"Отправить семье?"</string>
+    <string name="ui_888d3b87da05" formatted="false">"MP4 · %s с"</string>
+    <string name="ui_c0b66d15b4f3" formatted="false">"С тихой музыкой"</string>
+    <string name="ui_b77c8a4bd22c" formatted="false">"На следующем экране выберите, кому отправить видео."</string>
+    <string name="ui_7594ca819390" formatted="false">"Выбрать приложение и получателя"</string>
+    <string name="ui_1a91a2e0abeb" formatted="false">"Выберите фото, затем скажите или напишите, что помните. Откройте чёткий снимок одного человека, чтобы добавить его для поиска. Из фото можно создать видеоисторию, посмотреть её, сохранить или отправить после проверки."</string>
+    <string name="ui_096e1dedffce" formatted="false">"Более крупные фото"</string>
+    <string name="ui_c3c5a845d7c8" formatted="false">"Предпросмотр видеоистории"</string>
 </resources>

@@ -101,6 +101,7 @@ internal fun WorkspaceContinueDialog(item: WorkspaceContinuityItem?, canvases: L
                             WorkspaceDestination.STUDIO -> R.string.link53_studio
                             WorkspaceDestination.STUDY -> R.string.link53_study
                             WorkspaceDestination.CHAT -> R.string.link53_chat
+                            WorkspaceDestination.SHEETS -> R.string.toolkit_sheets
                         })) } }
                     if (item.type in setOf(WorkspaceObjectType.NOTE, WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA)) {
                         Text(stringResource(R.string.link53_canvas_effect), style = MaterialTheme.typography.bodyMedium)

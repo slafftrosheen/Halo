@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alive_wallpaper_name">Живые обои halo</string>
+    <string name="alive_wallpaper_description">Шесть живых обоев, которые сочетаются с вашим оформлением.</string>
+    <string name="alive_wallpaper_title">Обои · %1$s</string>
+    <string name="alive_wallpaper_see_at">Посмотреть в разное время</string>
+    <string name="alive_wallpaper_now">Сейчас</string>
+    <string name="alive_wallpaper_morning">Утро</string>
+    <string name="alive_wallpaper_day">День</string>
+    <string name="alive_wallpaper_evening">Вечер</string>
+    <string name="alive_wallpaper_night">Ночь</string>
+    <string name="alive_wallpaper_in_app">Показывать в halo</string>
+    <string name="alive_wallpaper_react">Реагируют на halo</string>
+    <string name="alive_wallpaper_calm">Спокойнее ночью</string>
+    <string name="alive_wallpaper_restore">Вернуть как было</string>
+    <string name="alive_wallpaper_set_android">Открыть предпросмотр обоев Android</string>
+    <string name="alive_wallpaper_drift">Парящий halo</string>
+    <string name="alive_wallpaper_aurora">Сияние</string>
+    <string name="alive_wallpaper_tide">Прилив</string>
+    <string name="alive_wallpaper_arc">Дуга дня</string>
+    <string name="alive_wallpaper_constellation">Созвездие</string>
+    <string name="alive_wallpaper_paper">Бумага</string>
+</resources>

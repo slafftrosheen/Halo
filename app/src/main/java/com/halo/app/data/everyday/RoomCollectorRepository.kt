@@ -17,7 +17,7 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         val source = CollectorCodec.source(row.body)
         var attempt = dao.attempt(row.id)?.let(CollectorCodec::attempt) ?: CollectorAttempt(row.id, null, CollectorAttemptState.NEVER)
         val snapshot = dao.snapshot(row.id)?.let { stored ->
-            try { CollectorCodec.snapshot(stored).also {CollectorPayloadLimits.validateKind(source.kind,it.payload)} }
+            try { CollectorCodec.snapshot(stored).also { CollectorPayloadLimits.validateSource(source, it.payload) } }
             catch (_: Exception) {
                 dao.removeSnapshot(row.id)
                 attempt = attempt.copy(state = CollectorAttemptState.FAILED, message = "Stored source data could not be read. Refresh this source to recover")
@@ -41,7 +41,17 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
     override suspend fun save(source: CollectorSource, expectedVersion: Long?): CollectorSource {
         val endpoint = source.endpoint?.let { CollectorUrlPolicy.validate(it).toString() }
         source.attributionUrl?.let(CollectorUrlPolicy::validate)
-        if (source.kind == CollectorKind.WEATHER) require(endpoint == OpenMeteoParser.endpoint(requireNotNull(source.place))) { "Weather must use the selected place's forecast endpoint" }
+        if (source.kind == CollectorKind.WEATHER) {
+            val place = requireNotNull(source.place)
+            require(endpoint == OpenMeteoParser.endpoint(place) || endpoint == OpenMeteoParser.oldEndpoint(place)) {
+                "Weather must use the selected place's forecast endpoint"
+            }
+        }
+        if (source.kind == CollectorKind.AIR_QUALITY) {
+            require(endpoint == OpenMeteoAirQuality.endpoint(requireNotNull(source.place))) {
+                "Air quality must use the selected city's Open-Meteo endpoint"
+            }
+        }
         val result = database.withTransaction {
             val previous = dao.source(source.id)?.let { CollectorCodec.source(it.body) }
             if (previous == null) {
@@ -179,7 +189,7 @@ class RoomCollectorRepository(private val database: AppDatabase, private val sou
         require(attempt.sourceId == source.id && attempt.state != CollectorAttemptState.FETCHING)
         if (snapshot != null) {
             require(snapshot.sourceId == source.id && snapshot.sourceVersion == source.version)
-            CollectorPayloadLimits.validateKind(reservation.source.kind,snapshot.payload)
+            CollectorPayloadLimits.validateSource(reservation.source, snapshot.payload)
             dao.putSnapshot(CollectorCodec.entity(snapshot))
         }
         dao.putAttempt(CollectorCodec.entity(source.version, attempt))

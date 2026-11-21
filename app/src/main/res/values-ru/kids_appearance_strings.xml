@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kids_sky_picker">Выбери своё небо</string>
+    <string name="kids_sky_tap_help">Коснись, чтобы услышать название, затем коснись ещё раз, чтобы выбрать.</string>
+    <string name="kids_choice_tap_again">Коснись ещё раз, чтобы выбрать</string>
+    <string name="kids_sky_stars">Звёзды</string>
+    <string name="kids_sky_sea">Море</string>
+    <string name="kids_sky_garden">Сад</string>
+    <string name="kids_sky_moon">Луна</string>
+    <string name="kids_sky_allowed">Доступное небо</string>
+    <string name="kids_learn_size">Размер урока</string>
+    <string name="kids_learn_pictures">Картинки</string>
+    <string name="kids_learn_simple">Просто</string>
+    <string name="kids_motion">Движение</string>
+    <string name="kids_motion_gentle">Плавно</string>
+    <string name="kids_motion_still">Без движения</string>
+    <string name="kids_read_automatically">Автоматически читать варианты и ответы</string>
+    <string name="kids_more_explanation">Показать объяснение целиком</string>
+    <string name="kids_less_explanation">Показать первую часть</string>
+</resources>

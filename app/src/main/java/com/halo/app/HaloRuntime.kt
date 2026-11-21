@@ -20,6 +20,8 @@ class HaloRuntime(
 
     @Volatile
     private var started = false
+    @Volatile
+    private var startRequested = false
 
     /** Engines are initialized once for the lifetime of the process graph. */
     private var initialized = false
@@ -28,7 +30,8 @@ class HaloRuntime(
 
     /** Idempotent so overlapping Activity bootstrap attempts safely converge. */
     suspend fun start() = lifecycleMutex.withLock {
-        if (started) return@withLock
+        startRequested = true
+        if (started || graph.haloPause.isPaused()) return@withLock
 
         RuntimeStartupTrace.mark("runtime.start.begin")
 
@@ -163,6 +166,10 @@ class HaloRuntime(
             started = false
             RuntimeStartupTrace.mark("runtime.stop.complete")
         }
+    }
+
+    internal suspend fun resumeAfterPause() {
+        if (startRequested) start()
     }
 
     private suspend fun stopStartedComponents(
