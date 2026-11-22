@@ -178,6 +178,9 @@ class EverydayToolExecutorTest {
     }
     @Test fun everyDefinitionHasCentralCapabilitiesNeverReplayWritesAndPersonalDisclosureClassification() {
         assertEquals(EverydayToolContracts.names,PersonalConfigurationToolAccess.everyday)
+        val descriptors = EverydayToolContracts.definitions.map { requireNotNull(HaloToolDescriptors.assistant(it)) }
+        val registry = ToolRegistry(listOf(executor), descriptors)
+        assertTrue(registry.operabilityReport(listOf(ToolFeatureOperability("today", setOf("halo_today_overview", "halo_today_weather_city")))).isEmpty())
         EverydayToolContracts.definitions.forEach {definition ->
             val descriptor=HaloToolDescriptors.assistant(definition)
             assertNotNull(definition.name,descriptor)

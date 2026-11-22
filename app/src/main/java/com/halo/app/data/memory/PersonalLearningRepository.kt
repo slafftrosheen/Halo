@@ -3,6 +3,7 @@ package com.halo.app.data.memory
 import androidx.room.withTransaction
 import com.halo.app.data.AppDatabase
 import com.halo.app.data.notebook.WorkspaceObjectEntity
+import com.halo.app.data.workspace.privateLibraryClaim
 import com.halo.runtime.cognition.memory.*
 import com.halo.runtime.cognition.procedures.*
 import kotlinx.coroutines.flow.map
@@ -38,11 +39,13 @@ class PersonalLearningRepository(private val db: AppDatabase, private val memori
         val id = "learning:$fingerprint"
         android.util.Log.i("HALO_MEMORY_PROPOSAL", "proposal=${id.takeLast(8)} kind=${p.kind} origin=${p.origin} confidenceBand=${if(p.confidence >= .8f) "likely" else "suggested"} evidenceCount=${p.evidence.size}")
         if(conflict.records.isNotEmpty()) android.util.Log.i("HALO_MEMORY_CONFLICT", "proposal=${id.takeLast(8)} existingCount=${conflict.records.size}")
-        val saved=store(PersonalSuggestionEntity(id,fingerprint,"MEMORY",PersonalMemoryCodec.proposal(revised),"PENDING",p.createdAt.toEpochMilli(),p.createdAt.toEpochMilli(),p.evidence.size), p.content)
+        val saved=store(PersonalSuggestionEntity(id,fingerprint,"MEMORY",PersonalMemoryCodec.proposal(revised),"PENDING",p.createdAt.toEpochMilli(),p.createdAt.toEpochMilli(),p.evidence.size), p.content,
+            listOfNotNull(p.scopeId) + revised.conflictMemoryIds + p.evidence.map { it.id }) { p.evidence.all { exists(it) } }
         if(saved) surface(id);return saved
     }
     suspend fun suggest(s: PersonalSuggestion): Boolean {
-        val saved=store(PersonalSuggestionEntity("learning:${s.fingerprint}",s.fingerprint,s.kind.name,PersonalMemoryCodec.suggestion(s),"PENDING",System.currentTimeMillis(),System.currentTimeMillis(),s.evidenceCount),s.title)
+        val saved=store(PersonalSuggestionEntity("learning:${s.fingerprint}",s.fingerprint,s.kind.name,PersonalMemoryCodec.suggestion(s),"PENDING",System.currentTimeMillis(),System.currentTimeMillis(),s.evidenceCount),s.title,
+            listOfNotNull(s.targetId))
         if(saved) surface("learning:${s.fingerprint}");return saved
     }
     private suspend fun surface(id: String) {
@@ -54,7 +57,11 @@ class PersonalLearningRepository(private val db: AppDatabase, private val memori
         catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch(_: Exception) { /* Durable Inbox entry remains the truth even if passive surfacing fails. */ }
     }
-    private suspend fun store(row: PersonalSuggestionEntity,title: String): Boolean = db.withTransaction {
+    private suspend fun store(row: PersonalSuggestionEntity,title: String, references: List<String>,
+        stillReadable: suspend () -> Boolean = { true },
+    ): Boolean = db.withTransaction {
+        val claims = (references + row.id).distinct().map(::privateLibraryClaim).chunked(400)
+        if (!stillReadable() || claims.any { db.privateLibraryDao().claims(it).isNotEmpty() }) return@withTransaction false
         expire()
         val old = dao.fingerprint(row.fingerprint); val now = System.currentTimeMillis()
         if(old != null && (old.state == "PENDING" || old.state == "ACCEPTED" || old.neverAgain || row.evidenceCount <= old.evidenceCount || now - old.updatedAt < budget.cooldownDays * 86400000)) return@withTransaction false

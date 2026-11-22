@@ -1,0 +1,10 @@
+<resources>
+    <string name="memory_reference_saved">Reference saved memories</string>
+    <string name="memory_reference_saved_detail">Use relevant saved facts and preferences in chat and voice.</string>
+    <string name="memory_reference_history">Reference chat history</string>
+    <string name="memory_reference_history_detail">Use relevant details and newer preferences from earlier chats. Requires saved memories to be enabled.</string>
+    <string name="memory_reference_active_profile">These settings apply to the current Local or Power profile.</string>
+    <string name="memory_learning_off_detail">Keep editing saved memories in the Library. Learning stays off.</string>
+    <string name="memory_learning_explicit_detail">Save a new memory when you ask Halo to remember something.</string>
+    <string name="memory_learning_suggest_detail">Receive memory and workflow suggestions to review and approve.</string>
+</resources>

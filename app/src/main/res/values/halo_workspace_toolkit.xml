@@ -1,0 +1,12 @@
+<resources>
+    <string name="toolkit_find_tool">Find a tool</string>
+    <string name="toolkit_empty_search">No matching tools</string>
+    <string name="toolkit_in_dock">In dock</string>
+    <string name="toolkit_on_shelf">On shelf</string>
+    <string name="toolkit_translated_scan_title">Translated scan</string>
+    <string name="toolkit_keep_translation">Keep translation</string>
+    <string name="toolkit_keeping_translation">Keeping translation</string>
+    <string name="toolkit_open_translation">Open translation</string>
+    <string name="toolkit_translation_kept">Photo and translation kept together in Workspace.</string>
+    <string name="toolkit_translation_error">Could not keep this translation. Try again.</string>
+</resources>

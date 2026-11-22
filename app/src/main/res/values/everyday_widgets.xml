@@ -7,8 +7,19 @@
 <string name="everyday_widget_headlines">Headlines</string>
 <string name="everyday_widget_alarms_timers">Alarms and timers</string>
 <string name="everyday_widget_dashboard">Everyday dashboard</string>
+<string name="halo_widget_today_preview">Events, weather and saved headlines</string>
 <string name="everyday_widget_preview">Open halo for your saved information</string>
 <string name="everyday_widget_saved">Saved on this phone</string>
 <string name="everyday_widget_configure">Configure widget</string>
 <string name="everyday_widget_description">Your saved plan and selected information in halo. Resize for more; open halo for private details.</string>
+<string name="everyday_widget_habits">Little habits</string>
+<string name="everyday_widget_habits_setup">Set up little habits</string>
+<string name="everyday_widget_habits_days">Days a routine was run</string>
+<string name="everyday_widget_departures_off">Departures are off</string>
+<string name="everyday_widget_live_departures_off">Live departures are off</string>
+<string name="everyday_widget_home_open">Open Our home</string>
+<string name="everyday_widget_shared_list_empty">Shared list is empty</string>
+<string name="everyday_widget_no_rain_forecast">No saved rain forecast</string>
+<string name="everyday_widget_rain_chance">Rain chance today</string>
+<string name="everyday_widget_smart_stack">Smart stack</string>
 </resources>

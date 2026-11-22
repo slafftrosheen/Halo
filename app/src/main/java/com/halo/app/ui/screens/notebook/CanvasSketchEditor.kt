@@ -56,6 +56,7 @@ internal fun CanvasSketchPadDialog(
     onSave: (String) -> Unit,
     onDismiss: () -> Unit,
     editingExisting: Boolean = false,
+    secure: Boolean = false,
 ) {
     // Keep the source stable while the parent receives drafts. Unchanged v1 is saved byte-for-byte.
     val source = remember(initial) { recovery ?: initial }
@@ -64,7 +65,8 @@ internal fun CanvasSketchPadDialog(
     LaunchedEffect(Unit) { onSelectionChanged(null) }
     AlertDialog(
         modifier = Modifier.widthIn(max = 880.dp).fillMaxWidth().padding(horizontal = 16.dp),
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false,
+            securePolicy = if (secure) androidx.compose.ui.window.SecureFlagPolicy.SecureOn else androidx.compose.ui.window.SecureFlagPolicy.Inherit),
         onDismissRequest = onDismiss,
         title = { Text(uiText("Sketch")) },
         text = {

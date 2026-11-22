@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_receipt_totals">Суммы сохранённых чеков</string>
+    <string name="halo_receipt_total_amount">%1$s %2$s · Учтено чеков: %3$d</string>
+    <string name="halo_receipt_no_totals">По этому запросу не нашлось чеков, в которых читаются продавец, дата, сумма и валюта.</string>
+    <string name="halo_receipt_limited">Часть сохранённых файлов не удалось проверить. Откройте чеки из списка, чтобы сверить суммы.</string>
+</resources>

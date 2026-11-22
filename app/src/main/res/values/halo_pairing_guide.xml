@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_pairing_device_type">What are you connecting?</string>
+    <string name="halo_pairing_headphones">Headphones and buds</string>
+    <string name="halo_pairing_ink">E-ink and watches</string>
+    <string name="halo_pairing_example">Example devices. Halo shows the controls supported by the device you find.</string>
+    <string name="halo_pairing_prepare_glasses">Turn on the glasses and follow their guide to enter pairing mode.</string>
+    <string name="halo_pairing_prepare_headphones">Put the headphones or their charging case into pairing mode as described in their guide.</string>
+    <string name="halo_pairing_prepare_ink">Keep the device awake. If its setup requires a companion app, connect it there first.</string>
+    <string name="halo_pairing_prepare_buddy">Turn on the robot and follow its guide to make it discoverable.</string>
+    <string name="halo_pairing_permissions">Read any pairing or permission prompts shown by the phone.</string>
+    <string name="halo_pairing_try">Open your connected device to see what you can try.</string>
+    <string name="halo_pairing_preview_gesture">Preview</string>
+    <string name="halo_pairing_open_bluetooth">Open Bluetooth settings</string>
+    <string name="halo_pairing_open_follow_me">Open Follow me</string>
+    <string name="halo_pairing_open_buddy">Set up BuddyBot</string>
+    <string name="halo_pairing_audio_system">Select the headphones in Android Bluetooth settings. Return to Devices to see the connected audio routes.</string>
+    <string name="halo_pairing_ink_follow_me">Open Follow me once the display is connected through its supported app or adapter.</string>
+    <string name="halo_pairing_buddy_wifi">Enter BuddyBot’s local Wi-Fi address, then use the code on the robot.</string>
+    <string name="halo_pairing_setup_unavailable">This setup could not be opened on this phone.</string>
+    <string name="halo_pairing_android_prompt">If Android shows a pairing code, compare it with the code on the accessory before accepting.</string>
+    <string name="halo_buddy_connect">Connect on Wi-Fi</string>
+    <string name="halo_buddy_connect_failed">Could not open the connection. Check BuddyBot and its local Wi-Fi address.</string>
+    <string name="halo_buddy_paired">BuddyBot confirmed pairing.</string>
+    <string name="halo_buddy_code_help">Enter the four digits shown on BuddyBot.</string>
+    <string name="halo_buddy_pair_failed">BuddyBot did not confirm the code. Disconnect and check the code before trying again.</string>
+    <string name="halo_buddy_disconnect">Disconnect BuddyBot</string>
+    <string name="halo_buddy_needs_you">%1$s needs attention</string>
+    <string name="halo_buddy_open_help">Check BuddyBot</string>
+</resources>

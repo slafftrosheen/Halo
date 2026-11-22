@@ -49,9 +49,12 @@ object StudioDocumentCodec {
         .put("source", value.source?.let { JSONObject().put("id", it.objectId).put("version", it.version) } ?: JSONObject.NULL)
         .put("mask", value.mask?.let(::rect) ?: JSONObject.NULL)
         .put("brightness", value.brightness).put("contrast", value.contrast).put("saturation", value.saturation)
+        .apply { if (value.pencil) put("pencil", true) }
+        .apply { value.symmetry?.let { put("symmetry", JSONObject().put("axis", it.axis.name).put("repeats", it.repeats)) } }
     private fun readLayer(value: JSONObject): StudioLayer {
-        value.fields("id", "name", "kind", "bounds", "visible", "locked", "opacity", "rotation", "color", "text",
+        val expected = arrayOf("id", "name", "kind", "bounds", "visible", "locked", "opacity", "rotation", "color", "text",
             "fontSize", "strokeWidth", "ink", "source", "mask", "brightness", "contrast", "saturation")
+        value.fields(*(expected + listOf("pencil", "symmetry").filter(value::has)))
         val source = if (value.isNull("source")) null else value.getJSONObject("source").let {
             it.fields("id", "version"); StudioSource(it.string("id"), it.string("version"))
         }
@@ -60,7 +63,11 @@ object StudioDocumentCodec {
             value.integer("opacity"), value.integer("rotation"), value.integer("color"), value.string("text"),
             value.integer("fontSize"), value.integer("strokeWidth"), value.string("ink"), source,
             if (value.isNull("mask")) null else readRect(value.getJSONObject("mask")),
-            value.integer("brightness"), value.integer("contrast"), value.integer("saturation"))
+            value.integer("brightness"), value.integer("contrast"), value.integer("saturation"),
+            value.has("pencil") && value.boolean("pencil"), value.optJSONObject("symmetry")?.let {
+                it.fields("axis", "repeats")
+                StudioSymmetry(StudioSymmetryAxis.valueOf(it.string("axis")), it.integer("repeats"))
+            }.also { require(it != null || !value.has("symmetry")) })
     }
     private fun JSONObject.fields(vararg expected: String): JSONObject = apply {
         require(keys().asSequence().toSet() == expected.toSet())

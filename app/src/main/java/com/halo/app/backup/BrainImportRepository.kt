@@ -8,6 +8,7 @@ import androidx.room.withTransaction
 import com.halo.app.data.AppDatabase
 import com.halo.app.data.Memory
 import com.halo.app.data.workspace.WorkspaceFileAvailability
+import com.halo.app.data.workspace.privateLibraryClaim
 import com.halo.app.storage.HaloStorageLayout
 import com.halo.engines.ai.AiSelectionRepository
 import com.halo.engines.ai.PersistedAiSelection
@@ -31,6 +32,7 @@ import java.util.zip.ZipFile
 import javax.crypto.AEADBadTagException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
@@ -107,6 +109,13 @@ class StagedBrainImporter(
                 parsed.zipFile.close()
                 if (prepared.encrypted) prepared.file.delete()
                 return@withContext BrainArchiveValidation.UnsupportedVersion(parsed.manifest.schemaVersion)
+            }
+            try {
+                requireNoPrivateReplay(parsed.snapshot)
+            } catch (error: Throwable) {
+                parsed.zipFile.close()
+                if (prepared.encrypted) prepared.file.delete()
+                throw error
             }
             val localObjects = database.brainSnapshotDao().workspaceObjects().associateBy { it.id }
             val localNotes = database.brainSnapshotDao().notes().associateBy { it.objectId }
@@ -205,12 +214,13 @@ class StagedBrainImporter(
             decryptedFile?.delete()
             error("This backup requires a newer Halo version")
         }
-        if (mode == BrainImportMode.REPLACE) {
-            try { createSafetySnapshot() } catch (error: Throwable) {
-                parsed.zipFile.close()
-                decryptedFile?.delete()
-                throw error
-            }
+        try {
+            requireNoPrivateReplay(parsed.snapshot)
+            if (mode == BrainImportMode.REPLACE) createSafetySnapshot()
+        } catch (error: Throwable) {
+            parsed.zipFile.close()
+            decryptedFile?.delete()
+            throw error
         }
         val dao = database.brainSnapshotDao()
         val existingIds = dao.workspaceObjects().mapTo(mutableSetOf()) { it.id }
@@ -240,8 +250,12 @@ class StagedBrainImporter(
         }
 
         var committed=false
+        val materializedPaths = mutableMapOf<File, String>()
         try {
-            val materializedFiles = materializeOwnedFiles(snapshot.files, parsed.zipFile, parsed.contentEntries, idMap.entries.associate { it.value to it.key })
+            val materializedFiles = materializeOwnedFiles(
+                snapshot.files, parsed.zipFile, parsed.contentEntries,
+                idMap.entries.associate { it.value to it.key }, materializedPaths,
+            )
             val fileUris = snapshot.files.zip(materializedFiles).associate { (before, after) -> before.uri to after.uri }
             snapshot = snapshot.copy(
                 files = materializedFiles,
@@ -276,6 +290,7 @@ class StagedBrainImporter(
             val maintenance=com.halo.app.everyday.EverydayWriteAuthority.beginMaintenance()
             try {reconciler.withEverydayRestore {
               try {database.withTransaction {
+                requireNoPrivateReplay(parsed.snapshot)
                 if (mode == BrainImportMode.REPLACE) clearBrain(dao)
                 dao.putWorkspaceObjects(room.workspace)
                 dao.putNotes(room.notes)
@@ -331,7 +346,13 @@ class StagedBrainImporter(
             }} finally {maintenance.close()}
             val screenStore=com.halo.app.di.ManualDependencyGraph.screenStore
             val screen=snapshot.everyday.firstOrNull {it.kind=="SCREEN"}
-            if(screen!=null && (mode==BrainImportMode.REPLACE || conflictPolicies[EverydayArchive.key(screen)]==ImportConflictPolicy.USE_BACKUP || screenStore.layout.value==null && conflictPolicies[EverydayArchive.key(screen)]!=ImportConflictPolicy.KEEP_LOCAL)) screenStore.restorePortable(screenStore.remapPortable(screen.body,everydayMapping))
+            if(screen!=null && (mode==BrainImportMode.REPLACE || conflictPolicies[EverydayArchive.key(screen)]==ImportConflictPolicy.USE_BACKUP || screenStore.layout.value==null && conflictPolicies[EverydayArchive.key(screen)]!=ImportConflictPolicy.KEEP_LOCAL)) {
+                val raw = screenStore.remapPortable(screen.body, everydayMapping)
+                val ownerIds = screenStore.portableAutomationSources(raw)
+                com.halo.app.automation.AutomationPrivacyFence.withOwners(ownerIds.mapTo(linkedSetOf(), com.halo.app.automation.AutomationPrivacyFence::routine)) {
+                    screenStore.restorePortable(screenStore.excludePrivateAutomations(raw, database))
+                }
+            }
             else if(mode==BrainImportMode.REPLACE && screen==null) screenStore.clearPortable()
             val portableStrings = snapshot.settings.values.filterKeys { it in PORTABLE_STRING_KEYS }.filter { (key,value) ->
                 key != "learning_mode" || value in setOf("OFF","EXPLICIT_ONLY","SUGGEST")
@@ -392,6 +413,11 @@ class StagedBrainImporter(
         } finally {
             parsed.zipFile.close()
             decryptedFile?.delete()
+            if (!committed) withContext(NonCancellable) {
+                for ((file, id) in materializedPaths) {
+                    if (database.workspaceFileDao().getFile(id)?.ownedCopyPath != file.absolutePath) file.delete()
+                }
+            }
         }
         val created = snapshot.workspace.count { it.id !in existingIds }
         val domain=snapshot.everyday.filter {it.kind in setOf("ORGANIZER","SOURCE","CLOCK","BRIEF","BRIEF_SETTINGS","SCREEN")}
@@ -552,7 +578,13 @@ class StagedBrainImporter(
         }
     }
 
-    private fun materializeOwnedFiles(files: List<FileSnapshot>, zip: ZipFile, entries: Map<String, String>, originalIds: Map<String, String>): List<FileSnapshot> = files.map { file ->
+    private fun materializeOwnedFiles(
+        files: List<FileSnapshot>,
+        zip: ZipFile,
+        entries: Map<String, String>,
+        originalIds: Map<String, String>,
+        materializedPaths: MutableMap<File, String>,
+    ): List<FileSnapshot> = files.map { file ->
         val archiveId = originalIds[file.objectId] ?: file.objectId
         val entryPath = entries[archiveId] ?: entries[safeSegment(archiveId)]
         if (file.ownership != "HALO_OWNED" || entryPath == null) {
@@ -561,8 +593,10 @@ class StagedBrainImporter(
             val destination = File(layout.managedWorkspaceFiles, "${safeSegment(file.objectId)}/${UUID.randomUUID()}_${safeSegment(file.displayName)}")
             destination.parentFile?.mkdirs()
             val temporary = File(destination.parentFile, ".${destination.name}.restoring")
+            materializedPaths[temporary] = file.objectId
             zip.getInputStream(requireNotNull(zip.getEntry(entryPath))).use { input -> FileOutputStream(temporary).use(input::copyTo) }
             check(temporary.renameTo(destination)) { "Unable to restore ${file.displayName}" }
+            materializedPaths[destination] = file.objectId
             val restoredUri = FileProvider.getUriForFile(context, "${context.packageName}.captures", destination)
             file.copy(uri = restoredUri.toString(), ownedCopyPath = destination.absolutePath, permissionPersisted = false, availability = WorkspaceFileAvailability.OWNED_LOCAL.name)
         }
@@ -613,6 +647,34 @@ class StagedBrainImporter(
         relations = source.relations.filterNot { it.fromId in skipped || it.toId in skipped }, files = source.files.filterNot { it.objectId in skipped },
         studioProjects = source.studioProjects.filterNot { it.objectId in skipped }, studioVersions = source.studioVersions.filterNot { it.objectId in skipped },
     )
+
+    private suspend fun requireNoPrivateReplay(snapshot: BrainSnapshot) {
+        val publicIds = sequence {
+            snapshot.workspace.forEach { yield(it.id) }
+            snapshot.notes.forEach { note ->
+                yield(note.objectId)
+                note.blocks.orEmpty().forEach { block -> block.refObjectId?.let { yield(it) } }
+            }
+            snapshot.files.forEach { yield(it.objectId) }
+            snapshot.provenance.forEach { yield(it.objectId); yield(it.sourceId) }
+            snapshot.relations.forEach { yield(it.fromId); yield(it.toId) }
+            snapshot.memories.forEach { yield(it.id); it.sourceObjectId?.let { id -> yield(id) } }
+            snapshot.legacyMemories.forEach { yield("mem_${it.legacyId}"); it.sourceObjectId?.let { id -> yield(id) } }
+            snapshot.conversations.forEach { yield(it.id) }
+            snapshot.turns.forEach { yield(it.id); yield(it.conversationId) }
+            snapshot.agentRuns.forEach { yield(it.id) }
+            snapshot.agentSteps.forEach { yield(it.id); yield(it.runId) }
+            snapshot.episodes.forEach { yield(it.id); yield(it.runId) }
+            snapshot.suggestionDecisions.forEach { yield(it.id) }
+            snapshot.everyday.forEach { if (it.kind == "ORGANIZER") yield(it.id) }
+        }
+        val privateLibrary = database.privateLibraryDao()
+        for (batch in publicIds.distinct().map(::privateLibraryClaim).chunked(400)) {
+            check(privateLibrary.claims(batch).isEmpty()) {
+                "This backup contains an item locked in Private. Restore the item from Private before applying the backup."
+            }
+        }
+    }
 
     private suspend fun clearBrain(dao: BrainSnapshotDao) {
         dao.clearAgentSteps(); dao.clearAgentRuns(); dao.clearFiles(); dao.clearRelations(); dao.clearProvenance(); dao.clearWorkingSet()

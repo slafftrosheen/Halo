@@ -169,11 +169,13 @@ class HaloNativeWidget : AppWidgetProvider() {
             val height = requestedHeight.coerceAtLeast(72)
             val narrow = width < 240 || context.resources.configuration.fontScale >= 1.2f
             val wide = !narrow && width >= 240 && height >= 160
-            val scheme = nearbyScheme(context)
+            val config = com.halo.app.everyday.presentation.EverydayCardConfig(com.halo.app.everyday.presentation.EverydayCardKind.QUICK_ACTIONS)
+            val scheme = EverydayWidgetAppearance.scheme(context, config)
             val density = context.resources.displayMetrics.density
             return RemoteViews(context.packageName, if (narrow) R.layout.halo_native_widget_narrow else if (wide) R.layout.halo_native_widget_wide else R.layout.halo_native_widget).apply {
-                setImageViewBitmap(R.id.halo_widget_background, nearbyBackground((width*density).toInt(), (height*density).toInt(), density, scheme.surfaceContainerLow.toArgb()))
-                setImageViewBitmap(R.id.halo_widget_orb, nearbyOrb(context, (48*density).toInt()))
+                setImageViewBitmap(R.id.halo_widget_background,
+                    EverydayWidgetAppearance.background(context, config, scheme, width, height, pixelsLimit = 384f))
+                setImageViewBitmap(R.id.halo_widget_orb, nearbyOrb(context, (48*density).toInt(), scheme = scheme))
                 setContentDescription(R.id.halo_widget_orb, label("Open Mini Halo"))
                 val animated = EverydayWidgetMotion.level(context, kids = ManualDependencyGraph.kidsPreferences.enabled.value) ==
                     com.halo.app.ui.theme.HaloLookMotion.FULL

@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +40,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
@@ -46,6 +49,7 @@ import com.halo.app.R
 import com.halo.app.ui.design.HaloShapes
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.zone5.Zone5Icon
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
@@ -70,7 +74,27 @@ internal fun HomeGreetingLine(greeting: HomeGreeting, day: LocalDate, weather: H
     val label = if (greeting == HomeGreeting.WEATHER && weather != null) {
         stringResource(R.string.home_start_day_with_weather, dayLabel, weather.place, weather.temperatureC.roundToInt())
     } else dayLabel
-    Text(label, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
+    Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+@Composable
+internal fun HomeStartHeader(
+    greeting: HomeGreeting,
+    hour: Int,
+    day: LocalDate,
+    weather: HomeWeather?,
+    modifier: Modifier = Modifier,
+) {
+    val title = when {
+        greeting == HomeGreeting.OFF -> com.halo.app.language.uiText("Home")
+        hour < 12 -> stringResource(R.string.home_greeting_morning)
+        hour < 18 -> stringResource(R.string.home_greeting_afternoon)
+        else -> stringResource(R.string.home_greeting_evening)
+    }
+    Column(modifier.fillMaxWidth().padding(top = 20.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(title, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
+        HomeGreetingLine(greeting, day, weather)
+    }
 }
 
 @Composable
@@ -79,17 +103,30 @@ internal fun HomeStartButtons(
     enabled: (HomeStart) -> Boolean,
     onOpen: (HomeStart) -> Unit,
 ) {
-    val easy = com.halo.app.ui.theme.rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
-    layout.starts.forEach { start ->
-        Surface(onClick = { onOpen(start) }, enabled = enabled(start),
-            modifier = Modifier.fillMaxWidth().heightIn(min = if (easy) 64.dp else 56.dp),
-            shape = HaloShapes.card, color = MaterialTheme.colorScheme.surfaceContainerLow,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
-            Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                HaloIcon(start.glyph, null, tint = MaterialTheme.colorScheme.primary)
-                Text(stringResource(start.label), Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
-                HaloIcon(HaloGlyph.NEXT, null, Modifier.size(18.dp))
+    val visual = com.halo.app.ui.theme.rememberVisualPreferences()
+    val easy = visual.viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
+    val colors = MaterialTheme.colorScheme
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        layout.starts.forEach { start ->
+            Surface(onClick = { onOpen(start) }, enabled = enabled(start),
+                modifier = Modifier.fillMaxWidth().heightIn(min = if (easy) 64.dp else 68.dp),
+                shape = HaloShapes.card, color = colors.surfaceContainerLow.copy(alpha = if (visual.higherContrast) 1f else .82f),
+                contentColor = colors.onSurface, border = BorderStroke(1.dp, colors.outlineVariant)) {
+                Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(shape = RoundedCornerShape(12.dp), color = colors.primary.copy(alpha = .12f),
+                        contentColor = colors.onSurface) {
+                        Box(Modifier.size(if (easy) 44.dp else 40.dp), contentAlignment = Alignment.Center) {
+                            Zone5Icon(start.iconId, start.glyph, Modifier.size(22.dp), tint = colors.primary)
+                        }
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(start.label), style = MaterialTheme.typography.titleSmall)
+                        if (!easy) Text(stringResource(start.detail), style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant)
+                    }
+                    Zone5Icon("action_forward", HaloGlyph.NEXT, Modifier.size(16.dp), tint = colors.onSurfaceVariant)
+                }
             }
         }
     }

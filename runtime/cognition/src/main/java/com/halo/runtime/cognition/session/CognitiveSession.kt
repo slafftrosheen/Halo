@@ -30,6 +30,7 @@ import com.halo.runtime.cognition.blackboard.InteractionOrigin
 import com.halo.runtime.cognition.blackboard.toObservationOrigin
 import com.halo.runtime.cognition.blackboard.InterpretationKnowledge
 import com.halo.runtime.cognition.conversation.ConversationStore
+import com.halo.runtime.cognition.conversation.ConversationExecutionLease
 import com.halo.runtime.cognition.facts.RuntimeFactResolver
 import com.halo.runtime.cognition.facts.DefaultRuntimeFactResolver
 import com.halo.runtime.cognition.turn.*
@@ -211,14 +212,11 @@ class CognitiveSession(
                         interpretation.metadata["conversationId"] ?: conversationStore.activeConversationId()
                     val job = scope.launch(start = CoroutineStart.LAZY) {
                         val ownedJob = coroutineContext[Job]!!
+                        var conversationLease: ConversationExecutionLease? = null
                         try {
                             conversationStore.awaitReady()
                             val boundConversation = conversationAtSubmission ?: conversationStore.activeConversationId()
-                            if (boundConversation != null) {
-                                require(conversationStore.isConversationAvailable(boundConversation)) {
-                                    "Conversation unavailable"
-                                }
-                            }
+                            conversationLease = conversationStore.reserveConversationExecution(boundConversation)
                             eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(identity.value)))
                             eventBus.publish(CognitiveRequestStarted(requestId = requestId, interactionId = identity.value))
                             val fact = factResolver.resolve(intent)
@@ -267,7 +265,8 @@ class CognitiveSession(
                             eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Failed(identity.value, message)))
                         } finally {
                             kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
-                                activeTurnCoordinator.clear(identity, ownedJob)
+                                try { activeTurnCoordinator.clear(identity, ownedJob) }
+                                finally { conversationLease?.release() }
                             }
                         }
                     }
@@ -326,7 +325,9 @@ class CognitiveSession(
                             listOfNotNull((interpretation.metadata["conversationId"] ?: conversationStore.activeConversationId())?.let { "conversationId" to it }).toMap())
                         val job = scope.launch(start = kotlinx.coroutines.CoroutineStart.LAZY) {
                             val ownedJob = coroutineContext[Job]!!
+                            var conversationLease: ConversationExecutionLease? = null
                             try {
+                                conversationLease = conversationStore.reserveConversationExecution(bound.metadata["conversationId"])
                                 _state.value = CognitiveSessionState.ExecutingTool("Native action")
                                 val requestId = "native:${identity.value}"
                                 eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(identity.value)))
@@ -338,7 +339,8 @@ class CognitiveSession(
                                 publishRouteResponse(text,
                                     bound, responseDelivery, result?.request?.interactionId ?: identity.value,
                                     terminal = terminal, boundRunId = result?.runId,
-                                    requestId = requestId, requestAlreadyStarted = true)
+                                    requestId = requestId, requestAlreadyStarted = true,
+                                    reservedConversationId = bound.metadata["conversationId"])
                                 // A waiting run is not a completed action. The response can be
                                 // presented or spoken while Activity retains its pending task.
                                 if (terminal) eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Completed(identity.value)))
@@ -362,7 +364,8 @@ class CognitiveSession(
                                 kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
                                     if (!ownedJob.isActive && (activeTurnCoordinator.activeTurn.value == null || activeTurnCoordinator.activeTurn.value?.job === ownedJob))
                                         _state.value = CognitiveSessionState.Idle
-                                    activeTurnCoordinator.clear(identity, ownedJob)
+                                    try { activeTurnCoordinator.clear(identity, ownedJob) }
+                                    finally { conversationLease?.release() }
                                 }
                             }
                         }
@@ -442,6 +445,7 @@ class CognitiveSession(
         boundRunId: AgentRunId? = null,
         requestId: String? = null,
         requestAlreadyStarted: Boolean = false,
+        reservedConversationId: String? = null,
     ) {
         conversationStore.awaitReady()
         val run = boundRunId?.let { agentRecoveryExecutor.loadRun(it) }
@@ -452,23 +456,25 @@ class CognitiveSession(
                 com.halo.sdk.runtime.fallbackFor(interpretation.origin?.speechRoute, voicePolicy().wearablePhoneFallback), responseDelivery)
         val responseRequestId = requestId ?: boundRunId?.let { "native:${it.value}:response" } ?: UUID.randomUUID().toString()
         val identity = InteractionId(interactionId ?: interpretation.origin?.captureId ?: UUID.randomUUID().toString())
-        if (!requestAlreadyStarted)
-            eventBus.publish(CognitiveRequestStarted(requestId = responseRequestId, interactionId = identity.value))
-        responseCommitter.commit(CognitiveResponseCommit(boundRunId, identity, responseRequestId, interpretation.transcript,
-            AiResponse(text, providerId = "native"), route.delivery, route.target, route.fallback, interpretation.origin?.captureId,
-            mapOf("inputSurface" to if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) "WEARABLE" else "PHONE"),
-            conversationId = conversation, terminal = terminal))
-        // A nonterminal tool result is a durable handoff: the response committer
-        // deliberately does not synthesize its text. Say the pending requirement
-        // without falsely completing the tool run or leaking wearable audio to phone.
-        if (!terminal && route.delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
-            val spoken = TtsSanitizer.sanitize(text)
-            if (spoken.isNotBlank()) eventBus.publish(TtsRequested(
-                text = spoken, transactionId = responseRequestId, target = route.target,
-                fallback = route.fallback, sourceCaptureId = interpretation.origin?.captureId,
-                interactionId = identity.value,
-            ))
+        suspend fun publish() {
+            if (!requestAlreadyStarted)
+                eventBus.publish(CognitiveRequestStarted(requestId = responseRequestId, interactionId = identity.value))
+            responseCommitter.commit(CognitiveResponseCommit(boundRunId, identity, responseRequestId, interpretation.transcript,
+                AiResponse(text, providerId = "native"), route.delivery, route.target, route.fallback, interpretation.origin?.captureId,
+                mapOf("inputSurface" to if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) "WEARABLE" else "PHONE"),
+                conversationId = conversation, terminal = terminal))
+            // Pending work can present a requirement without completing the tool run.
+            if (!terminal && route.delivery == ResponseDelivery.SPEECH_AND_VISUAL) {
+                val spoken = TtsSanitizer.sanitize(text)
+                if (spoken.isNotBlank()) eventBus.publish(TtsRequested(
+                    text = spoken, transactionId = responseRequestId, target = route.target,
+                    fallback = route.fallback, sourceCaptureId = interpretation.origin?.captureId,
+                    interactionId = identity.value, conversationId = conversation,
+                ))
+            }
         }
+        if (conversation == reservedConversationId && reservedConversationId != null) publish()
+        else conversationStore.withConversationExecution(conversation, ::publish)
     }
 
     fun submit(
@@ -492,10 +498,11 @@ class CognitiveSession(
         // a fast failure/completion can clear nothing, after which an already-finished Job is
         // installed as the active turn and every later speech request is dropped as occupied.
         val job = scope.launch(start = CoroutineStart.LAZY) {
+            var conversationLease: ConversationExecutionLease? = null
             try {
                 conversationStore.awaitReady()
                 val boundConversation = conversationAtSubmission ?: conversationStore.activeConversationId()
-                if (boundConversation != null) require(conversationStore.isConversationAvailable(boundConversation)) { "Conversation unavailable" }
+                conversationLease = conversationStore.reserveConversationExecution(boundConversation)
                 continuity?.bind(boundConversation, interactionId.value, RunContinuityResolver.endpoint(com.halo.sdk.runtime.responseTarget(origin?.speechRoute), origin?.toObservationOrigin()))
                 if (resumedRunId == null) {
                     eventBus.publish(InteractionTurnChanged(state = InteractionTurnState.Preparing(interactionId.value)))
@@ -580,8 +587,10 @@ class CognitiveSession(
             } finally {
                 val ownedJob = this.coroutineContext[Job]!!
                 kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
-                    activeTurnCoordinator.clear(interactionId, ownedJob)
-                    if (!ownedJob.isActive) continuity?.end(interactionId.value)
+                    try {
+                        activeTurnCoordinator.clear(interactionId, ownedJob)
+                        if (!ownedJob.isActive) continuity?.end(interactionId.value)
+                    } finally { conversationLease?.release() }
                 }
             }
         }
@@ -618,32 +627,34 @@ class CognitiveSession(
                 return@launch
             }
             if (automatic && previous == null) return@launch
-            if (bound != previous && !agentRecoveryExecutor.bindConversation(runId, bound, continueInCurrentConversation)) return@launch
-            val run = agentRecoveryExecutor.loadRun(runId) ?: return@launch
-            val route = RunContinuityResolver.delivery(run)
-            val inputModality = RunContinuityResolver.inputModality(run)
-            val inputSurface = when (run.origin?.source) {
-                ObservationSource.HeyCyanGlasses -> "WEARABLE"
-                ObservationSource.AndroidAssist -> "ANDROID_ASSISTANT"
-                else -> "PHONE"
-            }
-            val originalOrigin = com.halo.runtime.cognition.blackboard.InteractionOrigin(
-                source = if (inputModality == com.halo.runtime.cognition.turn.InteractionInputModality.VOICE) com.halo.sdk.runtime.Source.MICROPHONE else com.halo.sdk.runtime.Source.USER,
-                sourceDeviceId = run.origin?.hostId, captureId = run.sourceCaptureId, observationOrigin = run.origin,
-                speechRoute = RunContinuityResolver.inputRoute(run))
-            val interactionId = run.interactionId
+            val interactionId = original.interactionId
             val job = scope.launch(start = CoroutineStart.LAZY) {
+            var conversationLease: ConversationExecutionLease? = null
             try {
+                conversationLease = conversationStore.reserveConversationExecution(bound)
+                if (bound != previous && !agentRecoveryExecutor.bindConversation(runId, bound, continueInCurrentConversation)) return@launch
+                val run = agentRecoveryExecutor.loadRun(runId) ?: return@launch
+                val route = RunContinuityResolver.delivery(run)
+                val inputModality = RunContinuityResolver.inputModality(run)
+                val inputSurface = when (run.origin?.source) {
+                    ObservationSource.HeyCyanGlasses -> "WEARABLE"
+                    ObservationSource.AndroidAssist -> "ANDROID_ASSISTANT"
+                    else -> "PHONE"
+                }
+                val originalOrigin = com.halo.runtime.cognition.blackboard.InteractionOrigin(
+                    source = if (inputModality == com.halo.runtime.cognition.turn.InteractionInputModality.VOICE) com.halo.sdk.runtime.Source.MICROPHONE else com.halo.sdk.runtime.Source.USER,
+                    sourceDeviceId = run.origin?.hostId, captureId = run.sourceCaptureId, observationOrigin = run.origin,
+                    speechRoute = RunContinuityResolver.inputRoute(run))
                 continuity?.restore(run)
                 if (nativeDispatcher?.ownsRun(runId) == true) {
                     val nativeResult = nativeDispatcher.resume(runId) ?: return@launch
                     val interpretation = com.halo.runtime.cognition.blackboard.Interpretation(
-                        metadata = mapOf("interactionId" to nativeResult.request.interactionId),
+                        metadata = mapOf("interactionId" to nativeResult.request.interactionId, "conversationId" to bound),
                         origin = nativeDispatcher.resumeOrigin(runId))
                     publishRouteResponse(nativeResult.responseText(), interpretation,
                         if (interpretation.origin?.speechRoute is SpeechInputRoute.Device) ResponseDelivery.SPEECH_AND_VISUAL else responseDelivery,
                         nativeResult.request.interactionId, terminal = nativeResult.result is ToolTurnResult.Completed || nativeResult.result is ToolTurnResult.RunStopped,
-                        boundRunId = nativeResult.runId)
+                        boundRunId = nativeResult.runId, reservedConversationId = bound)
                     return@launch
                 }
                 when (val result = agentRecoveryExecutor.executeRecovery(runId)) {
@@ -756,7 +767,10 @@ class CognitiveSession(
                 _state.value = CognitiveSessionState.Failed(mapErrorMessage(e))
             } finally {
                 val ownedJob = this.coroutineContext[Job]!!
-                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { activeTurnCoordinator.clear(interactionId, ownedJob) }
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                    try { activeTurnCoordinator.clear(interactionId, ownedJob) }
+                    finally { conversationLease?.release() }
+                }
             }
             }
             launchTracked(interactionId, job, resume = true, automatic = automatic)

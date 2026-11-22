@@ -11,6 +11,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,8 +21,14 @@ import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.collectors.*
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloAlertDialog
+import com.halo.app.ui.components.HaloReadAloud
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.presence.*
+import com.halo.app.ui.screens.home.HaloHomeBlock
+import com.halo.app.ui.screens.home.HaloHomeBlockDeck
+import com.halo.app.ui.screens.home.rememberHaloBlockChoices
 import com.halo.app.ui.zone5.*
 import com.halo.app.ui.screens.notebook.ToolZoneHeader
 import kotlinx.coroutines.*
@@ -33,11 +40,12 @@ import java.time.format.FormatStyle
 @Composable
 fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, onBack: () -> Unit,
     onSource: (String, String?) -> Unit, onOrganizer: (String?) -> Unit, onLocal: (LocalFact) -> Unit,
-    onWidgetsDestination: (String) -> Unit = {}) {
+    onWidgetsDestination: (String) -> Unit = {}, readsOnly: Boolean = false, onOpenReadBlock: (String) -> Unit = {}) {
     val state by model.state.collectAsStateWithLifecycle()
     val familyReady by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
     val familyEnabled by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
     val privacy by Graph.privacyModes.mode.collectAsStateWithLifecycle()
+    val picturesVisible by Graph.articlePictureSettings.visible.collectAsStateWithLifecycle()
     val kids = !familyReady || familyEnabled
     val power = privacy == PrivacyMode.CLOUD
     val canShow = familyReady && familyEnabled == state.kids
@@ -54,7 +62,10 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
     var selectedOnly by rememberSaveable { mutableStateOf(false) }
     var adding by rememberSaveable { mutableStateOf(false) }
     var addingWidget by rememberSaveable { mutableStateOf(false) }
+    var showingKnowledge by rememberSaveable { mutableStateOf(false) }
     val addWidgetLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.alive_widget_title)
+    val heading = if (readsOnly) androidx.compose.ui.res.stringResource(com.halo.app.R.string.halo11_home_reads)
+        else uiText("Widgets & sources")
     var cityKind by rememberSaveable { mutableStateOf<String?>(null) }
     var removing by remember { mutableStateOf<CollectorSource?>(null) }
     var clearing by remember { mutableStateOf<CollectorSource?>(null) }
@@ -63,7 +74,18 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
     val current = state.sources.find { it.source.id == sourceId }?.takeIf { canShow && (!kids || SourcesViewModel.childSource(it.source)) }?.let { row ->
         state.manualReceipt?.takeIf { it.source.id == row.source.id && it.source.version == row.source.version } ?: row
     }
-    LaunchedEffect(kids) { if (kids) { adding = false; addingWidget = false; cityKind = null; removing = null; clearing = null; article = null } }
+    val readsHome = readsOnly && sourceId == null && canShow && !kids
+    val headlines = remember(state.sources, readsHome) {
+        if (!readsHome) emptyList() else state.sources.asSequence().filter {
+            it.source.kind == CollectorKind.FEED && it.source.enabled && it.source.selected && !it.source.muted
+        }.mapNotNull { row ->
+            val snapshot = row.snapshot?.takeIf { it.sourceVersion == row.source.version }
+            (snapshot?.payload as? CollectorPayload.Articles)?.items?.maxByOrNull {
+                it.publishedAt ?: Instant.MIN
+            }?.let { row.source to it }
+        }.sortedByDescending { it.second.publishedAt ?: Instant.MIN }.take(6).toList()
+    }
+    LaunchedEffect(kids) { if (kids) { adding = false; addingWidget = false; showingKnowledge = false; cityKind = null; removing = null; clearing = null; article = null } }
     val savedArticle = (current?.snapshot?.payload as? CollectorPayload.Articles)?.items?.firstOrNull { it.id == itemId }
     val fullArticle by produceState<ArticleContent?>(null, savedArticle?.contentKey) {
         value = savedArticle?.let { withContext(Dispatchers.IO) { Graph.articleContentStore.read(it.contentKey) } }
@@ -72,14 +94,23 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
     var articleReading by remember(itemId) { mutableStateOf(false) }
     val owner = ShellPageOwner(if (sourceId == null) "everyday_sources" else "everyday_source", objectId = sourceId,
         sourceIdentity = "${current?.source?.version}:${current?.snapshot?.contentRevision}:$itemId:${state.busy}:$kids:${state.draft != null}",
+        canonicalToolIds = if (sourceId == null && !kids) listOf("halo_source_query", "halo_source_save",
+            "halo_knowledge_catalogue", "halo_knowledge_search", "halo_knowledge_download")
+            else listOf("halo_source_query", "halo_source_get", "halo_source_image"),
         statusLabel = current?.snapshot?.retrievedAt?.let { uiText("Retrieved %1\$s", time(it)) }
             ?: uiText(if (power) "Power" else "Local"), guidanceBlocked = state.busy || state.loading || state.draft != null,
         helpDescription = uiText("Choose sources on this phone. Only selected, enabled sources refresh in Power. Saved snapshots remain readable in Local."),
         defaultDisabledActionReason = uiText(if (!power) "Refresh external sources in Power. Saved information stays available in Local." else "Select and enable the source, or wait for the current action to finish."))
     BindShellPageActions(owner, buildList {
-        if (sourceId == null && !kids) add(ShellPageAction("page.sources.widget", addWidgetLabel, HaloGlyph.TOOL) {
-            addingWidget = true
-        })
+        if (!kids) {
+            if (sourceId == null) add(ShellPageAction("page.sources.knowledge", stringResource(com.halo.app.R.string.knowledge_title), HaloGlyph.INTEGRATIONS) {
+                showingKnowledge = true
+            })
+            if (sourceId == null && !readsOnly) add(ShellPageAction("page.sources.widget", addWidgetLabel, HaloGlyph.TOOL) { addingWidget = true })
+            add(ShellPageAction("page.sources.pictures", uiText(if (picturesVisible) "Hide article pictures" else "Show article pictures"), HaloGlyph.SETTINGS) {
+                if (!Graph.kidsPreferences.enabled.value) Graph.articlePictureSettings.setVisible(!Graph.articlePictureSettings.visible.value)
+            })
+        }
         if (savedArticle != null) {
             add(ShellPageAction("page.sources.read", uiText("Read aloud"), HaloGlyph.SPEAK) { articleReading = true })
             if (!kids) add(ShellPageAction("page.sources.ask", uiText("Ask halo"), HaloGlyph.HALO) {
@@ -103,21 +134,41 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
         com.halo.app.ui.components.HaloReadAloud((fullArticle?.text ?: savedArticle.text).ifBlank { savedArticle.title })
     }
     if (LocalShellHaloOrb.current) BindShellUtilityBand(owner) {
-        ToolZoneHeader(uiText(if (sourceId == null) "Widgets & sources" else "Saved source"), onBack)
+        ToolZoneHeader(if (sourceId == null) heading else uiText("Saved source"), onBack)
     }
-    fun external(url: String) {
-        if (kids || Graph.kidsPreferences.enabled.value) return
-        if (Graph.privacyModes.mode.value != PrivacyMode.CLOUD) { externalError = "Opening a publisher website needs Power. The saved article remains available here."; return }
+    fun external(url: String): Boolean {
+        if (kids || Graph.kidsPreferences.enabled.value) return false
+        if (Graph.privacyModes.mode.value != PrivacyMode.CLOUD) { externalError = "Opening a publisher website needs Power. The saved article remains available here."; return false }
         externalError = runCatching {
             val checked = CollectorUrlPolicy.validate(url)
             context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(checked.toString())))
         }.fold({ null }, { "This website could not be opened. The saved information is kept." })
+        return externalError == null
     }
+    if (showingKnowledge && canShow && !kids) OfflineKnowledgeSheet(power, { showingKnowledge = false }, ::external)
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item {
-            Zone5PageHeading(current?.source?.title ?: uiText("Widgets & sources"), uiText("Saved information with clear sources and timestamps."))
+        if (savedArticle == null) item {
+            Zone5PageHeading(current?.source?.title ?: heading, uiText("Saved information with clear sources and timestamps."))
             Text(uiText(if (power) "Power · Only selected and enabled sources may refresh." else "Local · No internet refresh. Saved external information may be out of date."), style = MaterialTheme.typography.bodySmall)
             if (!LocalShellHaloOrb.current) TextButton(onBack) { Text(uiText("Back")) }
+        }
+        if (sourceId == null && canShow && !kids) item("offline-knowledge") {
+            OutlinedButton(onClick = { showingKnowledge = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(com.halo.app.R.string.knowledge_title))
+            }
+        }
+        if (readsHome) item("reads-headlines") {
+            val choices = rememberHaloBlockChoices("reads")
+            val saved = headlines.map { (source, fact) ->
+                HaloHomeBlock(source.id, com.halo.app.R.string.today_block_reads, fact.title,
+                    fact.publisher.ifBlank { source.publisher }, com.halo.app.R.string.today_block_why_reads,
+                    EverydayRoutes.source(source.id, fact.id), pictures = fact.gallery(picturesVisible, kids = false))
+            }
+            val spokenHeadlines = headlines.filter { (source, _) -> source.id !in choices.hidden }
+                .joinToString("\n\n") { (source, fact) -> "${fact.publisher.ifBlank { source.publisher }}. ${fact.title}" }
+            if (spokenHeadlines.isNotBlank()) HaloReadAloud(spokenHeadlines,
+                label = stringResource(com.halo.app.R.string.today_read_headlines), category = com.halo.sdk.provider.RemoteDataCategory.TEXT)
+            HaloHomeBlockDeck(saved, choices, onOpenReadBlock)
         }
         if (state.loading || state.busy || !canShow) item { com.halo.app.ui.zone6.Zone6DelayedLoading(true) }
         if (current?.attempt?.state == CollectorAttemptState.OFFLINE) item {
@@ -129,7 +180,7 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
         if (sourceId != null && current == null && !state.loading && canShow) item { Text(uiText("This source is unavailable or is no longer shared with this experience.")) }
         if (current != null) {
             val source = current.source
-            item {
+            if (savedArticle == null) item {
                 Text(source.publisher, style = MaterialTheme.typography.labelLarge)
                 Text(uiText(sourceCategoryLabel(source.category)) + " · " + source.language)
                 if (!source.selected) Text(uiText("Not selected · this source does not refresh."))
@@ -151,15 +202,18 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                 }
                 if (itemId != null) TextButton({ onSource(source.id, null) }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Back to saved source")) }
             }
-            collectorContent(current, itemId, now, locale, kids, { onSource(source.id, it) }, ::external, { entry ->
+            collectorContent(current, itemId, now, locale, kids, { onSource(source.id, it) }, { external(it) }, { entry ->
                 current.snapshot?.let { article = ArticleReminderReview(source.id, source.version, it.contentRevision, entry) }
-            }, onLocal)
+            }, onLocal, picturesVisible)
         } else if (sourceId == null && canShow) {
             item {
-                Text(uiText("On your home screen"), style = MaterialTheme.typography.titleMedium)
-                if (!kids) FilledTonalButton(onClick = { addingWidget = true },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(addWidgetLabel) }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (!readsOnly) Text(uiText("On your home screen"), style = MaterialTheme.typography.titleMedium)
+                if (!kids) FilledTonalButton(onClick = { if (readsOnly) adding = true else addingWidget = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(if (readsOnly) uiText("Add feed") else addWidgetLabel) }
+                if (!kids) EverydayToggle(uiText("Show article pictures"), picturesVisible, !state.busy) {
+                    if (!Graph.kidsPreferences.enabled.value) Graph.articlePictureSettings.setVisible(it)
+                }
+                if (!readsOnly) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton({ onOrganizer(null) }, Modifier.heightIn(min = 48.dp)) { Text(uiText("Organizer")) }
                     TextButton({ onWidgetsDestination(EverydayRoutes.CLOCKS) }, Modifier.heightIn(min = 48.dp)) { Text(uiText("World clocks")) }
                     TextButton({ onWidgetsDestination(EverydayRoutes.BRIEF) }, Modifier.heightIn(min = 48.dp)) { Text(uiText("Your day")) }
@@ -167,7 +221,8 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                         enabled = !state.busy) { Text(uiText("Add air & pollen city")) }
                 }
 
-                OutlinedTextField(query, { query = it.take(200) }, label = { Text(uiText("Find sources")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                HaloTextField(query, { query = it.take(200) }, VoiceFieldKind.SEARCH,
+                    label = { Text(uiText("Find sources")) }, modifier = Modifier.fillMaxWidth(), singleLine = true, maxChars = 200)
                 FilterChip(selectedOnly, { selectedOnly = !selectedOnly }, modifier = Modifier.heightIn(min = 56.dp), label = { Text(uiText("Selected sources")) })
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(category == null, { category = null }, modifier = Modifier.heightIn(min = 56.dp), label = { Text(uiText("All categories")) })
@@ -175,13 +230,15 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(language == null, { language = null }, modifier = Modifier.heightIn(min = 56.dp), label = { Text(uiText("All languages")) })
-                    state.sources.map { it.source.language }.distinct().sorted().forEach { value ->
+                    state.sources.filter { !readsOnly || it.source.kind == CollectorKind.FEED }
+                        .map { it.source.language }.distinct().sorted().forEach { value ->
                         FilterChip(language == value, { language = value }, modifier = Modifier.heightIn(min = 56.dp), label = { Text(value) })
                     }
                 }
             }
             val sources = state.sources.filter { row ->
-                (!selectedOnly || row.source.selected) && (category == null || row.source.category.name == category) &&
+                (!readsOnly || row.source.kind == CollectorKind.FEED) && (!selectedOnly || row.source.selected) &&
+                    (category == null || row.source.category.name == category) &&
                     (language == null || row.source.language == language) && "${row.source.title} ${row.source.publisher}".contains(query, true)
             }
             if (sources.isEmpty() && !state.loading) item {
@@ -200,6 +257,13 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(row.source.title, style = MaterialTheme.typography.titleMedium)
                         Text("${row.source.publisher} · ${row.source.language}", style = MaterialTheme.typography.bodySmall)
+                        if (!readsOnly && picturesVisible && row.source.selected && row.source.enabled && !row.source.muted) {
+                            val preview = (row.snapshot?.takeIf { it.sourceVersion == row.source.version }
+                                ?.payload as? CollectorPayload.Articles)?.items
+                                ?.filter { it.gallery(picturesVisible, kids).isNotEmpty() }
+                                ?.maxByOrNull { it.publishedAt ?: Instant.MIN }
+                            if (preview != null) ArticleSourcePreview(preview, picturesVisible, kids)
+                        }
                         Text(uiText(sourceCategoryLabel(row.source.category)), style = MaterialTheme.typography.labelLarge)
                         if (!kids) EverydayToggle(uiText("Include in selected sources"), row.source.selected, !state.busy) { model.select(row.source, it) }
                         Text(uiText(if (row.snapshot == null) "No saved snapshot" else if (row.snapshot.stale(now, row.source.external, power)) "Cached · may be out of date" else "Saved snapshot is current"), style = MaterialTheme.typography.bodySmall)
@@ -212,7 +276,7 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
     if (!kids) state.draft?.let { SourceSettings(model, state, it) }
     if (adding && !kids) AddFeedSheet(model, state, power) { adding = false }
     val chosenCityKind = cityKind?.let(CollectorKind::valueOf)
-    if (chosenCityKind != null && !kids) OfflineCityPicker(state.busy, onDismiss = { cityKind = null }) { city ->
+    if (chosenCityKind != null && !kids) OfflineCityPicker(state.busy, onDismiss = { cityKind = null }, weather = true) { city ->
         val place = city.weatherPlace()
         val air = chosenCityKind == CollectorKind.AIR_QUALITY
         val prefix = if (air) "air" else "weather"
@@ -220,7 +284,7 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
         model.edit(CollectorSource("$prefix:${java.util.UUID.randomUUID()}", title, "Open-Meteo", chosenCityKind,
             SourceCategory.WEATHER, "und",
             if (air) OpenMeteoAirQuality.endpoint(place) else OpenMeteoParser.endpoint(place),
-            if (air) OpenMeteoAirQuality.ATTRIBUTION_URL else "https://open-meteo.com/", place = place), creating = true)
+            if (air) OpenMeteoAirQuality.ATTRIBUTION_URL else "https://open-meteo.com/", selected = true, place = place), creating = true)
         cityKind = null
     }
     removing?.takeIf { !kids }?.let { source -> HaloAlertDialog({ removing = null }, title = { Text(uiText("Remove this source?")) },
@@ -272,7 +336,8 @@ private fun AddFeedSheet(model: SourcesViewModel, state: SourcesPageState, power
             Text(uiText("A source can be saved in Local without fetching it. Preview checks real feed contents in Power."))
             state.error?.let { EverydayMessage(it, true) }
             OutlinedTextField(title, { title = it.take(200) }, label = { Text(uiText("Source name")) }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(url, { url = it.take(4096) }, label = { Text(uiText("Public HTTPS feed address")) }, modifier = Modifier.fillMaxWidth())
+            HaloTextField(url, { url = it.take(4096) }, VoiceFieldKind.URL_ID, maxChars = 4096,
+                label = { Text(stringResource(com.halo.app.R.string.halo_source_public_url)) }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(language, { language = it.take(20) }, label = { Text(uiText("Source language · en, ru, lv or another code")) }, modifier = Modifier.fillMaxWidth())
             FlowRow {
                 listOf(CollectorKind.FEED to "RSS or Atom feed", CollectorKind.ALERTS to "CAP alerts", CollectorKind.PUBLIC_CALENDAR to "Public iCalendar").forEach { (kind, label) ->

@@ -5,6 +5,8 @@ import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
 import com.halo.app.ui.zone5.Zone5InstrumentHeading
 import com.halo.app.ui.zone5.Zone5ActionButton
+import com.halo.app.ui.instruments.HaloInstrumentAction
+import com.halo.app.ui.instruments.HaloInstrumentBar
 import com.halo.app.ui.zone6.BindHaloGestureAlternative
 import com.halo.app.ui.zone6.HaloGesture
 import com.halo.app.ui.zone6.LocalHaloPageGuidance
@@ -36,12 +38,18 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.data.notebook.CanvasNodeType
+import com.halo.app.data.notebook.CanvasVisualShape
+import com.halo.app.data.notebook.CanvasReviewPin
+import com.halo.app.data.notebook.canvasLockedIds
+import com.halo.app.data.notebook.isCanvasContainer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import com.halo.app.ui.fx.rememberHaloReducedMotion
@@ -163,6 +171,12 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         }
     }
     val boardEditingEnabled = state.canEditBoard()
+    var groupSelection by remember(viewModel.canvasId) { mutableStateOf<Set<String>?>(null) }
+    var reviewIndex by remember(viewModel.canvasId) { mutableStateOf(false) }
+    var pinPlacing by remember(viewModel.canvasId) { mutableStateOf(false) }
+    var pinPosition by remember(viewModel.canvasId) { mutableStateOf<Offset?>(null) }
+    var reviewPinId by remember(viewModel.canvasId) { mutableStateOf<String?>(null) }
+    val lockedIds = remember(state.nodes, state.edges) { canvasLockedIds(state.nodes, state.edges) }
     // Dismiss stale action menus if a background operation takes ownership of the board.
     // Saveable drafts remain intact and can be resumed when the board is ready.
     val memoReadiness by viewModel.memoReadiness.collectAsStateWithLifecycle()
@@ -282,6 +296,18 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var annotationOriginal by rememberSaveable { mutableStateOf("") }
     var searchOpen by remember { mutableStateOf(false) }
     var navigationControls by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
+    var handMode by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
+    var minimapOpen by remember(viewModel.canvasId) { mutableStateOf(false) }
+    var minimapJump by remember(viewModel.canvasId) { mutableStateOf<String?>(null) }
+    var minimapFit by remember(viewModel.canvasId) { mutableStateOf(false) }
+    var shapeOpen by remember(viewModel.canvasId) { mutableStateOf(false) }
+    var shapeTarget by remember(viewModel.canvasId) { mutableStateOf<CanvasNode?>(null) }
+    var frameOpen by remember(viewModel.canvasId) { mutableStateOf(false) }
+    var presenting by remember(viewModel.canvasId) { mutableStateOf(false) }
+    var alignOpen by remember(viewModel.canvasId) { mutableStateOf<Pair<Set<String>, Int>?>(null) }
+    var autoFocusNewText by remember(viewModel.canvasId) { mutableStateOf<String?>(null) }
+    var selectionStart by remember(viewModel.canvasId) { mutableStateOf<Offset?>(null) }
+    var selectionEnd by remember(viewModel.canvasId) { mutableStateOf<Offset?>(null) }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val pageOwner = ShellPageOwner("canvas", viewModel.canvasId,
         "${state.nodes.hashCode()}:${state.edges.hashCode()}:${state.selectedNodeIds.sorted()}:${state.selectedNodeId}",
@@ -299,7 +325,10 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             else -> stringResource(com.halo.app.R.string.zone5_saved_state)
         },
         helpDescription = stringResource(com.halo.app.R.string.zone5_help_canvas),
-        guidanceBlocked = connecting || appearanceDraft != null || navigationControls || !boardEditingEnabled || insertMenu || picker || showAi || state.aiDraft != null || menu || toolsExpanded || searchOpen || sketchOpen || showImageStudio,
+        guidanceBlocked = connecting || appearanceDraft != null || navigationControls || minimapOpen || shapeOpen ||
+            frameOpen || presenting || alignOpen != null || groupSelection != null || reviewIndex || pinPlacing ||
+            pinPosition != null || reviewPinId != null || !boardEditingEnabled || insertMenu || picker || showAi ||
+            state.aiDraft != null || menu || toolsExpanded || searchOpen || sketchOpen || showImageStudio,
         completedGuideIds = if (!state.loading && !state.missing && state.nodes.isNotEmpty()) setOf("canvas-add.v1", "canvas-new.v1") else emptySet(),
         helpSteps = listOf(com.halo.app.ui.presence.ShellGuideStep("canvas-add.v1", "page.canvas.add", stringResource(com.halo.app.R.string.zone5_guide_canvas), !state.loading && !state.missing && state.nodes.isNotEmpty())),
         nextStep = if (boardEditingEnabled && state.nodes.isEmpty() && !insertMenu && !picker && !showAi && state.aiDraft == null &&
@@ -399,6 +428,44 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     }
     var recognizing by remember { mutableStateOf(false) }
     var groupDialog by remember { mutableStateOf(false) }
+    groupSelection?.let { ids ->
+        val selection = state.nodes.filter { it.id in ids }
+        CanvasGroupInstruments(selection, lockedIds, onAction = { action ->
+            viewModel.manualSelectionActionOn(action, ids)
+            groupSelection = null
+        }, onDismiss = { groupSelection = null })
+    }
+    if (reviewIndex) {
+        CanvasReviewIndex(state.nodes, boardEditingEnabled, onPlace = {
+            reviewIndex = false
+            requestedList = false
+            handMode = false
+            pinPlacing = true
+        }, onOpen = { node ->
+            reviewIndex = false
+            reviewPinId = node.id
+        }, onDismiss = { reviewIndex = false })
+    }
+    val commentPosition = pinPosition
+    if (commentPosition != null) {
+        CanvasReviewPinDialog(null, boardEditingEnabled, onChange = { pin ->
+            viewModel.addReviewPin(commentPosition.x, commentPosition.y, pin) { id ->
+                pinPosition = null
+                reviewPinId = id
+            }
+        }, onDismiss = { pinPosition = null })
+    } else {
+        val reviewNode = state.nodes.firstOrNull { it.id == reviewPinId && it.type == CanvasNodeType.COMMENT }
+        val reviewPin = reviewNode?.let { CanvasReviewPin.decode(it.text) }
+        if (reviewNode != null && reviewPin != null) {
+            key(reviewNode.id, reviewNode.revision) {
+                CanvasReviewPinDialog(reviewPin, boardEditingEnabled, onChange = { pin ->
+                    viewModel.updateReviewPin(reviewNode, pin) { }
+                }, onDismiss = { reviewPinId = null })
+            }
+        }
+    }
+    BackHandler(enabled = pinPlacing) { pinPlacing = false }
     var groupTitle by rememberSaveable { mutableStateOf("") }
     var tagDialog by remember { mutableStateOf(false) }
     var tagTitle by rememberSaveable { mutableStateOf("") }
@@ -407,7 +474,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         val latest = state.nodes.firstOrNull { it.id == original.id }
         val matches = latest != null && latest.revision == original.revision && latest.text == original.text && latest.canEditListText()
         val maxChars = when (original.type) {
-            CanvasNodeType.GROUP -> 80
+            CanvasNodeType.GROUP, CanvasNodeType.FRAME -> 80
             CanvasNodeType.TAG -> 50
             else -> Int.MAX_VALUE
         }
@@ -471,6 +538,41 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
 
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) viewModel.importSource(uri)
+    }
+    if (minimapOpen) CanvasMinimapSheet(state.nodes, { id ->
+        requestedList = false; minimapJump = id; minimapOpen = false
+    }, onFit = { requestedList = false; minimapFit = true; minimapOpen = false }, onDismiss = { minimapOpen = false })
+    LaunchedEffect(showAsList, boardWidth, boardHeight, minimapJump, minimapFit) {
+        if (!showAsList && boardWidth > 0 && boardHeight > 0) {
+            minimapJump?.let(viewModel::focusNode)
+            if (minimapFit) viewModel.fitToContent()
+            minimapJump = null; minimapFit = false
+        }
+    }
+    if (shapeOpen) CanvasShapeDialog(shapeTarget?.let { CanvasVisualShape.decode(it.text) } ?: CanvasVisualShape(),
+        editing = shapeTarget != null, ready = boardEditingEnabled && shapeTarget?.let { state.nodes.firstOrNull { node -> node.id == it.id } == it } != false,
+        onApply = { shape ->
+            val existing = shapeTarget
+            if (existing == null) viewModel.addShape(shape) else viewModel.updateShape(existing, shape)
+            shapeTarget = null; shapeOpen = false
+        }, onDismiss = { shapeTarget = null; shapeOpen = false })
+    if (frameOpen) CanvasFrameDialog(boardEditingEnabled, onInsert = { title, preset ->
+        requestedList = false
+        handMode = false
+        viewModel.addFrame(title, preset)
+        frameOpen = false
+    }, onDismiss = { frameOpen = false })
+    if (presenting) CanvasPresentDialog(state) { presenting = false }
+    alignOpen?.let { (ids, fingerprint) ->
+        val valid = boardEditingEnabled && state.nodes.hashCode() == fingerprint && state.selectedNodeIds == ids
+        com.halo.app.ui.zone6.Zone6ButtonSheet(uiText("Align and distribute"), { alignOpen = null }) {
+            val commands = listOf("Align left", "Align center", "Align right", "Align top", "Align middle", "Align bottom",
+                "Distribute horizontally", "Distribute vertically")
+            commands.forEachIndexed { index, action ->
+                TextButton(onClick = { viewModel.manualSelectionAction(action); alignOpen = null },
+                    enabled = valid && ids.size >= if (index < 6) 2 else 3) { Text(uiText(action)) }
+            }
+        }
     }
     DisposableEffect(viewModel, lifecycleOwner) {
         com.halo.app.di.ManualDependencyGraph.activeCanvasForCapture.value = viewModel.canvasId
@@ -1052,6 +1154,44 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             onHalo = if (com.halo.app.ui.presence.LocalShellHaloOrb.current) null else ({ showAi = true }),
             haloEnabled = boardEditingEnabled)
         if (!state.loading && !state.missing) CanvasBoardModeSwitch(showAsList) { requestedList = it }
+        if (!state.loading && !state.missing) {
+            val canAct = boardEditingEnabled && !connecting
+            fun addText(sticky: Boolean) {
+                requestedList = false
+                handMode = false
+                if (state.selectionMode) viewModel.toggleSelectionMode()
+                viewModel.addTextNode(sticky) { id -> autoFocusNewText = id }
+            }
+            HaloInstrumentBar("canvas", mapOf(
+                "canvas.select" to HaloInstrumentAction({ handMode = false; viewModel.toggleSelectionMode() }, canAct, selected = state.selectionMode && !handMode),
+                "canvas.hand_pan" to HaloInstrumentAction({
+                    requestedList = false
+                    if (state.selectionMode) viewModel.toggleSelectionMode()
+                    handMode = !handMode
+                }, !connecting, selected = handMode && !showAsList),
+                "canvas.sticky_note" to HaloInstrumentAction({ addText(true) }, canAct, working = state.addingNode),
+                "canvas.shape" to HaloInstrumentAction({ requestedList = false; handMode = false; shapeTarget = null; shapeOpen = true }, canAct),
+                "canvas.text" to HaloInstrumentAction({ addText(false) }, canAct, working = state.addingNode),
+                "canvas.connector" to HaloInstrumentAction({ handMode = false; startConnect() }, canAct && state.nodes.size > 1, selected = connecting),
+                "canvas.pen_highlighter" to HaloInstrumentAction({ sketchTarget = null; sketchOriginal = ""; sketchOpen = true }, canAct),
+                "canvas.picture_file" to HaloInstrumentAction({ filePicker.launch(arrayOf("*/*")) }, canAct, working = state.importing),
+                "canvas.frame" to HaloInstrumentAction({ frameOpen = true }, canAct),
+                "canvas.group_lock" to HaloInstrumentAction({
+                    groupSelection = state.selectedNodeIds.ifEmpty { setOfNotNull(state.selectedNodeId) }
+                }, canAct && state.selectedNodeId != null, selected = state.selectedNodeId?.let { it in lockedIds } == true),
+                "canvas.comments" to HaloInstrumentAction({ reviewIndex = true }, !connecting,
+                    selected = reviewIndex || pinPlacing || reviewPinId != null),
+                "canvas.align_distribute" to HaloInstrumentAction({ alignOpen = state.selectedNodeIds to state.nodes.hashCode() }, canAct && state.selectedNodeIds.size >= 2),
+                "canvas.properties_panel" to HaloInstrumentAction({
+                    selected?.let { card ->
+                        if (card.type == CanvasNodeType.SHAPE) { shapeTarget = card; shapeOpen = true }
+                        else { listEditText = card.text; listEditSaveError = false; listEditCard = card }
+                    }
+                }, canAct && state.selectedNodeIds.size <= 1 && selected?.let { it.type == CanvasNodeType.SHAPE || it.canEditListText() } == true),
+                "canvas.minimap" to HaloInstrumentAction({ minimapOpen = true }, state.nodes.isNotEmpty() && !connecting),
+                "canvas.present" to HaloInstrumentAction({ presenting = true }, !connecting && state.nodes.any { it.type == CanvasNodeType.FRAME }, selected = presenting),
+            ), primary = "canvas.sticky_note")
+        }
         if (!shellOwnsOrb && !showAsList) Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1160,6 +1300,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 boardEditingEnabled,
                 onSelect = { id ->
                     if (connecting) { if (boardEditingEnabled) chooseConnectionNode(id) }
+                    else if (state.nodes.any { it.id == id && it.type == CanvasNodeType.COMMENT }) reviewPinId = id
                     else viewModel.selectNode(id)
                 },
                 onEdit = { node ->
@@ -1181,7 +1322,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         } else Box(Modifier.matchParentSize().haloGestureAnchor(HaloGesture.CANVAS_LINK).onSizeChanged {
             boardWidth = it.width; boardHeight = it.height
             viewModel.measureViewport(it.width.toFloat(), it.height.toFloat(), density.density)
-        }.pointerInput(viewModel, connecting, density) {
+        }.pointerInput(viewModel, connecting, density, state.selectionMode, handMode) {
             if (connecting) {
                 var origin: String? = null
                 fun cardAt(position: Offset): String? {
@@ -1223,7 +1364,22 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                         connectionPointer = change.position
                     }
                 }
-            } else detectTransformGestures { center, pan, zoom, _ ->
+            } else if (state.selectionMode && !handMode) detectDragGestures(
+                onDragStart = { point -> selectionStart = point; selectionEnd = point },
+                onDragEnd = {
+                    val from = selectionStart
+                    val to = selectionEnd
+                    if (from != null && to != null) {
+                        val view = viewModel.uiState.value
+                        val scale = view.viewportScale * density.density
+                        viewModel.selectInBounds((minOf(from.x, to.x) - view.viewportX) / scale,
+                            (minOf(from.y, to.y) - view.viewportY) / scale, (maxOf(from.x, to.x) - view.viewportX) / scale,
+                            (maxOf(from.y, to.y) - view.viewportY) / scale)
+                    }
+                    selectionStart = null; selectionEnd = null
+                }, onDragCancel = { selectionStart = null; selectionEnd = null },
+            ) { change, _ -> change.consume(); selectionEnd = change.position }
+            else detectTransformGestures { center, pan, zoom, _ ->
                 viewModel.transform(pan.x, pan.y, zoom, center.x, center.y)
             }
         }) {
@@ -1276,7 +1432,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             }
             val previewCandidates = state.nodes.mapNotNull { node ->
                 when (node.type) {
-                    CanvasNodeType.GROUP, CanvasNodeType.TAG, CanvasNodeType.SKETCH, CanvasNodeType.INK_SELECTION -> return@mapNotNull null
+                    CanvasNodeType.GROUP, CanvasNodeType.FRAME, CanvasNodeType.SHAPE, CanvasNodeType.TAG, CanvasNodeType.SKETCH, CanvasNodeType.INK_SELECTION -> return@mapNotNull null
                     else -> Unit
                 }
                 val ref = node.refObjectId ?: return@mapNotNull null
@@ -1292,7 +1448,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             }
             val admittedPreviews = admittedCanvasPreviews(previewCandidates, boardWidth.toFloat(),
                 boardHeight.toFloat(), requestedPreviewId ?: state.selectedNodeId)
-            state.nodes.sortedWith(compareBy<CanvasNode> { it.type != CanvasNodeType.GROUP }
+            state.nodes.sortedWith(compareBy<CanvasNode> { !it.type.isCanvasContainer() }
                 .thenBy { it.zIndex }).forEach { node ->
                 key(node.id) {
                     val position = cardMotion[node.id]
@@ -1303,12 +1459,16 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     val visible = x + with(density) { width.dp.toPx() } >= 0 && y + with(density) { height.dp.toPx() } >= 0 && x <= boardWidth && y <= boardHeight
                     val cardSelected = if (connecting) node.id == connectionFrom || node.id == connectionTo
                         else if (state.selectionMode) node.id in state.selectedNodeIds else node.id == state.selectedNodeId
-                    val selectCard: () -> Unit = { if (connecting) chooseConnectionNode(node.id) else viewModel.selectNode(node.id) }
+                    val selectCard: () -> Unit = {
+                        if (node.type == CanvasNodeType.COMMENT) reviewPinId = node.id
+                        else if (connecting) chooseConnectionNode(node.id)
+                        else viewModel.selectNode(node.id)
+                    }
                     val selectLabel = stringResource(if (state.selectionMode && cardSelected) com.halo.app.R.string.canvas_deselect_card else com.halo.app.R.string.canvas_select_card)
                     if (visible && !state.loading && !state.missing) CanvasCardFrame(
                         width = node.width, height = node.height, scale = state.viewportScale,
-                        modifier = Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }.pointerInput(node.id, state.viewportScale, boardEditingEnabled, connecting, appearance.snap) {
-                                if (boardEditingEnabled && !connecting) detectDragGesturesAfterLongPress(
+                        modifier = Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }.pointerInput(node.id, state.viewportScale, boardEditingEnabled, connecting, appearance.snap, handMode, node.id in lockedIds) {
+                                if (boardEditingEnabled && !connecting && !handMode && node.id !in lockedIds) detectDragGesturesAfterLongPress(
                                     onDragStart = { viewModel.beginDrag(node.id) },
                                     onDragEnd = { if (appearance.snap) viewModel.snapMovedCard(node.id) },
                                 ) { change, drag ->
@@ -1320,23 +1480,32 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     Surface(
                         modifier = Modifier.fillMaxSize().semantics {
                             this.selected = cardSelected
-                            onClick(label = selectLabel) { selectCard(); true }
+                            if (!handMode) onClick(label = selectLabel) { selectCard(); true }
                         },
-                        onClick = selectCard,
+                        onClick = { if (!handMode) selectCard() },
                         shape = com.halo.app.ui.design.HaloShapes.card,
-                        color = canvasCardColor(appearance, node,
+                        color = if (node.type == CanvasNodeType.SHAPE) androidx.compose.ui.graphics.Color.Transparent else canvasCardColor(appearance, node,
                             node.refObjectId?.let { it in state.images || state.files[it]?.mimeType?.startsWith("image/") == true } == true),
-                        border = BorderStroke(
+                        border = if (node.type == CanvasNodeType.SHAPE && !cardSelected) null else BorderStroke(
                             if (cardSelected) 2.dp else 1.dp,
                             if (cardSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
                     ) {
-                        if (node.type == CanvasNodeType.GROUP || node.type == CanvasNodeType.TAG) Column(
+                        if (node.type == CanvasNodeType.COMMENT) {
+                            CanvasReviewPinIcon(CanvasReviewPin.decode(node.text), Modifier.fillMaxSize())
+                        } else if (node.type == CanvasNodeType.SHAPE) {
+                            CanvasVisualShapeContent(CanvasVisualShape.decode(node.text) ?: CanvasVisualShape(), Modifier.fillMaxSize())
+                        } else if (node.type.isCanvasContainer() || node.type == CanvasNodeType.TAG) Column(
                             Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(uiText(if (node.type == CanvasNodeType.GROUP) "Group title" else "Tag card"),
+                            Text(uiText(when (node.type) {
+                                CanvasNodeType.GROUP -> "Group title"
+                                CanvasNodeType.FRAME -> "Frame"
+                                else -> "Tag card"
+                            }),
                                 style = MaterialTheme.typography.labelSmall)
-                            if (state.selectionMode) Text(node.text, style = MaterialTheme.typography.titleMedium)
-                            else BasicTextField(node.text, { viewModel.updateNodeText(node.id, it.take(if (node.type == CanvasNodeType.GROUP) 80 else 50)) },
+                            if (node.id in lockedIds) Text(uiText("Position locked"), style = MaterialTheme.typography.labelSmall)
+                            if (state.selectionMode || handMode) Text(node.text, style = MaterialTheme.typography.titleMedium)
+                            else BasicTextField(node.text, { viewModel.updateNodeText(node.id, it.take(if (node.type.isCanvasContainer()) 80 else 50)) },
                                 readOnly = !boardEditingEnabled,
                                 textStyle = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary))
@@ -1403,21 +1572,30 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                                 Text(uiText("Edit sketch"))
                             }
                         }
-                        else if (node.refObjectId == null && state.selectionMode) {
+                        else if (node.refObjectId == null && (state.selectionMode || handMode)) {
                             CanvasTextCardDecoration(node.text, Modifier.fillMaxSize().padding(14.dp)) {
                                 Text(node.text, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
-                        else if (node.refObjectId == null) BasicTextField(
+                        else if (node.refObjectId == null) {
+                            val textFocus = remember(node.id) { FocusRequester() }
+                            LaunchedEffect(autoFocusNewText, state.selectedNodeId, state.addingNode) {
+                                if (autoFocusNewText == node.id && state.selectedNodeId == node.id && !state.addingNode) {
+                                    textFocus.requestFocus()
+                                    autoFocusNewText = null
+                                }
+                            }
+                            BasicTextField(
                             value = node.text,
                             readOnly = !boardEditingEnabled,
                             onValueChange = { viewModel.updateNodeText(node.id, it) },
-                            modifier = Modifier.fillMaxSize().padding(14.dp)
+                            modifier = Modifier.fillMaxSize().padding(14.dp).focusRequester(textFocus)
                                 .onFocusChanged { if (it.isFocused && !state.selectionMode) viewModel.selectNode(node.id) },
                             textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                             decorationBox = { inner -> CanvasTextCardDecoration(node.text, content = inner) },
-                        )
+                            )
+                        }
                         else if (state.images[node.refObjectId] != null || state.files[node.refObjectId]?.isCanvasVisualSource() == true) {
                             val reference = state.references.firstOrNull { it.id.value == node.refObjectId }
                             val attachment = state.images[node.refObjectId]
@@ -1447,6 +1625,23 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     }
                 }
             }
+        }
+        if (pinPlacing && boardEditingEnabled) CanvasPickPin(
+            onPosition = { position ->
+                val board = viewModel.uiState.value
+                val scale = (board.viewportScale * density.density).coerceAtLeast(.1f)
+                pinPosition = Offset((position.x - board.viewportX) / scale, (position.y - board.viewportY) / scale)
+                pinPlacing = false
+            }, onCancel = { pinPlacing = false }, modifier = Modifier.matchParentSize(),
+        )
+        val selectionInk = MaterialTheme.colorScheme.primary
+        if (selectionStart != null && selectionEnd != null && state.selectionMode) Canvas(Modifier.matchParentSize()) {
+            val from = selectionStart ?: return@Canvas
+            val to = selectionEnd ?: return@Canvas
+            val origin = Offset(minOf(from.x, to.x), minOf(from.y, to.y))
+            val extent = androidx.compose.ui.geometry.Size(kotlin.math.abs(from.x - to.x), kotlin.math.abs(from.y - to.y))
+            drawRect(selectionInk.copy(alpha = .10f), origin, extent)
+            drawRect(selectionInk, origin, extent, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
         }
         // An unapproved draft is a board overlay, never a persisted CanvasNode.
         // It stays visible when the editor sheet is dismissed and disappears

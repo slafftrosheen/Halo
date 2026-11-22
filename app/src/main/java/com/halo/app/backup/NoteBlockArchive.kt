@@ -22,7 +22,8 @@ internal object NoteBlockArchive {
         }
     }
     private fun domain(block: NoteBlockSnapshot) = NoteBlock(block.id, block.position, NoteBlockType.fromStored(block.type),
-        block.text, block.checked, block.indent, block.refObjectId, block.language)
+        block.text, block.checked, block.indent, block.refObjectId, block.language,
+        NoteBlockPresentation.decode(block.presentation, block.text.length))
     fun remap(note: NoteSnapshot, ids: Map<String, String>, blockIds: Map<String, String>): NoteSnapshot {
         val blocks = note.blocks?.map { block ->
             val content = if (block.language == WorkspaceFileReceipts.LANGUAGE) runCatching {

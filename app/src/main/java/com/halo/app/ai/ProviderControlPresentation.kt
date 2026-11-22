@@ -45,6 +45,7 @@ val GenerationProof.label: String get() = when (this) {
 val com.halo.sdk.provider.SpeechErrorCode.label: String get() = when (this) {
     com.halo.sdk.provider.SpeechErrorCode.NOT_CONFIGURED -> "Setup required"
     com.halo.sdk.provider.SpeechErrorCode.AUTHENTICATION_FAILED -> "Authentication failed"
+    com.halo.sdk.provider.SpeechErrorCode.INSUFFICIENT_CREDITS -> "Insufficient credits"
     com.halo.sdk.provider.SpeechErrorCode.RATE_LIMITED -> "Rate limited"
     com.halo.sdk.provider.SpeechErrorCode.NETWORK_ERROR -> "Offline"
     com.halo.sdk.provider.SpeechErrorCode.VOICE_NOT_FOUND -> "Choose an available voice"

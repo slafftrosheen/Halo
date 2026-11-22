@@ -3,8 +3,11 @@
     <string name="online_title">Meklēt ar avotiem</string>
     <string name="online_query">Ko Halo meklēt tīmeklī?</string>
     <string name="online_search">Pārskatīt tīmekļa meklēšanu</string>
-    <string name="online_query_only">OpenRouter un izvēlētajam meklēšanas pakalpojumam Exa tiek nosūtīts tikai šis vaicājums, bez sarunām, piezīmēm un pielikumiem.</string>
-    <string name="online_search_price">Teksta modelis ir bezmaksas; tīmekļa meklēšana ir maksas. Meklēšanas maksas aplēse ir 0,007 USD par pieprasījumu, pārskatīta 2026. gada 21. oktobrī. Cenas var mainīties; tā nav garantēta cena vai limits.</string>
+    <string name="online_query_only">Izvēlētais meklēšanas pakalpojums saņem vaicājumu un atbildes valodu. Sarunas, piezīmes un pielikumi paliek Halo.</string>
+    <string name="online_search_engine_openai">Meklētājprogramma: OpenAI iebūvētā tīmekļa meklēšana</string>
+    <string name="online_search_price">Modeļa un meklēšanas maksa var mainīties. Halo reģistrē apstiprināto rezervi. Galīgo maksu nosaka pakalpojuma sniedzējs.</string>
+    <string name="online_search_engine_exa">Meklētājprogramma: Exa</string>
+    <string name="online_search_engine_auto">Meklētājprogramma: modeļa iebūvētā meklēšana, ja pieejama, citādi Exa</string>
     <string name="online_approve">Apstiprināt šo pieprasījumu</string>
     <string name="online_paid_title">Apstipriniet maksas darbību</string>
     <string name="online_image_unknown">Šis adapteris nenorāda precīzu attēla cenu. Pārbaudiet izvēlētā modeļa tarifu. Katra ģenerēšana, atkārtota ģenerēšana un rediģēšana jāapstiprina atsevišķi.</string>

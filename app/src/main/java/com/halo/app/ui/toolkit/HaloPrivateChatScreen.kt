@@ -256,7 +256,7 @@ private suspend fun privateDictation(context: Context, finish: CompletableDeferr
             ?: SherpaSpeechModelCatalog.resolve("AUTOMATIC", ::usable)
             ?: SherpaSpeechModelCatalog.recognitionModels.firstOrNull(::usable)
     } ?: error("Local speech model unavailable")
-    val session = Graph.speechDiagnosticRunner.captureSession(finish, maxDurationMs = 15_000)
+    val session = Graph.speechDiagnosticRunner.captureSession(finish, maxDurationMs = 15_000, stopAfterSpeech = true)
     try {
         processing()
         return Graph.hostGraph.audioPerceptionEngine.withDiagnosticRecognitionOwnership {

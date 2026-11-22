@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.halo.app.HaloApplication
 import com.halo.app.data.notebook.*
 import com.halo.app.data.workspace.WorkspaceQuery
@@ -15,9 +16,25 @@ import com.halo.app.everyday.organizer.android.OrganizerAndroidClock
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.time.*
-import java.time.temporal.TemporalAdjusters
 
 data class OrganizerLinkChoice(val id: String,val title: String,val kind: String)
+
+private fun plannerConflictKeys(rows: List<OrganizerOccurrence>): Set<String> = buildSet {
+    val events = rows.filter { it.record.kind == OrganizerKind.EVENT && !it.completed && it.end != null }.sortedBy { it.start }
+    var latestEnd = Instant.MIN
+    var latestKey: String? = null
+    events.forEach { event ->
+        if (event.start < latestEnd) {
+            add(event.key)
+            latestKey?.let(::add)
+        }
+        val end = requireNotNull(event.end)
+        if (end > latestEnd) {
+            latestEnd = end
+            latestKey = event.key
+        }
+    }
+}
 
 data class OrganizerPageState(
     val loading: Boolean = true, val busy: Boolean = false, val kids: Boolean = true,
@@ -27,7 +44,9 @@ data class OrganizerPageState(
     val calendarEvents: List<OrganizerRecord> = emptyList(),
     val agenda: List<OrganizerOccurrence> = emptyList(), val conflicts: Set<String> = emptySet(),
     val weekCounts: Map<LocalDate, Int> = emptyMap(), val agendaDate: LocalDate? = null,
+    val calendarView: String? = null, val calendarDays: Map<LocalDate, List<OrganizerOccurrence>> = emptyMap(),
     val plannerBriefSettings: BriefSettings? = null,
+    val plannerCalendars: PlannerCalendarSettings = PlannerCalendarSettings(),
     val receipts: List<DeliveryReceipt> = emptyList(), val notes: List<WorkspaceObject> = emptyList(),
     val overrides: List<OccurrenceOverride> = emptyList(), val selected: OrganizerRecord? = null,
     val missing: Boolean = false, val error: String? = null, val notice: String? = null,
@@ -36,6 +55,7 @@ data class OrganizerPageState(
     val exportFile: WorkspaceFile? = null,
     val selectedOccurrence: OrganizerOccurrence? = null, val occurrenceMissing: Boolean = false,
     val linkChoices: List<OrganizerLinkChoice> = emptyList(),
+    val leaveBy: PlannerLeaveByReview? = null,
 )
 
 class OrganizerViewModel(private val app: HaloApplication, private val saved: SavedStateHandle, initialId: String?, private val initialKind: OrganizerKind? = null,
@@ -47,6 +67,7 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
     val query = saved.getStateFlow("organizer.query", "")
     val day = saved.getStateFlow("organizer.day", LocalDate.now().toString())
     val kind = saved.getStateFlow("organizer.kind", "AGENDA")
+    private val plannerView = MutableStateFlow(PlannerView.WEEK)
     private var selectedId: String? = if(saved.contains("organizer.selected")) saved["organizer.selected"] else initialId
     private var selectedOriginal: Instant? = saved.get<String>("organizer.occurrence")?.let(Instant::parse) ?: initialOccurrence.takeIf {
         selectedId==initialId && saved.get<Boolean>("organizer.occurrenceCleared")!=true }
@@ -55,6 +76,7 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
     init { observe() }
     fun query(value: String) { saved["organizer.query"] = value.take(200) }
     fun day(value: LocalDate) { saved["organizer.day"] = value.toString() }
+    internal fun calendarView(value: PlannerView) { plannerView.value = value }
     fun kind(value: String) { require(value in OrganizerKind.entries.map { it.name } + listOf("AGENDA", "TRASH")); saved["organizer.kind"] = value }
     fun open(id: String?, occurrence: Instant? = null) {
         selectedId = id
@@ -62,6 +84,7 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
         saved["organizer.selected"] = id
         saved["organizer.occurrence"] = selectedOriginal?.toString()
         saved["organizer.occurrenceCleared"] = selectedOriginal == null
+        mutable.update { it.copy(leaveBy = null) }
         refreshes.tryEmit(Unit)
     }
     fun retry() { observe() }
@@ -73,50 +96,62 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
                 app.awaitOrganizerBootstrap(); Graph.kidsPreferences.getEnabled()
                 merge(Graph.organizerRepository.observe().map { Unit }, Graph.organizerRepository.observeReceipts().map { Unit },
                     Graph.kidsPreferences.enabled.map { Unit }, Graph.briefRepository.observeSettings().map { Unit },
-                    query.map { Unit }, day.map { Unit }, kind.map { Unit }, refreshes)
+                    PlannerCalendarPreferences.observeChanges.map { Unit },
+                    query.map { Unit }, day.map { Unit }, kind.map { Unit }, plannerView.map { Unit }, refreshes)
                     .collectLatest { refresh() }
             } catch (cancelled: CancellationException) { throw cancelled }
               catch (_: Exception) { mutable.update { it.copy(loading = false, records = emptyList(), agenda = emptyList(),
+                  calendarDays = emptyMap(), weekCounts = emptyMap(),
                   selected = null, error = "Your organizer could not be opened. Your saved data is kept; try again.") } }
         }
     }
     private suspend fun refresh() {
         val kids = Graph.kidsPreferences.getEnabled()
         val briefSettings = Graph.briefRepository.settings()
+        val calendars = if (kids) PlannerCalendarSettings()
+            else withContext(Dispatchers.IO) { PlannerCalendarPreferences.read(Graph.storage) }
         val sharing = if (kids) briefSettings.childRecordIds else emptySet()
         val rows = Graph.organizerRepository.records(includeDeleted = !kids).filter { !kids || it.id in sharing }
         val current = selectedId?.let { id -> rows.find { it.id == id && it.deletedAt == null } }
-        val zone = ZoneId.systemDefault(); val date = LocalDate.parse(day.value)
-        val from = date.atStartOfDay(zone).toInstant(); val until = date.plusDays(1).atStartOfDay(zone).toInstant()
-        val week = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        val weekDays = List(7) { week.plusDays(it.toLong()) }
-        val weekStart = week.atStartOfDay(zone).toInstant()
-        val weekEnd = week.plusWeeks(1).atStartOfDay(zone).toInstant()
+        val zone = ZoneId.systemDefault()
+        val view = plannerView.value
+        val date = if (view == PlannerView.EASY) LocalDate.now(zone) else LocalDate.parse(day.value)
+        val dates = view.dates(date)
+        val windowStart = dates.first().atStartOfDay(zone).toInstant()
+        val windowEnd = dates.last().plusDays(1).atStartOfDay(zone).toInstant()
         val active = rows.filter { it.deletedAt == null }
+        val visible = active.filter { kids || it.kind !in setOf(OrganizerKind.EVENT, OrganizerKind.TASK) ||
+            calendars.appearance(it.calendar).visible }
         val exceptions = active.filter { it.time != null }.associate { it.id to Graph.organizerRepository.overrides(it.id) }
         selectedOriginal?.let { saved["organizer.occurrence"]=it.toString() }
         val selectedOccurrence=if(current != null && selectedOriginal != null) OrganizerRecurrence.exact(current,exceptions[current.id].orEmpty(),selectedOriginal!!,zone) else null
         val words = query.value.lowercase(java.util.Locale.ROOT).split(Regex("\\s+")).filter(String::isNotBlank)
         fun matches(row: OrganizerRecord) = words.all { it in "${row.title}\n${row.details}\n${row.location}".lowercase(java.util.Locale.ROOT) }
-        val weekAgenda = withContext(Dispatchers.Default) {
+        val calendar = withContext(Dispatchers.Default) {
             val occurrences = mutableListOf<OrganizerOccurrence>()
-            active.forEach { record ->
+            visible.forEach { record ->
                 ensureActive()
                 val visibleCompletedTask = record.kind == OrganizerKind.TASK && record.status == OrganizerStatus.COMPLETED && record.repeat == null
                 val scheduled = if (visibleCompletedTask) record.copy(status = OrganizerStatus.ACTIVE) else record
-                val entries = OrganizerRecurrence.between(scheduled, exceptions[record.id].orEmpty(), weekStart, weekEnd, zone)
+                val entries = if (windowStart < windowEnd)
+                    OrganizerRecurrence.between(scheduled, exceptions[record.id].orEmpty(), windowStart, windowEnd, zone) else emptyList()
                 occurrences += if (visibleCompletedTask) entries.map { it.copy(record = record, completed = true) } else entries
                 require(occurrences.size <= 70_000)
             }
-            occurrences.sortedBy { it.start }
-        }
-        fun onDay(row: OrganizerOccurrence, start: Instant, end: Instant) =
-            row.start < end && (row.end?.let { it > start } ?: (row.start >= start))
-        val allAgenda = weekAgenda.filter { onDay(it, from, until) }
-        val weekCounts = weekDays.associateWith { tile ->
-            val start = tile.atStartOfDay(zone).toInstant()
-            val end = tile.plusDays(1).atStartOfDay(zone).toInstant()
-            weekAgenda.count { !it.completed && onDay(it, start, end) }
+            val rowsByDay = dates.associateWith { mutableListOf<OrganizerOccurrence>() }
+            occurrences.sortedWith(compareBy({ it.start }, { it.key })).forEach { occurrence ->
+                ensureActive()
+                val first = maxOf(dates.first(), occurrence.start.atZone(zone).toLocalDate())
+                val last = minOf(dates.last(), (occurrence.end?.minusNanos(1) ?: occurrence.start).atZone(zone).toLocalDate())
+                var cursor = first
+                while (cursor <= last) {
+                    rowsByDay.getValue(cursor).add(occurrence)
+                    cursor = cursor.plusDays(1)
+                }
+            }
+            Triple(rowsByDay.mapValues { (_, entries) -> entries.filter { matches(it.record) } },
+                rowsByDay.mapValues { (_, entries) -> entries.count { !it.completed } },
+                plannerConflictKeys(occurrences))
         }
         val receipts = current?.let { Graph.organizerRepository.receipts(it.id) }.orEmpty()
         val notes = if (kids) emptyList() else Graph.workspaceRepository.observe(WorkspaceQuery(types = setOf(WorkspaceObjectType.NOTE))).first()
@@ -130,17 +165,20 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
         if (kids != Graph.kidsPreferences.enabled.value) return
         mutable.update { old -> old.copy(loading = false, kids = kids,
             linkChoices=choices,
-            records = active.filter(::matches), parentTasks = if (kids) emptyList() else active.filter { it.kind == OrganizerKind.TASK && it.status == OrganizerStatus.ACTIVE },
+            records = visible.filter(::matches), parentTasks = if (kids) emptyList() else active.filter { it.kind == OrganizerKind.TASK && it.status == OrganizerStatus.ACTIVE },
             calendarEvents = if (kids) emptyList() else active.filter { it.kind == OrganizerKind.EVENT },
             subtasks = current?.let { parent -> active.filter { it.parentId == parent.id } }.orEmpty(),
             trash = if (kids) emptyList() else rows.filter { it.deletedAt != null && matches(it) },
-            agenda = allAgenda.filter { matches(it.record) }, agendaDate = date, weekCounts = weekCounts,
+            agenda = calendar.first.getValue(date), agendaDate = date, weekCounts = calendar.second,
+            calendarView = view.key, calendarDays = calendar.first,
             plannerBriefSettings = briefSettings.takeUnless { kids },
-            conflicts = OrganizerRecurrence.conflicts(allAgenda.filterNot { it.completed }).keys,
+            plannerCalendars = calendars,
+            conflicts = calendar.third,
             receipts = receipts, selected = current, missing = selectedId != null && current == null,
             selectedOccurrence=selectedOccurrence,occurrenceMissing=current != null && selectedOriginal != null && selectedOccurrence==null,
             overrides = current?.let { exceptions[it.id] }.orEmpty(), notes = notes,
-            draft = old.draft.takeUnless { kids }, undoId = old.undoId.takeUnless { kids }, undoVersion = old.undoVersion.takeUnless { kids }) }
+            draft = old.draft.takeUnless { kids }, undoId = old.undoId.takeUnless { kids }, undoVersion = old.undoVersion.takeUnless { kids },
+            leaveBy = old.leaveBy.takeUnless { kids }) }
         if (initialKind != null && saved.get<Boolean>("organizer.createConsumed") != true) {
             saved["organizer.createConsumed"] = true
             if (!kids && state.value.draft == null) new(initialKind)
@@ -172,12 +210,13 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
         }
     }
     fun new(kind: OrganizerKind, parentId: String? = null, sourceTitle: String? = null, sourceUrl: String? = null,
-        sourceLabel: String? = null, sourceTime: java.time.LocalTime? = null) {
+        sourceLabel: String? = null, sourceTime: java.time.LocalTime? = null, selectedDate: LocalDate? = null) {
         if (state.value.kids || state.value.busy) return
         val now = Instant.ofEpochMilli(System.currentTimeMillis())
         val localNow = LocalDateTime.now()
         val scannedStart = sourceTime?.let { time -> localNow.toLocalDate().atTime(time) }
-        val start = if (scannedStart == null) localNow.plusHours(1).withSecond(0).withNano(0)
+        val start = if (scannedStart == null) selectedDate?.takeIf { it != localNow.toLocalDate() }?.atTime(9, 0)
+            ?: localNow.plusHours(1).withSecond(0).withNano(0)
             else if (scannedStart > localNow) scannedStart else scannedStart.plusDays(1)
         val record = OrganizerRecord(java.util.UUID.randomUUID().toString(), kind, "New item", time =
             if (kind in setOf(OrganizerKind.TIMER, OrganizerKind.TASK)) null else OrganizerTime(start,
@@ -201,6 +240,72 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
         val override = occurrence?.let { Graph.organizerRepository.overrides(base.id).find { entry -> entry.originalStart == it.originalStart } }
         draft(if (occurrence == null) OrganizerDraft(base, false) else OrganizerDraft.forOccurrence(base, occurrence, override))
     }
+
+    internal fun reschedule(row: OrganizerOccurrence, operation: OrganizerScheduleEdit, steps: Int) = work {
+        check(!state.value.kids && state.value.draft == null)
+        val savedEvent = Graph.organizerUseCases.rescheduleEvent(row.record.id, row.record.version, row.originalStart, operation, steps)
+        if (savedEvent.version > row.record.version) mutable.update { it.copy(notice = "Event time saved.") }
+    }
+
+    internal fun updateCalendar(version: Long, calendar: OrganizerCalendar, visible: Boolean?,
+        color: PlannerCalendarColor?) = work {
+        val result = withContext(Dispatchers.IO) {
+            PlannerCalendarPreferences.update(Graph.storage, version, calendar, visible, color)
+        }
+        mutable.update { it.copy(plannerCalendars = result) }
+    }
+
+    internal fun reviewLeaveBy(event: OrganizerRecord, originalStart: Instant?) = work {
+        val review = currentLeaveByEvent(event.id, event.version, originalStart)
+        val existing = Graph.organizerRepository.get(review.reminderId)
+        if (selectedId == event.id && selectedOriginal == originalStart)
+            mutable.update { it.copy(leaveBy = review.copy(existing = existing)) }
+    }
+
+    internal fun dismissLeaveBy() { if (!state.value.busy) mutable.update { it.copy(leaveBy = null) } }
+
+    internal fun keepLeaveBy(review: PlannerLeaveByReview, minutes: Int) = work {
+        check(state.value.leaveBy == review)
+        val savedReminder = Graph.appDatabase.withTransaction {
+            val current = currentLeaveByEvent(review.eventId, review.eventVersion, review.originalStart)
+            if (current.start != review.start) throw OrganizerConflict("The event start changed")
+            val leaveAt = current.leaveAt(minutes)
+            val now = Instant.ofEpochMilli(System.currentTimeMillis())
+            require(leaveAt > now)
+            if (Graph.organizerRepository.get(review.reminderId) != null) throw OrganizerConflict("A leave reminder already exists")
+            val link = OrganizerLink("organizer:${current.eventId}")
+            val title = com.halo.app.language.resolveUiText(app.resources, "Leave for %s", current.title).take(200)
+            val display = leaveAt.atZone(ZoneId.systemDefault())
+            val local = display.toLocalDateTime()
+            // Local times in the second pass of a repeated hour need their fixed offset to preserve the reviewed instant.
+            val reminderZone = if (local.atZone(display.zone).toInstant() == leaveAt) display.zone else display.offset
+            val reminder = OrganizerRecord(review.reminderId, OrganizerKind.REMINDER, title,
+                time = OrganizerTime(local, zoneId = reminderZone.id), notifyBeforeMinutes = 0,
+                details = com.halo.app.language.resolveUiText(app.resources, "You allowed %s minutes for travel.", minutes),
+                links = listOf(link), createdAt = now, location = current.location)
+            val event = Graph.organizerUseCases.requireCurrent(current.eventId, current.eventVersion)
+            if (event.repeat == null && event.leaveBeforeMinutes != minutes)
+                Graph.organizerRepository.save(event.copy(leaveBeforeMinutes = minutes), event.version)
+            Graph.organizerRepository.save(reminder, null)
+        }
+        open(savedReminder.id)
+        mutable.update { it.copy(notice = "Leave reminder saved. Check Delivery status for Android scheduling.") }
+    }
+
+    private suspend fun currentLeaveByEvent(id: String, version: Long, originalStart: Instant?): PlannerLeaveByReview {
+        val record = Graph.organizerUseCases.requireCurrent(id, version)
+        val time = requireNotNull(record.time)
+        if (record.kind != OrganizerKind.EVENT || record.status != OrganizerStatus.ACTIVE)
+            throw OrganizerConflict("The selected event is no longer active")
+        val zone = ZoneId.systemDefault()
+        val identity = originalStart ?: if (record.repeat == null) OrganizerRecurrence.slots(time, null, zone).first().identity
+        else throw OrganizerConflict("Choose an occurrence of the series")
+        val occurrence = OrganizerRecurrence.exact(record, Graph.organizerRepository.overrides(id), identity, zone)
+            ?.takeIf { !it.allDay && it.start > Instant.now() } ?: throw OrganizerConflict("Choose an upcoming timed event")
+        return PlannerLeaveByReview(record.id, record.version, occurrence.originalStart, occurrence.start, occurrence.record.title,
+            occurrence.record.location, record.leaveBeforeMinutes)
+    }
+
     fun draft(value: OrganizerDraft?) {
         saved["organizer.draft"] = value?.bundle()
         mutable.update { it.copy(draft = value, error = null) }

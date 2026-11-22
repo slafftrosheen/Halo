@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_coach_ink_mirror">Mirror to Halo Ink</string>
+    <string name="halo11_coach_ink_mirror_pending">Halo Ink mirroring is awaiting device qualification.</string>
+    <string name="halo11_coach_ink_mirror_review">Choose a paired device to show this problem and your steps. It can send handwriting back for you to review. The photo stays here.</string>
+    <string name="halo11_coach_ink_mirror_no_devices">Pair the other Halo device in Devices first.</string>
+    <string name="halo11_coach_ink_join_from">On the paired device, open Devices, choose Join Coach session, and enter this address and code.</string>
+    <string name="halo11_coach_ink_join_details">%1$s:%2$d · Code %3$s</string>
+    <string name="halo11_coach_ink_join">Join Coach session</string>
+    <string name="halo11_coach_ink_choose_host">Choose the paired phone running Photo Coach.</string>
+    <string name="halo11_coach_ink_host_address">Address and port</string>
+    <string name="halo11_coach_ink_host_code">Session code</string>
+    <string name="halo11_coach_ink_mirror_connected">Mirroring to %1$s</string>
+    <string name="halo11_coach_ink_mirror_ended">The Coach connection ended.</string>
+    <string name="halo11_coach_ink_mirror_failed">Could not connect to Halo Ink. Keep both devices open on the same local network.</string>
+    <string name="halo11_coach_ink_mirror_stop">Stop mirroring</string>
+    <string name="halo11_coach_ink_mirror_step">%1$s → %2$s</string>
+    <string name="halo11_coach_ink_tablet_write">Write your answer here and send it to the phone for review.</string>
+    <string name="halo11_coach_ink_tablet_send">Send handwriting</string>
+    <string name="halo11_coach_ink_tablet_sent">Handwriting sent for review.</string>
+    <string name="halo11_coach_ink_tablet_rejected">Handwriting could not be sent. Try again with the current step and a shorter answer.</string>
+    <string name="halo11_coach_ink_review_tablet">Review handwriting from Halo Ink</string>
+    <string name="halo11_coach_ink_network_permission">Allow local network access</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_focus_rest">Break</string>
+    <string name="halo11_focus_end_rest">End break</string>
+    <string name="halo11_focus_start_rest">Start %1$d-minute break</string>
+    <string name="halo11_focus_blocks">Study blocks</string>
+    <string name="halo11_focus_work_time">Focus time (minutes)</string>
+    <string name="halo11_focus_rest_time">Break time (minutes)</string>
+    <string name="halo11_focus_done">What I did</string>
+    <string name="halo11_focus_keep_hint">Keep an optional line on Today.</string>
+    <string name="halo11_focus_finish">Finish</string>
+    <string name="halo11_focus_kept">Kept on Today</string>
+    <string name="halo11_focus_remove">Remove</string>
+    <string name="halo11_focus_kids_timer">Focus timer</string>
+    <string name="halo11_focus_kids_clock">%1$d:%2$02d</string>
+    <string name="halo11_focus_kids_minutes">%1$d min</string>
+    <string name="halo11_focus_kids_stop">Stop</string>
+    <string name="halo11_focus_kids_start">Start</string>
+</resources>

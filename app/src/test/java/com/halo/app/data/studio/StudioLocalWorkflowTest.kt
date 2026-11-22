@@ -110,6 +110,31 @@ class StudioLocalWorkflowTest {
         assertEquals(output.objectId.value, canvases.observe(canvas).first()!!.nodes.single { it.id == node }.refObjectId)
         assertTrue(runCatching { service.export(created.id, created.revision, CanvasImageFormat.PNG) }.isFailure)
     }
+    @Test fun selectedPixelEraseIsBoundToTheOpenRevisionAndCanBeUndone() = runTest {
+        val layer = StudioLayer(id = "pigment", name = "Pigment", kind = StudioLayerKind.RECTANGLE, color = Color.RED)
+        val initial = projects.create("Precise erase", StudioDocument(80, 80, layers = listOf(layer), selectedLayerId = layer.id))
+        val token = service.attachProject(initial.id)
+        service.edit(initial.id, initial.revision, "select_pixels", mapOf("shape" to "rectangle", "points" to
+            listOf(mapOf("x" to 250, "y" to 250), mapOf("x" to 750, "y" to 750))))
+        assertNotNull(service.currentPixelSelection(initial.id, initial.revision))
+        val updated = service.edit(initial.id, initial.revision, "erase_selected_pixels", emptyMap())
+        val edited = updated.session.current.layers.single()
+        val source = requireNotNull(edited.source)
+        assertEquals(layer.id, edited.id)
+        assertEquals(StudioLayerKind.IMAGE, edited.kind)
+        readable(requireNotNull(files.getFile(WorkspaceObjectId(source.objectId))))
+        val painted = renderer.render(updated.session.current, preview = false)
+        try {
+            assertEquals(0, Color.alpha(painted.getPixel(40, 40)))
+            assertEquals(Color.RED, painted.getPixel(10, 10))
+        } finally { painted.recycle() }
+        assertTrue(runCatching { service.edit(initial.id, initial.revision, "erase_selected_pixels", emptyMap()) }.isFailure)
+        val undone = projects.undo(updated.id, updated.revision)
+        assertEquals(layer, undone.session.current.layers.single())
+        assertNull(service.currentPixelSelection(undone.id, undone.revision))
+        service.detachProject(token)
+        assertTrue(runCatching { service.edit(undone.id, undone.revision, "select_pixels", mapOf("shape" to "subject")) }.isFailure)
+    }
     @Test fun assistantUsesSameRevisionGuardAndDispatchReceiptsAsLocalEditing() = runTest {
         val tools = com.halo.app.di.tools.StudioToolExecutor(service)
         val definitions = tools.definitions()

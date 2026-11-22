@@ -43,6 +43,7 @@ data class NoteBlockEntity(
     val language: String? = null,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
+    val presentation: String? = null,
 )
 
 /** A workspace object joined with its note row: the durable document header. */
@@ -55,6 +56,7 @@ data class NoteDocumentRow(
     val lifecycle: String,
     val createdAt: Long,
     val updatedAt: Long,
+    val pageSettings: String? = null,
 )
 
 @Dao
@@ -63,7 +65,7 @@ interface NotebookDocumentDao {
         """
         SELECT w.id AS id, w.title AS title, n.body AS body, n.revision AS revision,
                n.schemaVersion AS schemaVersion, w.lifecycle AS lifecycle,
-               w.createdAt AS createdAt, w.updatedAt AS updatedAt
+               w.createdAt AS createdAt, w.updatedAt AS updatedAt, n.pageSettings AS pageSettings
         FROM workspace_objects w
         INNER JOIN notes n ON n.objectId = w.id
         WHERE w.id = :noteId AND w.type = 'NOTE'
@@ -76,7 +78,7 @@ interface NotebookDocumentDao {
         """
         SELECT w.id AS id, w.title AS title, n.body AS body, n.revision AS revision,
                n.schemaVersion AS schemaVersion, w.lifecycle AS lifecycle,
-               w.createdAt AS createdAt, w.updatedAt AS updatedAt
+               w.createdAt AS createdAt, w.updatedAt AS updatedAt, n.pageSettings AS pageSettings
         FROM workspace_objects w
         INNER JOIN notes n ON n.objectId = w.id
         WHERE w.id = :noteId AND w.type = 'NOTE'
@@ -133,6 +135,9 @@ interface NotebookDocumentDao {
         body: String,
         schemaVersion: Int,
     ): Int
+
+    @Query("UPDATE notes SET pageSettings = :value WHERE objectId = :noteId")
+    suspend fun updatePageSettings(noteId: String, value: String?): Int
 
     /** Derived-projection refresh that must not look like a user edit. */
     @Query(
@@ -247,6 +252,7 @@ class NotebookDocumentRepository(
         expectedRevision = expectedRevision,
         title = title,
         acknowledgeDraftSequence = acknowledgeDraftSequence,
+        reviewTextEdits = command !is DocumentCommand.ResolveChanges,
         mutate = { blocks -> DocumentReducer.apply(blocks, command, newId).blocks },
     )
 
@@ -256,11 +262,14 @@ class NotebookDocumentRepository(
         blocks: List<NoteBlock>,
         title: String? = null,
         acknowledgeDraftSequence: Long = 0L,
+        pageSettings: NotePageSettings? = null,
     ): CommitOutcome = commitInternal(
         noteId = noteId,
         expectedRevision = expectedRevision,
         title = title,
         acknowledgeDraftSequence = acknowledgeDraftSequence,
+        pageSettings = pageSettings,
+        reviewTextEdits = pageSettings == null,
         mutate = { blocks },
     )
 
@@ -269,6 +278,8 @@ class NotebookDocumentRepository(
         expectedRevision: Long,
         title: String? = null,
         acknowledgeDraftSequence: Long = 0L,
+        pageSettings: NotePageSettings? = null,
+        reviewTextEdits: Boolean,
         mutate: (List<NoteBlock>) -> List<NoteBlock>,
     ): CommitOutcome {
         return try {
@@ -287,7 +298,12 @@ class NotebookDocumentRepository(
                 }
                 if (storedRevision == 0L) return@withTransaction CommitOutcome.Rejected(DocumentRejection.MISSING)
 
-                val normalized = DocumentReducer.normalize(mutate(storedBlocks))
+                val edited = mutate(storedBlocks)
+                val reviewed = if (reviewTextEdits && edited != storedBlocks) {
+                    val settings = NotePageSettings.decode(dao.getDocument(noteId)?.pageSettings)
+                    if (settings.trackChanges) trackNoteChanges(storedBlocks, edited) else retainUntrackedEdits(storedBlocks, edited)
+                } else edited
+                val normalized = DocumentReducer.normalize(reviewed)
                 val currentTitle = dao.titleOf(noteId).orEmpty()
                 val derivedTitle = NotebookDocumentCodec.deriveTitle(normalized)
                 val resolvedTitle = when {
@@ -309,6 +325,7 @@ class NotebookDocumentRepository(
                 if (swapped != 1) {
                     return@withTransaction CommitOutcome.Conflict(dao.getRevision(noteId)?.toLong() ?: -1L)
                 }
+                if (pageSettings != null) check(dao.updatePageSettings(noteId, pageSettings.encode()) == 1)
                 dao.replaceBlocks(noteId, normalized.map { block ->
                     val existing = existingById[block.id]
                     block.toEntity(
@@ -352,6 +369,7 @@ class NotebookDocumentRepository(
         sequence: Long,
         title: String? = null,
         sourceDraft: String? = null,
+        pageSettings: NotePageSettings? = null,
     ) {
         require(sourceDraft == null || sourceDraft.length <= 1_000_000)
         val timestamp = now()
@@ -362,7 +380,7 @@ class NotebookDocumentRepository(
                 updatedAt = timestamp,
                 baseRevision = baseRevision,
                 sequence = sequence,
-                structureJson = RecoveryJson.encode(blocks, title, sourceDraft),
+                structureJson = RecoveryJson.encode(blocks, title, sourceDraft, pageSettings),
             )
         )
     }
@@ -383,6 +401,7 @@ class NotebookDocumentRepository(
             sequence = sequence,
             updatedAt = entity.updatedAt,
             sourceDraft = restored.sourceDraft,
+            pageSettings = restored.pageSettings,
         )
     }
 
@@ -399,6 +418,7 @@ internal fun NoteBlockEntity.toDomain(): NoteBlock = NoteBlock(
     indent = indent,
     refObjectId = refObjectId,
     language = language,
+    presentation = NoteBlockPresentation.decode(presentation, text.length),
 )
 
 internal fun NoteBlock.toEntity(noteId: String, timestamp: Long): NoteBlockEntity = NoteBlockEntity(
@@ -413,6 +433,7 @@ internal fun NoteBlock.toEntity(noteId: String, timestamp: Long): NoteBlockEntit
     language = language,
     createdAtEpochMs = timestamp,
     updatedAtEpochMs = timestamp,
+    presentation = presentation.encode(),
 )
 
 internal fun NoteBlock.toEntity(noteId: String, createdAt: Long, updatedAt: Long): NoteBlockEntity = NoteBlockEntity(
@@ -427,6 +448,7 @@ internal fun NoteBlock.toEntity(noteId: String, createdAt: Long, updatedAt: Long
     language = language,
     createdAtEpochMs = createdAt,
     updatedAtEpochMs = updatedAt,
+    presentation = presentation.encode(),
 )
 
 internal fun NoteDocumentRow.toDocument(blocks: List<NoteBlock>): NotebookDocument = NotebookDocument(
@@ -439,13 +461,16 @@ internal fun NoteDocumentRow.toDocument(blocks: List<NoteBlock>): NotebookDocume
     createdAt = createdAt,
     schemaVersion = schemaVersion,
     titleIsDerived = blocks.isEmpty() || title == NotebookDocumentCodec.deriveTitle(blocks),
+    pageSettings = NotePageSettings.decode(pageSettings),
 )
 
 /** Minimal structural encoding for recovery drafts; no reflection and no schema negotiation. */
 internal object RecoveryJson {
-    data class Decoded(val blocks: List<NoteBlock>, val title: String?, val sourceDraft: String? = null)
+    data class Decoded(val blocks: List<NoteBlock>, val title: String?, val sourceDraft: String? = null,
+        val pageSettings: NotePageSettings? = null)
 
-    fun encode(blocks: List<NoteBlock>, title: String?, sourceDraft: String? = null): String {
+    fun encode(blocks: List<NoteBlock>, title: String?, sourceDraft: String? = null,
+        pageSettings: NotePageSettings? = null): String {
         val array = JSONArray()
         blocks.forEach { block ->
             array.put(
@@ -457,12 +482,14 @@ internal object RecoveryJson {
                     .put("indent", block.indent)
                     .put("ref", block.refObjectId ?: JSONObject.NULL)
                     .put("lang", block.language ?: JSONObject.NULL)
+                    .put("presentation", block.presentation.encode())
             )
         }
         return JSONObject()
             .put("schemaVersion", 2)
             .put("title", title ?: JSONObject.NULL)
             .put("sourceDraft", sourceDraft ?: JSONObject.NULL)
+            .put("pageSettings", pageSettings?.let { it.encode() ?: "{}" })
             .put("blocks", array)
             .toString()
     }
@@ -477,15 +504,17 @@ internal object RecoveryJson {
             val blocks = (0 until array.length()).mapNotNull { index ->
                 val item = array.optJSONObject(index) ?: return@mapNotNull null
                 val id = item.optString("id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                val text = item.optString("text")
                 NoteBlock(
                     id = id,
                     position = index,
                     type = NoteBlockType.fromStored(item.optString("type")),
-                    text = item.optString("text"),
+                    text = text,
                     checked = item.optBoolean("checked"),
                     indent = item.optInt("indent"),
                     refObjectId = item.optString("ref").takeIf { !item.isNull("ref") && it.isNotBlank() },
                     language = item.optString("lang").takeIf { !item.isNull("lang") && it.isNotBlank() },
+                    presentation = NoteBlockPresentation.decode(item.optString("presentation"), text.length),
                 )
             }
             Decoded(
@@ -493,6 +522,8 @@ internal object RecoveryJson {
                 title = objectRoot?.optString("title")
                     ?.takeIf { !objectRoot.isNull("title") && it.isNotBlank() },
                 sourceDraft = objectRoot?.optString("sourceDraft")?.takeIf { !objectRoot.isNull("sourceDraft") },
+                pageSettings = objectRoot?.optString("pageSettings")?.takeIf { it.isNotEmpty() }
+                    ?.let(NotePageSettings::decode),
             )
         }.getOrDefault(Decoded(emptyList(), null))
     }

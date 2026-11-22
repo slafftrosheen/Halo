@@ -84,8 +84,13 @@ class EverydayWidgetRenderingTest {
             layout(view,160,height,context.resources.displayMetrics.density)
             visibleText(view).forEach { assertFits(view,it,kind.name) }
             if(kind!=EverydayCardKind.CLOCK) {
-                assertNotNull(view.contentDescription)
-                assertTrue("Compact widgets must remain distinguishable",identities.add(visibleText(view).joinToString {it.text.toString()}))
+                val labels = visibleText(view).mapNotNull { text ->
+                    if (text.importantForAccessibility == View.IMPORTANT_FOR_ACCESSIBILITY_NO) null
+                    else (text.contentDescription ?: text.text)?.toString()?.takeIf(String::isNotBlank)
+                }
+                assertTrue("${kind.name} requires a readable label", !view.contentDescription.isNullOrBlank() || labels.isNotEmpty())
+                val visibleIdentity = visibleText(view).joinToString { it.text.toString() }
+                assertTrue("${kind.name} compact widgets must remain distinguishable", identities.add(visibleIdentity))
             }
             capture(view,"build/outputs/roborazzi/everyday-widget-${kind.name.lowercase()}-ru-minimum-200-synthetic.png")
         }
@@ -98,7 +103,7 @@ class EverydayWidgetRenderingTest {
         text.layout?.let { lines ->
             assertTrue("$kind text height: ${text.text}",lines.height<=text.height-text.compoundPaddingTop-text.compoundPaddingBottom+1)
             (0 until lines.lineCount).forEach { line ->
-                assertEquals(0,lines.getEllipsisCount(line))
+                assertEquals("$kind clipped text: ${text.text}",0,lines.getEllipsisCount(line))
                 assertTrue("$kind glyph width: ${text.text}",lines.getLineLeft(line)>=-1f && lines.getLineRight(line)<=lines.width+1f)
             }
         }
@@ -108,15 +113,19 @@ class EverydayWidgetRenderingTest {
         val instance=EverydayWidgetInstance(201,1,EverydayCardConfig(EverydayCardKind.CLOCK,theme="LIGHT"))
         val data=snapshot();val label:(String)->String={it}
         val full=EverydayWidgetViews.render(context,instance,data,320,300,Locale.US,1f,label)
-        val view=full.apply(context,FrameLayout(context));layout(view,320,300,context.resources.displayMetrics.density)
+        val host=FrameLayout(context)
+        val view=full.apply(context,host);layout(view,320,300,context.resources.displayMetrics.density)
         val small=EverydayWidgetViews.render(context,instance,data,160,96,Locale.US,2f,label,unavailable=true)
-        small.reapply(context,view);layout(view,160,96,context.resources.displayMetrics.density)
-        assertEquals(View.VISIBLE,view.findViewById<TextView>(R.id.everyday_widget_value).visibility)
-        assertTrue(view.findViewById<TextView>(R.id.everyday_widget_value).text.toString() in setOf("Configure widget","Halo","Clock","Clock\nConfigure widget"))
-        visibleText(view).forEach { assertFits(view,it,"compact recovery") }
-        full.reapply(context,view);layout(view,320,300,context.resources.displayMetrics.density)
-        assertEquals(View.VISIBLE,view.findViewById<TextView>(R.id.everyday_widget_status).visibility)
-        assertEquals(View.VISIBLE,view.findViewById<TextClock>(R.id.everyday_widget_clock).visibility)
+        // Android reinflates the widget when its layout ID changes between the ring and compact card.
+        val smallView = small.apply(context, host)
+        layout(smallView,160,96,context.resources.displayMetrics.density)
+        assertEquals(View.VISIBLE,smallView.findViewById<TextView>(R.id.everyday_widget_value).visibility)
+        assertTrue(smallView.findViewById<TextView>(R.id.everyday_widget_value).text.toString() in setOf("Configure widget","Halo","Clock","Clock\nConfigure widget"))
+        visibleText(smallView).forEach { assertFits(smallView,it,"compact recovery") }
+        val restored = full.apply(context,host)
+        layout(restored,320,300,context.resources.displayMetrics.density)
+        assertEquals(View.VISIBLE,restored.findViewById<TextClock>(R.id.everyday_widget_clock_date).visibility)
+        assertEquals(View.VISIBLE,restored.findViewById<TextClock>(R.id.everyday_widget_clock).visibility)
     }
     @Test fun liveClockAndDateOwnTheirAccessibilityTextAfterTimeChangesWithoutRepaint() {
         val context=ApplicationProvider.getApplicationContext<Application>()

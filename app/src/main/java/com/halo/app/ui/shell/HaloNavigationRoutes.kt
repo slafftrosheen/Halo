@@ -22,7 +22,11 @@ fun primaryNavigationRoute(route: String?): String? = when {
     route.substringBefore("?") == "activity" -> "activity"
     route.substringBefore("?") == "automation" -> "settings"
     route == "notifications" || route.startsWith("notifications/") -> "home"
-    route.substringBefore("?") in setOf("study", "scan", "record", "sheets", "album", "vault", "translate", "magnifier") -> "notebook"
+    route.substringBefore("?") == "search" -> "search"
+    route.startsWith("home/") -> "home"
+    route.substringBefore("?") == "merchant_checkout" -> "home"
+    route.startsWith("maps/") -> "home"
+    route.substringBefore("?") in setOf("study", "scan", "record", "sheets", "album", "vault", "translate", "magnifier", "maps", "measure", "calc") -> "notebook"
     route == "workspace_handoff" || route == "canvases" || route.startsWith("notebook/") || route.startsWith("studio") || route.startsWith("file_tools") -> "notebook"
     route == "screen" || route.startsWith("screen/") -> "home"
     route == "discovery" || route.startsWith("device/") -> "devices"
@@ -42,7 +46,11 @@ fun NavHostController.navigateToPrimary(route: String, restoreSavedState: Boolea
         false
     }
     navigate(route) {
-        if (!guidedSetupActive) popUpTo(graph.findStartDestination().id) { saveState = true }
+        if (!guidedSetupActive) {
+            val start = graph.findStartDestination()
+            val home = runCatching { getBackStackEntry(HaloHomeTab.TODAY.route) }.getOrNull()
+            popUpTo(home?.destination?.id ?: start.id) { saveState = true }
+        }
         launchSingleTop = true
         // An explicit destination request must not restore a detail above that root.
         restoreState = restoreSavedState && !guidedSetupActive
@@ -52,8 +60,8 @@ fun NavHostController.navigateToPrimary(route: String, restoreSavedState: Boolea
 /** Object-bearing instruments own a fresh entry; Back restores the previous identity and draft. */
 internal fun NavHostController.navigateToInstrument(route: String) {
     navigate(route) {
-        launchSingleTop = route.substringBefore("?") !in setOf(
+        launchSingleTop = !route.startsWith("study?photoCoach=true") && route.substringBefore("?") !in setOf(
             com.halo.app.ui.everyday.EverydayRoutes.ORGANIZER, com.halo.app.ui.everyday.EverydayRoutes.BRIEF,
-            com.halo.app.ui.everyday.EverydayRoutes.SOURCE,com.halo.app.ui.everyday.EverydayRoutes.CLOCKS,"activity")
+            com.halo.app.ui.everyday.EverydayRoutes.SOURCE,com.halo.app.ui.everyday.EverydayRoutes.CLOCKS,"activity","maps")
     }
 }

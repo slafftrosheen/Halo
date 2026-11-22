@@ -14,7 +14,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.halo.sdk.runtime.ExecutionMode
 
@@ -34,7 +37,10 @@ class BuddyBotSession(
 
     private val _state = MutableStateFlow(SessionState.SAVED)
     override val state: StateFlow<SessionState> = _state.asStateFlow()
-    private var requestIdCounter = 1
+    private val requestIds = AtomicInteger(1)
+    private val pairLock = Any()
+    private var pendingPair: CompletableDeferred<Boolean>? = null
+    private var pairUncertain = false
 
     private val sessionScope = CoroutineScope(SupervisorJob() + coroutineContext)
     private val pendingIntents = ConcurrentHashMap<String, Long>() // intentId -> timestamp
@@ -48,6 +54,7 @@ class BuddyBotSession(
                         sendHandshake()
                     }
                     TransportConnectionState.DISCONNECTED, TransportConnectionState.ERROR -> {
+                        clearPairing()
                         val reason = if (connState == TransportConnectionState.ERROR) "TRANSPORT_ERROR" else "DEVICE_DISCONNECTED"
                         failPendingIntents(reason)
                         _state.value = if (connState == TransportConnectionState.ERROR) SessionState.ERROR else SessionState.DISCONNECTED
@@ -106,8 +113,15 @@ class BuddyBotSession(
                     _state.value = SessionState.READY
                 } else if (message.contains("\"type\":\"paired\"") || message.contains("\"type\": \"paired\"")) {
                     val tokenMatch = Regex("\"token\"\\s*:\\s*\"([^\"]+)\"").find(message)
-                    tokenMatch?.groupValues?.get(1)?.let { token ->
-                        sessionToken = token
+                    tokenMatch?.groupValues?.get(1)?.takeIf { it.length in 1..512 }?.let { token ->
+                        synchronized(pairLock) {
+                            val waiter = pendingPair
+                            if (waiter != null && _state.value == SessionState.READY) {
+                                sessionToken = token
+                                pendingPair = null
+                                waiter.complete(true)
+                            }
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -116,20 +130,43 @@ class BuddyBotSession(
         }
     }
 
-    var sessionToken: String? = null
+    @Volatile var sessionToken: String? = null
         private set
 
     val hasToken: Boolean get() = !sessionToken.isNullOrEmpty()
 
-    suspend fun pair(code: String) {
-        val pairJson = "{\"v\":1,\"id\":${requestIdCounter++},\"type\":\"pair\",\"code\":\"$code\"}"
-        sessionScope.launch {
-            transport.send(pairJson)
+    private fun clearPairing() = synchronized(pairLock) {
+        sessionToken = null
+        pendingPair?.complete(false)
+        pendingPair = null
+        pairUncertain = false
+    }
+
+    suspend fun pair(code: String): Boolean {
+        require(code.matches(Regex("[0-9]{4}")))
+        val waiter = CompletableDeferred<Boolean>()
+        synchronized(pairLock) {
+            if (executionMode != ExecutionMode.LIVE || _state.value != SessionState.READY || pairUncertain || pendingPair != null) return false
+            if (hasToken) return true
+            pendingPair = waiter
+        }
+        try {
+            val pairJson = "{\"v\":1,\"id\":${requestIds.getAndIncrement()},\"type\":\"pair\",\"code\":\"$code\"}"
+            if (!transport.send(pairJson)) return false
+            return withTimeoutOrNull(10_000L) { waiter.await() } == true
+        } finally {
+            synchronized(pairLock) {
+                if (pendingPair === waiter) {
+                    // This protocol does not correlate a paired message with the request ID.
+                    pendingPair = null
+                    pairUncertain = true
+                }
+            }
         }
     }
 
     private fun sendHandshake() {
-        val handshakeJson = "{\"v\":1,\"id\":${requestIdCounter++},\"type\":\"handshake\"}"
+        val handshakeJson = "{\"v\":1,\"id\":${requestIds.getAndIncrement()},\"type\":\"handshake\"}"
         sessionScope.launch {
             transport.send(handshakeJson)
         }
@@ -165,6 +202,7 @@ class BuddyBotSession(
 
     override suspend fun disconnect() {
         _state.value = SessionState.DISCONNECTING
+        clearPairing()
         if (executionMode != ExecutionMode.REPLAY) {
             transport.disconnect()
         }
@@ -188,7 +226,7 @@ class BuddyBotSession(
 
         val map = mutableMapOf<String, Any>()
         map["v"] = 1
-        map["id"] = requestIdCounter++
+        map["id"] = requestIds.getAndIncrement()
         map["intentId"] = intent.intentId
         sessionToken?.let { map["token"] = it }
 

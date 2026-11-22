@@ -7,6 +7,8 @@ import androidx.room.withTransaction
 import com.halo.app.HaloApplication
 import com.halo.app.data.everyday.CollectorCodec
 import com.halo.app.di.ManualDependencyGraph as Graph
+import com.halo.app.everyday.briefing.TODAY_WEATHER_ID
+import com.halo.app.everyday.briefing.setTodayWeatherCity as saveTodayWeatherCity
 import com.halo.app.everyday.collectors.*
 import com.halo.app.everyday.organizer.*
 import kotlinx.coroutines.*
@@ -69,6 +71,11 @@ class SourcesViewModel(private val app: HaloApplication, private val saved: Save
         Graph.collectorRepository.save(source, if (creating) null else source.version)
         saved.remove<String>("sources.draft"); saved.remove<Boolean>("sources.draftNew")
         mutable.update { it.copy(draft = null, preview = null, notice = "Source settings saved. Selection does not fetch in Local.") }
+    }
+    fun setTodayWeatherCity(city: OfflineCity, savedCity: () -> Unit) = work {
+        val version = state.value.sources.find { it.source.id == TODAY_WEATHER_ID }?.source?.version ?: 0
+        saveTodayWeatherCity(Graph.collectorRepository, city, version)
+        savedCity()
     }
     fun refresh(source: CollectorSource) = work {
         val current = Graph.collectorRepository.state(source.id)?.source ?: throw CollectorConflict("Missing source")

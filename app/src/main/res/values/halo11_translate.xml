@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_translate_title">Translate</string>
+    <string name="halo11_translate_swap">Swap</string>
+    <string name="halo11_translate_turns">Take turns using either side.</string>
+    <string name="halo11_translate_spoken_turns">Translate each spoken turn automatically</string>
+    <string name="halo11_translate_cloud_voice">Allow the cloud voice to read translated turns</string>
+    <string name="halo11_translate_speaker">Speak or type in %1$s</string>
+    <string name="halo11_translate_say_turns">Read translated turns aloud</string>
+    <string name="halo11_translate_local">Translation runs on this phone.</string>
+    <string name="halo11_translate_pack_needed">Download the languages to translate offline.</string>
+    <string name="halo11_translate_checking">Checking installed languages…</string>
+    <string name="halo11_translate_packs">Offline languages</string>
+    <string name="halo11_translate_input">Enter text</string>
+    <string name="halo11_translate_listen">Read aloud</string>
+    <string name="halo11_translate_keep">Keep phrase</string>
+    <string name="halo11_translate_saved">Open kept phrase</string>
+    <string name="halo11_translate_packs_explain">Language packs download over Wi-Fi. Your text stays on this phone during translation.</string>
+    <string name="halo11_translate_download">Download over Wi-Fi</string>
+    <string name="halo11_translate_phrasebook">Phrasebook</string>
+    <string name="halo11_translate_review">%1$s\n\n%2$s</string>
+    <string name="halo11_translate_pack_failed">Could not download the language pack. Connect to Wi-Fi and try again.</string>
+    <string name="halo11_translate_failed">Could not translate this text. Try again.</string>
+    <string name="halo11_translate_keep_failed">Could not keep this phrase. Try again.</string>
+</resources>

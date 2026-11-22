@@ -26,6 +26,9 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
 import com.halo.app.di.ManualDependencyGraph as Graph
+import com.halo.app.data.workspace.ContentOwnership
+import com.halo.app.data.workspace.WorkspaceFile
+import com.halo.app.data.workspace.WorkspaceFileAvailability
 import java.io.DataOutputStream
 import java.io.File
 import java.util.UUID
@@ -40,16 +43,34 @@ import kotlin.math.PI
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
+import org.json.JSONArray
+import org.json.JSONObject
 
 internal const val ALBUM_STORY_SCENE_MS = 3200L
 internal data class AlbumStory(val photos: List<HaloAlbumPhoto>, val title: String, val subtitle: String, val music: Boolean)
-internal data class AlbumStoryVideo(val draft: AlbumStory, val file: File, val durationMs: Long) {
-    fun uri(context: Context): Uri = captureFileUri(context, file)
-}
+internal data class AlbumStoryVideo(val draft: AlbumStory, val file: File, val durationMs: Long)
 
 private const val frameSize = 720
 private const val soundRate = 16_000
-private const val storyFolder = "workspace/owned/album-story-staging"
+private const val storyFolder = "album-story-staging"
+
+internal suspend fun requireCurrentAlbumPhoto(photo: HaloAlbumPhoto): WorkspaceFile {
+    val header = Graph.appDatabase.notebookDao().getWorkspaceObject(photo.id)
+    val file = requireNotNull(Graph.workspaceUseCases.getFile(photo.id)) { "Album source is unavailable" }
+    check(header?.lifecycle == "ACTIVE" && file.ownership == ContentOwnership.HALO_OWNED &&
+        file.availability == WorkspaceFileAvailability.OWNED_LOCAL && file.mimeType.startsWith("image/") &&
+        file.uri == photo.uri && file.version == photo.version) { "Album source changed" }
+    return file
+}
+
+internal suspend fun AlbumStory.requireCurrentSources() {
+    for (photo in photos) requireCurrentAlbumPhoto(photo)
+}
+
+internal fun albumSourceProvenance(kind: String, photos: List<HaloAlbumPhoto>) =
+    JSONObject().put("kind", kind).put("sources", JSONArray(photos.map { photo ->
+        JSONObject().put("id", photo.id).put("version", requireNotNull(photo.version))
+    }))
 
 /** The actual encoded file is the playback source, local export and reviewed share attachment. */
 @androidx.annotation.OptIn(UnstableApi::class)
@@ -57,7 +78,7 @@ internal suspend fun renderAlbumStory(context: Context, draft: AlbumStory, adult
     require(draft.photos.size in 1..5 && draft.title.isNotBlank() && draft.title.length <= 80)
     val id = UUID.randomUUID().toString()
     val inputs = File(context.cacheDir, "album-encode-$id")
-    val outputDir = File(context.filesDir, storyFolder)
+    val outputDir = File(context.cacheDir, storyFolder)
     val output = File(outputDir, "story-$id.mp4")
     val duration = draft.photos.size * ALBUM_STORY_SCENE_MS
     var complete = false
@@ -71,8 +92,7 @@ internal suspend fun renderAlbumStory(context: Context, draft: AlbumStory, adult
             draft.photos.forEachIndexed { index, photo ->
                 ensureActive()
                 Graph.kidsPreferences.requireAdultAction(adultRevision)
-                val file = requireNotNull(Graph.workspaceUseCases.getFile(photo.id))
-                check(file.uri == photo.uri && file.version == photo.version)
+                val file = requireCurrentAlbumPhoto(photo)
                 val image = requireNotNull(loadAlbumBitmap(context, file.uri, frameSize * 2))
                 val scene = File(inputs, "scene-$index.jpg")
                 try { writeStoryScene(scene, image, draft.title, draft.subtitle, index, draft.photos.size) }
@@ -94,6 +114,7 @@ internal suspend fun renderAlbumStory(context: Context, draft: AlbumStory, adult
         Graph.kidsPreferences.requireAdultAction(adultRevision)
         val result = encodeAlbumStory(context, composition, output)
         Graph.kidsPreferences.requireAdultAction(adultRevision)
+        draft.requireCurrentSources()
         check(output.isFile && output.length() > 0 && result.videoFrameCount > 0)
         if (draft.music) check(result.audioMimeType != null)
         val encodedDuration = withContext(Dispatchers.IO) {
@@ -104,6 +125,8 @@ internal suspend fun renderAlbumStory(context: Context, draft: AlbumStory, adult
                 requireNotNull(metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()).also { check(it > 0) }
             } finally { metadata.release() }
         }
+        Graph.kidsPreferences.requireAdultAction(adultRevision)
+        draft.requireCurrentSources()
         complete = true
         return AlbumStoryVideo(draft, output, encodedDuration)
     } finally {

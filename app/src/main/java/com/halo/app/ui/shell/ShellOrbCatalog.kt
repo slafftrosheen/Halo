@@ -10,7 +10,10 @@ internal object ShellOrbCatalog {
     /** Adult shell roots only. Child mode retains its existing allowlist. */
     fun globalDestinations(kids: Boolean): List<HaloOrbDestination> = if (kids) destinations(true) else listOf(
         HaloOrbDestination("home", "Home", HaloGlyph.HOME),
-        HaloOrbDestination("notebook", "Workspace", HaloGlyph.NOTE),
+        HaloOrbDestination("notebook", "Library", HaloGlyph.NOTE),
+        HaloOrbDestination("search", "Search", HaloGlyph.SEE),
+        HaloOrbDestination("home/tools", "Tools", HaloGlyph.TOOL),
+        HaloOrbDestination("home/reads", "Reads", HaloGlyph.READ_MODE),
         HaloOrbDestination("devices", "Devices", HaloGlyph.DEVICE),
         HaloOrbDestination("activity", "Activity", HaloGlyph.ACTIVITY),
         HaloOrbDestination("settings", "Settings", HaloGlyph.SETTINGS),
@@ -48,7 +51,7 @@ internal object ShellOrbCatalog {
         "everyday_organizer" -> route?.substringBefore("?") == "screen/organizer" && owner.objectId==objectId
         "everyday_clocks" -> route?.substringBefore("?") == "screen/clocks"
         "everyday_brief" -> route?.substringBefore("?") == "screen/brief"
-        "everyday_sources" -> route == "screen/sources"
+        "everyday_sources" -> route == "screen/sources" || route == "home/reads"
         "everyday_source" -> route?.substringBefore("?") == "screen/source" && owner.objectId == objectId
         "notebook" -> route == "notebook"
         "canvas" -> route?.startsWith("notebook/canvas/") == true && owner.objectId == objectId

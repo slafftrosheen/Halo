@@ -23,8 +23,7 @@ data class OpenRouterSpeechState(val models: List<OpenRouterSpeechModel> = empty
     val sourceVersion: String = java.util.UUID.randomUUID().toString())
 
 /** Uses the existing OpenRouter credential. The host owns all playback/routing.
- * Only qualified Gemini models use raw PCM (Google documents 24 kHz mono signed LE16).
- * All other models request self-describing MP3; never guess the format of arbitrary PCM.
+ * Request raw PCM for models with a documented sample rate and MP3 otherwise.
  * Contract: https://openrouter.ai/docs/guides/overview/multimodal/tts */
 class OpenRouterSpeechProvider(
     private val storage: Storage,
@@ -104,17 +103,20 @@ class OpenRouterSpeechProvider(
         return synthesizeChunk(pinned, epoch.get())
     }
     private suspend fun synthesizeChunk(request: SpeechRequest, version: Long): PcmSpeech {
-        val rawPcm = request.modelId in GEMINI_PCM_MODELS
+        val sampleRate = PCM_SAMPLE_RATES[request.modelId]
+        val rawPcm = sampleRate != null
         val body = JSONObject().put("model", request.modelId).put("input", request.text)
             .put("voice", request.voiceId).put("response_format", if (rawPcm) "pcm" else "mp3")
-        val bytes = fetch(Request.Builder().url(baseUrl.toHttpUrl().newBuilder().addPathSegments("audio/speech").build())
-            .post(body.toString().toRequestBody("application/json".toMediaType())), version, if (rawPcm) "audio/pcm" else "audio/mpeg")
+        val bytes = withContext(storage.remoteSpeechContext(ID, request)) {
+            fetch(Request.Builder().url(baseUrl.toHttpUrl().newBuilder().addPathSegments("audio/speech").build())
+                .post(body.toString().toRequestBody("application/json".toMediaType())), version, if (rawPcm) "audio/pcm" else "audio/mpeg")
+        }
         ensureCurrent(version)
-        val pcm = if (rawPcm) {
+        val pcm = if (sampleRate != null) {
             // OpenRouter's pcm response is headerless; reject containers and partial samples.
             if (bytes.size % 2 != 0 || bytes.take(4).toByteArray().decodeToString() in setOf("RIFF", "OggS"))
                 throw SpeechProviderException(SpeechErrorCode.INVALID_AUDIO_RESPONSE)
-            PcmSpeech(24000, 1, PcmEncoding.SIGNED_16_LE, listOf(bytes))
+            PcmSpeech(sampleRate, 1, PcmEncoding.SIGNED_16_LE, listOf(bytes))
         } else decodeMp3(bytes)
         ensureCurrent(version)
         return pcm
@@ -140,6 +142,7 @@ class OpenRouterSpeechProvider(
                     val result = runCatching { response.use {
                         if (!it.isSuccessful) throw SpeechProviderException(when (it.code) {
                             401, 403 -> SpeechErrorCode.AUTHENTICATION_FAILED
+                            402 -> SpeechErrorCode.INSUFFICIENT_CREDITS
                             429 -> SpeechErrorCode.RATE_LIMITED
                             else -> SpeechErrorCode.SYNTHESIS_FAILED
                         }, if (it.code == 402) "OpenRouter has insufficient credits for this speech model" else "OpenRouter speech request failed (HTTP ${it.code})")
@@ -184,9 +187,15 @@ class OpenRouterSpeechProvider(
         const val VOICE = "openrouter_tts_voice"
         // https://ai.google.dev/gemini-api/docs/speech-generation#output-formats
         // Qualified against OpenRouter's dedicated speech endpoint, not chat audio.
-        private val GEMINI_PCM_MODELS = setOf(
-            "google/gemini-3.8-flash-lite-tts", "google/gemini-3.8-flash-tts", "google/gemini-3.1-flash-tts-preview",
-            "google/gemini-2.5-flash-tts", "google/gemini-2.5-pro-tts",
+        private val PCM_SAMPLE_RATES = mapOf(
+            "google/gemini-3.8-flash-lite-tts" to 24_000,
+            "google/gemini-3.8-flash-tts" to 24_000,
+            "google/gemini-3.1-flash-tts-preview" to 24_000,
+            "google/gemini-2.5-flash-tts" to 24_000,
+            "google/gemini-2.5-pro-tts" to 24_000,
+            "heygen/heygen-voice-1" to 44_100,
+            "heygen/heygen-voice-1-turbo" to 44_100,
+            "heygen/heygen-voice-1-turbo:free" to 44_100,
         )
         fun defaultClient() = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS).callTimeout(60, TimeUnit.SECONDS)

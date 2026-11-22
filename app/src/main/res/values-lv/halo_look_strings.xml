@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="look_title">Pielāgo sev</string>
+    <string name="look_motion_play">Priekšskatīt animāciju</string>
+    <string name="look_motion_android_off">Android iestatījumos animācijas ir izslēgtas.</string>
+    <string name="look_motion_device_limited">Tālrunis pašlaik ierobežo animācijas.</string>
+    <string name="look_motion_contrast">Augsta kontrasta režīmā gredzens nekustas.</string>
 </resources>

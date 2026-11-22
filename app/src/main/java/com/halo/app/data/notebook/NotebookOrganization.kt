@@ -8,6 +8,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import androidx.room.Transaction
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -44,6 +45,7 @@ data class NotebookCollectionMemberEntity(
     val collectionId: String,
     val objectId: String,
     val addedAtEpochMs: Long,
+    val suggestionToken: String? = null,
 )
 
 @Entity(
@@ -61,7 +63,10 @@ data class NotebookFavoriteEntity(
     val addedAtEpochMs: Long,
 )
 
-data class NotebookCollection(val id: String, val name: String, val sortOrder: Int)
+data class NotebookCollection(val id: String, val name: String, val sortOrder: Int, val activeItems: Int = 0)
+data class LibrarySuggestedSource(val id: String, val title: String, val updatedAt: Long)
+data class LibraryCollectionSuggestion(val collectionId: String, val collectionName: String, val sources: List<LibrarySuggestedSource>)
+data class LibraryCollectionAddition(val collectionId: String, val ids: List<String>, val token: String)
 
 /** Exact private compare state; never serialized to assistant/provider output. */
 data class NotebookOrganizationSnapshot(
@@ -85,6 +90,8 @@ interface NotebookOrganizationDao {
     suspend fun guardedFavorite(id: String): NotebookFavoriteEntity?
     @Query("SELECT * FROM notebook_collections ORDER BY id")
     suspend fun guardedCollections(): List<NotebookCollectionEntity>
+    @Query("SELECT * FROM notebook_collections WHERE id = :id")
+    suspend fun collection(id: String): NotebookCollectionEntity?
     @Query("SELECT * FROM notebook_collection_members WHERE collectionId = :id ORDER BY objectId")
     suspend fun guardedMembers(id: String): List<NotebookCollectionMemberEntity>
 
@@ -131,8 +138,11 @@ interface NotebookOrganizationDao {
         }
     }
 
-    @Query("SELECT * FROM notebook_collections ORDER BY sortOrder ASC, name COLLATE NOCASE ASC")
-    fun observeCollections(): Flow<List<NotebookCollectionEntity>>
+    @Query("""SELECT c.id, c.name, c.sortOrder, COUNT(w.id) AS activeItems FROM notebook_collections c
+        LEFT JOIN notebook_collection_members m ON m.collectionId = c.id
+        LEFT JOIN workspace_objects w ON w.id = m.objectId AND w.lifecycle = 'ACTIVE' AND w.type != 'MEMORY'
+        GROUP BY c.id ORDER BY c.sortOrder ASC, c.name COLLATE NOCASE ASC""")
+    fun observeCollections(): Flow<List<NotebookCollection>>
 
     @Query("SELECT objectId FROM notebook_favorites")
     fun observeFavoriteIds(): Flow<List<String>>
@@ -142,6 +152,39 @@ interface NotebookOrganizationDao {
 
     @Query("SELECT objectId FROM notebook_collection_members WHERE collectionId = :collectionId")
     fun observeMemberIds(collectionId: String): Flow<List<String>>
+
+    @Query("SELECT * FROM notebook_collection_members")
+    fun observeCollectionLinks(): Flow<List<NotebookCollectionMemberEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun addSuggestedMembers(links: List<NotebookCollectionMemberEntity>)
+
+    @Transaction
+    suspend fun applyLibrarySuggestion(suggestion: LibraryCollectionSuggestion, now: Long, token: String,
+        admitted: suspend () -> Boolean): LibraryCollectionAddition? {
+        val collection = collection(suggestion.collectionId)?.takeIf { it.name == suggestion.collectionName } ?: return null
+        val ids = suggestion.sources.map { it.id }
+        if (ids.size !in 1..12 || ids.toSet().size != ids.size) return null
+        val existing = guardedMembers(collection.id).mapTo(hashSetOf()) { it.objectId }
+        if (ids.any(existing::contains)) return null
+        for (source in suggestion.sources) {
+            val row = guardedObject(source.id) ?: return null
+            if (row.lifecycle != "ACTIVE" || row.type !in librarySuggestionSourceTypes ||
+                row.title != source.title || row.updatedAt != source.updatedAt) return null
+        }
+        if (!admitted()) return null
+        addSuggestedMembers(ids.map { NotebookCollectionMemberEntity(collection.id, it, now, token) })
+        return LibraryCollectionAddition(collection.id, ids, token)
+    }
+
+    @Query("DELETE FROM notebook_collection_members WHERE collectionId = :collectionId AND objectId IN (:ids) AND suggestionToken = :token")
+    suspend fun removeSuggestionLinks(collectionId: String, ids: List<String>, token: String): Int
+
+    @Transaction
+    suspend fun undoLibrarySuggestion(addition: LibraryCollectionAddition, admitted: suspend () -> Boolean): Int? {
+        if (!admitted()) return null
+        return removeSuggestionLinks(addition.collectionId, addition.ids, addition.token)
+    }
 
     @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM notebook_collections")
     suspend fun nextCollectionPosition(): Int
@@ -178,10 +221,18 @@ class NotebookOrganizationRepository(
         dao.applyGuarded(expected, change, now(), newId(), isStillAdmitted)
     }
 
-    fun observeCollections(): Flow<List<NotebookCollection>> =
-        dao.observeCollections().map { rows ->
-            rows.map { NotebookCollection(it.id, it.name, it.sortOrder) }
-        }
+    fun observeCollections(): Flow<List<NotebookCollection>> = dao.observeCollections()
+    suspend fun containsCollection(id: String): Boolean = dao.collection(id) != null
+
+    fun observeCollectionLinks(): Flow<Map<String, Set<String>>> = dao.observeCollectionLinks().map { links ->
+        links.groupBy(NotebookCollectionMemberEntity::collectionId).mapValues { (_, members) -> members.mapTo(hashSetOf()) { it.objectId } }
+    }
+
+    suspend fun applyLibrarySuggestion(suggestion: LibraryCollectionSuggestion, admitted: suspend () -> Boolean): LibraryCollectionAddition? =
+        dao.applyLibrarySuggestion(suggestion, now(), newId(), admitted)
+
+    suspend fun undoLibrarySuggestion(addition: LibraryCollectionAddition, admitted: suspend () -> Boolean): Int? =
+        dao.undoLibrarySuggestion(addition, admitted)
 
     fun observeFavorites(): Flow<Set<String>> =
         dao.observeFavoriteIds().map { it.toSet() }
@@ -227,3 +278,5 @@ class NotebookOrganizationRepository(
         setFavorite(objectId, !dao.isFavorite(objectId))
     }
 }
+
+internal val librarySuggestionSourceTypes = setOf("NOTE", "FILE", "MEDIA", "ARTIFACT", "CANVAS")

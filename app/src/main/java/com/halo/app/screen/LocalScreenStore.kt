@@ -1,6 +1,8 @@
 package com.halo.app.screen
 
 import android.content.Context
+import com.halo.app.data.AppDatabase
+import com.halo.app.data.workspace.privateLibraryClaim
 import kotlinx.coroutines.flow.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -73,6 +75,39 @@ class LocalScreenStore(context: Context) : ScreenItemStore {
     }
 
     override fun observe(ids: Set<String>): Flow<List<ScreenItem>> = items.map { values -> values.filter { it.id in ids } }
+
+    /** A routine result is a disposable cache of an automation whose durable owner is Room. */
+    internal fun withdrawAutomationSources(ids: Set<String>) = synchronized(lock) {
+        val retained = _items.value.filterNot { it.automationSource() in ids }
+        if (retained.size == _items.value.size) return@synchronized
+        _items.value = retained
+        check(preferences.edit().putString("items", itemsJson(retained)).commit())
+    }
+
+    internal suspend fun reconcileAutomationPrivacy(database: AppDatabase) {
+        withdrawAutomationSources(privateAutomationSources(database, _items.value.mapNotNull { it.automationSource() }.toSet()))
+    }
+
+    internal suspend fun excludePrivateAutomations(raw: String, database: AppDatabase): String {
+        val root = JSONObject(raw)
+        val items = readItems(root.getJSONArray("items").toString())
+        val privateIds = privateAutomationSources(database, items.mapNotNull { it.automationSource() }.toSet())
+        return if (privateIds.isEmpty()) raw else root.put("items", JSONArray(itemsJson(items.filterNot {
+            it.automationSource() in privateIds
+        }))).toString()
+    }
+
+    internal fun portableAutomationSources(raw: String): Set<String> =
+        readItems(JSONObject(raw).getJSONArray("items").toString()).mapNotNull { it.automationSource() }.toSet()
+
+    private suspend fun privateAutomationSources(database: AppDatabase, ids: Set<String>): Set<String> {
+        val keys = ids.associateBy(::privateLibraryClaim)
+        return keys.keys.chunked(400).flatMap { database.privateLibraryDao().claims(it) }
+            .mapNotNullTo(linkedSetOf()) { keys[it] }
+    }
+
+    private fun ScreenItem.automationSource(): String? = if (sourceType == ScreenSourceType.AUTOMATION)
+        sourceId ?: id.takeIf { it.startsWith("automation:") }?.removePrefix("automation:") else null
 
     fun saveLayout(value: ScreenLayout, recordUndo: Boolean = true) = synchronized(lock) {
         val checked = checkedLayout(value)

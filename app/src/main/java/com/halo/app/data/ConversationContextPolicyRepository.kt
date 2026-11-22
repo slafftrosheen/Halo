@@ -9,8 +9,15 @@ import org.json.JSONObject
 class StorageConversationContextPolicyRepository(
     private val storage: Storage,
 ) : ConversationContextPolicyRepository {
+    internal fun privateRaw(conversationId: String): String? = storage.getString(key(conversationId))
+
+    internal fun writePrivateRaw(conversationId: String, raw: String?) {
+        storage.putString(key(conversationId), raw)
+        check(privateRaw(conversationId) == raw) { "Conversation policy was not saved" }
+    }
+
     override fun get(conversationId: String): ConversationContextPolicy? {
-        val raw = storage.getString(key(conversationId)) ?: return null
+        val raw = privateRaw(conversationId) ?: return null
         return runCatching {
             val json = JSONObject(raw)
             val base = storage.readRuntimeAiContextPolicy()

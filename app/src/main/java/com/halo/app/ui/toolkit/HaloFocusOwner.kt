@@ -28,6 +28,7 @@ internal data class HaloFocusSession(
     val boot: Int,
     val quietRequested: Boolean,
     val quietApplied: Boolean = false,
+    val rest: Boolean = false,
 ) {
     fun left(now: Long = SystemClock.elapsedRealtime()) = (deadlineElapsed - now).coerceAtLeast(0)
 }
@@ -39,12 +40,21 @@ internal class HaloFocusOwner private constructor(private val context: Context) 
     val state = mutable.asStateFlow()
     private val boot get() = Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1)
 
+    suspend fun dayReportSpan(): Pair<Long, Long>? = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val active = mutable.value?.takeIf { it.boot == boot && !it.rest } ?: return@withLock null
+            val duration = TimeUnit.MINUTES.toMillis(active.durationMinutes.toLong()) - active.left()
+            (active.startedAt to active.startedAt + duration).takeIf { duration > 0 }
+        }
+    }
+
     private fun read(): HaloFocusSession? {
         val id = disk.getString("id", null) ?: return null
         val minutes = disk.getInt("minutes", 0)
         if (minutes !in 1..120) return null
         return HaloFocusSession(id, disk.getLong("started", 0), disk.getLong("deadline", 0), minutes,
-            disk.getInt("boot", -1), disk.getBoolean("quiet", false), disk.getBoolean("quietApplied", false))
+            disk.getInt("boot", -1), disk.getBoolean("quiet", false), disk.getBoolean("quietApplied", false),
+            disk.getBoolean("rest", false))
     }
 
     suspend fun current(): HaloFocusSession? = withContext(Dispatchers.IO) {
@@ -55,7 +65,7 @@ internal class HaloFocusOwner private constructor(private val context: Context) 
         }
     }
 
-    suspend fun start(minutes: Int, quiet: Boolean): HaloFocusSession = withContext(Dispatchers.IO) {
+    suspend fun start(minutes: Int, quiet: Boolean, rest: Boolean = false): HaloFocusSession = withContext(Dispatchers.IO) {
         require(minutes in 1..120)
         mutex.withLock {
             val family = requireAdultToolkit(context)
@@ -63,9 +73,9 @@ internal class HaloFocusOwner private constructor(private val context: Context) 
             check(former == null || former.boot != boot || former.left() == 0L)
             former?.let(::stopLocked)
             val duration = TimeUnit.MINUTES.toMillis(minutes.toLong())
-            val requested = quiet && Build.VERSION.SDK_INT >= 29
+            val requested = quiet && !rest && Build.VERSION.SDK_INT >= 29
             val session = HaloFocusSession(UUID.randomUUID().toString(), System.currentTimeMillis(),
-                SystemClock.elapsedRealtime() + duration, minutes, boot, requested)
+                SystemClock.elapsedRealtime() + duration, minutes, boot, requested, rest = rest)
             // Schedule recovery before enabling an app-owned interruption rule.
             val work = OneTimeWorkRequestBuilder<HaloFocusEndWorker>()
                 .setInputData(workDataOf("version" to session.version))
@@ -75,7 +85,7 @@ internal class HaloFocusOwner private constructor(private val context: Context) 
             requireAdultToolkit(context, family)
             check(disk.edit().putString("id", session.version).putLong("started", session.startedAt)
                 .putLong("deadline", session.deadlineElapsed).putInt("minutes", minutes).putInt("boot", session.boot)
-                .putBoolean("quiet", requested).commit())
+                .putBoolean("quiet", requested).putBoolean("rest", rest).commit())
             mutable.value = session
             val applied = if (requested) runCatching { NativeDndController(context, focus = true).request(true).acknowledged }
                 .getOrDefault(false) else false
@@ -88,10 +98,15 @@ internal class HaloFocusOwner private constructor(private val context: Context) 
         }
     }
 
-    suspend fun end(version: String, onlyExpired: Boolean = false) = withContext(Dispatchers.IO) {
+    suspend fun end(version: String, onlyExpired: Boolean = false, note: String? = null) = withContext(Dispatchers.IO) {
         mutex.withLock {
             val session = mutable.value?.takeIf { it.version == version } ?: return@withLock false
             if (onlyExpired && session.boot == boot && session.left() > 0) return@withLock false
+            if (!note.isNullOrBlank()) {
+                requireAdultToolkit(context)
+                check(!session.rest)
+                com.halo.app.everyday.briefing.DayReportSettings.get(context).keepFocusNote(session.version, note)
+            }
             stopLocked(session)
             true
         }
@@ -101,6 +116,11 @@ internal class HaloFocusOwner private constructor(private val context: Context) 
         if (session.quietRequested) {
             try { NativeDndController(context, focus = true).request(false) }
             catch (_: SecurityException) { /* Android owns access and removal of revoked rules. */ }
+        }
+        if (session.boot == boot && !session.rest) {
+            val duration = TimeUnit.MINUTES.toMillis(session.durationMinutes.toLong()) - session.left()
+            if (duration > 0) com.halo.app.everyday.briefing.DayReportSettings.get(context)
+                .recordFocus(session.version, session.startedAt, session.startedAt + duration)
         }
         check(disk.edit().clear().commit()) { "Could not end focus" }
         mutable.value = null

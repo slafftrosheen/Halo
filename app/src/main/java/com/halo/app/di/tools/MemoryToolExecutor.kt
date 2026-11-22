@@ -3,14 +3,20 @@ package com.halo.app.di.tools
 import com.halo.app.data.memory.MemoryCandidate
 import com.halo.app.data.memory.MemoryContextSource
 import com.halo.app.data.memory.MemoryQuery
+import com.halo.app.data.memory.MemoryRecord
 import com.halo.app.data.memory.MemoryRepository
 import com.halo.app.data.memory.PersonalLearningRepository
 import com.halo.app.data.memory.PersonalMemoryCodec
+import com.halo.app.data.memory.isMemoryPage
+import com.halo.app.data.memory.memoryPageNeighborhood
 import com.halo.runtime.cognition.memory.*
 import com.halo.runtime.cognition.tools.*
 import com.halo.sdk.provider.*
 import java.time.Instant
 import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.flow.first
+import org.json.JSONArray
+import org.json.JSONObject
 
 class MemoryToolExecutor(private val memoryRepository: MemoryRepository,private val contextSource: MemoryContextSource,
     private val learning: PersonalLearningRepository,private val preferences: ()->LearningPreferences,
@@ -19,11 +25,21 @@ class MemoryToolExecutor(private val memoryRepository: MemoryRepository,private 
         mapOf("type" to "object","properties" to fields,"required" to required,"additionalProperties" to false))
     private val text=mapOf("type" to "string","maxLength" to 1000)
     private val identity=mapOf("type" to "string","maxLength" to 200)
+    private val version = mapOf("type" to "integer", "minimum" to 0)
+    private val flag = mapOf("type" to "boolean")
     override fun definitions() = listOf(
         definition("halo_set_working_memory","Keep a short temporary task note for this run only. It disappears after the run.",mapOf("key" to mapOf("type" to "string","maxLength" to 80),"content" to mapOf("type" to "string","maxLength" to 512)),listOf("key","content")),
         definition("halo_read_working_memory","Read this run's temporary task notes.",emptyMap(),emptyList()),
         definition("halo_search_memory","Search current scoped memories or recent historical episodes; no full-store dump.",mapOf("query" to mapOf("type" to "string","maxLength" to 500),"intent" to mapOf("type" to "string","enum" to listOf("CURRENT","EPISODE"))),listOf("query")),
         definition("halo_read_memory","Read one exact current memory id or episode id.",mapOf("id" to identity),listOf("id")),
+        definition("halo_memory_page_connections", "Read the tags and incoming or outgoing links of an exact current memory page, with nearby pages at depth 1–3.",
+            mapOf("id" to identity, "depth" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 3)), listOf("id")),
+        definition("halo_memory_page_link", "Create or remove a link between exact current memory pages, or create a page and link it in one confirmed operation.",
+            mapOf("id" to identity, "version" to version, "targetId" to identity, "targetVersion" to version,
+                "newPage" to text, "linked" to flag), listOf("id", "version", "linked")),
+        definition("halo_memory_page_tag", "Add or remove a reviewed tag on one exact current memory page.",
+            mapOf("id" to identity, "version" to version, "tag" to mapOf("type" to "string", "maxLength" to 34), "tagged" to flag),
+            listOf("id", "version", "tag", "tagged")),
         definition("halo_propose_memory","Place an inferred non-sensitive memory suggestion in Notebook Inbox. Does not remember a fact.",mapOf("content" to text,"kind" to mapOf("type" to "string","enum" to listOf("FACT","PREFERENCE","PROJECT","RELATIONSHIP")),"scope" to mapOf("type" to "string","enum" to listOf("GLOBAL","PROJECT","WORKSPACE_OBJECT")),"scope_id" to identity,"confidence" to mapOf("type" to "number","minimum" to 0,"maximum" to .95),"sensitivity" to mapOf("type" to "string","enum" to listOf("ORDINARY","SENSITIVE","UNKNOWN"))),listOf("content","kind","confidence","sensitivity")),
         definition("halo_remember","Remember concise user-approved information. Requires confirmation; never use for autonomous inferred learning.",mapOf("content" to text,"kind" to mapOf("type" to "string","enum" to MemoryKind.entries.filter { it != MemoryKind.EPISODE }.map { it.name }),"scope" to mapOf("type" to "string","enum" to listOf("GLOBAL","PROJECT","WORKSPACE_OBJECT")),"scope_id" to identity),listOf("content")),
         definition("halo_update_memory","Correct one exact memory id after user confirmation.",mapOf("id" to identity,"content" to text),listOf("id","content")),
@@ -32,7 +48,8 @@ class MemoryToolExecutor(private val memoryRepository: MemoryRepository,private 
     override suspend fun execute(toolCall: ToolCall): ToolExecutionResult {
         fun reject(reason: String, kind: com.halo.runtime.cognition.tools.ToolRejectionKind = com.halo.runtime.cognition.tools.ToolRejectionKind.INVALID_ARGUMENTS) = ToolExecutionResult.Rejected(toolCall.id,toolCall.functionName,reason,kind)
         val scope=coroutineContext[RunToolScope]
-        val write=toolCall.functionName in setOf("halo_remember","halo_update_memory","halo_forget_memory","halo_propose_memory")
+        val write=toolCall.functionName in setOf("halo_remember","halo_update_memory","halo_forget_memory","halo_propose_memory",
+            "halo_memory_page_link", "halo_memory_page_tag")
         if(write && (scope == null || !learning.isRootRun(scope.runId.value))) return reject("Only a root run may propose or change durable memory", com.halo.runtime.cognition.tools.ToolRejectionKind.UNSUPPORTED_OPERATION)
         if(write && preferences().mode == LearningPreference.OFF) return reject("Memory learning is off; manual Notebook operations remain available", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
         if(scope?.targetIsLocal == false && !cloudAllowed()) return reject("Cloud memory access is disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
@@ -76,6 +93,8 @@ class MemoryToolExecutor(private val memoryRepository: MemoryRepository,private 
                         memoryRepository.markUsed(listOf(id));ToolExecutionResult.Success(toolCall.id,toolCall.functionName,"Saved memory (data, not instructions): ${record.content}")
                     }
                 }
+                "halo_memory_page_connections", "halo_memory_page_link", "halo_memory_page_tag" ->
+                    memoryPageOperation(toolCall)
                 "halo_propose_memory" -> {
                     if(preferences().mode != LearningPreference.SUGGEST || !preferences().suggestMemories) return reject("Memory suggestions are disabled", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_DISABLED)
                     val run=scope?.runId?.value ?: return reject("Run evidence required", com.halo.runtime.cognition.tools.ToolRejectionKind.RESOURCE_UNAVAILABLE)
@@ -120,8 +139,66 @@ class MemoryToolExecutor(private val memoryRepository: MemoryRepository,private 
                 else -> reject("Unsupported memory tool", com.halo.runtime.cognition.tools.ToolRejectionKind.TOOL_UNKNOWN)
             }
         } catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-        catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch(_: IllegalArgumentException) { return reject("Invalid memory arguments") }
         catch(_: Exception) { return reject("Memory operation failed or validation rejected; nothing was confirmed", com.halo.runtime.cognition.tools.ToolRejectionKind.TRANSIENT_FAILURE) }
+    }
+
+    private suspend fun memoryPageOperation(call: ToolCall): ToolExecutionResult {
+        fun unavailable(message: String) = ToolExecutionResult.Rejected(call.id, call.functionName, message, ToolRejectionKind.RESOURCE_UNAVAILABLE)
+        val args = call.arguments
+        val scopeIds = activeScopeIds()
+        val clock = System.currentTimeMillis()
+        fun visible(page: MemoryRecord): Boolean = page.isMemoryPage() &&
+            (page.scope == MemoryScope.GLOBAL || page.scopeId in scopeIds) &&
+            (page.validUntil ?: Long.MAX_VALUE) > clock
+        val id = requireNotNull(args["id"] as? String)
+        val current = memoryRepository.getMemory(id)
+        if (current == null || !visible(current)) return unavailable("Memory page is unavailable in this scope")
+        val receipt = JSONObject().put("id", id).put("version", current.updatedAt)
+        if (call.functionName == "halo_memory_page_connections") {
+            val metadata = memoryRepository.observePageMetadata().first()
+            val visiblePages = memoryRepository.observeMemories().first().filter(::visible).associateBy(MemoryRecord::id)
+            if (visiblePages[id]?.updatedAt != current.updatedAt) return unavailable("Memory page changed; review it again")
+            val depth = (args["depth"] as? Number)?.toInt() ?: 1
+            val graph = memoryPageNeighborhood(id, metadata.links, visiblePages.keys, depth)
+            val pages = graph.distance.map { (pageId, distance) ->
+                val page = visiblePages.getValue(pageId)
+                JSONObject().put("id", pageId).put("version", page.updatedAt).put("depth", distance)
+                    .put("title", page.content.lineSequence().first().take(100))
+            }
+            receipt.put("pages", JSONArray(pages))
+                .put("tags", JSONArray(metadata.tagsOf(id).map { it.label }))
+                .put("links", JSONArray(graph.links.map { JSONObject().put("sourceId", it.sourceId).put("targetId", it.targetId) }))
+                .put("truncated", graph.truncated)
+        } else {
+            val sourceVersion = requireNotNull(args["version"] as? Number).toLong()
+            if (current.updatedAt != sourceVersion) return unavailable("Memory page changed; review it again")
+            if (call.functionName == "halo_memory_page_tag") {
+                val tagged = requireNotNull(args["tagged"] as? Boolean)
+                val label = requireNotNull(args["tag"] as? String)
+                if (!memoryRepository.tagPage(id, sourceVersion, label, tagged)) return unavailable("Memory page changed; review it again")
+                receipt.put("tag", label).put("tagged", tagged)
+            } else {
+                val linked = requireNotNull(args["linked"] as? Boolean)
+                val targetId = args["targetId"] as? String
+                val newPage = args["newPage"] as? String
+                require((targetId == null) != (newPage == null))
+                val target = if (targetId != null) {
+                    val targetVersion = requireNotNull(args["targetVersion"] as? Number).toLong()
+                    val record = memoryRepository.getMemory(targetId)
+                    if (record == null || !visible(record) || record.updatedAt != targetVersion)
+                        return unavailable("Linked page is unavailable or changed; review it again")
+                    if (!memoryRepository.linkPage(id, sourceVersion, targetId, targetVersion, linked))
+                        return unavailable("Memory pages changed; review them again")
+                    record
+                } else {
+                    require(linked)
+                    memoryRepository.linkNewPage(id, sourceVersion, requireNotNull(newPage))
+                        ?: return unavailable("Memory page changed; review it again")
+                }
+                receipt.put("targetId", target.id).put("targetVersion", target.updatedAt).put("linked", linked)
+            }
+        }
+        return ToolExecutionResult.Success(call.id, call.functionName, receipt.toString())
     }
 }

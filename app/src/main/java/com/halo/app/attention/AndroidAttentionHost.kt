@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import com.halo.app.data.AppDatabase
+import com.halo.app.data.workspace.privateLibraryClaim
 import com.halo.app.nativeactions.nativeUi
 import com.halo.runtime.cognition.attention.*
 import com.halo.sdk.runtime.*
@@ -52,6 +54,21 @@ class AndroidAttentionHost(
     fun foreground(value: Boolean) { foreground = value; refresh() }
     fun interacting(value: Boolean) { interacting = value; refresh() }
     fun refresh() { revisions.update { it + 1 } }
+    internal fun cancelAutomationNotice(id: String) { notifications.cancel(id, 0) }
+    internal suspend fun reconcilePrivateAutomationNotices(database: AppDatabase) {
+        val notices = notifications.activeNotifications.mapNotNull { delivered ->
+            val tag = delivered.tag ?: return@mapNotNull null
+            val id = when {
+                tag.startsWith("result:") || tag.startsWith("watch:") -> tag.substringAfter(':')
+                tag.startsWith("run:") -> tag.removePrefix("run:").substringBeforeLast(':')
+                else -> return@mapNotNull null
+            }
+            privateLibraryClaim(id) to tag
+        }.groupBy({ it.first }, { it.second })
+        for (batch in notices.keys.chunked(400)) {
+            database.privateLibraryDao().claims(batch).forEach { claim -> notices[claim].orEmpty().forEach(::cancelAutomationNotice) }
+        }
+    }
     override fun snapshot() = AttentionContext(
         foregroundState = if (foreground) ForegroundState.HALO_FOREGROUND else ForegroundState.OTHER_APP_FOREGROUND,
         screenInteractive = context.getSystemService(android.os.PowerManager::class.java).isInteractive,

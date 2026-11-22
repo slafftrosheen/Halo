@@ -29,20 +29,30 @@ class OpenRouterSpeechTest {
     private val catalogue = """{"data":[{"id":"vendor/speech","name":"Speech","architecture":{"output_modalities":["speech"]}},{"id":"vendor/chat","architecture":{"output_modalities":["text"]}}]}"""
     private val pcm = PcmSpeech(24000, 1, PcmEncoding.SIGNED_16_LE, listOf(byteArrayOf(1, 0)))
 
-    @Test fun qualifiedGeminiRequestsPcmAndPreservesItsDocumentedFormat() = runBlocking {
+    @Test fun pcmOnlyModelsPreserveTheirDocumentedSampleRate() = runBlocking {
         val server = MockWebServer(); server.start()
         val disk = Memory().apply { putString(OpenRouterSpeechProvider.KEY, "fixture-key") }
         val provider = OpenRouterSpeechProvider(disk, { error("PCM must not reach MP3 decoder") }, baseUrl = server.url("/").toString())
         try {
-            for (model in listOf(
-                "google/gemini-3.8-flash-lite-tts", "google/gemini-3.8-flash-tts", "google/gemini-3.1-flash-tts-preview",
-                "google/gemini-2.5-flash-tts", "google/gemini-2.5-pro-tts",
+            for ((model, rate) in listOf(
+                "google/gemini-3.8-flash-lite-tts" to 24_000,
+                "google/gemini-3.8-flash-tts" to 24_000,
+                "google/gemini-3.1-flash-tts-preview" to 24_000,
+                "google/gemini-2.5-flash-tts" to 24_000,
+                "google/gemini-2.5-pro-tts" to 24_000,
+                "heygen/heygen-voice-1" to 44_100,
+                "heygen/heygen-voice-1-turbo" to 44_100,
+                "heygen/heygen-voice-1-turbo:free" to 44_100,
             )) {
                 val bytes = byteArrayOf(0, 0, -1, 127, 0, -128)
                 server.enqueue(MockResponse().setHeader("Content-Type", "audio/pcm").setBody(okio.Buffer().write(bytes)))
-                val result = provider.synthesizeToPcm(SpeechRequest("Hello", modelId = model, voiceId = "Kore"))
-                assertEquals("pcm", JSONObject(server.takeRequest().body.readUtf8()).getString("response_format"))
-                assertEquals(24000, result.sampleRateHz); assertEquals(1, result.channelCount)
+                val voice = if (model.startsWith("heygen/")) "nadine" else "Kore"
+                val result = provider.synthesizeToPcm(SpeechRequest("Hello", modelId = model, voiceId = voice))
+                val body = JSONObject(server.takeRequest().body.readUtf8())
+                assertEquals("pcm", body.getString("response_format"))
+                assertEquals(model, body.getString("model"))
+                assertEquals(voice, body.getString("voice"))
+                assertEquals(rate, result.sampleRateHz); assertEquals(1, result.channelCount)
                 assertEquals(PcmEncoding.SIGNED_16_LE, result.encoding); assertArrayEquals(bytes, result.chunks.single())
             }
         } finally { provider.close(); server.shutdown() }

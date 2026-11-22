@@ -61,7 +61,7 @@ val LocalPrivateSpeech = compositionLocalOf { false }
 /**
  * One explicit, reusable Voice/Text affordance for Study and Workspace editors.
  *
- * Selected local STT, never Android/OEM cloud recognition. A recognized utterance
+ * Uses the assistant's selected recognizer and end-of-speech detection. A recognized utterance
  * remains an uncommitted preview until the user accepts it into the current draft.
  * Reading uses Halo's one canonical routed TtsRequested playback owner.
  */
@@ -113,6 +113,7 @@ fun HaloVoiceTextActions(
     val scope=rememberCoroutineScope()
     val latestText by rememberUpdatedState(text)
     val latestOnText by rememberUpdatedState(onText)
+    val latestCommand by rememberUpdatedState(onCommand)
     val latestTransform by rememberUpdatedState(spokenTransform)
     var searchUndo by remember { mutableStateOf<Pair<String, String>?>(null) }
     var heard by remember { mutableStateOf<String?>(null) }
@@ -224,7 +225,7 @@ fun HaloVoiceTextActions(
                     phase = "RECORDING"
                     val take = if (count == 0) signal else CompletableDeferred<Unit>()
                     finish = take
-                    val captured = runner.captureSession(take, maxDurationMs = 15_000)
+                    val captured = runner.captureSession(take, maxDurationMs = 15_000, stopAfterSpeech = !long)
                     session = captured
                     currentCoroutineContext().ensureActive()
                     phase = "RECOGNIZING"
@@ -249,7 +250,8 @@ fun HaloVoiceTextActions(
                         val transformed = latestTransform(utterance)
                         heard = utterance
                         editedPreview = transformed ?: utterance
-                        if (onCommand != null) onCommand(utterance)
+                        val command = latestCommand
+                        if (command != null && accepted && utterance.length <= maxChars) command(utterance)
                         else if (applySearchImmediately && transformed != null) {
                             searchUndo = latestText to transformed
                             latestOnText(transformed)

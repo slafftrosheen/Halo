@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_coach_ink_mirror">Показать в Halo Ink</string>
+    <string name="halo11_coach_ink_mirror_pending">Показ в Halo Ink станет доступен после проверки устройств.</string>
+    <string name="halo11_coach_ink_mirror_review">Выберите сопряжённое устройство, чтобы показать задачу и шаги решения. С него можно отправить рукописный ответ для проверки. Фото останется здесь.</string>
+    <string name="halo11_coach_ink_mirror_no_devices">Сначала подключите другое устройство Halo в разделе «Устройства».</string>
+    <string name="halo11_coach_ink_join_from">На сопряжённом устройстве откройте «Устройства», выберите «Присоединиться к занятию» и введите адрес и код.</string>
+    <string name="halo11_coach_ink_join_details">%1$s:%2$d · Код %3$s</string>
+    <string name="halo11_coach_ink_join">Присоединиться к занятию</string>
+    <string name="halo11_coach_ink_choose_host">Выберите сопряжённый телефон с открытым разбором задачи по фото.</string>
+    <string name="halo11_coach_ink_host_address">Адрес и порт</string>
+    <string name="halo11_coach_ink_host_code">Код занятия</string>
+    <string name="halo11_coach_ink_mirror_connected">Задача показана на устройстве %1$s</string>
+    <string name="halo11_coach_ink_mirror_ended">Соединение завершено.</string>
+    <string name="halo11_coach_ink_mirror_failed">Не удалось подключиться к Halo Ink. Откройте Halo на обоих устройствах в одной локальной сети.</string>
+    <string name="halo11_coach_ink_mirror_stop">Остановить показ</string>
+    <string name="halo11_coach_ink_mirror_step">%1$s → %2$s</string>
+    <string name="halo11_coach_ink_tablet_write">Напишите ответ здесь и отправьте его на телефон для проверки.</string>
+    <string name="halo11_coach_ink_tablet_send">Отправить рукописный ответ</string>
+    <string name="halo11_coach_ink_tablet_sent">Рукописный ответ отправлен на проверку.</string>
+    <string name="halo11_coach_ink_tablet_rejected">Не удалось отправить ответ. Попробуйте написать короче и отправить ответ для текущего шага.</string>
+    <string name="halo11_coach_ink_review_tablet">Проверить рукописный ответ из Halo Ink</string>
+    <string name="halo11_coach_ink_network_permission">Разрешить доступ к локальной сети</string>
+</resources>

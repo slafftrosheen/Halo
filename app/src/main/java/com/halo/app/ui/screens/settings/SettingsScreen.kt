@@ -258,6 +258,7 @@ internal fun SettingsContent(
                     "About halo" -> {
                         Text(uiText("halo"), style = MaterialTheme.typography.headlineLarge)
                         Text(state.version, style = MaterialTheme.typography.bodyMedium)
+                        com.halo.app.ui.toolkit.HaloOfflineMapCredits()
                     }
                     "Appearance" -> {
                         if (palettePreferences != null) AppearanceControls(state.appearanceMode, onApplyAppearance ?: { draft ->
@@ -289,6 +290,7 @@ internal fun SettingsContent(
                                     } })
                             }
                             if (failure) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
+                            com.halo.app.ui.screens.kids.GrownUpHomeworkSettings(kidsPreferences)
                         }
                     }
                 }

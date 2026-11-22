@@ -15,9 +15,22 @@ data class PayloadReferenceEntity(
 @Dao
 interface PayloadDao {
     @Query("SELECT * FROM payload_bodies") suspend fun bodies(): List<PayloadBodyEntity>
+    @Query("SELECT * FROM payload_bodies WHERE sha256 = :sha") suspend fun body(sha: String): PayloadBodyEntity?
     @Query("SELECT * FROM payload_refs") suspend fun references(): List<PayloadReferenceEntity>
     @Query("SELECT * FROM payload_refs WHERE id = :id AND ownerKind = :kind AND ownerId = :owner LIMIT 1")
     suspend fun reference(id: String, kind: String, owner: String): PayloadReferenceEntity?
+    @Query("SELECT EXISTS(SELECT 1 FROM payload_refs WHERE ownerId IN (:ids))")
+    suspend fun hasPrivateOwnerReferences(ids: List<String>): Boolean
+    @Query("SELECT * FROM payload_refs WHERE ownerId IN (:ids) ORDER BY id, ownerKind, ownerId")
+    suspend fun privateReferences(ids: List<String>): List<PayloadReferenceEntity>
+    @Query("""SELECT DISTINCT other.* FROM payload_refs AS owned JOIN payload_refs AS other ON other.id = owned.id
+        WHERE owned.ownerId = :owner AND (other.ownerId != owned.ownerId OR other.ownerKind != owned.ownerKind)
+        ORDER BY other.ownerKind, other.ownerId, other.id""")
+    suspend fun sharedPrivateReferences(owner: String): List<PayloadReferenceEntity>
+    @Query("SELECT * FROM payload_refs WHERE id IN (:ids)")
+    suspend fun referencesByIds(ids: List<String>): List<PayloadReferenceEntity>
+    @Query("DELETE FROM payload_refs WHERE id = :id AND ownerKind = :kind AND ownerId = :owner")
+    suspend fun withdrawPrivateReference(id: String, kind: String, owner: String): Int
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun body(value: PayloadBodyEntity)
     @Insert suspend fun reference(value: PayloadReferenceEntity)
     @Query("UPDATE payload_bodies SET unreferencedAtMs = NULL WHERE sha256 = :sha") suspend fun markReferenced(sha: String)

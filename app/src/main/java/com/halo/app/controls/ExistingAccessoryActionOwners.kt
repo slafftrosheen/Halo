@@ -65,7 +65,9 @@ class ExistingAccessoryActionOwners {
                     val captured = Graph.hostGraph.captureCoordinator?.captureAiThumbnail(publishForInference = false)?.isSuccess == true
                     if(captured) {
                         Graph.contextualCapture.reopen()
-                        if(selection.action == AccessoryAction.CaptureAndAsk) Graph.contextualCapture.action(com.halo.app.capture.CaptureAction.ASK)
+                        if (selection.action == AccessoryAction.CaptureAndAsk && !Graph.kidsPreferences.enabled.value &&
+                            Graph.contextualCapture.state.value?.kidsHomeworkRevision == null)
+                            Graph.contextualCapture.action(com.halo.app.capture.CaptureAction.ASK)
                         result(AccessoryActionOutcome.OPENED_FOR_REVIEW, "Image received for review; no analysis submitted")
                     } else result(AccessoryActionOutcome.FAILED, "Image acquisition failed")
                 }

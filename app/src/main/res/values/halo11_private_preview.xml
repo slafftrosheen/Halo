@@ -1,0 +1,10 @@
+<resources>
+    <string name="halo11_private_preview">Preview</string>
+    <string name="halo11_private_preview_loading">Opening preview…</string>
+    <string name="halo11_private_preview_empty">Empty document</string>
+    <string name="halo11_private_preview_truncated">Beginning of document</string>
+    <string name="halo11_private_preview_restore">Restore to Library to open this file.</string>
+    <string name="halo11_private_preview_play">Play recording</string>
+    <string name="halo11_private_preview_stop">Stop playback</string>
+    <string name="halo11_private_preview_first_page">Page 1 of %1$d</string>
+</resources>

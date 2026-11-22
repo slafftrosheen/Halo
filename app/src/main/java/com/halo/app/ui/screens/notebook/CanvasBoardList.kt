@@ -28,7 +28,7 @@ import com.halo.app.ui.icons.HaloIcon
 private data class CanvasListLink(val targetId: String, val outgoing: Boolean, val label: String?)
 
 internal fun CanvasNode.canEditListText(): Boolean =
-    refObjectId == null && type in setOf(CanvasNodeType.TEXT, CanvasNodeType.GROUP, CanvasNodeType.TAG)
+    refObjectId == null && type in setOf(CanvasNodeType.TEXT, CanvasNodeType.STICKY, CanvasNodeType.GROUP, CanvasNodeType.FRAME, CanvasNodeType.TAG)
 
 @Composable
 internal fun canvasTouchExplorationEnabled(): Boolean {
@@ -94,11 +94,12 @@ internal fun CanvasBoardList(
             val reference = references[node.refObjectId]
             val title = canvasListTitle(node, reference?.title)
             val glyph = when (node.type) {
-                CanvasNodeType.TEXT, CanvasNodeType.NOTE -> HaloGlyph.NOTE
+                CanvasNodeType.TEXT, CanvasNodeType.STICKY, CanvasNodeType.NOTE -> HaloGlyph.NOTE
                 CanvasNodeType.IMAGE, CanvasNodeType.INK_SELECTION -> HaloGlyph.SEE
                 CanvasNodeType.FILE -> HaloGlyph.FILE
                 CanvasNodeType.SKETCH -> HaloGlyph.TOOL
-                CanvasNodeType.GROUP, CanvasNodeType.TAG -> HaloGlyph.ACTION
+                CanvasNodeType.COMMENT -> HaloGlyph.NOTE
+                CanvasNodeType.GROUP, CanvasNodeType.FRAME, CanvasNodeType.SHAPE, CanvasNodeType.TAG -> HaloGlyph.ACTION
             }
             val selectedCard = if (connectionNodes != null) node.id in connectionNodes
                 else if (state.selectionMode) node.id in state.selectedNodeIds else node.id == selectedId
@@ -117,6 +118,7 @@ internal fun CanvasBoardList(
                                 Text(title, Modifier.semantics { heading() }, style = MaterialTheme.typography.titleSmall)
                                 Text(uiText(when (node.type) {
                                     CanvasNodeType.INK_SELECTION -> "Ink selection"
+                                    CanvasNodeType.COMMENT -> "Comment pin"
                                     else -> node.type.name.lowercase().replaceFirstChar { it.uppercase() }
                                 }), style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -156,5 +158,6 @@ internal fun CanvasBoardList(
 private fun canvasListTitle(node: CanvasNode, reference: String?): String = (reference ?: when (node.type) {
     CanvasNodeType.SKETCH -> uiText("Sketch")
     CanvasNodeType.INK_SELECTION -> uiText("Ink selection")
+    CanvasNodeType.COMMENT -> uiText("Comment pin")
     else -> node.readableText()
 }).trim().ifBlank { uiText("Untitled card") }

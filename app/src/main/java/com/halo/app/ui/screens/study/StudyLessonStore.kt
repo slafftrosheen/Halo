@@ -7,6 +7,7 @@ import com.halo.app.data.study.StudyVerdict
 import com.halo.app.study.StudySessionLocalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -16,6 +17,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 data class StudyMaterialFocus(val objectId: String, val version: String, val page: Int? = null)
 
@@ -25,8 +28,13 @@ data class StudyRecoveryState(val draft: String = "", val submissionKey: String?
     val cardAnswers: Map<String, String> = emptyMap())
 
 /** Bounded local lesson history, independent of notebook sources and graded attempts. */
-class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
+class StudyLessonStore(private val storage: Storage, private val sessionExists: (suspend (String) -> Boolean)? = null) : StudySessionLocalData {
+    internal val course = StudyCourseOrder(storage)
     private val recoveryMutex = Mutex()
+    private val privateJournal = StudySidecarJournal(storage)
+    private class VaultWrites(val owner: StudyLessonStore) : AbstractCoroutineContextElement(Key) {
+        companion object Key : CoroutineContext.Key<VaultWrites>
+    }
     private val journeyChanges = MutableStateFlow(0)
     internal val widgetJourneyRevision: kotlinx.coroutines.flow.StateFlow<Int> = journeyChanges
     private fun deletedKey(id: String) = "study_deleted_v1_$id"
@@ -50,9 +58,10 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                 }.orEmpty())
         }
     }
-    suspend fun loadRecovery(id: String) = recoveryMutex.withLock { withContext(Dispatchers.IO) { readRecovery(id) } }
+    suspend fun loadRecovery(id: String) = readWithSidecars(id) { readRecovery(id) }
     private suspend fun updateRecovery(id: String, allowDeletedCleanup: Boolean = false, update: (StudyRecoveryState) -> StudyRecoveryState): StudyRecoveryState =
         recoveryMutex.withLock { withContext(Dispatchers.IO) {
+            settlePrivateSidecar(id)
             if (allowDeletedCleanup && storage.getBoolean(deletedKey(id), false)) return@withContext StudyRecoveryState()
             requireWritable(id)
             val previous = readRecovery(id)
@@ -92,7 +101,7 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
     private val revision = MutableStateFlow(0L)
     fun observeSavedResponseCount(id: String) = revision.map { load(id).size }.distinctUntilChanged()
     private fun key(id: String) = "study_lesson_v1_$id"
-    suspend fun load(id: String): List<StudyTurn> = withContext(Dispatchers.IO) { readSavedTurns(id) }
+    suspend fun load(id: String): List<StudyTurn> = readWithSidecars(id) { readSavedTurns(id) }
 
     /** Refuse damaged or unexpectedly oversized history rather than interpreting it as empty.
      * A later generated reply must not overwrite records the current version cannot decode.
@@ -120,6 +129,7 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
             }
     }
     suspend fun save(id: String, turns: List<StudyTurn>) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
+        settlePrivateSidecar(id)
         requireWritable(id)
         // Old history might have become unreadable after a downgrade/storage fault.
         // Do not overwrite it with a new answer assembled from an empty UI projection.
@@ -142,7 +152,7 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
         check(storage.getString(key(id)) == encoded) { "Study replies were not confirmed in local storage" }
         revision.update { it + 1 }
     } }
-    suspend fun loadJourney(id: String): LearningJourney? = withContext(Dispatchers.IO) { readSavedJourney(id) }
+    suspend fun loadJourney(id: String): LearningJourney? = readWithSidecars(id) { readSavedJourney(id) }
 
     private fun readSavedJourney(id: String): LearningJourney? {
         val raw = storage.getString("study_journey_v1_$id") ?: return null
@@ -181,6 +191,7 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
                     json.getLong("summaryNoteRevision") else null)
     }
     suspend fun saveJourney(id: String, journey: LearningJourney) = recoveryMutex.withLock { withContext(Dispatchers.IO) {
+        settlePrivateSidecar(id)
         requireWritable(id)
         val previousStage = readSavedJourney(id)?.stage
         val key = "study_journey_v1_$id"
@@ -220,11 +231,13 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
             .joinToString("") { "%02x".format(it) }
     }
     override suspend fun version(sessionId: String): String = recoveryMutex.withLock { withContext(Dispatchers.IO) {
+        settlePrivateSidecar(sessionId)
         fingerprint(sessionId, snapshot(sessionId))
     } }
 
     override suspend fun deleteWith(sessionId: String, expectedVersion: String?, deleteRecords: suspend (() -> Unit) -> Boolean): Boolean =
         recoveryMutex.withLock { withContext(NonCancellable + Dispatchers.IO) {
+            settlePrivateSidecar(sessionId)
             // Once admitted, finish the bounded local transaction and its outcome handoff.
             // Cancellation after SQLite commits must not restore deleted local history.
             val before = snapshot(sessionId)
@@ -250,4 +263,69 @@ class StudyLessonStore(private val storage: Storage) : StudySessionLocalData {
         } }
 
     suspend fun delete(id: String) { check(deleteWith(id, null) { clear -> clear(); true }) }
+
+    private suspend fun <T> readWithSidecars(id: String, read: () -> T): T {
+        if (currentCoroutineContext()[VaultWrites]?.owner === this) return read()
+        return recoveryMutex.withLock { withContext(Dispatchers.IO) { settlePrivateSidecar(id); read() } }
+    }
+
+    internal suspend fun <T> withPrivateLibrarySidecars(action: suspend () -> T): T = recoveryMutex.withLock {
+        withContext(Dispatchers.IO + VaultWrites(this)) {
+            settleAllPrivateSidecarsLocked()
+            try { action() }
+            finally { withContext(NonCancellable) { settleAllPrivateSidecarsLocked() } }
+        }
+    }
+
+    internal suspend fun settlePrivateLibrarySidecars() = recoveryMutex.withLock {
+        withContext(Dispatchers.IO) { settleAllPrivateSidecarsLocked() }
+    }
+
+    internal suspend fun capturePrivateSidecars(id: String): StudyPrivateSidecars {
+        requireVaultWrites()
+        return rawPrivateSidecars(id)
+    }
+
+    internal suspend fun withdrawPrivateSidecars(id: String, expected: StudyPrivateSidecars) {
+        requireVaultWrites()
+        check(rawPrivateSidecars(id) == expected) { "Study drafts changed since review" }
+        check(sessionExists != null) { "Study private recovery is unavailable" }
+        privateJournal.stage(id, StudySidecarMove.WITHDRAW, expected, sidecarValues(id, null), mapOf(deletedKey(id) to true))
+        publishSidecarChanges()
+    }
+
+    internal suspend fun restorePrivateSidecars(id: String, expected: StudyPrivateSidecars) {
+        requireVaultWrites()
+        check(snapshot(id).values.all { it == null }) { "Existing Study drafts must be preserved" }
+        check(sessionExists != null) { "Study private recovery is unavailable" }
+        privateJournal.stage(id, StudySidecarMove.RESTORE, expected, emptyMap(), emptyMap())
+    }
+
+    private suspend fun requireVaultWrites() {
+        check(currentCoroutineContext()[VaultWrites]?.owner === this) { "Study private storage was not reserved" }
+    }
+
+    private fun rawPrivateSidecars(id: String) = StudyPrivateSidecars(storage.getString(key(id)),
+        storage.getString("study_journey_v1_$id"), storage.getString(recoveryKey(id)), storage.getBoolean(deletedKey(id), false))
+
+    private fun sidecarValues(id: String, values: StudyPrivateSidecars?): Map<String, String?> = mapOf(
+        key(id) to values?.replies, "study_journey_v1_$id" to values?.journey, recoveryKey(id) to values?.recovery,
+    )
+
+    private suspend fun settleAllPrivateSidecarsLocked() {
+        privateJournal.pending().forEach { settlePrivateSidecar(it) }
+    }
+
+    private suspend fun settlePrivateSidecar(id: String) {
+        val move = privateJournal.move(id) ?: return
+        val isPublic = requireNotNull(sessionExists) { "Study private recovery is unavailable" }(id)
+        val restored = if (isPublic) privateJournal.read(id, move) else null
+        privateJournal.finish(id, sidecarValues(id, restored), mapOf(deletedKey(id) to (restored?.deleted ?: true)), remainsPrivate = !isPublic)
+        publishSidecarChanges()
+    }
+
+    private fun publishSidecarChanges() {
+        revision.update { it + 1 }
+        journeyChanges.update { it + 1 }
+    }
 }

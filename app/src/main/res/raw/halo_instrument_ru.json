@@ -1,0 +1,590 @@
+{
+  "studio.move": {
+    "name": "Перемещение",
+    "description": "Перемещает выбранный слой или выделение."
+  },
+  "studio.rectangle_ellipse_select": {
+    "name": "Прямоугольное или овальное выделение",
+    "description": "Выделяет прямоугольную или овальную область."
+  },
+  "studio.lasso": {
+    "name": "Лассо",
+    "description": "Выделяет область по контуру от руки или по точкам."
+  },
+  "studio.magic_wand": {
+    "name": "Волшебная палочка",
+    "description": "Выделяет пиксели похожего цвета."
+  },
+  "studio.select_subject": {
+    "name": "Выделить объект",
+    "description": "Находит и выделяет главный объект изображения."
+  },
+  "studio.brush": {
+    "name": "Кисть",
+    "description": "Рисует текущей кистью."
+  },
+  "studio.pencil": {
+    "name": "Карандаш",
+    "description": "Рисует чёткую линию без сглаживания краёв."
+  },
+  "studio.eraser": {
+    "name": "Ластик",
+    "description": "Стирает штрихи на текущем слое."
+  },
+  "studio.smudge_blend": {
+    "name": "Растушёвка",
+    "description": "Смешивает штрихи и растягивает цвет."
+  },
+  "studio.fill": {
+    "name": "Заливка",
+    "description": "Заполняет область цветом или градиентом."
+  },
+  "studio.eyedropper": {
+    "name": "Пипетка",
+    "description": "Берёт цвет с изображения."
+  },
+  "studio.colour_wheel_triangle": {
+    "name": "Цветовой круг и треугольник",
+    "description": "Помогает выбрать оттенок и тон."
+  },
+  "studio.shapes": {
+    "name": "Фигуры",
+    "description": "Добавляет редактируемые фигуры."
+  },
+  "studio.text": {
+    "name": "Текст",
+    "description": "Добавляет текст на отдельный слой."
+  },
+  "studio.transform": {
+    "name": "Трансформация",
+    "description": "Меняет масштаб, поворот, наклон и форму выделения."
+  },
+  "studio.crop": {
+    "name": "Обрезка",
+    "description": "Обрезает изображение."
+  },
+  "studio.layers_panel": {
+    "name": "Панель слоёв",
+    "description": "Управляет слоями и их настройками."
+  },
+  "studio.symmetry": {
+    "name": "Симметрия",
+    "description": "Зеркально повторяет штрихи."
+  },
+  "studio.reference_image": {
+    "name": "Изображение-образец",
+    "description": "Открывает изображение-образец рядом с работой."
+  },
+  "studio.history": {
+    "name": "История",
+    "description": "Показывает предыдущие действия."
+  },
+  "studio.quick_palette": {
+    "name": "Быстрая палитра",
+    "description": "Открывает быстрый выбор цветов и кистей."
+  },
+  "studio.fix_the_light_halo": {
+    "name": "Исправить освещение",
+    "description": "Создаёт слой с предложенной коррекцией света и цвета."
+  },
+  "notes.paragraph_styles": {
+    "name": "Стили абзацев",
+    "description": "Меняет оформление заголовков и абзацев."
+  },
+  "notes.font_size": {
+    "name": "Шрифт и размер",
+    "description": "Меняет шрифт и размер выделенного текста."
+  },
+  "notes.bold_italic_underline": {
+    "name": "Полужирный, курсив и подчёркивание",
+    "description": "Добавляет выделение шрифтом."
+  },
+  "notes.highlight": {
+    "name": "Выделение цветом",
+    "description": "Отмечает текст цветом."
+  },
+  "notes.lists": {
+    "name": "Списки",
+    "description": "Создаёт маркированные и нумерованные списки."
+  },
+  "notes.align_spacing": {
+    "name": "Выравнивание и интервалы",
+    "description": "Настраивает выравнивание и интервал строк."
+  },
+  "notes.insert_picture": {
+    "name": "Вставить изображение",
+    "description": "Вставляет фото в документ."
+  },
+  "notes.table": {
+    "name": "Таблица",
+    "description": "Вставляет таблицу."
+  },
+  "notes.link": {
+    "name": "Ссылка",
+    "description": "Добавляет ссылку на сайт или страницу памяти."
+  },
+  "notes.header_footer_page_numbers": {
+    "name": "Колонтитулы и номера страниц",
+    "description": "Добавляет повторяющиеся подписи и номера страниц."
+  },
+  "notes.page_setup": {
+    "name": "Параметры страницы",
+    "description": "Настраивает поля, размер и ориентацию страницы."
+  },
+  "notes.comments": {
+    "name": "Комментарии",
+    "description": "Добавляет комментарии и ответы."
+  },
+  "notes.track_changes": {
+    "name": "Отслеживание изменений",
+    "description": "Отмечает изменения в документе."
+  },
+  "notes.spelling_easier_words": {
+    "name": "Правописание и простые слова",
+    "description": "Проверяет текст и предлагает более простые слова."
+  },
+  "notes.find_replace": {
+    "name": "Найти и заменить",
+    "description": "Ищет и заменяет текст."
+  },
+  "notes.outline": {
+    "name": "Структура",
+    "description": "Показывает список заголовков."
+  },
+  "notes.read_aloud": {
+    "name": "Читать вслух",
+    "description": "Читает документ с текущего места."
+  },
+  "notes.dictate": {
+    "name": "Диктовка",
+    "description": "Вводит текст голосом."
+  },
+  "notes.templates": {
+    "name": "Шаблоны",
+    "description": "Создаёт документ по готовому шаблону."
+  },
+  "notes.export": {
+    "name": "Экспорт",
+    "description": "Сохраняет копию документа в выбранном формате."
+  },
+  "sheets.cell_select_range": {
+    "name": "Выбор ячеек и диапазонов",
+    "description": "Выбирает ячейку или диапазон."
+  },
+  "sheets.formula_bar": {
+    "name": "Строка формул",
+    "description": "Показывает и редактирует формулу."
+  },
+  "sheets.ask_in_words": {
+    "name": "Спросить словами",
+    "description": "Предлагает формулу по описанию словами."
+  },
+  "sheets.fill_down_series": {
+    "name": "Заполнить или продолжить ряд",
+    "description": "Копирует значения или продолжает ряд."
+  },
+  "sheets.number_format": {
+    "name": "Формат чисел",
+    "description": "Меняет формат чисел и дат."
+  },
+  "sheets.sort": {
+    "name": "Сортировка",
+    "description": "Сортирует строки."
+  },
+  "sheets.filter": {
+    "name": "Фильтр",
+    "description": "Показывает подходящие строки."
+  },
+  "sheets.colour_rules": {
+    "name": "Правила цвета",
+    "description": "Применяет цвет по условию."
+  },
+  "sheets.charts": {
+    "name": "Диаграммы",
+    "description": "Строит диаграмму по выбранным данным."
+  },
+  "sheets.freeze_rows_columns": {
+    "name": "Закрепить строки и столбцы",
+    "description": "Оставляет заголовки на месте при прокрутке."
+  },
+  "sheets.add_up_button": {
+    "name": "Сумма",
+    "description": "Считает итог по выбранным значениям."
+  },
+  "sheets.explain_this_sheet": {
+    "name": "Объяснить таблицу",
+    "description": "Кратко объясняет содержимое таблицы."
+  },
+  "sheets.check_entries": {
+    "name": "Проверка ввода",
+    "description": "Проверяет значения в ячейках по правилам."
+  },
+  "sheets.remove_duplicates": {
+    "name": "Удалить дубликаты",
+    "description": "Удаляет повторяющиеся строки после подтверждения."
+  },
+  "sheets.sheet_tabs": {
+    "name": "Вкладки листов",
+    "description": "Управляет листами таблицы."
+  },
+  "sheets.import_export": {
+    "name": "Импорт и экспорт",
+    "description": "Открывает файл или сохраняет копию."
+  },
+  "canvas.select": {
+    "name": "Выделение",
+    "description": "Выделяет и перемещает элементы доски."
+  },
+  "canvas.hand_pan": {
+    "name": "Рука и панорамирование",
+    "description": "Перемещает видимую область доски."
+  },
+  "canvas.sticky_note": {
+    "name": "Стикер",
+    "description": "Добавляет цветную заметку."
+  },
+  "canvas.shape": {
+    "name": "Фигура",
+    "description": "Добавляет фигуру."
+  },
+  "canvas.text": {
+    "name": "Текст",
+    "description": "Добавляет текстовый блок."
+  },
+  "canvas.connector": {
+    "name": "Соединитель",
+    "description": "Связывает элементы линией."
+  },
+  "canvas.pen_highlighter": {
+    "name": "Перо и маркер",
+    "description": "Рисует от руки."
+  },
+  "canvas.picture_file": {
+    "name": "Изображение и файл",
+    "description": "Добавляет изображение или файл."
+  },
+  "canvas.frame": {
+    "name": "Рамка",
+    "description": "Добавляет отдельную область доски для показа."
+  },
+  "canvas.align_distribute": {
+    "name": "Выровнять и распределить",
+    "description": "Выравнивает и распределяет выделенные элементы."
+  },
+  "canvas.group_lock": {
+    "name": "Сгруппировать и закрепить",
+    "description": "Объединяет элементы и защищает их от перемещения."
+  },
+  "canvas.properties_panel": {
+    "name": "Панель свойств",
+    "description": "Меняет общие свойства выделенных элементов."
+  },
+  "canvas.minimap": {
+    "name": "Мини-карта",
+    "description": "Показывает доску целиком и переносит к нужной области."
+  },
+  "canvas.present": {
+    "name": "Презентация",
+    "description": "Показывает рамки на весь экран."
+  },
+  "canvas.comments": {
+    "name": "Комментарии",
+    "description": "Добавляет комментарий к месту на доске."
+  },
+  "scan.capture": {
+    "name": "Снять страницу",
+    "description": "Снимает страницу."
+  },
+  "scan.import_photo": {
+    "name": "Импортировать фото",
+    "description": "Открывает готовое фото."
+  },
+  "scan.edges": {
+    "name": "Границы",
+    "description": "Настраивает границы страницы."
+  },
+  "scan.rotate_reorder": {
+    "name": "Повернуть и переставить",
+    "description": "Поворачивает страницы и меняет порядок."
+  },
+  "scan.filter": {
+    "name": "Фильтр",
+    "description": "Настраивает вид отсканированной страницы."
+  },
+  "scan.read_it_to_me": {
+    "name": "Прочитай мне",
+    "description": "Читает распознанный текст."
+  },
+  "scan.found_text": {
+    "name": "Распознанный текст",
+    "description": "Показывает распознанный текст."
+  },
+  "scan.translate": {
+    "name": "Перевести",
+    "description": "Переводит видимый текст."
+  },
+  "scan.fill_a_form": {
+    "name": "Заполнить форму",
+    "description": "Предлагает заполнить поля формы."
+  },
+  "scan.sign": {
+    "name": "Подписать",
+    "description": "Добавляет сохранённую подпись."
+  },
+  "scan.magnifier": {
+    "name": "Лупа",
+    "description": "Увеличивает изображение с камеры."
+  },
+  "scan.save_pdf": {
+    "name": "Сохранить PDF",
+    "description": "Сохраняет страницы в PDF."
+  },
+  "record.record_pause": {
+    "name": "Записать или приостановить",
+    "description": "Начинает, приостанавливает и возобновляет запись."
+  },
+  "record.play_scrub": {
+    "name": "Воспроизведение и перемотка",
+    "description": "Воспроизводит запись и меняет позицию."
+  },
+  "record.speed": {
+    "name": "Скорость",
+    "description": "Меняет скорость воспроизведения."
+  },
+  "record.marker": {
+    "name": "Метка",
+    "description": "Отмечает место в записи."
+  },
+  "record.chapters": {
+    "name": "Главы",
+    "description": "Делит запись на тематические части."
+  },
+  "record.transcript": {
+    "name": "Расшифровка",
+    "description": "Показывает текст записи с отметками времени."
+  },
+  "record.speakers": {
+    "name": "Говорящие",
+    "description": "Показывает, кто говорил."
+  },
+  "record.find_in_transcript": {
+    "name": "Поиск по расшифровке",
+    "description": "Ищет слова и переходит к нужному месту."
+  },
+  "record.in_short": {
+    "name": "Кратко",
+    "description": "Показывает решения и задачи из записи."
+  },
+  "record.trim": {
+    "name": "Обрезать",
+    "description": "Обрезает начало и конец."
+  },
+  "record.send_to_planner": {
+    "name": "Отправить в планировщик",
+    "description": "Переносит задачу в планировщик после проверки."
+  },
+  "record.export": {
+    "name": "Экспорт",
+    "description": "Сохраняет копию аудио, текста или субтитров."
+  },
+  "planner.views": {
+    "name": "Виды",
+    "description": "Переключает виды планировщика."
+  },
+  "planner.today_back_next": {
+    "name": "Сегодня, назад и вперёд",
+    "description": "Переходит к сегодняшней, предыдущей или следующей дате."
+  },
+  "planner.new_event": {
+    "name": "Новое событие",
+    "description": "Создаёт событие."
+  },
+  "planner.add_by_talking": {
+    "name": "Добавить голосом",
+    "description": "Предлагает событие по устному описанию."
+  },
+  "planner.drag_to_move_resize": {
+    "name": "Переместить или изменить длительность",
+    "description": "Меняет время и длительность события."
+  },
+  "planner.leave_by_time": {
+    "name": "Время выхода",
+    "description": "Подсказывает, когда выходить."
+  },
+  "planner.calendars": {
+    "name": "Календари",
+    "description": "Показывает и скрывает календари."
+  },
+  "planner.tasks": {
+    "name": "Задачи",
+    "description": "Открывает список задач."
+  },
+  "planner.mini_month": {
+    "name": "Мини-календарь",
+    "description": "Переходит к дате по календарю."
+  },
+  "planner.search": {
+    "name": "Поиск",
+    "description": "Ищет события по словам."
+  },
+  "planner.import_export": {
+    "name": "Импорт и экспорт",
+    "description": "Открывает или сохраняет файл календаря."
+  },
+  "study.course_outline": {
+    "name": "План курса",
+    "description": "Показывает уроки курса и прогресс."
+  },
+  "study.lesson_view": {
+    "name": "Урок",
+    "description": "Меняет вид урока."
+  },
+  "study.flashcards": {
+    "name": "Карточки",
+    "description": "Открывает карточки для повторения."
+  },
+  "study.quiz": {
+    "name": "Викторина",
+    "description": "Открывает упражнения для проверки понимания."
+  },
+  "study.hint": {
+    "name": "Подсказка",
+    "description": "Показывает подсказку."
+  },
+  "study.hear_it": {
+    "name": "Послушать",
+    "description": "Читает ответ или материал."
+  },
+  "study.say_it": {
+    "name": "Произнести",
+    "description": "Принимает ответ голосом."
+  },
+  "study.make_cards": {
+    "name": "Создать карточки",
+    "description": "Предлагает карточки по материалу урока."
+  },
+  "study.dynamic_cards": {
+    "name": "Динамические карточки",
+    "description": "Показывает карточки текущего урока."
+  },
+  "study.import_export": {
+    "name": "Импорт и экспорт",
+    "description": "Открывает или сохраняет карточки в CSV."
+  },
+  "memory.page": {
+    "name": "Страница",
+    "description": "Создаёт запись памяти."
+  },
+  "memory.link": {
+    "name": "Ссылка",
+    "description": "Связывает страницы памяти."
+  },
+  "memory.tag": {
+    "name": "Тег",
+    "description": "Добавляет метку для группировки."
+  },
+  "memory.backlinks": {
+    "name": "Обратные ссылки",
+    "description": "Показывает страницы, которые ссылаются на запись."
+  },
+  "memory.link_map": {
+    "name": "Карта связей",
+    "description": "Показывает карту связей."
+  },
+  "memory.timeline": {
+    "name": "Хронология",
+    "description": "Показывает записи в порядке времени."
+  },
+  "memory.search": {
+    "name": "Поиск",
+    "description": "Ищет записи памяти."
+  },
+  "memory.ask_before_using": {
+    "name": "Спрашивать перед использованием",
+    "description": "Открывает настройки использования памяти."
+  },
+  "memory.export": {
+    "name": "Экспорт",
+    "description": "Сохраняет копию записей."
+  },
+  "album.library_sidebar": {
+    "name": "Разделы альбома",
+    "description": "Открывает разделы библиотеки."
+  },
+  "album.search_by_memory": {
+    "name": "Поиск по воспоминаниям",
+    "description": "Ищет фото по словам, времени и людям."
+  },
+  "album.grid_zoom": {
+    "name": "Масштаб сетки",
+    "description": "Меняет размер сетки."
+  },
+  "album.select": {
+    "name": "Выделение",
+    "description": "Выделяет несколько фото."
+  },
+  "album.adjust": {
+    "name": "Настроить",
+    "description": "Настраивает свет и цвет."
+  },
+  "album.crop": {
+    "name": "Обрезать",
+    "description": "Обрезает фото."
+  },
+  "album.compare": {
+    "name": "Сравнить",
+    "description": "Показывает оригинал для сравнения."
+  },
+  "album.revert": {
+    "name": "Вернуть оригинал",
+    "description": "Отменяет правки изображения."
+  },
+  "album.make_a_story": {
+    "name": "Создать историю",
+    "description": "Собирает видеоисторию из фото."
+  },
+  "album.info": {
+    "name": "Сведения",
+    "description": "Показывает сведения о фотографии."
+  },
+  "album.share": {
+    "name": "Поделиться",
+    "description": "Передаёт копию после подтверждения."
+  },
+  "vault.unlock": {
+    "name": "Открыть сейф",
+    "description": "Открывает сейф после проверки на телефоне."
+  },
+  "vault.scan_a_paper": {
+    "name": "Отсканировать документ",
+    "description": "Считывает сведения со снимка документа."
+  },
+  "vault.import_file": {
+    "name": "Импортировать файл",
+    "description": "Импортирует документ из файлов."
+  },
+  "vault.folders": {
+    "name": "Папки",
+    "description": "Группирует документы в папках."
+  },
+  "vault.list_grid": {
+    "name": "Список и сетка",
+    "description": "Переключает список и сетку."
+  },
+  "vault.preview_details": {
+    "name": "Просмотр и сведения",
+    "description": "Показывает документ и его сведения."
+  },
+  "vault.reminder": {
+    "name": "Напоминание",
+    "description": "Устанавливает напоминание до окончания срока."
+  },
+  "vault.search": {
+    "name": "Поиск",
+    "description": "Ищет документы по названию и тексту."
+  },
+  "vault.share_a_copy": {
+    "name": "Поделиться копией",
+    "description": "Передаёт копию после подтверждения."
+  }
+}

@@ -51,6 +51,10 @@ interface OrganizerDao {
     @Update suspend fun update(record: OrganizerEntity): Int
     @Query("DELETE FROM organizer_records WHERE id = :id AND version = :version AND deletedAt IS NOT NULL")
     suspend fun purgeDeleted(id: String, version: Long): Int
+    @Query("DELETE FROM organizer_records WHERE id = :id AND version = :version")
+    suspend fun withdrawForPrivate(id: String, version: Long): Int
+    @Query("DELETE FROM organizer_changes WHERE recordId = :id")
+    suspend fun removePrivateHistory(id: String)
     @Query("SELECT * FROM organizer_occurrences WHERE recordId = :id ORDER BY originalStart")
     suspend fun overrides(id: String): List<OrganizerOccurrenceEntity>
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun putOverride(value: OrganizerOccurrenceEntity)

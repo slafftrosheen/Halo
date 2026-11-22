@@ -81,6 +81,68 @@ interface WorkspaceAssetDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAttachment(entity: NoteAttachmentEntity)
 
+    @Query("SELECT * FROM note_attachments WHERE noteId = :noteId ORDER BY position, createdAtEpochMs, id")
+    suspend fun privateAttachmentLinks(noteId: String): List<NoteAttachmentEntity>
+
+    @Query("""SELECT n.* FROM note_attachments n JOIN workspace_assets a ON a.id = n.assetId
+        WHERE a.objectId = :noteId ORDER BY n.position, n.createdAtEpochMs, n.id""")
+    suspend fun privateBackingLinks(noteId: String): List<NoteAttachmentEntity>
+
+    @Query("""SELECT n.noteId FROM note_attachments n JOIN workspace_assets a ON a.id = n.assetId
+        WHERE a.objectId = :noteId AND n.noteId <> :noteId
+        UNION SELECT a.objectId FROM note_attachments n JOIN workspace_assets a ON a.id = n.assetId
+        WHERE n.noteId = :noteId AND a.objectId <> :noteId""")
+    suspend fun privateLinkedNoteOwners(noteId: String): List<String>
+
+    @Query("SELECT DISTINCT noteId FROM note_attachments WHERE assetId IN (:assetIds)")
+    suspend fun linkedAttachmentNoteIds(assetIds: List<String>): List<String>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM note_attachments WHERE assetId = :assetId AND noteId <> :noteId)")
+    suspend fun attachmentUsedByAnotherNote(assetId: String, noteId: String): Boolean
+
+    @Query("SELECT EXISTS(SELECT 1 FROM workspace_assets WHERE pathOrUri IN (:addresses)) OR EXISTS(SELECT 1 FROM workspace_files WHERE uri IN (:addresses) OR ownedCopyPath IN (:addresses))")
+    suspend fun hasStoredAssetPath(addresses: List<String>): Boolean
+
+    @Query("SELECT * FROM workspace_assets")
+    suspend fun privateAssetBackings(): List<WorkspaceAssetEntity>
+
+    @Query("SELECT id FROM workspace_assets WHERE objectId = :noteId UNION SELECT id FROM note_attachments WHERE noteId = :noteId")
+    suspend fun privateOwnedAttachmentIds(noteId: String): List<String>
+
+    @Query("""SELECT
+        EXISTS(SELECT 1 FROM notes WHERE
+            (instr(:protectedOwners, '|' || objectId || '|') = 0 AND (instr(body, :assetId) > 0 OR instr(body, :linkId) > 0)) OR
+            (:publicBacking = 0 AND instr(:rebindingOwners, '|' || objectId || '|') = 0 AND instr(body, :basename) > 0)) OR
+        EXISTS(SELECT 1 FROM note_blocks WHERE
+            (instr(:protectedOwners, '|' || noteId || '|') = 0 AND (refObjectId IN (:assetId, :linkId) OR instr(text, :assetId) > 0 OR instr(text, :linkId) > 0)) OR
+            (:publicBacking = 0 AND instr(:rebindingOwners, '|' || noteId || '|') = 0 AND instr(text, :basename) > 0)) OR
+        EXISTS(SELECT 1 FROM note_drafts WHERE
+            (instr(:protectedOwners, '|' || objectId || '|') = 0 AND (instr(body, :assetId) > 0 OR instr(body, :linkId) > 0 OR
+                instr(structureJson, :assetId) > 0 OR instr(structureJson, :linkId) > 0)) OR
+            (:publicBacking = 0 AND instr(:rebindingOwners, '|' || objectId || '|') = 0 AND
+                (instr(body, :basename) > 0 OR instr(structureJson, :basename) > 0))) OR
+        EXISTS(SELECT 1 FROM canvas_nodes WHERE
+            (instr(:protectedOwners, '|' || canvasId || '|') = 0 AND (refObjectId IN (:assetId, :linkId) OR instr(text, :assetId) > 0 OR instr(text, :linkId) > 0)) OR
+            (:publicBacking = 0 AND instr(text, :basename) > 0)) OR
+        EXISTS(SELECT 1 FROM object_provenance WHERE
+            (instr(:protectedOwners, '|' || objectId || '|') = 0 AND (sourceId IN (:assetId, :linkId) OR instr(metadata, :assetId) > 0 OR instr(metadata, :linkId) > 0)) OR
+            (:publicBacking = 0 AND instr(:rebindingOwners, '|' || objectId || '|') = 0 AND instr(metadata, :basename) > 0)) OR
+        EXISTS(SELECT 1 FROM study_sessions WHERE
+            (instr(:protectedOwners, '|' || id || '|') = 0 AND (instr(sourcesJson, :assetId) > 0 OR instr(sourcesJson, :linkId) > 0)) OR
+            (:publicBacking = 0 AND instr(sourcesJson, :basename) > 0)) OR
+        EXISTS(SELECT 1 FROM agent_steps WHERE
+            (instr(:protectedOwners, '|' || runId || '|') = 0 AND (instr(payloadJson, :assetId) > 0 OR instr(payloadJson, :linkId) > 0)) OR
+            (:publicBacking = 0 AND instr(payloadJson, :basename) > 0))
+        """)
+    suspend fun privateAttachmentHasPublicReferences(protectedOwners: String, rebindingOwners: String, assetId: String,
+        linkId: String?, basename: String, publicBacking: Boolean): Boolean
+
+    @Query("UPDATE notes SET body = :replacement WHERE objectId = :noteId AND body = :expected")
+    suspend fun rebindRestoredNoteBody(noteId: String, expected: String, replacement: String): Int
+
+    @Query("UPDATE note_blocks SET text = :replacement, presentation = :presentation WHERE noteId = :noteId AND id = :blockId AND text = :expected")
+    suspend fun rebindRestoredBlockText(noteId: String, blockId: String, expected: String, replacement: String, presentation: String?): Int
+
     @Query(
         """
         SELECT a.id, a.noteId, a.assetId, a.position, a.caption,

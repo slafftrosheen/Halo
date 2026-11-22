@@ -4,8 +4,13 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 enum class OrganizerKind { EVENT, TASK, REMINDER, ALARM, TIMER }
+enum class OrganizerCalendar(val label: String) {
+    PERSONAL("Me"), FAMILY("Family space"), OTHERS("Other calendars"),
+}
 enum class OrganizerStatus { ACTIVE, COMPLETED, CANCELLED }
 enum class TaskPriority { LOW, NORMAL, HIGH, URGENT }
 enum class RepeatFrequency { DAILY, WEEKLY, MONTHLY, YEARLY }
@@ -19,15 +24,26 @@ data class OrganizerTime(
     val zoneId: String,
     val allDay: Boolean = false,
     val followDeviceZone: Boolean = false,
+    val startOffset: ZoneOffset? = null,
+    val endOffset: ZoneOffset? = null,
 ) {
     fun zone(deviceZone: ZoneId): ZoneId = if (followDeviceZone) deviceZone else ZoneId.of(zoneId)
-    fun instant(deviceZone: ZoneId): Instant = start.atZone(zone(deviceZone)).toInstant()
+    private fun resolve(local: LocalDateTime, zone: ZoneId, offset: ZoneOffset?): Instant =
+        ZonedDateTime.ofLocal(local, zone, offset.takeIf { zone.id == zoneId }).toInstant()
+    fun instant(deviceZone: ZoneId): Instant = resolve(start, zone(deviceZone), startOffset)
+    fun endInstant(deviceZone: ZoneId): Instant? = end?.let { resolve(it, zone(deviceZone), endOffset) }
+    fun duration(): Duration? {
+        val storedZone = ZoneId.of(zoneId)
+        return endInstant(storedZone)?.let { Duration.between(instant(storedZone), it) }
+    }
     fun validate() {
-        ZoneId.of(zoneId)
+        val storedZone = ZoneId.of(zoneId)
         require(start.year in 1970..2199 && (end == null || end.year in 1970..2199)) { "Date is outside the supported range" }
-        require(end == null || end > start) { "End must follow start" }
+        require(end == null || end > start || startOffset != null || endOffset != null) { "End must follow start" }
         require(start.nano % 1000000 == 0 && (end == null || end.nano % 1000000 == 0)) { "Time precision cannot be smaller than a millisecond" }
-        require(end == null || end.atZone(ZoneId.of(zoneId)).toInstant() > start.atZone(ZoneId.of(zoneId)).toInstant()) {
+        require(startOffset == null || !allDay && startOffset in storedZone.rules.getValidOffsets(start))
+        require(endOffset == null || !allDay && end != null && endOffset in storedZone.rules.getValidOffsets(end))
+        require(end == null || requireNotNull(endInstant(storedZone)) > instant(storedZone)) {
             "The time-zone change puts the end before the start; choose a later end"
         }
         require(!allDay || start.toLocalTime() == java.time.LocalTime.MIDNIGHT &&
@@ -107,6 +123,8 @@ data class OrganizerRecord(
     val location: String = "",
     val calendarUid: String? = null,
     val leaveBeforeMinutes: Int? = null,
+    val calendar: OrganizerCalendar = if (calendarUid == null) OrganizerCalendar.PERSONAL else OrganizerCalendar.OTHERS,
+    val studyExam: StudyExamSchedule? = null,
 ) {
     fun validate() {
         require(id.matches(Regex("[A-Za-z0-9_.:-]{1,200}"))) { "Invalid record identity" }
@@ -127,7 +145,13 @@ data class OrganizerRecord(
             it.scheme in setOf("https", "http") && !it.host.isNullOrBlank() && it.rawUserInfo == null })
         require(sourceLabel == null || sourceLabel.length <= 200)
         time?.validate()
-        require(repeat?.until == null || repeat.until >= requireNotNull(time).start.atZone(ZoneId.of(time.zoneId)).toInstant())
+        studyExam?.let { plan ->
+            val anchor = requireNotNull(time)
+            require(kind == OrganizerKind.EVENT && !anchor.allDay && !anchor.followDeviceZone)
+            require(repeat == null || repeat.frequency == RepeatFrequency.DAILY && repeat.interval == 1 && (repeat.count ?: 0) in 2..14)
+            require(anchor.start.toLocalDate().plusDays((repeat?.count ?: 1).toLong() - 1) < plan.examDate)
+        }
+        require(repeat?.until == null || repeat.until >= requireNotNull(time).instant(ZoneId.of(time.zoneId)))
     }
 }
 
@@ -138,6 +162,8 @@ data class OrganizerOccurrence(
     val end: Instant?,
     val completed: Boolean = false,
     val allDay: Boolean = record.time?.allDay == true,
+    val effectiveTime: OrganizerTime? = record.time,
+    val examLessons: List<StudyExamLesson> = emptyList(),
 ) { val key: String get() = "${record.id}@${originalStart.toEpochMilli()}" }
 
 /** The original start is immutable identity even when this occurrence moves to another day. */

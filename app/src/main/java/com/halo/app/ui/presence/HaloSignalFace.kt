@@ -55,16 +55,18 @@ fun HaloSignalFace(
     onClickLabel: String? = null,
     zone5: Boolean = false,
     interactionSource: MutableInteractionSource? = null,
+    dock: Boolean = false,
 ) {
     val localizedLabel = uiText(presentation.label)
     val dark = MaterialTheme.colorScheme.background.luminance() < .5f
     val systemReducedMotion = com.halo.app.ui.fx.rememberHaloReducedMotion()
-    val highContrast = com.halo.app.ui.theme.rememberVisualPreferences().higherContrast
+    val visual = com.halo.app.ui.theme.rememberVisualPreferences()
+    val highContrast = visual.higherContrast
     val reduced = presentation.reducedMotion || systemReducedMotion || (zone5 && highContrast)
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val artwork = presentation.presenceArtwork()
     val foreground = lifecycleState.isAtLeast(if (zone5) Lifecycle.State.RESUMED else Lifecycle.State.STARTED)
-    val zone5Asset = if (zone5) zone5OrbMotionAsset(presentation, size.value, dark, !reduced, kids) else null
+    val zone5Asset = if (zone5) zone5OrbMotionAsset(presentation, size.value, dark, !reduced, kids, dock) else null
     val policy = if (zone5) PresenceMotionPolicy(zone5Asset != null && foreground, loop = artwork != PresenceArtwork.IDLE)
         else artwork.motionPolicy(size.value, reduced, foreground)
     // Keep an eligible composition mounted as the Activity pauses. Discarding it on
@@ -106,6 +108,7 @@ fun HaloSignalFace(
                     iterations = if (policy.loop) Int.MAX_VALUE else 1,
                     isPlaying = foreground,
                     restartOnPlay = false,
+                    speed = if (dock && (kids || visual.motionLevel == com.halo.app.ui.theme.HaloLookMotion.GENTLE)) .75f else 1f,
                     modifier = Modifier.matchParentSize()
                 )
             }

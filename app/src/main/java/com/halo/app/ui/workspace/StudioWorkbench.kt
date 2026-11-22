@@ -35,7 +35,9 @@ import kotlinx.coroutines.flow.collect
 internal fun StudioWorkbench(service: StudioService, project: StudioProject, busy: Boolean,
     onDraw: () -> Unit, onText: () -> Unit, onShapes: () -> Unit, onImage: () -> Unit,
     onLayers: () -> Unit, onTransform: () -> Unit, onSelect: (String) -> Unit, onEdit: (StudioLayer) -> Unit,
-    modifier: Modifier = Modifier, appearance: StudioAppearance = StudioAppearance(), onUndo: () -> Unit = {}) {
+    modifier: Modifier = Modifier, appearance: StudioAppearance = StudioAppearance(), onUndo: () -> Unit = {},
+    pixelSelection: StudioPixelMask? = null,
+    reference: @Composable BoxScope.() -> Unit = {}) {
     val document = project.session.current
     val selected = document.layers.firstOrNull { it.id == document.selectedLayerId }
     val easy = com.halo.app.ui.theme.rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
@@ -45,7 +47,7 @@ internal fun StudioWorkbench(service: StudioService, project: StudioProject, bus
             BoxWithConstraints(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                 val ratio = document.width.toFloat() / document.height
                 val width = minOf(maxWidth, maxHeight * ratio)
-                StudioArtworkFrame(service, project, appearance, Modifier.width(width).height(width / ratio))
+                StudioArtworkFrame(service, project, appearance, Modifier.width(width).height(width / ratio), pixelSelection, reference)
             }
             if (easy && !appearance.leftHanded) StudioEasyActions(busy, project.session.undo.isNotEmpty(), onDraw, onText, onImage, onUndo)
         }
@@ -61,7 +63,7 @@ internal fun StudioWorkbench(service: StudioService, project: StudioProject, bus
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         StudioArtworkFrame(service, project, appearance,
-            (if (short) Modifier.height(220.dp) else Modifier.weight(1f)).fillMaxWidth().heightIn(min = 120.dp))
+            (if (short) Modifier.height(220.dp) else Modifier.weight(1f)).fillMaxWidth().heightIn(min = 120.dp), pixelSelection, reference)
         if (document.layers.isNotEmpty()) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             document.layers.asReversed().forEach { layer ->
@@ -98,6 +100,8 @@ internal fun StudioWorkbench(service: StudioService, project: StudioProject, bus
 @Composable
 private fun StudioArtworkFrame(
     service: StudioService, project: StudioProject, appearance: StudioAppearance, modifier: Modifier,
+    pixelSelection: StudioPixelMask?,
+    reference: @Composable BoxScope.() -> Unit,
 ) {
     val guidance = LocalHaloPageGuidance.current
     val visual = com.halo.app.ui.theme.rememberVisualPreferences()
@@ -132,19 +136,25 @@ private fun StudioArtworkFrame(
         shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surface,
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
         Box(Modifier.fillMaxSize().clipToBounds().transformable(transform)) {
-            StudioDocumentPreview(service, project.session.current, Modifier.fillMaxSize().graphicsLayer {
+            val document = project.session.current
+            Box(Modifier.fillMaxSize().graphicsLayer {
                 scaleX = shownZoom
                 scaleY = shownZoom
                 val horizontalLimit = size.width * (shownZoom - 1f).coerceAtLeast(0f) / 2f
                 val verticalLimit = size.height * (shownZoom - 1f).coerceAtLeast(0f) / 2f
                 translationX = pan.x.coerceIn(-horizontalLimit, horizontalLimit)
                 translationY = pan.y.coerceIn(-verticalLimit, verticalLimit)
-            }.drawWithContent { drawContent(); drawStudioPaper(appearance.paper, ink) })
+            }) {
+                StudioDocumentPreview(service, document, Modifier.matchParentSize()
+                    .drawWithContent { drawContent(); drawStudioPaper(appearance.paper, ink) })
+                if (pixelSelection != null) StudioSelectionOverlay(pixelSelection, Modifier.matchParentSize(), document.recipe)
+            }
             if (zoom != 1f) TextButton(onClick = { zoom = 1f; pan = Offset.Zero },
                 modifier = Modifier.align(if (appearance.leftHanded) Alignment.BottomStart else Alignment.BottomEnd)
                     .heightIn(min = 48.dp)) {
                 Text(uiText("Fit image"))
             }
+            reference()
         }
     }
 }

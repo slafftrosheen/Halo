@@ -58,6 +58,19 @@ class KidsHomeChoicesTest {
         assertEquals(1, started)
     }
 
+    @Test fun v11HomeOpensEachOfItsFourActivities() {
+        val calls = mutableListOf<String>()
+        compose.setContent {
+            HaloTheme { KidsBrandTheme {
+                KidsHomeChoices(onIdentify = { calls += "identify" }, onPlay = { calls += "play" }) { calls += it.name }
+            } }
+        }
+        listOf("Learn", "Make", "What is this?", "Play with buddy").forEach {
+            compose.onNodeWithText(it).assertIsDisplayed().performClick()
+        }
+        assertEquals(listOf("LEARN", "CREATE", "identify", "play"), calls)
+    }
+
     @Test fun busyStoryHasNoSubmissionAction() {
         compose.setContent {
             HaloTheme {

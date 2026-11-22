@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Static fallback; the live face is drawn by nearbyBackground() (radius 28dp, see EverydayWidgetZone6.kt). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-<item><shape><solid android:color="@color/everyday_widget_surface" /><corners android:radius="28dp" /><stroke android:width="1dp" android:color="@color/everyday_widget_outline" /></shape></item>
+<item><shape><gradient android:angle="315" android:startColor="@color/halo_widget_glass_top" android:endColor="@color/everyday_widget_surface" /><corners android:radius="28dp" /><stroke android:width="1dp" android:color="@color/everyday_widget_outline" /></shape></item>
 <item><shape android:shape="rectangle"><corners android:radius="28dp" /><gradient android:type="radial" android:gradientRadius="160dp" android:centerX="1" android:centerY="0" android:startColor="@color/everyday_widget_glow" android:endColor="#00000000" /></shape></item>
 </layer-list>

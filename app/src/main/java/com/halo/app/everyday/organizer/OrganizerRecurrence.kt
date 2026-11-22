@@ -12,7 +12,7 @@ object OrganizerRecurrence {
     fun slots(time: OrganizerTime, rule: RepeatRule?, deviceZone: ZoneId): Sequence<Slot> {
         val identityZone = ZoneId.of(time.zoneId)
         return starts(time.copy(followDeviceZone = false), rule, identityZone).map { identity ->
-            val start = if (time.followDeviceZone) identity.atZone(identityZone).toLocalDate()
+            val start = if (time.followDeviceZone && deviceZone != identityZone) identity.atZone(identityZone).toLocalDate()
                 .atTime(time.start.toLocalTime()).atZone(deviceZone).toInstant() else identity
             Slot(identity, start)
         }
@@ -23,7 +23,7 @@ object OrganizerRecurrence {
         var emitted = 0
         fun permitted(instant: Instant) = rule?.until?.let { instant <= it } ?: true
         // DTSTART belongs to the recurrence set even when BYDAY does not include its weekday.
-        val first = anchor.atZone(zone).toInstant()
+        val first = time.instant(deviceZone)
         if (!permitted(first)) return@sequence
         yield(first); emitted++
         if (rule == null || rule.count == 1) return@sequence
@@ -72,7 +72,7 @@ object OrganizerRecurrence {
         if (record.deletedAt != null || record.status != OrganizerStatus.ACTIVE) return emptyList()
         val time = record.time ?: return emptyList()
         val exceptions = overrides.filter { it.recordId == record.id }.associateBy { it.originalStart }
-        val duration = time.end?.let { Duration.between(time.start.atZone(ZoneId.of(time.zoneId)), it.atZone(ZoneId.of(time.zoneId))) }
+        val duration = time.duration()
         fun occurrence(original: Instant, actualStart: Instant, exception: OccurrenceOverride?): OrganizerOccurrence? {
             if (exception?.disposition == OccurrenceDisposition.CANCELLED) return null
             val replacement = exception?.replacementTime
@@ -80,7 +80,7 @@ object OrganizerRecurrence {
             val end = if (replacement != null) replacement.end?.let { end ->
                 if (replacement.allDay) start.atZone(replacement.zone(deviceZone)).plusDays(
                     ChronoUnit.DAYS.between(replacement.start.toLocalDate(), end.toLocalDate())).toInstant()
-                else start.plus(Duration.between(replacement.start.atZone(ZoneId.of(replacement.zoneId)), end.atZone(ZoneId.of(replacement.zoneId))))
+                else start.plus(requireNotNull(replacement.duration()))
             }
                 else duration?.let {
                     // All-day ends follow local midnight; timed durations retain elapsed duration across DST.
@@ -91,7 +91,8 @@ object OrganizerRecurrence {
             return OrganizerOccurrence(record.copy(title = exception?.replacementTitle ?: record.title,
                 details = exception?.replacementDetails ?: record.details, location = exception?.replacementLocation ?: record.location,
                 sourceUrl = if (exception?.sourceUrlOverride != null) exception.sourceUrlOverride.takeIf { it.isNotEmpty() } else record.sourceUrl), original, start, end,
-                exception?.disposition == OccurrenceDisposition.COMPLETED, replacement?.allDay ?: time.allDay)
+                exception?.disposition == OccurrenceDisposition.COMPLETED, replacement?.allDay ?: time.allDay, replacement ?: time,
+                record.examLessonsFor(original))
         }
         val rows = mutableListOf<OrganizerOccurrence>()
         for (slot in slots(time, record.repeat, deviceZone)) {
@@ -118,7 +119,7 @@ object OrganizerRecurrence {
         if (!contains(record,originalStart,deviceZone)) return null
         val time=record.time ?: return null
         val changed=overrides.find { it.recordId==record.id && it.originalStart==originalStart }
-        val start=changed?.replacementTime?.instant(deviceZone) ?: if(time.followDeviceZone)
+        val start=changed?.replacementTime?.instant(deviceZone) ?: if(time.followDeviceZone && deviceZone.id != time.zoneId)
             originalStart.atZone(ZoneId.of(time.zoneId)).toLocalDate().atTime(time.start.toLocalTime()).atZone(deviceZone).toInstant() else originalStart
         return between(record,overrides,start,start.plusSeconds(1),deviceZone).find { it.originalStart==originalStart }
     }

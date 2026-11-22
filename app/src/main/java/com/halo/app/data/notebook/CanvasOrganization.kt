@@ -29,7 +29,7 @@ data class CanvasOrganizationProposal(
 
 internal fun canvasNodeFingerprint(node: CanvasNode): String = MessageDigest.getInstance("SHA-256")
     .digest(listOf(node.id, node.type.name, node.refObjectId.orEmpty(), node.text,
-        node.x, node.y, node.width, node.height, node.zIndex).joinToString("\u0000").toByteArray())
+        node.x, node.y, node.width, node.height, node.zIndex, node.locked).joinToString("\u0000").toByteArray())
     .joinToString("") { "%02x".format(it) }
 
 /** Parse only a bounded organization proposal. No executable tool/action fields are accepted. */

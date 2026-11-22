@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
@@ -95,22 +96,28 @@ internal fun zone5ActionIconId(action: HaloOrbContextAction): String = when (act
 }
 
 @Composable
-internal fun Zone5Icon(iconId: String, fallback: HaloGlyph, modifier: Modifier = Modifier) {
+internal fun Zone5Icon(
+    iconId: String,
+    fallback: HaloGlyph,
+    modifier: Modifier = Modifier,
+    tint: Color = Color.Unspecified,
+    contentDescription: String? = null,
+) {
     val resource = HaloZone5Icons.resource(when (iconId) {
         "tool_canvas" -> "screen_arrange"
         "tool_notes" -> "office_edit_text"
         else -> iconId
     })
     val colors = MaterialTheme.colorScheme
-    val ink = when (zone5IconRole(iconId)) {
+    val ink = if (tint != Color.Unspecified) tint else when (zone5IconRole(iconId)) {
         Zone5IconRole.FILE -> if (com.halo.app.ui.theme.rememberVisualPreferences().higherContrast) colors.onSurface else zone5FileInk(colors)
         Zone5IconRole.TOOL -> colors.primary
         Zone5IconRole.DEFAULT -> LocalContentColor.current
     }
     val renderedInk = ink.copy(alpha = ink.alpha * LocalContentColor.current.alpha)
-    if (resource == null) HaloIcon(fallback, null, modifier, tint = renderedInk)
-    else com.halo.app.ui.icons.HaloIconTreatment(fallback, modifier, renderedInk) { styled, tint ->
-        Icon(painterResource(resource), contentDescription = null, modifier = styled, tint = tint)
+    if (resource == null) HaloIcon(fallback, contentDescription, modifier, tint = renderedInk)
+    else com.halo.app.ui.icons.HaloIconTreatment(fallback, modifier, renderedInk) { styled, inkColor ->
+        Icon(painterResource(resource), contentDescription = contentDescription, modifier = styled, tint = inkColor)
     }
 }
 

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_scan_import">Импорт в сканер</string>
+    <string name="halo_scan_import_photo">Выбрать фото</string>
+    <string name="halo_scan_import_pdf">Выбрать PDF</string>
+    <string name="halo_scan_read_page">Прочитать эту страницу</string>
+    <string name="halo_scan_pdf_limit">В скане помещается до восьми страниц. Сохраните или очистите страницы, чтобы добавить ещё.</string>
+    <string name="halo_scan_open_study">Использовать сохранённый скан в обучении</string>
+</resources>

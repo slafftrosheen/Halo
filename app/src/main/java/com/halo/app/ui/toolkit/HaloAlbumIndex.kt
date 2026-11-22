@@ -3,6 +3,15 @@ package com.halo.app.ui.toolkit
 import android.content.Context
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
+import androidx.room.withTransaction
+import com.halo.app.data.toolkit.AlbumPeopleFormat
+import com.halo.app.data.toolkit.AlbumPeopleStore
+import com.halo.app.data.toolkit.AlbumPersonEntity
+import com.halo.app.data.toolkit.AlbumPersonMatch
+import com.halo.app.data.toolkit.albumIndexLimit
+import com.halo.app.data.toolkit.albumIndexWriteLock as saveIndexLock
+import com.halo.app.data.toolkit.albumPeopleLimit
+import com.halo.app.data.toolkit.albumPreferenceName
 import com.halo.app.data.workspace.ContentOwnership
 import com.halo.app.data.workspace.WorkspaceFile
 import com.halo.app.di.ManualDependencyGraph as Graph
@@ -15,7 +24,11 @@ import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -32,47 +45,126 @@ internal data class HaloAlbumPhoto(
     val nearbyCity: String = "",
     val placeSearch: String = "",
     val suggestedPeople: List<String> = emptyList(),
-)
+    val sourceCredit: String = "",
+    val sourceLink: String = "",
+    val sourceLicense: String = "",
+    val editedFromId: String? = null,
+    val suggestedPeopleOwners: List<AlbumPerson> = emptyList(),
+) {
+    fun withVisiblePeople(current: Set<AlbumPerson>): HaloAlbumPhoto {
+        val eligible = suggestedPeopleOwners.filter { it in current }
+        return copy(suggestedPeople = eligible.map(AlbumPerson::name).distinct(), suggestedPeopleOwners = eligible)
+    }
+}
 
-private const val albumLimit = 120
-private const val peopleLimit = 20
-private val saveIndexLock = Mutex()
 internal class AlbumReferenceFaceUnavailable : IllegalArgumentException()
 private data class AlbumLocation(val city: String, val search: String)
 private data class AlbumPhotoDetails(val date: LocalDate?, val words: String, val location: AlbumLocation?)
+internal data class AlbumNamingFacts(val id: String, val version: String, val date: LocalDate?, val city: String?)
 
 internal class HaloAlbumIndex(private val context: Context) {
-    private val storage = context.getSharedPreferences("halo_album_v1", Context.MODE_PRIVATE)
+    private val storage = context.getSharedPreferences(albumPreferenceName, Context.MODE_PRIVATE)
+    private val database get() = Graph.appDatabase
+    private val peopleStore by lazy { AlbumPeopleStore(context, database) }
+
+    /** Older edits recorded their original photo in Album before the managed-file publisher had versioned lineage. */
+    suspend fun backfillLegacyEditOrigins() = withContext(Dispatchers.IO) {
+        saveIndexLock.withLock {
+            val data = readRows()
+            database.withTransaction {
+                val origins = database.workspaceContextDao()
+                for (index in 0 until data.length()) {
+                    val row = data.optJSONObject(index) ?: continue
+                    val original = row.optString("editedFromId").takeIf(String::isNotBlank) ?: continue
+                    val id = row.optString("id")
+                    if (id.isBlank() || id == original) continue
+                    val previous = origins.provenanceFor(id) ?: continue
+                    val source = Uri.parse(previous.sourceId)
+                    val path = source.pathSegments
+                    if (source.scheme != "content" || source.authority != context.packageName + ".captures" ||
+                        path.size != 3 || path[0] != "workspace-owned" || path[1] != "scan-staging" ||
+                        !path[2].matches(Regex("Edited-photo-[a-f0-9-]{36}\\.png"))) continue
+                    val owner = database.notebookDao().getWorkspaceObject(id) ?: continue
+                    if (owner.lifecycle != "ACTIVE" || owner.type != "FILE") continue
+                    val metadata = JSONObject(previous.metadata).put("kind", "ALBUM_PHOTO_EDIT_LEGACY")
+                        .put("originalPhotoId", original).put("sources", JSONArray().put(JSONObject().put("id", original)))
+                    // Preserve the original provenance revision. A legacy Album record does not
+                    // attest the source version used for this copy.
+                    origins.provenance(previous.copy(sourceId = original, metadata = metadata.toString()))
+                }
+            }
+        }
+    }
 
     suspend fun photos(): List<HaloAlbumPhoto> = withContext(Dispatchers.IO) {
+        val peopleReady = albumTry { peopleStore.ensureReady() } != null
         val data = readRows()
-        val people = readPeople()
         val available = (0 until data.length()).mapNotNull { index ->
             val row = data.optJSONObject(index) ?: return@mapNotNull null
             val file = Graph.workspaceUseCases.getFile(row.optString("id")) ?: return@mapNotNull null
             if (file.ownership != ContentOwnership.HALO_OWNED || !file.mimeType.startsWith("image/")) null else row to file
         }
         val versions = available.associate { (_, file) -> file.objectId.value to file.version }
-        val peopleById = people.filter { versions[it.referenceId] == it.referenceVersion }.associateBy(AlbumPerson::id)
+        // Read the canonical owner after the photo versions so a withdrawn profile cannot
+        // regain a name from a legacy photo row or from a stale derived match.
+        val people = if (peopleReady) database.albumPeopleDao().people().filter { versions[it.referenceId] == it.referenceVersion }
+            else emptyList()
+        val matchesByPhoto = people.flatMap { person ->
+            runCatching { AlbumPeopleFormat.matches(person) }.getOrDefault(emptyList())
+                .filter { versions[it.photoId].orEmpty() == it.photoVersion }
+                .map { it.photoId to (it.position to person) }
+        }.groupBy({ it.first }, { it.second })
         available.map { (row, file) ->
             val version = file.version
             val photo = HaloAlbumPhoto(
                 file.objectId.value, file.displayName, runCatching { LocalDate.parse(row.optString("date")) }.getOrNull(),
                 row.optString("words"), row.optString("tags"), file.uri, version, row.optString("city"), row.optString("placeSearch"),
+                sourceCredit = row.optString("sourceCredit"), sourceLink = row.optString("sourceLink"),
+                sourceLicense = row.optString("sourceLicense"),
+                editedFromId = row.optString("editedFromId").takeIf(String::isNotBlank),
             )
-            val derivedMatches = row.optJSONArray("people")
-                .takeIf { row.optString("peopleVersion") == version.orEmpty() }
-            val candidates = derivedMatches?.let { values ->
-                (0 until values.length()).mapNotNull { peopleById[values.optString(it)]?.name }
-            }.orEmpty()
-            val explicit = peopleById.values.filter { it.referenceId == photo.id }.map(AlbumPerson::name)
-            photo.copy(suggestedPeople = (explicit + candidates).distinct())
+            val candidates = matchesByPhoto[photo.id].orEmpty().sortedBy { it.first }.map { it.second }
+            val explicit = people.filter { it.referenceId == photo.id }
+            val names = (explicit + candidates).distinctBy(AlbumPersonEntity::id)
+            photo.copy(suggestedPeople = names.map(AlbumPersonEntity::name),
+                suggestedPeopleOwners = names.map(AlbumPersonEntity::toAlbumPerson))
         }
     }
 
-    suspend fun add(uri: Uri, adultRevision: Long) {
+    suspend fun keepArticlePicture(name: String, mimeType: String, bytes: ByteArray, sourceId: String,
+        contentRevision: String, assetKey: String, credit: String, link: String, license: String,
+        validate: suspend () -> Unit) = withContext(Dispatchers.IO) {
+        saveIndexLock.withLock {
+            validate()
+            val rows = readRows()
+            if ((0 until rows.length()).any { index ->
+                    val row = rows.getJSONObject(index)
+                    row.optString("articleAsset") == assetKey && row.optString("sourceLink") == link &&
+                        Graph.workspaceUseCases.getFile(row.optString("id")) != null
+                }) return@withLock
+            check(rows.length() < albumIndexLimit) { "Album is full" }
+            val metadata = JSONObject().put("sourceCredit", credit).put("sourceLink", link).put("sourceLicense", license)
+            metadata.put("collectorSourceId", sourceId).put("collectorRevision", contentRevision)
+            val suffix = when (mimeType) {
+                "image/png" -> ".png"
+                "image/webp" -> ".webp"
+                "image/jpeg" -> ".jpg"
+                else -> error("Unsupported article picture")
+            }
+            val file = Graph.workspaceFileRepository.createManagedFileWithPreparedSource(name.take(114) + suffix, mimeType, bytes,
+                metadata.toString(), validateSource = validate, prepareSource = {
+                    Graph.notebookRepository.createNote("$credit\n$link\n$license", title = name.take(120)).id
+                })
+            rows.put(JSONObject().put("id", file.objectId.value).put("placeIndexed", true)
+                .put("articleAsset", assetKey).put("sourceCredit", credit).put("sourceLink", link).put("sourceLicense", license))
+            save(rows)
+            Unit
+        }
+    }
+
+    suspend fun add(uri: Uri, adultRevision: Long): String {
         Graph.kidsPreferences.requireAdultAction(adultRevision)
-        check(readRows().length() < albumLimit) { "Album is full" }
+        check(readRows().length() < albumIndexLimit) { "Album is full" }
         val file = Graph.workspaceUseCases.importForCanvas(uri)
         check(file.mimeType.startsWith("image/"))
         val details = localDetails(file)
@@ -80,14 +172,43 @@ internal class HaloAlbumIndex(private val context: Context) {
             saveIndexLock.withLock {
                 Graph.kidsPreferences.requireAdultAction(adultRevision)
                 val data = readRows()
-                check(data.length() < albumLimit)
+                check(data.length() < albumIndexLimit)
                 val existing = (0 until data.length()).any { data.optJSONObject(it)?.optString("id") == file.objectId.value }
-                if (!existing) data.put(JSONObject().put("id", file.objectId.value)
-                    .put("date", details.date?.toString().orEmpty()).put("words", details.words)
-                    .put("city", details.location?.city.orEmpty()).put("placeSearch", details.location?.search.orEmpty())
-                    .put("placeIndexed", true))
+                if (!existing) {
+                    data.put(JSONObject().put("id", file.objectId.value)
+                        .put("date", details.date?.toString().orEmpty())
+                        .put("words", details.words).put("tags", "")
+                        .put("city", details.location?.city.orEmpty())
+                        .put("placeSearch", details.location?.search.orEmpty())
+                        .put("namingVersion", file.version)
+                        .put("placeIndexed", true))
+                }
                 save(data)
             }
+        }
+        return file.objectId.value
+    }
+
+    suspend fun addEdited(photo: HaloAlbumPhoto, bytes: ByteArray, adultRevision: Long): String = withContext(Dispatchers.IO) {
+        saveIndexLock.withLock {
+            Graph.kidsPreferences.requireAdultAction(adultRevision)
+            val data = readRows()
+            check(data.length() < albumIndexLimit)
+            val base = photo.name.substringBeforeLast('.').replace(Regex("[\\p{Cntrl}/\\\\]+"), " ")
+                .trim().take(100).ifBlank { "Photo" }
+            val metadata = albumSourceProvenance("ALBUM_PHOTO_EDIT_V1", listOf(photo))
+                .put("originalPhotoId", photo.editedFromId ?: photo.id)
+            val file = Graph.workspaceFileRepository.createManagedFile("$base · edited.png", "image/png", bytes,
+                photo.id, requireNotNull(photo.version), metadata.toString(), validateSource = {
+                    Graph.kidsPreferences.requireAdultAction(adultRevision)
+                    requireCurrentAlbumPhoto(photo)
+                })
+            Graph.kidsPreferences.requireAdultAction(adultRevision)
+            data.put(JSONObject().put("id", file.objectId.value).put("date", photo.date?.toString().orEmpty())
+                .put("words", photo.words).put("tags", photo.tags).put("city", photo.nearbyCity).put("placeSearch", photo.placeSearch)
+                .put("namingVersion", file.version).put("editedFromId", photo.editedFromId ?: photo.id).put("placeIndexed", true))
+            save(data)
+            file.objectId.value
         }
     }
 
@@ -101,7 +222,53 @@ internal class HaloAlbumIndex(private val context: Context) {
         }
     }
 
-    suspend fun people(): List<AlbumPerson> = withContext(Dispatchers.IO) { readPeople() }
+    suspend fun people(): List<AlbumPerson> = withContext(Dispatchers.IO) {
+        peopleStore.ensureReady()
+        database.albumPeopleDao().people().map(AlbumPersonEntity::toAlbumPerson)
+    }
+
+    /** IDs of canonical local images explicitly admitted to Album by the grown-up. */
+    fun observeLocalPhotoIds(): Flow<Set<String>> = callbackFlow {
+        fun snapshot() = runCatching {
+            val rows = readRows()
+            (0 until rows.length()).mapNotNull(rows::optJSONObject)
+                .filter { it.optString("sourceLink").isEmpty() && it.optString("articleAsset").isEmpty() }
+                .mapNotNull { row -> row.optString("id").takeIf(String::isNotEmpty) }.toSet()
+        }.fold(onSuccess = { trySend(it); Unit }, onFailure = { close(it); Unit })
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == null || key == "photos") snapshot()
+        }
+        storage.registerOnSharedPreferenceChangeListener(listener)
+        snapshot()
+        awaitClose { storage.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.conflate()
+
+    fun observePeople(): Flow<List<AlbumPerson>> = peopleStore.observeEntries().map { rows ->
+        rows.map(AlbumPersonEntity::toAlbumPerson)
+    }
+
+    fun observeNamingFacts(): Flow<List<AlbumNamingFacts>> = observePreference("photos") {
+        val rows = readRows()
+        (0 until rows.length()).mapNotNull { index ->
+            val row = rows.optJSONObject(index) ?: return@mapNotNull null
+            val version = row.optString("namingVersion").takeIf(String::isNotBlank) ?: return@mapNotNull null
+            AlbumNamingFacts(row.getString("id"), version, runCatching { LocalDate.parse(row.optString("date")) }.getOrNull(),
+                row.optString("city").trim().takeIf { it.isNotBlank() && it.length <= 70 && it.none(Char::isISOControl) })
+        }
+    }
+
+    private fun <T> observePreference(keyName: String, read: () -> T): Flow<T> = callbackFlow {
+        fun snapshot() = runCatching(read).fold(
+            onSuccess = { trySend(it); Unit },
+            onFailure = { close(it); Unit },
+        )
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == null || key == keyName) snapshot()
+        }
+        storage.registerOnSharedPreferenceChangeListener(listener)
+        snapshot()
+        awaitClose { storage.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.conflate()
 
     suspend fun refreshPlaces(adultRevision: Long) = withContext(Dispatchers.IO) {
         val snapshot = readRows()
@@ -132,7 +299,7 @@ internal class HaloAlbumIndex(private val context: Context) {
         require(name.isNotBlank() && name.length <= 60 && name.none(Char::isISOControl))
         val previous = people()
         val existing = previous.firstOrNull { normalizeAlbumText(it.name) == normalizeAlbumText(name) }
-        require(existing != null || previous.size < peopleLimit)
+        require(existing != null || previous.size < albumPeopleLimit)
         val person = AlbumPerson(existing?.id ?: UUID.randomUUID().toString(), name, photo.id,
             photo.version ?: throw AlbumReferenceFaceUnavailable())
         val next = previous.filterNot { it.id == person.id } + person
@@ -146,16 +313,10 @@ internal class HaloAlbumIndex(private val context: Context) {
     }
 
     suspend fun removePerson(id: String, adultRevision: Long) = withContext(Dispatchers.IO) {
-        saveIndexLock.withLock {
+        peopleStore.ensureReady()
+        database.withTransaction {
             Graph.kidsPreferences.requireAdultAction(adultRevision)
-            val keep = readPeople().filterNot { it.id == id }
-            val rows = readRows()
-            for (index in 0 until rows.length()) {
-                val row = rows.getJSONObject(index)
-                val matches = row.optJSONArray("people") ?: continue
-                row.put("people", JSONArray((0 until matches.length()).map(matches::getString).filterNot { it == id }))
-            }
-            save(rows, keep)
+            check(database.albumPeopleDao().deletePerson(id) == 1)
         }
     }
 
@@ -187,38 +348,36 @@ internal class HaloAlbumIndex(private val context: Context) {
         }
         withContext(Dispatchers.IO) {
             saveIndexLock.withLock {
-                Graph.kidsPreferences.requireAdultAction(adultRevision)
-                check(readPeople() == expected) { "Album people changed during matching" }
-                val rows = readRows()
-                for (index in 0 until rows.length()) {
-                    val row = rows.getJSONObject(index)
-                    val id = row.getString("id")
-                    val (version, matches) = evaluated[id] ?: continue
-                    val currentFile = Graph.workspaceUseCases.getFile(id)
-                    if (currentFile != null && currentFile.version == version) {
-                        row.put("peopleVersion", version.orEmpty()).put("people", JSONArray(matches.toList()))
+                database.withTransaction {
+                    Graph.kidsPreferences.requireAdultAction(adultRevision)
+                    val dao = database.albumPeopleDao()
+                    val current = dao.people()
+                    check(current.map(AlbumPersonEntity::toAlbumPerson) == expected) { "Album people changed during matching" }
+                    val checkedPhotos = evaluated.filter { (id, result) ->
+                        val file = Graph.workspaceUseCases.getFile(id)
+                        file != null && file.version == result.first
                     }
+                    val next = wanted.mapIndexed { order, person ->
+                        val kept = current.firstOrNull { it.id == person.id }?.let(AlbumPeopleFormat::matches).orEmpty()
+                            .filterNot { it.photoId in checkedPhotos }
+                        val updated = checkedPhotos.mapNotNull { (photoId, result) ->
+                            val position = result.second.indexOf(person.id)
+                            if (position < 0) null else AlbumPersonMatch(photoId, result.first.orEmpty(), position)
+                        }
+                        AlbumPersonEntity(person.id, person.name, AlbumPeopleFormat.nameKey(person.name), person.referenceId,
+                            person.referenceVersion, order, AlbumPeopleFormat.encodeMatches(kept + updated))
+                            .also(AlbumPeopleFormat::requireValidPerson)
+                    }
+                    dao.deletePeople()
+                    if (next.isNotEmpty()) dao.insertPeople(next)
+                    Graph.kidsPreferences.requireAdultAction(adultRevision)
                 }
-                save(rows, wanted)
             }
         }
     }
 
     private fun readRows() = JSONArray(storage.getString("photos", null).orEmpty().ifEmpty { "[]" })
-    private fun readPeople(): List<AlbumPerson> {
-        val rows = JSONArray(storage.getString("people", "[]"))
-        return (0 until rows.length().coerceAtMost(peopleLimit)).map { index ->
-            val item = rows.getJSONObject(index)
-            AlbumPerson(item.getString("id"), item.getString("name"), item.getString("referenceId"), item.getString("referenceVersion"))
-        }
-    }
-    private fun save(rows: JSONArray, people: List<AlbumPerson>? = null) {
-        val update = storage.edit().putString("photos", rows.toString())
-        if (people != null) update.putString("people", JSONArray(people.map {
-            JSONObject().put("id", it.id).put("name", it.name).put("referenceId", it.referenceId).put("referenceVersion", it.referenceVersion)
-        }).toString())
-        check(update.commit())
-    }
+    private fun save(rows: JSONArray) { check(storage.edit().putString("photos", rows.toString()).commit()) }
 
     private suspend fun location(exif: ExifInterface?): AlbumLocation? {
         val points = exif?.latLong ?: return null
@@ -244,6 +403,8 @@ internal class HaloAlbumIndex(private val context: Context) {
         } finally { bitmap.recycle() }
     }
 }
+
+private fun AlbumPersonEntity.toAlbumPerson() = AlbumPerson(id, name, referenceId, referenceVersion)
 
 private suspend inline fun <T> albumTry(block: () -> T): T? = try { block() }
 catch (cancel: CancellationException) { throw cancel }

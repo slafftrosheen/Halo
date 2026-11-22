@@ -37,6 +37,8 @@ class ComposerDraftStore(private val storage: Storage, private val scope: Corout
     private val pendingMigrations = mutableSetOf<String>()
     private val deletedIds = mutableSetOf<String>()
     private val deletedRevisions = mutableMapOf<String, Long>()
+    private val privateTransitions = mutableSetOf<String>()
+    private val privateEditors = mutableSetOf<String>()
     private var restoredTemporary = false
     private val temporaryMoves = linkedMapOf<Long, ComposerDraftIdentity>()
     fun hasRestoredTemporary(): Boolean = synchronized(lock) { restoredTemporary }
@@ -45,10 +47,12 @@ class ComposerDraftStore(private val storage: Storage, private val scope: Corout
     /** Exact rendered identity, optionally following one real revision-bound startup move. */
     fun resolveIdentity(id: String, revision: Long, literal: String): ComposerDraftIdentity? = synchronized(lock) {
         val value = mutable.value[id]
-        if (id !in deletedIds && value?.revision == revision && value.text == literal)
+        if (id !in deletedIds && id !in privateTransitions && id !in privateEditors &&
+            value?.revision == revision && value.text == literal)
             return@synchronized ComposerDraftIdentity(id, revision, literal)
         if (id.isNotEmpty()) return@synchronized null
         temporaryMoves[revision]?.takeIf { moved -> moved.literal == literal && moved.conversationId !in deletedIds &&
+            moved.conversationId !in privateTransitions && moved.conversationId !in privateEditors &&
             mutable.value[moved.conversationId]?.let { it.revision == moved.revision && it.text == literal } == true }
     }
     fun resolveSubmission(id: String, revision: Long, literal: String, activeConversation: String?, temporaryTarget: String?): ComposerDraftIdentity? {
@@ -74,6 +78,7 @@ class ComposerDraftStore(private val storage: Storage, private val scope: Corout
     fun save(conversationId: String, text: String): Job {
         checkId(conversationId)
         val revision = synchronized(lock) {
+            if (conversationId in privateTransitions || conversationId in privateEditors) return Job().apply { complete() }
             (++generation).also { publish(conversationId, ComposerDraftState(text, it)) }
         }
         return write(conversationId, revision)
@@ -81,7 +86,7 @@ class ComposerDraftStore(private val storage: Storage, private val scope: Corout
     /** Compare literal text AND editor revision, including edits which later return to the same text. */
     fun replaceIfCurrent(id: String, revision: Long, text: String, replacement: String): Long? = synchronized(lock) {
         val value = mutable.value[id] ?: return@synchronized null
-        if (id in deletedIds) return@synchronized null
+        if (id in deletedIds || id in privateTransitions || id in privateEditors) return@synchronized null
         if (value.revision != revision || value.text != text) return@synchronized null
         val next = ++generation
         publish(id, ComposerDraftState(replacement, next))
@@ -112,7 +117,12 @@ class ComposerDraftStore(private val storage: Storage, private val scope: Corout
                     return@withLock
                 }
                 synchronized(lock) {
-                    if (available == true && deletedIds.remove(conversationId)) {
+                    if (available == true && privateEditors.remove(conversationId)) {
+                        deletedIds.remove(conversationId)
+                        deletedRevisions.remove(conversationId)
+                        publish(conversationId, ComposerDraftState(persisted[conversationId].orEmpty(),
+                            revision = ++generation, saved = true))
+                    } else if (available == true && deletedIds.remove(conversationId)) {
                         // Restoration grants a new editor identity, never an old queued write.
                         // Input entered during the exact existence check already has a newer identity.
                         val floor = deletedRevisions.remove(conversationId) ?: beforeCheck?.revision ?: 0L
@@ -136,6 +146,90 @@ class ComposerDraftStore(private val storage: Storage, private val scope: Corout
             } }
         }
         current(conversationId)?.text.orEmpty()
+    }
+
+    /** Take the disk lock before entering Room, the same order as regular draft writers. */
+    internal suspend fun <T> withPrivateAccess(protecting: Set<String>,
+        isSealed: suspend (String) -> Boolean, action: suspend () -> T,
+    ): T = disk.withLock {
+        synchronized(lock) { privateTransitions.addAll(protecting) }
+        try {
+            action()
+        } finally {
+            withContext(NonCancellable) {
+                try {
+                    val sealed = protecting.filterTo(linkedSetOf()) { isSealed(it) }
+                    if (sealed.isNotEmpty()) {
+                        val migratedTemporary = pendingMigrations.any { it in sealed }
+                        synchronized(lock) {
+                            privateEditors.addAll(sealed)
+                            mutable.value = mutable.value - sealed
+                            temporaryMoves.entries.removeAll { it.value.conversationId in sealed }
+                            if (migratedTemporary) restoredTemporary = false
+                        }
+                        try {
+                            if (migratedTemporary || sealed.any(persisted::containsKey)) {
+                                val next = LinkedHashMap(persisted).apply {
+                                    sealed.forEach(::remove)
+                                    if (migratedTemporary) remove("")
+                                }
+                                storage.putString(STORAGE_KEY, encode(next))
+                                persisted = next
+                            }
+                            pendingMigrations.removeAll(sealed)
+                        } catch (_: Exception) {
+                            // The old backing is still encrypted and unavailable to a missing
+                            // conversation. Ordinary draft reconciliation can clean it later.
+                            mutableCleanupFailure.value = true
+                        }
+                    }
+                } finally {
+                    synchronized(lock) { privateTransitions.removeAll(protecting) }
+                }
+            }
+        }
+    }
+
+    /** Called only inside withPrivateAccess. The confirmed envelope contains the latest draft. */
+    internal suspend fun privateDraft(id: String): String? {
+        checkId(id)
+        readDisk()
+        val draft = synchronized(lock) { mutable.value[id] }
+        val text = (draft?.text ?: persisted[id]).orEmpty()
+        require(text.length <= MAX_TEXT)
+        // Move the unscoped startup copy before Room commits. A process death after the
+        // lock must leave no temporary draft for the replacement conversation to inherit.
+        if (id in pendingMigrations) {
+            val next = LinkedHashMap(persisted).apply {
+                remove("")
+                if (text.isEmpty()) remove(id) else put(id, text)
+            }
+            storage.putString(STORAGE_KEY, encode(next))
+            persisted = next
+            pendingMigrations.remove(id)
+            synchronized(lock) {
+                restoredTemporary = false
+                if (draft != null && draft == mutable.value[id]) publish(id, draft.copy(saved = true, failure = null))
+            }
+        }
+        return text.takeIf(String::isNotEmpty)
+    }
+
+    /** Stage in the existing encrypted editor store. Room existence still governs read access. */
+    internal suspend fun restorePrivateDraft(id: String, text: String?) {
+        checkId(id)
+        readDisk()
+        if (text != null || persisted.containsKey(id)) {
+            val next = LinkedHashMap(persisted).apply {
+                if (text.isNullOrEmpty()) remove(id) else put(id, text)
+            }
+            storage.putString(STORAGE_KEY, encode(next))
+            persisted = next
+        }
+        synchronized(lock) {
+            privateEditors.add(id)
+            mutable.value = mutable.value - id
+        }
     }
     fun reload(id: String): Job = scope.launch(dispatcher) {
         disk.withLock { if (!loaded) unreadable = false }

@@ -17,7 +17,7 @@ import java.util.Locale
 
 internal fun LazyListScope.collectorContent(state: CollectorState, itemId: String?, now: Instant, locale: Locale,
     kids: Boolean, onArticle: (String) -> Unit, onExternal: (String) -> Unit, onRemind: (ArticleFact) -> Unit,
-    onLocal: (LocalFact) -> Unit) {
+    onLocal: (LocalFact) -> Unit, picturesVisible: Boolean = true) {
     fun stamp(at: Instant, zone: ZoneId = ZoneId.systemDefault()) = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withLocale(locale).withZone(zone).format(at)
     when (val payload = state.snapshot?.payload) {
         null -> item { Text(uiText("No saved information yet. Select this source and refresh it when Power is enabled.")) }
@@ -25,17 +25,15 @@ internal fun LazyListScope.collectorContent(state: CollectorState, itemId: Strin
             val article = itemId?.let { id -> payload.items.find { it.id == id } }
             if (itemId != null && article == null) item { Text(uiText("This article is no longer in the saved feed. Open the source for current saved items.")) }
             else if (article != null) item {
-                Text(article.title, style = MaterialTheme.typography.headlineMedium)
-                Text(article.publisher, style = MaterialTheme.typography.labelLarge)
-                article.publishedAt?.let { Text(uiText("Published %1\$s", stamp(it)), style = MaterialTheme.typography.bodySmall) }
-                SavedArticleBody(article)
-                article.url?.let { url -> Text(url, style = MaterialTheme.typography.bodySmall); if (!kids) TextButton({ onExternal(url) }) { Text(uiText("Open publisher in browser")) } }
+                SavedArticleBody(state, article, article.publishedAt?.let { stamp(it) }, kids)
+                article.url?.let { url -> if (!kids) TextButton({ onExternal(url) }) { Text(uiText("Open publisher in browser")) } }
                 if (!kids) TextButton({ onRemind(article) }) { Text(uiText("Remind me about this article")) }
             } else {
                 if (payload.items.isEmpty()) item { Text(uiText("This source returned no articles.")) }
                 items(payload.items, key = { it.id }) { entry ->
                     Surface(onClick = { onArticle(entry.id) }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ArticleSourcePreview(entry, picturesVisible, kids)
                             Text(entry.title, style = MaterialTheme.typography.titleMedium)
                             Text(entry.publisher, style = MaterialTheme.typography.bodySmall)
                             entry.publishedAt?.let { Text(uiText("Published %1\$s", stamp(it)), style = MaterialTheme.typography.bodySmall) }

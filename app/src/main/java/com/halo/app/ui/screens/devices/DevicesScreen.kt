@@ -259,8 +259,9 @@ class DevicesViewModel(
                         battery?.let { now - it.timestampMs } ?: Long.MAX_VALUE
                     }
                     val healthWarning = if (isRobot && liveRobot) {
-                        if (!buddyBotTelemetry.safetyFault.isNullOrEmpty() && buddyBotTelemetry.safetyFault != "none") {
-                            "Fault: ${buddyBotTelemetry.safetyFault}"
+                        if (buddyBotTelemetry.hasFault) {
+                            buddyBotTelemetry.safetyFault?.takeUnless { it.isBlank() || it.equals("none", true) }
+                                ?.let { "Fault: $it" } ?: "Movement stopped"
                         } else if (buddyBotTelemetry.forwardMotionBlocked) {
                             "Obstacle Blocked"
                         } else null
@@ -544,6 +545,7 @@ class DevicesViewModel(
 @Composable
 @OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val reconnectStates by viewModel.reconnectState.collectAsStateWithLifecycle()
     val accessories by com.halo.app.di.ManualDependencyGraph.audioAccessoryRegistry.accessories.collectAsStateWithLifecycle()
@@ -551,14 +553,26 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val wear by com.halo.app.di.ManualDependencyGraph.wearEndpointBridge.endpoints.collectAsStateWithLifecycle()
     var phoneDetails by rememberSaveable { mutableStateOf(false) }
     var pairingGuide by rememberSaveable { mutableStateOf(false) }
+    var pairingUnavailable by rememberSaveable { mutableStateOf(false) }
     var editDevices by rememberSaveable { mutableStateOf(false) }
     var editDeviceId by rememberSaveable { mutableStateOf<String?>(null) }
     var appearancePreview by remember { mutableStateOf<Pair<String, DeviceAppearance>?>(null) }
     val openDeviceAppearance = { editDevices = true; editDeviceId = null }
     val deviceEditLabel = stringResource(R.string.page_layout_edit)
-    if (pairingGuide) DevicePairingGuide(onFind = {
+    if (pairingGuide) DevicePairingGuide(onFind = setup@{ kind ->
         pairingGuide = false
-        viewModel.navigateTo("discovery")
+        val graph = com.halo.app.di.ManualDependencyGraph
+        if (!graph.kidsPreferences.loadedState.value || graph.kidsPreferences.enabled.value || graph.isHaloPaused()) return@setup
+        when (kind) {
+            DeviceSetupKind.GLASSES -> viewModel.navigateTo("discovery")
+            DeviceSetupKind.AUDIO -> pairingUnavailable = runCatching {
+                context.startActivity(android.content.Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS))
+            }.isFailure
+            DeviceSetupKind.INK -> viewModel.navigateTo("follow_me")
+            DeviceSetupKind.BUDDY -> viewModel.buddyBotHost?.deviceId?.let { id ->
+                viewModel.navigateTo("device/${android.net.Uri.encode(id)}")
+            } ?: run { pairingUnavailable = true }
+        }
     }, onDismiss = { pairingGuide = false })
     if (editDevices) DeviceAppearanceSheet(uiState.devices, editDeviceId,
         onSelect = { editDeviceId = it },
@@ -614,6 +628,9 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
     val shellHosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
     LazyColumn(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground()),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        if (pairingUnavailable) item("setup-unavailable") {
+            Text(stringResource(R.string.halo_pairing_setup_unavailable), color = MaterialTheme.colorScheme.error)
+        }
         item {
             if (shellHosted) com.halo.app.ui.zone5.Zone5PageHeading(uiText("Devices"),
                 modifier = if (uiState.devices.isEmpty()) Modifier else Modifier.editZone6PageOnHold(openDeviceAppearance))
@@ -643,6 +660,16 @@ fun DevicesScreen(viewModel: DevicesViewModel, onTestAudio: () -> Unit = {}) {
         item { CrossDeviceInkPanel(com.halo.app.di.ManualDependencyGraph.crossDeviceInk) }
         item { ExternalDisplayPanel(com.halo.app.di.ManualDependencyGraph.externalDisplayPresenter) }
         item { PeripheralInventoryPanel(com.halo.app.di.ManualDependencyGraph.peripheralInventory) }
+        uiState.devices.firstOrNull { it.kind == DeviceKind.BUDDYBOT && it.isConnected && it.healthWarning != null }?.let { buddy ->
+            item("buddy-needs-you") {
+                com.halo.app.ui.workspace.HaloWorkspaceCard {
+                    Text(stringResource(R.string.halo_buddy_needs_you, buddy.name), style = MaterialTheme.typography.titleMedium)
+                    androidx.compose.material3.TextButton(onClick = { viewModel.navigateTo("device/${android.net.Uri.encode(buddy.id)}") }) {
+                        Text(stringResource(R.string.halo_buddy_open_help))
+                    }
+                }
+            }
+        }
         listOf(DeviceListGroup.READY, DeviceListGroup.CONNECTING, DeviceListGroup.SAVED).forEach { section ->
             val group = uiState.devices.filter { deviceListGroup(it.sessionState) == section }
             if (group.isNotEmpty()) item {

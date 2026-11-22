@@ -1,5 +1,6 @@
 package com.halo.app.ui.screens.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -13,8 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -23,9 +24,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.halo.app.R
 import com.halo.app.language.uiText
-import com.halo.app.ui.components.HaloActionButton
-import com.halo.app.ui.components.HaloActionStyle
-import com.halo.app.ui.design.HaloShapes
+import com.halo.app.ui.zone5.Zone5Icon
 
 /** H02 composer: the same runtime owns Send, Talk, Stop and barge-in. */
 @Composable
@@ -64,6 +63,7 @@ internal fun HaloComposer(
     val listeningLabel = uiText("Listening…")
     val messageLabel = uiText("Message")
     val sendLabel = uiText("Send")
+    var fieldFocused by remember { mutableStateOf(false) }
     val primary = homeComposerPrimaryAction(visibleText, enabled, voiceEnabled, showStop, focusAllowed, shellOwnsOrb)
     // At large text the four touch targets need their own row, leaving the field full width.
     // Keep the established compact landscape presentation for standalone hosts.
@@ -81,7 +81,7 @@ internal fun HaloComposer(
                 }
             },
             enabled = focusAllowed,
-            modifier = fieldModifier.semantics { contentDescription = messageLabel }.then(
+            modifier = fieldModifier.onFocusChanged { fieldFocused = it.isFocused }.semantics { contentDescription = messageLabel }.then(
                 if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
             // Keep one vertical text scroller across IME/rotation changes. Material's
             // multiline decoration padding clips the baseline in a short landscape row.
@@ -105,8 +105,12 @@ internal fun HaloComposer(
     }
     val attachButton: @Composable () -> Unit = {
         onAttach?.let { attach ->
-            IconButton(onClick = attach, modifier = Modifier.size(48.dp)) {
-                Icon(painterResource(R.drawable.halo_ic_add), uiText("Attach"), Modifier.size(24.dp))
+            OutlinedIconButton(onClick = attach, modifier = Modifier.size(48.dp), shape = CircleShape,
+                border = BorderStroke(1.dp, scheme.outlineVariant),
+                colors = IconButtonDefaults.outlinedIconButtonColors(
+                    containerColor = scheme.onSurface.copy(alpha = .07f),
+                    contentColor = scheme.onSurface)) {
+                Zone5Icon("action_attach", HaloGlyph.FILE, Modifier.size(20.dp), contentDescription = uiText("Attach"))
             }
         }
     }
@@ -142,9 +146,9 @@ internal fun HaloComposer(
         val label = when (primary) {
             HomeComposerAction.STOP -> uiText("Stop")
             HomeComposerAction.SEND -> sendLabel
-            else -> if (visibleText.isNotBlank()) sendLabel else voiceContentDescription
+            else -> if (shellOwnsOrb || visibleText.isNotBlank()) sendLabel else voiceContentDescription
         }
-        if (!shellOwnsOrb || visibleText.isNotBlank() || showStop) FilledIconButton(onClick = {
+        if (!shellOwnsOrb || compact || visibleText.isNotBlank() || showStop) FilledIconButton(onClick = {
             when (primary) {
                 HomeComposerAction.STOP -> onStop()
                 HomeComposerAction.SEND -> onSubmit()
@@ -158,21 +162,35 @@ internal fun HaloComposer(
             }, shape = CircleShape,
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = if (showStop) scheme.onSurface else scheme.primaryContainer,
-                contentColor = if (showStop) scheme.surface else scheme.onPrimaryContainer)) {
-            Icon(painterResource(when (primary) {
-                HomeComposerAction.STOP -> R.drawable.halo_ic_stop
-                HomeComposerAction.SEND -> R.drawable.halo_ic_send
-                else -> if (visibleText.isNotBlank()) R.drawable.halo_ic_send else R.drawable.halo_ic_mic
-            }), null, Modifier.size(24.dp))
+                contentColor = if (showStop) scheme.surface else scheme.onPrimaryContainer,
+                disabledContainerColor = scheme.onSurface.copy(alpha = .07f),
+                disabledContentColor = scheme.onSurfaceVariant)) {
+            when {
+                primary == HomeComposerAction.STOP -> HaloIcon(HaloGlyph.STOP, null, Modifier.size(22.dp))
+                shellOwnsOrb || visibleText.isNotBlank() -> Zone5Icon("action_send", HaloGlyph.ACTION, Modifier.size(20.dp))
+                else -> HaloIcon(HaloGlyph.LISTEN, null, Modifier.size(22.dp))
+            }
         }
     }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            if (shellOwnsOrb && compact) Box { attachButton() }
-            // Keep the field at the same composition position when the IME changes window height.
-            field(Modifier.weight(1f))
-            if (compact) actions()
+            if (shellOwnsOrb) {
+                if (compact) attachButton()
+                Surface(modifier = Modifier.weight(1f), shape = CircleShape,
+                    color = scheme.onSurface.copy(alpha = .07f), contentColor = scheme.onSurface,
+                    border = BorderStroke(1.dp, if (fieldFocused) scheme.primary else scheme.outlineVariant)) {
+                    Row(Modifier.fillMaxWidth().padding(end = if (compact) 2.dp else 0.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        // Keep one editor instance when Android opens and closes the keyboard.
+                        field(Modifier.weight(1f))
+                        if (compact) actions()
+                    }
+                }
+            } else {
+                field(Modifier.weight(1f))
+                if (compact) actions()
+            }
         }
         if (!compact) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)) { actions() }

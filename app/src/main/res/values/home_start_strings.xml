@@ -25,4 +25,15 @@
     <string name="home_start_save_error">Home could not be saved. Try again.</string>
     <string name="home_start_undo">Undo</string>
     <string name="home_start_done">Done</string>
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_start_today_detail">See your plans and reminders</string>
+    <string name="home_start_note_detail">Write it down or dictate</string>
+    <string name="home_start_study_detail">One step at a time</string>
+    <string name="home_start_camera_detail">Point the camera and ask</string>
+    <string name="home_start_timer_detail">Set a countdown</string>
+    <string name="home_start_weather_detail">See your local forecast</string>
+    <string name="home_start_brief_detail">Listen to your daily brief</string>
+    <string name="home_start_draw_detail">Open HaloStudio</string>
 </resources>

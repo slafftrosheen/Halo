@@ -178,6 +178,43 @@ class OnlineAdmissionTest {
             rejected { f.search.search("question", "en", c, BigDecimal("0.01"), true) }.problem)
         assertEquals(0, f.calls)
     }
+    @Test fun reviewedSearchUsesSelectedOpenRouterModelAndItsAutomaticSearchEngine() = runTest {
+        val f = Fixture()
+        f.router.selectModel("openai/gpt-5.2")
+        val review = f.search.prepareReview("question", "en")
+        assertEquals("openai/gpt-5.2", review.model)
+        assertEquals("native_or_exa", review.searchMode)
+        f.search.search("question", "en", review.challenge, BigDecimal("0.01"), true)
+        assertEquals("openai/gpt-5.2", f.request.getString("model"))
+        assertFalse(f.request.getJSONArray("plugins").getJSONObject(0).has("engine"))
+        assertEquals(review.model, OnlineOperationLedger(f.storage).snapshot().records.single().model)
+    }
+    @Test fun changingTheSearchModelRequiresFreshApproval() = runTest {
+        val f = Fixture()
+        val approval = f.search.prepare("question", "en")
+        f.router.selectModel("openai/gpt-5.2")
+        assertEquals(OnlineProblem.CONSENT_EXPIRED,
+            rejected { f.search.search("question", "en", approval, BigDecimal("0.01"), true) }.problem)
+        assertEquals(0, f.calls)
+        assertTrue(OnlineOperationLedger(f.storage).snapshot().records.isEmpty())
+    }
+    @Test fun supportedOpenAiModelUsesResponsesSearchWithItsOwnKey() = runTest {
+        val f = Fixture(providerId = "openai", response = """{"status":"completed","output":[
+            {"type":"web_search_call","status":"completed"},
+            {"type":"message","role":"assistant","content":[{"type":"output_text","text":"Fact (source)","annotations":[
+                {"type":"url_citation","start_index":5,"end_index":13,"url":"https://example.org/report","title":"Report"}
+            ]}]}
+        ]}""")
+        f.router.selectModel("gpt-5.4-mini")
+        val approval = f.search.prepareReview("public question", "en")
+        assertEquals("openai", approval.providerId)
+        val answer = f.search.search("public question", "en", approval.challenge, BigDecimal("0.01"), true)
+        assertEquals("openai", answer.providerId)
+        assertEquals("api.openai.com", f.requestHost)
+        assertEquals("web_search", f.request.getJSONArray("tools").getJSONObject(0).getString("type"))
+        assertFalse(f.request.getBoolean("store"))
+        assertNull(OnlineOperationLedger(f.storage).snapshot().records.single().reportedUsd)
+    }
     @Test fun revokedAccessDuringReservationStopsImageBeforeProvider() = runTest {
         val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage, { f.allowed },privacyModes=f.modes.mode)
         val c = service.prepareSpend(f.choice, "draw", null, "image/png")
@@ -204,24 +241,33 @@ class OnlineAdmissionTest {
         try { block() } catch (error: OnlineOperationRejected) { return error }
         throw AssertionError("Expected rejection")
     }
-    private class Fixture(response: String = """{"model":"free-resolved","choices":[{"finish_reason":"stop","message":{"content":"Answer","annotations":[{"type":"url_citation","url_citation":{"url":"https://example.org/report","title":"Report"}}]}}],"usage":{"cost":0.007}}""") {
-        val disk=MemoryStorage().apply {putString("openrouter_api_key","test-key")}
-        val modes=PrivacyModeStore(disk).apply {remoteAllowed={true};configuredProviders={setOf("openrouter")};acknowledgeSharing();set(PrivacyMode.CLOUD)}
+    private class Fixture(response: String = """{"model":"free-resolved","choices":[{"finish_reason":"stop","message":{"content":"Answer","annotations":[{"type":"url_citation","url_citation":{"url":"https://example.org/report","title":"Report"}}]}}],"usage":{"cost":0.007}}""",
+        providerId: String = "openrouter") {
+        val disk=MemoryStorage().apply {putString("${providerId}_api_key","test-key")}
+        val modes=PrivacyModeStore(disk).apply {remoteAllowed={true};configuredProviders={setOf(providerId)};acknowledgeSharing();set(PrivacyMode.CLOUD)}
         val storage=modes.storage.apply {putBoolean(KEY_CLOUD_WORKSPACE,true)}
-        val provider = ImageProvider()
+        val provider = ImageProvider(providerId)
         val router = Router(provider)
         val choice = WorkspaceImageChoice(provider.id, provider.displayName, AiImageModel("image-model"))
         var allowed = true
         var calls = 0
-        val client = OpenRouterOnlineClient(OkHttpClient.Builder().addInterceptor { chain ->
+        lateinit var request: org.json.JSONObject
+        var requestHost = ""
+        val http = OkHttpClient.Builder().addInterceptor { chain ->
             calls++
+            requestHost = chain.request().url.host
+            chain.request().body?.let { body ->
+                val bytes = okio.Buffer()
+                body.writeTo(bytes)
+                request = org.json.JSONObject(bytes.readUtf8())
+            }
             Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK")
                 .body(response.toResponseBody("application/json".toMediaType())).build()
-        }.build())
-        val search = GroundedWebSearchService(storage, router, { allowed }, client,modes.mode)
+        }.build()
+        val search = GroundedWebSearchService(storage, router, { allowed }, OpenRouterOnlineClient(http), modes.mode,
+            OpenAiWebSearchClient(http))
     }
-    private class ImageProvider : AiImageProvider {
-        override val id = "openrouter"
+    private class ImageProvider(override val id: String = "openrouter") : AiImageProvider {
         override val displayName = "Fixture"
         override val isLocal = false
         override val status = MutableStateFlow(ProviderStatus.READY)
@@ -236,7 +282,7 @@ class OnlineAdmissionTest {
         override fun stream(request: AiRequest, context: AiContext): Flow<AiStreamEvent> = emptyFlow()
     }
     private class Router(private val provider: AiProvider) : AiProviderRouter {
-        override val selectedProviderId = MutableStateFlow<String?>("openrouter")
+        override val selectedProviderId = MutableStateFlow<String?>(provider.id)
         override val selectedModelId = MutableStateFlow<String?>("openrouter/free")
         override val routingPolicy = MutableStateFlow(AiRoutingPolicy.EXPLICIT)
         override fun selectProvider(id: String) { selectedProviderId.value = id }

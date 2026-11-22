@@ -94,7 +94,8 @@ data class NoteEntity(
     @PrimaryKey val objectId: String,
     val body: String,
     val revision: Int,
-    @ColumnInfo(defaultValue = "1") val schemaVersion: Int = 2
+    @ColumnInfo(defaultValue = "1") val schemaVersion: Int = 2,
+    val pageSettings: String? = null,
 )
 
 @Entity(

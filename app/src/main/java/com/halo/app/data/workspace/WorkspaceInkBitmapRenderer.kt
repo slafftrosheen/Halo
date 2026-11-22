@@ -9,7 +9,7 @@ import com.halo.sdk.runtime.ink.InkLimits
 
 /** Android raster output for portable Ink; shared by Studio and source-linked PDF page images. */
 object WorkspaceInkBitmapRenderer {
-    fun draw(canvas: Canvas, document: InkDocument, rect: RectF, paint: Paint, baseWidth: Float) {
+    fun draw(canvas: Canvas, document: InkDocument, rect: RectF, paint: Paint, baseWidth: Float, hardPencil: Boolean = false) {
         InkLimits.requireValid(document)
         require(baseWidth.isFinite() && baseWidth > 0)
         paint.strokeCap = Paint.Cap.ROUND; paint.strokeJoin = Paint.Join.ROUND
@@ -26,6 +26,11 @@ object WorkspaceInkBitmapRenderer {
             var startX = x(points.first()); var startY = y(points.first())
             for (index in 1 until points.size) {
                 val before = points[index - 1]; val current = points[index]
+                if (hardPencil) {
+                    paint.strokeWidth = width(current)
+                    canvas.drawLine(x(before), y(before), x(current), y(current), paint)
+                    continue
+                }
                 val endX = if (index == points.lastIndex) x(current) else (x(before) + x(current)) / 2
                 val endY = if (index == points.lastIndex) y(current) else (y(before) + y(current)) / 2
                 paint.strokeWidth = (width(before) + width(current)) / 2

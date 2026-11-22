@@ -83,7 +83,12 @@ class RoutineExecutor internal constructor(private val db: AppDatabase, private 
         return execute(if(manual) RoutineOccurrence.manual(r, occurrence) else RoutineOccurrence.scheduled(r, occurrence))
     }
     /** Explicit one-shot approval only. This definition never enters the scheduler's repository. */
-    suspend fun executeTrial(draft: Routine, runId: String): RoutineRunSummary? {
+    suspend fun executeTrial(draft: Routine, runId: String): RoutineRunSummary? =
+        AutomationPrivacyFence.withOwner(AutomationPrivacyFence.routine(draft.id.value)) {
+            if (repository.hasPrivateReferences(draft)) null else executeReviewedTrial(draft, runId)
+        }
+
+    private suspend fun executeReviewedTrial(draft: Routine, runId: String): RoutineRunSummary? {
         val snapshot = draft.copy(id = RoutineId("trial-${java.util.UUID.randomUUID()}"), enabled = false,
             actions = draft.actions.toList(), conditions = draft.conditions.toList(),
             delivery = RoutineDeliveryPolicy.SilentActivity, lastRunAt = null, nextRunAt = null, grantDigest = null)
@@ -105,7 +110,10 @@ class RoutineExecutor internal constructor(private val db: AppDatabase, private 
         return repository.runResult(runId)
     }
     suspend fun runResult(id: String) = repository.runResult(id)
-    suspend fun execute(occurrence: RoutineOccurrence): String? = execute(occurrence, null)
+    suspend fun execute(occurrence: RoutineOccurrence): String? =
+        AutomationPrivacyFence.withOwner(AutomationPrivacyFence.routine(occurrence.routineId.value)) {
+            execute(occurrence, null)
+        }
     private suspend fun execute(occurrence: RoutineOccurrence, trial: Routine?): String? {
         if (pause?.isPaused() == true) return "Halo is paused"
         val id = occurrence.routineId
@@ -119,6 +127,7 @@ class RoutineExecutor internal constructor(private val db: AppDatabase, private 
         val routine = db.withTransaction {
             if (pause?.isPaused() == true || repository.dao.run(identity) != null) return@withTransaction null
             val r = trial ?: repository.get(id) ?: return@withTransaction null
+            if (repository.hasPrivateReferences(r)) return@withTransaction null
             if(occurrence.routineRevision != null && r.updatedAt != occurrence.routineRevision) return@withTransaction null
             if (!manual && !r.enabled) return@withTransaction null
             val cooldown = maxOf(r.minimumIntervalSeconds, (r.trigger as? RoutineTrigger.NotificationFromApp)?.coalesceSeconds ?: 0)
@@ -241,6 +250,10 @@ class RoutineExecutor internal constructor(private val db: AppDatabase, private 
                     return reason
                 }
                 val result = try {
+                    if (repository.hasPrivateReferences(current)) {
+                        finish(RoutineRunState.CANCELLED, "Automation source is unavailable")
+                        return "Automation source is unavailable"
+                    }
                     // Claim before dispatch; never replay a claimed action after unknown completion.
                     if (!coordinator.recordStep(AgentStep.ToolExecutionClaimed(AgentStepId("$key:claim"), runId, Instant.now(),
                             ToolInvocationId("$key:invocation"), key, action.toolId, key, ReplaySafety.NEVER_REPLAY.name))) {

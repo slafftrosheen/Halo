@@ -114,6 +114,23 @@ class StudySourcesTest {
         visual: ResolvedStudySource? = null) = TutorTurnRequest(s, TutorStage.HINT, s.languages, s.goal,
         excerpts, null, emptyList(), null, "turn", visualSource = visual)
 
+    @Test fun adultTopicCanUsePowerWithoutWorkspaceSharing() = runBlocking {
+        val provider = Provider(isLocal = false)
+        val gateway = AiRouterTutorGateway(router(provider), { false })
+        val topic = turn(session(emptyList()), emptyList()).copy(learnerQuestion = "How do fractions work?")
+        val response = gateway.respond(topic)
+        assertTrue(response is TutorTurnResponse.Ready)
+        assertTrue(provider.requests.single().text.orEmpty().contains("How do fractions work?"))
+    }
+
+    @Test fun cloudOnlyProviderCannotServeTopicWhenSessionRequiresOnDevice() = runBlocking {
+        val provider = Provider(isLocal = false)
+        val gateway = AiRouterTutorGateway(router(provider), { false }, sessionAllowsRemote = { false })
+        val response = gateway.respond(turn(session(emptyList()), emptyList()))
+        assertTrue(response is TutorTurnResponse.Unavailable)
+        assertTrue(provider.requests.isEmpty())
+    }
+
     @Test fun simpleCardGrammarKeepsExactSourceAndRejectsUnknownSources() {
         val drafts=StudyCardDraftParser.parse("S2 | Q: What? | A: Second passage",sources)!!
         assertEquals("b",drafts.single().source.objectId)

@@ -89,6 +89,7 @@ internal fun HaloFamilyScreen(onBack: () -> Unit) {
             about = true
         })) {
         Text(description)
+        HaloFamilySafePlaces()
         TextButton({ importPicker.launch(arrayOf("application/json", "text/plain")) }, enabled = !busy && posts.size < 100) {
             Text(stringResource(R.string.halo_family_import))
         }

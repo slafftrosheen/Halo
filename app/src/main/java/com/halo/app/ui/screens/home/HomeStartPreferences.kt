@@ -7,15 +7,15 @@ import com.halo.app.ui.icons.HaloGlyph
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal enum class HomeStart(@StringRes val label: Int, val glyph: HaloGlyph) {
-    TODAY(R.string.home_start_today, HaloGlyph.CALENDAR),
-    NOTE(R.string.home_start_note, HaloGlyph.NOTE),
-    STUDY(R.string.home_start_study, HaloGlyph.QUESTION),
-    CAMERA(R.string.home_start_camera, HaloGlyph.SEE),
-    TIMER(R.string.home_start_timer, HaloGlyph.AUTOMATION),
-    WEATHER(R.string.home_start_weather, HaloGlyph.INTEGRATIONS),
-    BRIEF(R.string.home_start_brief, HaloGlyph.READ_MODE),
-    DRAW(R.string.home_start_draw, HaloGlyph.TOOL),
+internal enum class HomeStart(@StringRes val label: Int, @StringRes val detail: Int, val glyph: HaloGlyph, val iconId: String) {
+    TODAY(R.string.home_start_today, R.string.home_start_today_detail, HaloGlyph.CALENDAR, "screen_calendar"),
+    NOTE(R.string.home_start_note, R.string.home_start_note_detail, HaloGlyph.NOTE, "office_new_note"),
+    STUDY(R.string.home_start_study, R.string.home_start_study_detail, HaloGlyph.QUESTION, "tool_study"),
+    CAMERA(R.string.home_start_camera, R.string.home_start_camera_detail, HaloGlyph.SEE, "capture_camera"),
+    TIMER(R.string.home_start_timer, R.string.home_start_timer_detail, HaloGlyph.AUTOMATION, "screen_clock"),
+    WEATHER(R.string.home_start_weather, R.string.home_start_weather_detail, HaloGlyph.INTEGRATIONS, "screen_weather"),
+    BRIEF(R.string.home_start_brief, R.string.home_start_brief_detail, HaloGlyph.READ_MODE, "action_read_aloud"),
+    DRAW(R.string.home_start_draw, R.string.home_start_draw_detail, HaloGlyph.TOOL, "tool_studio"),
 }
 
 internal enum class HomeGreeting(@StringRes val label: Int) {

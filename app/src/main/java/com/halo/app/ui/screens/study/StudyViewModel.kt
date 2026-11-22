@@ -198,6 +198,7 @@ class StudyViewModel(
     private val lessons: StudyLessonStore? = null,
     private val workspace: com.halo.app.data.workspace.WorkspaceRepository? = null,
     private val readerStorage: com.halo.sdk.runtime.Storage? = null,
+    private val courseAuthority: () -> (() -> Unit) = { {} },
 ) : ViewModel() {
 
     val sourceCandidates = (workspace?.observe(com.halo.app.data.workspace.WorkspaceQuery(types = setOf(
@@ -209,6 +210,27 @@ class StudyViewModel(
     private var readerSelectionGeneration = 0L
     private val mutableUiState = MutableStateFlow(StudyUiState())
     val uiState: StateFlow<StudyUiState> = mutableUiState.asStateFlow()
+    internal val courseOutline = lessons?.course?.observe(study.observeCourseSessions(), sessionId)
+        ?: kotlinx.coroutines.flow.flowOf(StudyCourseRead.Unavailable)
+    private val courseSaving = MutableStateFlow(false)
+    internal val savingCourse = courseSaving.asStateFlow()
+
+    internal fun moveCourseLesson(version: String, id: String, movement: Int) {
+        val order = lessons?.course ?: return
+        if (courseSaving.value) return
+        courseSaving.value = true
+        viewModelScope.launch {
+            try {
+                order.move(version, id, movement, sessionId, courseAuthority()) { study.observeCourseSessions().first() }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                mutableUiState.value = mutableUiState.value.copy(notice = "The course outline changed. Open it again and try again.")
+            } finally {
+                courseSaving.value = false
+            }
+        }
+    }
 
     private val navigation = Channel<String>(Channel.BUFFERED)
     val savedNotes = navigation.receiveAsFlow()
@@ -267,12 +289,19 @@ class StudyViewModel(
                     is ResolvedStudySource.Unsupported -> "UNAVAILABLE"; else -> "TEXT" },
                 (it.resolved as? ResolvedStudySource.Pdf)?.pageCount) } to candidates
         }
+        val course = try {
+            lessons?.course?.outline(study.observeCourseSessions().first(), sessionId)
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
             check(semanticVersion(lease, mutableUiState.value) == before.second) { "Study view changed; read it again" }
             val sourceVersion = "study-view:" + java.security.MessageDigest.getInstance("SHA-256")
-                .digest("${before.second}|$currentSources|$candidates".toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+                .digest("${before.second}|$currentSources|$candidates|${course?.version}".toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
             ActiveStudySnapshot(sessionId, sourceVersion, state.stage.name,
-                semanticPending || state.isGenerating || state.isSubmitting || state.savingSummary || state.comparingCards.isNotEmpty(),
+                semanticPending || courseSaving.value || state.isGenerating || state.isSubmitting || state.savingSummary || state.comparingCards.isNotEmpty(),
                 state.draft.isNotBlank(), state.isFinished, state.reviewIntensity.name,
                 currentSources, candidates,
                 state.attempts.map { it.id }, state.turns.map { it.id },
@@ -280,7 +309,7 @@ class StudyViewModel(
                 state.notice?.take(500), semanticExportedNoteId, semanticRestartedSessionId, before.second,
                 state.journey.probeSkipped, state.journey.explanationDepth.name, state.journey.stage.name,
                 completedHints(state), state.journey.priorKnowledge.isNotBlank(), state.journey.reflection.isNotBlank(),
-                state.activeVisualId, state.pdfPages, state.reader != null, state.reader?.speaking == true)
+                state.activeVisualId, state.pdfPages, state.reader != null, state.reader?.speaking == true, course)
         }
     }
 
@@ -292,7 +321,8 @@ class StudyViewModel(
             check(!observed.busy && !state.loading) { "Finish the current Study operation first" }
             if (command.action in setOf("advance", "repeat", "back", "guidance", "solution", "submit_attempt_feedback", "ask_tutor", "skip_probe", "explanation_depth", "knowledge_probe", "explore_topic", "reflect", "reflect_feedback", "suggest_topics"))
                 check(!state.isFinished) { "This lesson is already finished" }
-            if (command.action !in setOf("skip_probe", "explanation_depth")) check(state.draft.isBlank()) { "Keep or send the existing learner draft first" }
+            if (command.action !in setOf("skip_probe", "explanation_depth", "reorder_course_lesson"))
+                check(state.draft.isBlank()) { "Keep or send the existing learner draft first" }
             if (command.action in setOf("advance", "repeat", "back", "guidance", "solution", "submit_attempt_feedback", "ask_tutor", "create_practice_drafts", "knowledge_probe", "explore_topic", "reflect_feedback", "suggest_topics"))
                 check(observed.sources.none { it.stale || it.version == null }) { "Review changed or unavailable Study material first" }
         }
@@ -324,6 +354,14 @@ class StudyViewModel(
             "submit_attempt_feedback" -> { setDraft(requireNotNull(command.text)); submitAttempt() }
             "ask_tutor" -> if (command.text == null) askTutor() else { setDraft(command.text); askQuestion() }
             "create_practice_drafts" -> createPracticeCards()
+            "reorder_course_lesson" -> {
+                val course = requireNotNull(observed.course)
+                val lessonId = requireNotNull(command.courseLessonId)
+                val movement = requireNotNull(command.courseMovement)
+                val index = course.lessons.indexOfFirst { it.id == lessonId }
+                check(index in course.lessons.indices && index + movement in course.lessons.indices)
+                moveCourseLesson(course.version, lessonId, movement)
+            }
             "skip_probe" -> skipKnowledgeProbe()
             "explanation_depth" -> setExplanationDepth(com.halo.app.study.StudyExplanationDepth.valueOf(requireNotNull(command.depth)))
             "knowledge_probe" -> discoverPriorKnowledge(requireNotNull(command.text))
@@ -1228,6 +1266,12 @@ class StudyViewModel(
         )
     }
 
+    internal fun readTutorCardAloud(turn: StudyTurn, text: String) {
+        val state = mutableUiState.value
+        if (text.isBlank() || state.turns.none { it.id == turn.id && it.text == turn.text }) return
+        openReader(text, turn.stage.label(), "$sessionId:turn:${turn.id}:card", state.session?.sourceRevision)
+    }
+
     /** Open the reader on the session source. */
     fun readSourceAloud(objectId: String? = null) {
         openValidatedSource(objectId)
@@ -1600,18 +1644,29 @@ class StudyViewModel(
             mutableUiState.value = mutableUiState.value.copy(notice = "There is no tutor response to save")
             return
         }
+        saveTutorCard(turn.id, question, turn.text)
+    }
+
+    private val cardSaveLock = kotlinx.coroutines.sync.Mutex()
+
+    internal fun saveTutorCard(turnId: String, question: String, answer: String) {
+        if (question.isBlank() || answer.isBlank()) return
         viewModelScope.launch {
-            study.addPracticeDraft(
-                sessionId = sessionId,
-                question = question,
-                answer = turn.text,
-                sourceObjectId = turn.citations.firstOrNull()?.sourceObjectId,
-                sourceVersion = turn.citations.firstOrNull()?.sourceVersion,
-                sourceLocator = turn.citations.firstOrNull()?.locator,
-            )
-            mutableUiState.value = mutableUiState.value.copy(
-                notice = "Saved as a draft card — review it before it enters the queue",
-            )
+            if (!cardSaveLock.tryLock()) return@launch
+            try {
+                val state = mutableUiState.value
+                val turn = state.turns.firstOrNull { it.id == turnId && it.failure == null } ?: return@launch
+                val session = state.session ?: return@launch
+                val citation = turn.citations.firstOrNull()
+                if (citation != null) check(state.sources.any {
+                    it.objectId == citation.sourceObjectId && it.version == citation.sourceVersion && !it.stale
+                } && study.sourcesStillCurrent(session, state.sources))
+                requireNotNull(study.addPracticeDraft(sessionId, question, answer,
+                    citation?.sourceObjectId, citation?.sourceVersion, citation?.locator))
+                mutableUiState.value = mutableUiState.value.copy(notice = "Saved as a draft card — review it before it enters the queue")
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { mutableUiState.value = mutableUiState.value.copy(notice = "Could not keep this card. Try again.") }
+            finally { cardSaveLock.unlock() }
         }
     }
 
@@ -1888,10 +1943,12 @@ class StudyViewModel(
         private val lessons: StudyLessonStore? = null,
         private val workspace: com.halo.app.data.workspace.WorkspaceRepository? = null,
         private val readerStorage: com.halo.sdk.runtime.Storage? = null,
+        private val courseAuthority: () -> (() -> Unit) = { {} },
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            StudyViewModel(sessionId, study, gateway, notes = notes, lessons = lessons, workspace = workspace, readerStorage=readerStorage) as T
+            StudyViewModel(sessionId, study, gateway, notes = notes, lessons = lessons, workspace = workspace,
+                readerStorage = readerStorage, courseAuthority = courseAuthority) as T
     }
 }
 

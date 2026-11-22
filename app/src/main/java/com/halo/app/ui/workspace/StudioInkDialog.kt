@@ -15,17 +15,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.R
 import com.halo.app.data.studio.StudioService
 import com.halo.app.ui.screens.notebook.CanvasInkSurface
+import com.halo.app.ui.screens.notebook.InkMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 
 @Composable
 internal fun StudioInkDialog(service: StudioService, session: StudioInkSession,
-    onSaveCopy: () -> Unit, onDismiss: () -> Unit) {
+    onSaveCopy: () -> Unit, onDismiss: () -> Unit, initialMode: InkMode = InkMode.DRAW,
+    reference: @Composable BoxScope.() -> Unit = {}) {
     // Freeze the input owner's initial state. Background Room emissions must not reset a contact in progress.
     val scope = rememberCoroutineScope()
     val project = session.initial
     val layer = requireNotNull(project.session.current.layers.find { it.id == session.layerId })
+    var previewInk by remember(session) { mutableStateOf(layer.ink) }
     val failed by session.failed.collectAsStateWithLifecycle()
     var selectionJob by remember(session) { mutableStateOf<Job?>(null) }
     var previewFailed by remember(session) { mutableStateOf(false) }
@@ -43,9 +46,15 @@ internal fun StudioInkDialog(service: StudioService, session: StudioInkSession,
                 failed -> Text(stringResource(R.string.studio_failed_ink), color = MaterialTheme.colorScheme.error)
                 previewFailed -> Text(stringResource(R.string.studio_preview_error), color = MaterialTheme.colorScheme.error)
                 background == null -> CircularProgressIndicator()
-                else -> CanvasInkSurface(initial = layer.ink, onChanged = session::submit, background = background?.asImageBitmap(),
+                else -> Box {
+                    CanvasInkSurface(initial = layer.ink, onChanged = { encoded ->
+                        session.submit(encoded)
+                        if (layer.symmetry != null) previewInk = encoded
+                    }, background = background?.asImageBitmap(),
                     selectionOwnerId = project.id, selectionPageId = layer.id, selectionBaseRevision = project.revision.toString(),
                     strokeColor = Color(layer.color), strokeWidthFraction = service.inkWidthFraction(project.session.current, layer),
+                    initialMode = initialMode,
+                    hardPencil = layer.pencil,
                     onSelectionChanged = { context ->
                         selectionJob?.cancel()
                         if (context == null) service.clearSelection(project.id, session.ownerToken)
@@ -55,7 +64,10 @@ internal fun StudioInkDialog(service: StudioService, session: StudioInkSession,
                                 service.clearSelection(project.id, session.ownerToken)
                         }
                     })
+                    reference()
+                }
             }
+            if (layer.symmetry != null) StudioSymmetryPreview(service, project.session.current, layer.copy(ink = previewInk))
         }
     }, confirmButton = {
         if (failed) TextButton(onClick = onSaveCopy) { Text(stringResource(R.string.studio_save_as)) }

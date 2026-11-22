@@ -22,6 +22,28 @@ import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContextAssemblerTest {
+    @Test fun `eligible past chat is sent as reference with source receipt and gated by cloud memory`() = runTest {
+        val history = object : com.halo.runtime.cognition.conversation.ConversationHistoryRetriever {
+            override suspend fun search(currentConversationId: String, query: String, limit: Int) = emptyList<com.halo.runtime.cognition.conversation.ConversationHistoryHit>()
+            override suspend fun referenceOtherChats(currentConversationId: String, query: String, targetIsLocal: Boolean) =
+                listOf(com.halo.runtime.cognition.conversation.ConversationHistoryHit("turn", "earlier", "Units", 1L, "I prefer Celsius.", "2"))
+            override suspend fun stillReferenceable(hit: com.halo.runtime.cognition.conversation.ConversationHistoryHit, targetIsLocal: Boolean) = true
+        }
+        val assembler = DefaultContextAssembler(InMemoryConversationStore(), DefaultBlackboard(), conversationHistory = history)
+        val policy = AiContextPolicy(includeMemories = true, referenceChatHistory = true, includeConversation = false)
+        val request = ContextAssemblyRequest(conversationId = "current", userText = "What's the forecast?")
+        val local = assembler.assemble(policy, setOf(AiCapability.TEXT), request)
+        val wire = CognitiveContextPlanner().fitProviderContext(8192, com.halo.sdk.provider.AiRequest(text = request.userText), local.context)
+        assertTrue(wire.conversation.single().content.startsWith(MEMORY_REFERENCE_PREFIX))
+        assertTrue(wire.conversation.single().content.contains("I prefer Celsius."))
+        assertEquals("earlier", local.usedWorkspaceReferences.single().objectId)
+        assertTrue(com.halo.sdk.provider.RemoteDataCategory.MEMORIES in wire.remoteDataCategories)
+        val cloud = assembler.assemble(policy, setOf(AiCapability.TEXT), request.copy(targetIsLocal = false))
+        assertTrue(cloud.context.conversation.isEmpty())
+        assertTrue(cloud.context.memories.isEmpty())
+        assertTrue(cloud.usedWorkspaceReferences.isEmpty())
+    }
+
     @Test fun `exact unavailable selection cannot fall back to unrelated Working Set`() = runTest {
         var reads = 0
         val source = object : WorkspaceContextSource {

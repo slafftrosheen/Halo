@@ -31,8 +31,21 @@ object ConversationSemantics {
             "^(?:przeczytaj|podsumuj|porównaj)\\s+(?:moje|zapisane|wybrane)\\s+(?:źródła|artykuły|powiadomienia|notatki|dokumenty)\\b",
         RegexOption.IGNORE_CASE
     )
+    private val todayContext = Regex(
+        "^(?:what(?:['’]s| is) (?:on (?:my (?:calendar|agenda)|(?:the )?today page)|next on my (?:calendar|agenda)|my next (?:event|appointment|meeting))|" +
+            "(?:read|tell me|give me|show me) (?:the |my )?hourly news(?: report)?|" +
+            "(?:read|list|show) (?:my |the )?(?:selected|saved) (?:news )?(?:sources|feeds)|" +
+            "что (?:у меня в календаре|у меня запланировано|на странице сегодня)|прочитай (?:почасовой обзор|мои источники))\\b",
+        RegexOption.IGNORE_CASE,
+    )
+    private val personalSettingsAction = Regex(
+        "^(?:(?:set|change) (?:my |the |today(?:['’]s)? )?weather city (?:to|for)\\s+|" +
+            "remember (?:that |this preference)|forget (?:that |the (?:fact|memory|preference) )|" +
+            "запомни(?:,? что| это)|забудь(?:,? что| это)|установи город для погоды)\\b",
+        RegexOption.IGNORE_CASE,
+    )
     private fun needsSavedContext(text: String): Boolean = commandText(text).let {
-        dayContext.containsMatchIn(it) || savedContext.containsMatchIn(it)
+        dayContext.containsMatchIn(it) || savedContext.containsMatchIn(it) || todayContext.containsMatchIn(it)
     }
     // Explicit domain writes still route through the normal tool authorizer when
     // the optional local intent classifier is absent. These cues supply no slots.
@@ -106,7 +119,7 @@ object ConversationSemantics {
         return when {
             explicitTool.containsMatchIn(command) -> ToolActionReason.EXPLICIT_TOOL_REQUEST
             needsSavedContext(command) -> ToolActionReason.WORKSPACE_LOOKUP
-            workspaceWrite.containsMatchIn(command) -> ToolActionReason.ACTION_INTENT
+            workspaceWrite.containsMatchIn(command) || personalSettingsAction.containsMatchIn(command) -> ToolActionReason.ACTION_INTENT
             appWorkflow.containsMatchIn(command) -> ToolActionReason.SCREEN_OPERATION
             workspace.containsMatchIn(command) -> ToolActionReason.WORKSPACE_LOOKUP
             screen.containsMatchIn(command) -> ToolActionReason.SCREEN_OPERATION

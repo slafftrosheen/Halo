@@ -89,6 +89,9 @@ class RoomAgentRunRepository(private val db: AppDatabase) : AgentRunStore {
     }
 
     override suspend fun create(run: AgentRun) = db.withTransaction {
+        check(db.privateLibraryDao().claims(listOf(com.halo.app.data.workspace.privateLibraryClaim(run.id.value))).isEmpty()) {
+            "A Private run with this ID already exists"
+        }
         dao.insertRun(run.toEntity())
         val metadata = JSONObject().put("createdAt", run.createdAt.toEpochMilli())
             .put("originSource", run.origin?.source?.javaClass?.simpleName)

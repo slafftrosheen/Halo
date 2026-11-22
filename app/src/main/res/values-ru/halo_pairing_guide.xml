@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_pairing_device_type">Что вы подключаете?</string>
+    <string name="halo_pairing_headphones">Наушники</string>
+    <string name="halo_pairing_ink">Часы и экраны E Ink</string>
+    <string name="halo_pairing_example">На фото показаны примеры. Halo покажет доступные функции найденного устройства.</string>
+    <string name="halo_pairing_prepare_glasses">Включите очки и переведите их в режим сопряжения по инструкции.</string>
+    <string name="halo_pairing_prepare_headphones">Переведите наушники или зарядный футляр в режим сопряжения по инструкции.</string>
+    <string name="halo_pairing_prepare_ink">Не выключайте экран устройства. Если для настройки нужно фирменное приложение, подключите устройство сначала в нём.</string>
+    <string name="halo_pairing_prepare_buddy">Включите робота и сделайте его видимым для поиска по инструкции.</string>
+    <string name="halo_pairing_permissions">Проверьте запросы на сопряжение и разрешения на телефоне.</string>
+    <string name="halo_pairing_try">Откройте подключённое устройство и попробуйте доступные функции.</string>
+    <string name="halo_pairing_preview_gesture">Пример жеста</string>
+    <string name="halo_pairing_open_bluetooth">Открыть настройки Bluetooth</string>
+    <string name="halo_pairing_open_follow_me">Открыть «Следуй за мной»</string>
+    <string name="halo_pairing_open_buddy">Настроить BuddyBot</string>
+    <string name="halo_pairing_audio_system">Выберите наушники в настройках Bluetooth. Вернитесь в «Устройства», чтобы увидеть подключённые аудиоустройства.</string>
+    <string name="halo_pairing_ink_follow_me">Подключите экран через совместимое приложение или адаптер, затем откройте «Следуй за мной».</string>
+    <string name="halo_pairing_buddy_wifi">Введите локальный адрес BuddyBot в сети Wi-Fi, затем код с экрана робота.</string>
+    <string name="halo_pairing_setup_unavailable">На этом телефоне не удалось открыть настройки устройства.</string>
+    <string name="halo_pairing_android_prompt">Если Android покажет код сопряжения, сравните его с кодом на устройстве перед подтверждением.</string>
+    <string name="halo_buddy_connect">Подключить по Wi-Fi</string>
+    <string name="halo_buddy_connect_failed">Не удалось подключиться. Проверьте BuddyBot и его локальный адрес в сети Wi-Fi.</string>
+    <string name="halo_buddy_paired">BuddyBot подтвердил сопряжение.</string>
+    <string name="halo_buddy_code_help">Введите четыре цифры с экрана BuddyBot.</string>
+    <string name="halo_buddy_pair_failed">BuddyBot не подтвердил код. Отключите робота и проверьте код перед повторной попыткой.</string>
+    <string name="halo_buddy_disconnect">Отключить BuddyBot</string>
+    <string name="halo_buddy_needs_you">%1$s требует внимания</string>
+    <string name="halo_buddy_open_help">Проверить BuddyBot</string>
+</resources>

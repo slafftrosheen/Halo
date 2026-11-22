@@ -4,13 +4,16 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.room.withTransaction
+import com.halo.app.R
 import com.halo.app.data.*
 import com.halo.app.data.notebook.*
 import com.halo.app.data.workspace.NoteAttachmentEntity
 import com.halo.app.data.workspace.WorkspaceAssetEntity
+import com.halo.app.data.workspace.privateLibraryCaptureClaim
 import com.halo.sdk.host.ObservationSource
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
@@ -29,14 +32,23 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
 
     private fun uri(file: File) = FileProvider.getUriForFile(context, "${context.packageName}.captures", file)
 
-    suspend fun discardPendingCapture(file: File) = withContext(Dispatchers.IO) {
+    suspend fun discardPendingCapture(file: File): Unit = withContext(Dispatchers.IO) {
         val capturesDir = File(context.filesDir, "captures/images").canonicalFile
         val candidate = file.canonicalFile
-        if (candidate.path.startsWith(capturesDir.path + File.separator)) candidate.delete()
+        if (candidate.parentFile == capturesDir && candidate.isFile) db.withTransaction {
+            val addresses = listOf(candidate.path, file.absolutePath, Uri.fromFile(candidate).toString(), uri(candidate).toString())
+            if (!db.workspaceAssetDao().hasStoredAssetPath(addresses)) candidate.delete()
+        }
     }
 
     suspend fun receive(file: File, deviceId: String? = null, captureId: String = file.nameWithoutExtension,
         publishForInference: Boolean = false, sourceLabel: String? = null, sourceKind: String? = null, title: String? = null, captureQuality: String? = null, captureTimestampMs: Long? = null, trigger: String? = null, body: String = ""): String = withContext(Dispatchers.IO) {
+        val sourceId = deviceId ?: "phone"
+        val claim = privateLibraryCaptureClaim(sourceId, captureId)
+        suspend fun requirePublicCapture() {
+            check(db.privateLibraryDao().claims(listOf(claim)).isEmpty()) { context.getString(R.string.halo11_private_capture_replay) }
+        }
+        requirePublicCapture()
         require(file.exists() && file.length() in 1..(32L * 1024 * 1024)) { "No complete image received, or image exceeds 32 MB" }
         val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
         android.graphics.BitmapFactory.decodeFile(file.absolutePath, options)
@@ -44,11 +56,13 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
         val mime = options.outMimeType ?: "image/jpeg"
         val capturesDir = File(context.filesDir, "captures/images")
         capturesDir.mkdirs()
-        val local = if (file.canonicalPath.startsWith(capturesDir.canonicalPath + File.separator)) file
+        val isOriginalLocal = file.canonicalFile.parentFile == capturesDir.canonicalFile
+        val local = if (isOriginalLocal) file
             else File(capturesDir, "${UUID.randomUUID()}.jpg").also { file.copyTo(it, overwrite = false) }
         val source = sourceLabel ?: if (deviceId == null) "Phone camera" else "Wearable camera"
-        val note = db.withTransaction {
-            db.workspaceContextDao().captureObject(deviceId ?: "phone", captureId)?.let { id ->
+        val note = try { db.withTransaction {
+            requirePublicCapture()
+            db.workspaceContextDao().captureObject(sourceId, captureId)?.let { id ->
                 return@withTransaction requireNotNull(notebook.getNote(id)) { "Saved capture unavailable" }
             }
             val note = notebook.createNote(body.take(8000), WorkspaceSource.DEVICE_CAPTURE, title = title?.take(160)?.takeIf { it.isNotBlank() } ?: "Capture — $source")
@@ -81,9 +95,12 @@ class LocalCaptureStore(private val context: Context, private val db: AppDatabas
                     createdAtEpochMs = timestamp,
                 )
             )
-            db.workspaceContextDao().provenance(ObjectProvenance(note.id, deviceId ?: "phone", captureId,
+            db.workspaceContextDao().provenance(ObjectProvenance(note.id, sourceId, captureId,
                 org.json.JSONObject(mapOf("mimeType" to mime, "localPath" to local.absolutePath, "captureId" to captureId, "sourceKind" to (sourceKind ?: "DEVICE_CAPTURE"), "sourceLabel" to source, "quality" to (captureQuality ?: "UNKNOWN"), "captureTimestampMs" to captureTimestampMs, "trigger" to trigger, "sha256" to java.security.MessageDigest.getInstance("SHA-256").digest(local.readBytes()).joinToString("") { "%02x".format(it) })).toString()))
             note
+        } } catch (error: Exception) {
+            if (!isOriginalLocal) withContext(NonCancellable) { runCatching { discardPendingCapture(local) } }
+            throw error
         }
         events.publish(ActionReceipt(operationId = captureId, category = "Vision", title = "Image received", stage = "Completed",
             detail = "$source · $mime · saved in Notebook Inbox", sourceDeviceId = deviceId, objectId = note.id))

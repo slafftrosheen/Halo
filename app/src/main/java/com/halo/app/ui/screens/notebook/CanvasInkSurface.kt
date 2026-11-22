@@ -50,7 +50,7 @@ import kotlin.math.ceil
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private enum class InkMode { DRAW, ERASE, PAN, SELECT }
+internal enum class InkMode { DRAW, ERASE, PAN, SELECT }
 
 /** Shared for free sketches and page overlays. Only finished edits invoke the draft owner. */
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalLayoutApi::class)
@@ -67,6 +67,8 @@ internal fun CanvasInkSurface(
     onSaveSelection: ((InkSelectionContext) -> Unit)? = null,
     strokeColor: Color? = null,
     strokeWidthFraction: Float? = null,
+    initialMode: InkMode = InkMode.DRAW,
+    hardPencil: Boolean = false,
 ) {
     val sourceAspect = background?.let { (it.width * 1000f / it.height).roundToInt() } ?: aspectMilli
     val parsed = remember(initial, sourceAspect) {
@@ -80,7 +82,7 @@ internal fun CanvasInkSurface(
     }
     val committedCallback by rememberUpdatedState(onChanged)
     var revision by remember(initial) { mutableIntStateOf(0) }
-    var mode by remember { mutableStateOf(InkMode.DRAW) }
+    var mode by remember(initialMode) { mutableStateOf(initialMode) }
     var zoom by remember { mutableFloatStateOf(1f) }
     var pan by remember { mutableStateOf(Offset.Zero) }
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
@@ -392,10 +394,10 @@ internal fun CanvasInkSurface(
                     drawRect(selectionColor, topLeft, androidx.compose.ui.geometry.Size(selectionRect.width, selectionRect.height),
                         style = Stroke(2.dp.toPx() / zoom))
                 }
-                drawInk(preview, inkColor, rect, strokeWidthFraction?.let { rect.width * it })
+                drawInk(preview, inkColor, rect, strokeWidthFraction?.let { rect.width * it }, hardPencil)
                 selectionContext?.let { selected ->
                     val ids = selected.selectedStrokeIds.toSet()
-                    drawInk(preview.copy(strokes = preview.strokes.filter { it.strokeId in ids }), selectionColor, rect, strokeWidthFraction?.let { rect.width * it })
+                    drawInk(preview.copy(strokes = preview.strokes.filter { it.strokeId in ids }), selectionColor, rect, strokeWidthFraction?.let { rect.width * it }, hardPencil)
                 }
                 val dragStart = selectionStart
                 val dragEnd = selectionEnd
@@ -457,7 +459,7 @@ internal fun inkBounds(width: Float, height: Float, aspectMilli: Int): Rect {
 }
 
 /** Same normalized coordinates for editing, thumbnails and page overlays. */
-internal fun DrawScope.drawInk(document: InkDocument, ink: Color, rect: Rect, baseWidth: Float? = null) {
+internal fun DrawScope.drawInk(document: InkDocument, ink: Color, rect: Rect, baseWidth: Float? = null, hardPencil: Boolean = false) {
     fun InkPoint.pixel() = Offset(rect.left + x / 1000f * rect.width, rect.top + y / 1000f * rect.height)
     fun width(point: InkPoint) = ((baseWidth ?: (minOf(rect.width, rect.height) * 0.006f)) *
         (point.pressure?.let { 0.3f + 1.4f * it / 1000f } ?: 1f)).coerceAtLeast(0.75f)
@@ -482,6 +484,10 @@ internal fun DrawScope.drawInk(document: InkDocument, ink: Color, rect: Rect, ba
         for (i in 1 until points.size) {
             val control = points[i - 1].pixel()
             val next = points[i].pixel()
+            if (hardPencil) {
+                drawLine(ink, control, next, width(points[i]), cap = StrokeCap.Round)
+                continue
+            }
             val end = if (i == points.lastIndex) next else (control + next) / 2f
             path.reset(); path.moveTo(start.x, start.y); path.quadraticBezierTo(control.x, control.y, end.x, end.y)
             drawPath(path, ink, style = Stroke((width(points[i - 1]) + width(points[i])) / 2, cap = StrokeCap.Round))

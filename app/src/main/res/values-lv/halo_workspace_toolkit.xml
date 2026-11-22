@@ -1,0 +1,12 @@
+<resources>
+    <string name="toolkit_find_tool">Atrast rīku</string>
+    <string name="toolkit_empty_search">Nav atbilstošu rīku</string>
+    <string name="toolkit_in_dock">Joslā</string>
+    <string name="toolkit_on_shelf">Rīku plauktā</string>
+    <string name="toolkit_translated_scan_title">Skenējums ar tulkojumu</string>
+    <string name="toolkit_keep_translation">Saglabāt tulkojumu</string>
+    <string name="toolkit_keeping_translation">Saglabā tulkojumu</string>
+    <string name="toolkit_open_translation">Atvērt tulkojumu</string>
+    <string name="toolkit_translation_kept">Fotoattēls un tulkojums saglabāti kopā darbvietā.</string>
+    <string name="toolkit_translation_error">Neizdevās saglabāt tulkojumu. Mēģini vēlreiz.</string>
+</resources>

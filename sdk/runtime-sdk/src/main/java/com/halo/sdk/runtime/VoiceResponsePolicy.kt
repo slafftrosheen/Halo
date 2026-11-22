@@ -39,4 +39,5 @@ data class StreamingSpeechPrepared(
     override val timestamp: Long = System.currentTimeMillis(),
     val remoteDataCategories: Set<String>? = null,
     val remoteDispatchRevision: Long? = null,
+    val conversationId: String? = null,
 ) : HaloEvent

@@ -190,7 +190,13 @@ class DefaultSkillRegistry(
             "halo_note_move_block" to SkillRisk.REVERSIBLE, "halo_note_indent_block" to SkillRisk.REVERSIBLE, "halo_note_split_block" to SkillRisk.REVERSIBLE,
             "halo_note_merge_block" to SkillRisk.REVERSIBLE, "halo_note_duplicate_block" to SkillRisk.REVERSIBLE, "halo_note_insert_reference" to SkillRisk.REVERSIBLE,
             "halo_note_set_reference" to SkillRisk.REVERSIBLE, "halo_note_archive" to SkillRisk.REVERSIBLE, "halo_note_restore" to SkillRisk.REVERSIBLE,
-            "halo_note_remove_from_inbox" to SkillRisk.REVERSIBLE)
+            "halo_note_remove_from_inbox" to SkillRisk.REVERSIBLE,
+            "halo_note_review_block" to SkillRisk.READ_ONLY, "halo_note_set_format" to SkillRisk.REVERSIBLE,
+            "halo_note_set_page_settings" to SkillRisk.REVERSIBLE, "halo_note_comment" to SkillRisk.REVERSIBLE,
+            "halo_note_resolve_changes" to SkillRisk.DESTRUCTIVE)
+        private fun canvasReviewTools() = listOf(
+            "halo_canvas_group_lock" to SkillRisk.REVERSIBLE, "halo_canvas_add_comment" to SkillRisk.REVERSIBLE,
+            "halo_canvas_review_comment" to SkillRisk.READ_ONLY, "halo_canvas_update_comment" to SkillRisk.REVERSIBLE)
         private fun studySkill(): SkillDescriptor {
             val tools = listOf(
                 "halo_study_with_halo" to SkillRisk.REVERSIBLE, "halo_get_study_session" to SkillRisk.READ_ONLY,
@@ -249,9 +255,10 @@ class DefaultSkillRegistry(
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.localRoles,
                 setOf("halo_local_role_state"), sensitive = setOf("halo_local_role_select")),
             configurationSkill("halo.everyday", "Your day, organizer and widgets",
-                "Operate canonical local organizer, world clocks, selected sources, briefs and independent widgets. Power-only external preview/refresh follows the global policy; no mode changes or Android grants.",
+                "Operate the organizer, world clocks, Reads and Sources, offline knowledge and wiki dumps, briefs and independent widgets. Power-only source updates use the shared network policy.",
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.everyday,
-                setOf("halo_day_context","halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_source_image","halo_brief_query","halo_widget_query")),
+                setOf("halo_knowledge_catalogue","halo_knowledge_search","halo_today_overview","halo_day_context","halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_source_image","halo_brief_query","halo_widget_query"),
+                sensitive = setOf("halo_knowledge_download")),
             configurationSkill("halo.saved_devices", "Saved device controls",
                 "Inspect saved local device preferences and request exact guarded device actions; pairing and physical readiness remain separate.",
                 com.halo.runtime.cognition.tools.PersonalConfigurationToolAccess.savedDevices,
@@ -335,8 +342,8 @@ class DefaultSkillRegistry(
                 name = "Workspace",
                 description = "Create, search, and manage local notes and workspace items.",
                 category = SkillCategory.WORKSPACE,
-                tools = setOf("halo_canvas_current", "halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect", "halo_canvas_get", "halo_canvas_create", "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_clear_sketch", "halo_canvas_move", "halo_canvas_connect", "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status", "halo_workspace_open_with", "halo_workspace_insert", "halo_workspace_select", "halo_save_screen_to_notebook", "halo_create_empty_note", "halo_create_note", "halo_search_notebook", "halo_get_workspace_object", "halo_context_used_sources", "halo_add_to_working_set", "halo_remove_from_working_set", "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status") + noteTools().map { it.first } + com.halo.runtime.cognition.tools.WorkspaceToolAccess.remoteInkTools + com.halo.runtime.cognition.tools.WorkspaceToolAccess.canvasWorkflowTools,
-                toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_clear_sketch", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_rename", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_add_group", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_tag", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_duplicate", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_arrange", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_delete", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_ungroup", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_disconnect", SkillRisk.DESTRUCTIVE)) + noteTools().map { (id, risk) -> com.halo.sdk.runtime.skills.SkillToolDefinition(id, risk) } + inkToolDefinitions() + listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_current", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_context_used_sources", SkillRisk.READ_ONLY)) + com.halo.runtime.cognition.tools.WorkspaceToolAccess.canvasWorkflowTools.sorted().map { name -> com.halo.sdk.runtime.skills.SkillToolDefinition(name, if (name == "halo_canvas_workflow_status") SkillRisk.READ_ONLY else SkillRisk.SENSITIVE) },
+                tools = setOf("halo_canvas_current", "halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect", "halo_canvas_get", "halo_canvas_create", "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_clear_sketch", "halo_canvas_move", "halo_canvas_connect", "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status", "halo_workspace_open_with", "halo_workspace_insert", "halo_workspace_select", "halo_save_screen_to_notebook", "halo_create_empty_note", "halo_create_note", "halo_search_notebook", "halo_get_workspace_object", "halo_context_used_sources", "halo_add_to_working_set", "halo_remove_from_working_set", "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status") + (noteTools() + canvasReviewTools()).map { it.first } + com.halo.runtime.cognition.tools.WorkspaceToolAccess.remoteInkTools + com.halo.runtime.cognition.tools.WorkspaceToolAccess.canvasWorkflowTools,
+                toolDefinitions = listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_clear_sketch", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_rename", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_add_group", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_tag", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_duplicate", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_arrange", SkillRisk.REVERSIBLE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_delete", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_ungroup", SkillRisk.DESTRUCTIVE), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_disconnect", SkillRisk.DESTRUCTIVE)) + (noteTools() + canvasReviewTools()).map { (id, risk) -> com.halo.sdk.runtime.skills.SkillToolDefinition(id, risk) } + inkToolDefinitions() + listOf(com.halo.sdk.runtime.skills.SkillToolDefinition("halo_canvas_current", SkillRisk.READ_ONLY), com.halo.sdk.runtime.skills.SkillToolDefinition("halo_context_used_sources", SkillRisk.READ_ONLY)) + com.halo.runtime.cognition.tools.WorkspaceToolAccess.canvasWorkflowTools.sorted().map { name -> com.halo.sdk.runtime.skills.SkillToolDefinition(name, if (name == "halo_canvas_workflow_status") SkillRisk.READ_ONLY else SkillRisk.SENSITIVE) },
                 risk = SkillRisk.REVERSIBLE,
                 source = SkillSource.BUILT_IN
             ),
@@ -388,11 +395,16 @@ class DefaultSkillRegistry(
             ),
             SkillDescriptor(
                 id = SkillId("halo.web"),
-                name = "Web reading",
-                description = "Read the readable text or links of one public web page so Halo can summarize it.",
+                name = "Web search and reading",
+                description = "Get a current answer with cited sources through reviewed web search, or read one supplied public web page.",
                 category = SkillCategory.INFORMATION,
-                tools = setOf("halo_fetch_url"),
-                risk = SkillRisk.SENSITIVE,
+                tools = setOf("halo_fetch_url", "halo_web_search_prepare", "halo_web_search"),
+                toolDefinitions = listOf(
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_fetch_url", SkillRisk.SENSITIVE),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_web_search_prepare", SkillRisk.READ_ONLY),
+                    com.halo.sdk.runtime.skills.SkillToolDefinition("halo_web_search", SkillRisk.EXTERNAL_SIDE_EFFECT),
+                ),
+                risk = SkillRisk.EXTERNAL_SIDE_EFFECT,
                 source = SkillSource.BUILT_IN
             ),
             SkillDescriptor(

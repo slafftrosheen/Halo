@@ -31,9 +31,7 @@ internal fun HaloZone(
     onNavigate: (String) -> Unit, attentionCount: Int,
     utility: @Composable () -> Unit, orb: @Composable (Dp) -> Unit,
     profile: @Composable () -> Unit = { com.halo.app.ui.components.PrivacyModeControl(detail = true) },
-    backdrop: @Composable BoxScope.() -> Unit = {
-        com.halo.app.ui.theme.HaloAmbientBackdrop(Modifier.matchParentSize(), animate = false)
-    },
+    backdrop: @Composable BoxScope.() -> Unit = { Zone6DockBackdrop(Modifier.matchParentSize()) },
     destinations: List<HaloOrbDestination> = ShellOrbCatalog.globalDestinations(false),
     profileStatus: @Composable () -> Unit = {},
     composer: Boolean = false,
@@ -41,14 +39,22 @@ internal fun HaloZone(
     nextStep: ShellNextStep? = null,
     guideIdle: Boolean = false,
     kids: Boolean = false,
+    devicesNeedAttention: Boolean = false,
 ) {
     val density = LocalDensity.current
     val largeText = density.fontScale >= Zone6DockTokens.largeTextScale
     val singleRow = compact || availableHeight < Zone6DockTokens.shortWindow
     BoxWithConstraints {
         val fallback = singleRow || largeText || maxWidth < 320.dp
-        val bounded = !fallback
+        val quietToday = !kids && route == HaloHomeTab.TODAY.route && !fallback
         val header = LocalShellUtilityBand.current?.value?.takeIf { LocalShellPageOwnerFilter.current(it.owner) }
+        val primaryUtility = header?.takeIf { it.owner.routeFamily in setOf("notebook", "activity") &&
+            (!singleRow || maxWidth >= 418.dp) }
+        val dockHeight = availableHeight * Zone6DockTokens.fraction
+        val bounded = !fallback && !quietToday && dockHeight >= if (primaryUtility != null) 188.dp else 176.dp
+        val dockUtility: (@Composable () -> Unit)? = if (primaryUtility == null) null else {
+            { RenderShellUtilityBand(primaryUtility) }
+        }
         val showUtility = composer || header?.owner?.routeFamily in setOf("kids", "settings")
         val utilityInSheet = !composer && (!showUtility || singleRow)
         val session = LocalZone5GuideSession.current
@@ -92,11 +98,12 @@ internal fun HaloZone(
             entryId, compact = singleRow, onDisclosureChanged = { disclosed = it }, inlineControls = true,
             compactUtility = { if (utilityInSheet) utility() }, kids = kids, guidanceTargetVisible = !fallback,
             compactUtilityIncludesStatus = utilityInSheet && header?.includesStatus == true,
-            zone6 = true, attentionCount = attentionCount, composer = composer)
+            zone6 = true, attentionCount = attentionCount, composer = composer,
+            primaryUtility = dockUtility, quietToday = quietToday, devicesNeedAttention = devicesNeedAttention)
         val utilityScroll = rememberScrollState()
         Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
             shape = RoundedCornerShape(topStart = Zone6DockTokens.radius, topEnd = Zone6DockTokens.radius),
-            modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.height(availableHeight * Zone6DockTokens.fraction) else Modifier)
+            modifier = Modifier.fillMaxWidth().then(if (bounded) Modifier.height(dockHeight) else Modifier)
                 .haloGestureAnchor(HaloGesture.DOCK_SWIPE)
                 .semantics { testTagsAsResourceId = true }.testTag("halo-zone6")) {
             Box {
@@ -104,7 +111,7 @@ internal fun HaloZone(
                 CompositionLocalProvider(LocalHaloZone5Navigation provides navigation, LocalZone6GuideTarget provides guideTarget,
                     LocalShellCarouselBackVisible provides true, LocalShellCarouselActionIds provides emptySet()) {
                     Column(Modifier.fillMaxWidth().then(if (bounded) Modifier.fillMaxHeight() else Modifier)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)) {
+                        .padding(horizontal = 12.dp, vertical = 4.dp)) {
                         Zone6DockHorizon()
                         if (composer) {
                             HomeComposerDock(
@@ -124,14 +131,14 @@ internal fun HaloZone(
                         } else {
                             Column((if (bounded) Modifier.weight(1f) else Modifier).fillMaxWidth()
                                 .then(if (bounded) Modifier.verticalScroll(utilityScroll) else Modifier)) {
-                                if (!singleRow) Zone6PlaceRow(route, owner ?: header?.owner, guide) {
+                                if (!singleRow && !quietToday) Zone6PlaceRow(route, owner ?: header?.owner, guide) {
                                     guide?.let { session?.dismiss(it.id) }
                                     session?.pause()
                                     visibleGuide = null
                                 }
                                 if (!utilityInSheet) Column(Modifier.fillMaxWidth()) { utility() }
                             }
-                            orb(when { kids -> 60.dp; singleRow -> 48.dp; else -> 56.dp })
+                            orb(when { kids -> 60.dp; singleRow || quietToday -> 48.dp; else -> 56.dp })
                         }
                     }
                 }

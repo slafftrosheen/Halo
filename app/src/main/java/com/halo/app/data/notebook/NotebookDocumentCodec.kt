@@ -28,7 +28,7 @@ object NotebookDocumentCodec {
 
     private fun serializeAll(blocks: List<NoteBlock>): String = buildString {
         var numberedRun = mutableMapOf<Int, Int>()
-        blocks.forEachIndexed { index, block ->
+        blocks.filterNot(NoteBlock::isPendingDeletion).forEachIndexed { index, block ->
             if (index > 0) append("\n\n")
             if (block.type != NoteBlockType.NUMBERED_LIST) numberedRun = mutableMapOf()
             append(serializeBlock(block, numberedRun))
@@ -226,6 +226,7 @@ object NotebookDocumentCodec {
 
     /** Plain text projection for narration, snippets and search: markup removed, structure kept. */
     fun plainText(blocks: List<NoteBlock>): String = blocks
+        .filterNot(NoteBlock::isPendingDeletion)
         .joinToString("\n") { block ->
             when (block.type) {
                 NoteBlockType.DIVIDER -> "—"
@@ -238,10 +239,11 @@ object NotebookDocumentCodec {
 
     /** Derived title policy: first heading, else first non-blank paragraph line. */
     fun deriveTitle(blocks: List<NoteBlock>): String {
-        val heading = blocks.firstOrNull { it.type.isHeading && it.text.isNotBlank() }
+        val visible = blocks.filterNot(NoteBlock::isPendingDeletion)
+        val heading = visible.firstOrNull { it.type.isHeading && it.text.isNotBlank() }
         if (heading != null) return cleanTitle(heading.text)
-        val paragraph = blocks.firstOrNull { it.type == NoteBlockType.PARAGRAPH && it.text.isNotBlank() }
-            ?: blocks.firstOrNull { it.text.isNotBlank() }
+        val paragraph = visible.firstOrNull { it.type == NoteBlockType.PARAGRAPH && it.text.isNotBlank() }
+            ?: visible.firstOrNull { it.text.isNotBlank() }
         return cleanTitle(paragraph?.text.orEmpty())
     }
 

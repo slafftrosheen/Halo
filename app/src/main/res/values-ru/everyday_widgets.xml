@@ -7,8 +7,19 @@
 <string name="everyday_widget_headlines">Заголовки</string>
 <string name="everyday_widget_alarms_timers">Будильники и таймеры</string>
 <string name="everyday_widget_dashboard">Повседневная панель</string>
+<string name="halo_widget_today_preview">События, погода и сохранённые заголовки</string>
 <string name="everyday_widget_preview">Откройте halo для сохранённой информации</string>
 <string name="everyday_widget_saved">Сохранено на этом телефоне</string>
 <string name="everyday_widget_configure">Настроить виджет</string>
 <string name="everyday_widget_description">Ваш сохранённый план и выбранная информация halo. Измените размер для большего обзора; личные данные доступны в halo.</string>
+<string name="everyday_widget_habits">Привычки</string>
+<string name="everyday_widget_habits_setup">Настроить привычки</string>
+<string name="everyday_widget_habits_days">Дни выполнения</string>
+<string name="everyday_widget_departures_off">Отправления отключены</string>
+<string name="everyday_widget_live_departures_off">Расписание в реальном времени отключено</string>
+<string name="everyday_widget_home_open">Открыть «Наш дом»</string>
+<string name="everyday_widget_shared_list_empty">Общий список пуст</string>
+<string name="everyday_widget_no_rain_forecast">Нет прогноза дождя</string>
+<string name="everyday_widget_rain_chance">Вероятность дождя сегодня</string>
+<string name="everyday_widget_smart_stack">Умная стопка</string>
 </resources>

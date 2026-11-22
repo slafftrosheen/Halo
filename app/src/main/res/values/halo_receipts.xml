@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_receipt_totals">Totals from saved receipts</string>
+    <string name="halo_receipt_total_amount">%1$s %2$s · Receipts counted: %3$d</string>
+    <string name="halo_receipt_no_totals">No saved receipts had a readable merchant, date, total and currency for this search.</string>
+    <string name="halo_receipt_limited">Some saved files could not be checked. Open the listed receipts to verify the totals.</string>
+</resources>

@@ -30,10 +30,17 @@ class CollectorParsingTest {
         assertThrows(org.xml.sax.SAXException::class.java) { FeedParser.parse(deep.toByteArray(), source) }
     }
     @Test fun linksCannotCarryJavascriptCredentialsOrLocalServiceSchemes() {
-        listOf("javascript:alert(1)", "file:///secret", "https://user:password@example.org/private", "http://example.org/").forEach { url ->
+        listOf("javascript:alert(1)", "file:///secret", "https://user:password@example.org/private",
+            "http://user:password@example.org/private", "http://127.0.0.1/", "http://example.org:8080/").forEach { url ->
             val body = "<rss><channel><item><guid>one</guid><title>News</title><link>$url</link></item></channel></rss>"
             assertNull(FeedParser.parse(body.toByteArray(), source).articles.single().url)
         }
+    }
+    @Test fun publicHttpCanBeUsedForFeedsWithoutChangingTheModelDownloadPolicy() {
+        val url = "http://example.org/feed"
+        val body = "<rss><channel><item><guid>clock</guid><title>News</title><link>$url</link></item></channel></rss>"
+        assertEquals(url, FeedParser.parse(body.toByteArray(), source).articles.single().url)
+        assertThrows(IllegalArgumentException::class.java) { com.halo.sdk.provider.PublicNetworkPolicy.validate(url) }
     }
     @Test fun dnsRejectsPrivateMixedAndSpecialAddressesWithoutSecondResolution() {
         listOf("127.0.0.1", "10.0.0.2", "172.16.0.1", "192.168.1.1", "169.254.169.254", "100.64.0.1", "198.18.0.1", "192.0.2.1", "224.0.0.1", "::1", "fe80::1", "fd00::1", "2001:db8::1", "2002:7f00:1::1").forEach { address ->

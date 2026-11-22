@@ -4,11 +4,19 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
+import android.provider.Settings
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -23,6 +31,8 @@ import com.halo.app.ui.theme.HaloLookMotion
 import com.halo.app.ui.theme.LocalHaloAccentInk
 import com.halo.app.ui.theme.rememberReducedMotion
 import com.halo.app.ui.theme.rememberVisualPreferences
+import com.halo.app.ui.theme.LocalHaloDecorationPaused
+import androidx.compose.material3.MaterialTheme
 import kotlinx.coroutines.flow.collect
 
 @Composable
@@ -32,22 +42,25 @@ internal fun HaloWallpaperCanvas(
     previewTime: Float? = null,
     animate: Boolean = true,
     useSchedule: Boolean = false,
+    previewAmbient: HaloAmbient? = null,
+    sharedPreview: WallpaperPreviewClock? = null,
+    kidsSky: Boolean = false,
+    motionScale: Float = 1f,
 ) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val motion = rememberVisualPreferences().motionLevel
-    val reduced by rememberReducedMotion()
-    val ambient by HaloWallpaperActivity.state.collectAsStateWithLifecycle()
+    val ambient = if (options.reactsToHalo && previewAmbient == null)
+        HaloWallpaperActivity.state.collectAsStateWithLifecycle().value else previewAmbient ?: HaloAmbient.IDLE
     val accent = LocalHaloAccentInk.current.toArgb()
     var clock by remember { mutableFloatStateOf(haloWallpaperTime()) }
-    val latch = remember { WallpaperPeriodLatch(wallpaperPeriod(clock)) }
-    var period by remember { mutableStateOf(latch.period) }
+    val latch = remember(options.schedule) { WallpaperPeriodLatch(wallpaperPeriod(haloWallpaperTime())) }
+    var period by remember(latch) { mutableStateOf(latch.period) }
     val wall = if (useSchedule) options.wallpaperAt(period) else options.wallpaper
-    var powerAllowsMotion by remember { mutableStateOf(wallpaperMotionAllowed(context)) }
-    if (animate || useSchedule) DisposableEffect(context, lifecycle, useSchedule) {
+    val powerAllowsMotion = rememberWallpaperMotionPermission(animate)
+    if (animate || useSchedule) DisposableEffect(context, lifecycle, useSchedule, latch) {
         fun updateClock(visible: Boolean) {
             clock = haloWallpaperTime()
-            powerAllowsMotion = wallpaperMotionAllowed(context)
             if (useSchedule) period = latch.update(wallpaperPeriod(clock), visible, SystemClock.elapsedRealtime())
         }
         val receiver = object : BroadcastReceiver() {
@@ -69,33 +82,25 @@ internal fun HaloWallpaperCanvas(
             addAction(Intent.ACTION_TIMEZONE_CHANGED)
             addAction(Intent.ACTION_SCREEN_ON)
             addAction(Intent.ACTION_SCREEN_OFF)
-            addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
         }, ContextCompat.RECEIVER_NOT_EXPORTED)
         onDispose { context.unregisterReceiver(receiver); lifecycle.removeObserver(observer) }
     }
-    val moving = animate && !reduced && powerAllowsMotion && !wall.nearStill && motion != HaloLookMotion.STILL
-    val night = options.calmerAtNight && previewTime == null && (clock >= 22f / 24f || clock < 7f / 24f)
-    val elapsed = remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(lifecycle, moving, motion, night) {
-        if (!moving) return@LaunchedEffect
-        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            val speed = (if (motion == HaloLookMotion.FULL) 1f else .5f) * if (night) .5f else 1f
-            var lastFrame = withFrameNanos { it }
-            while (true) {
-                val nextFrame = withFrameNanos { it }
-                if (nextFrame - lastFrame >= WALLPAPER_FRAME_NS) {
-                    elapsed.floatValue += (nextFrame - lastFrame).toFloat().coerceAtMost(150_000_000f) / 1e9f * speed
-                    lastFrame = nextFrame
-                }
-            }
-        }
-    }
-    val weather = animate && wall.usesEnvironment && wall != HaloWallpaper.LUMEN_GARDEN
-    val garden = animate && wall == HaloWallpaper.LUMEN_GARDEN
-    val environment by produceState(WallpaperEnvironment(), lifecycle, weather, garden) {
+    val renderedTime = previewTime ?: clock
+    val night = options.calmerAtNight && wallpaperQuietTime(renderedTime)
+    val paused = LocalHaloDecorationPaused.current
+    val moving = !wall.nearStill && !paused &&
+        (sharedPreview?.moving ?: (animate && powerAllowsMotion && motion != HaloLookMotion.STILL))
+    val speed = wallpaperMotionSpeed(motion, night) * motionScale
+    val ownClock = rememberWallpaperFrames(moving && sharedPreview == null, speed, WALLPAPER_FRAME_NS)
+    val elapsed = sharedPreview?.elapsed ?: ownClock
+    var ambientStart by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(ambient) { ambientStart = elapsed.value }
+    val weather = (animate || useSchedule || kidsSky) && wall.usesEnvironment && wall != HaloWallpaper.LUMEN_GARDEN
+    val garden = (animate || useSchedule || kidsSky) && wall == HaloWallpaper.LUMEN_GARDEN
+    val environment by produceState(WallpaperEnvironment(), lifecycle, weather, garden, kidsSky) {
         value = WallpaperEnvironment()
         if (weather || garden) lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            wallpaperEnvironment(weather, garden).collect { value = it }
+            wallpaperEnvironment(weather, garden, kidsSky).collect { value = it }
         }
     }
     val photoStore = remember(context) { WallpaperPhotoStore(context) }
@@ -107,25 +112,112 @@ internal fun HaloWallpaperCanvas(
     val painter = remember { HaloWallpaperPainter() }
     Canvas(modifier) {
         drawIntoCanvas { canvas ->
-            painter.paint(canvas.nativeCanvas, wall, if (moving) elapsed.floatValue else 0f, previewTime ?: clock, accent,
+            painter.paint(canvas.nativeCanvas, wall, if (wall.nearStill) 0f else elapsed.value, renderedTime, accent,
                 if (options.reactsToHalo) ambient else HaloAmbient.IDLE, 1f,
-                ripples = moving && motion == HaloLookMotion.FULL, dim = if (night) .25f else 0f,
+                ripples = moving && sharedPreview == null, dim = if (night) .25f else 0f,
                 width = size.width, height = size.height, environment = environment, photo = photo,
-                ring = stylePhoto?.ring ?: WallpaperRing.CENTER)
+                ring = stylePhoto?.ring ?: WallpaperRing.CENTER, ambientTime = (elapsed.value - ambientStart).coerceAtLeast(0f))
         }
     }
 }
 
+internal data class WallpaperPreviewClock(val elapsed: State<Float>, val moving: Boolean)
+
 @Composable
-internal fun HaloWallpaperBackdrop(modifier: Modifier, kids: Boolean) {
+internal fun rememberWallpaperPreviewClock(enabled: Boolean = true, motionScale: Float = 1f): WallpaperPreviewClock {
+    val motion = rememberVisualPreferences().motionLevel
+    val permission = rememberWallpaperMotionPermission(track = enabled)
+    val moving = permission && motion != HaloLookMotion.STILL && !LocalHaloDecorationPaused.current
+    return WallpaperPreviewClock(rememberWallpaperFrames(moving, motionScale * wallpaperMotionSpeed(motion, false), 66_666_667L), moving)
+}
+
+@Composable
+internal fun rememberWallpaperMotionPermission(track: Boolean): Boolean {
+    if (!track) return false
+    val context = LocalContext.current
+    val appContext = context.applicationContext
+    val reduced by rememberReducedMotion()
+    var allowed by remember(context) { mutableStateOf(wallpaperMotionAllowed(context)) }
+    DisposableEffect(context) {
+        val listener = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                allowed = wallpaperMotionAllowed(appContext)
+            }
+        }
+        val resolver = context.contentResolver
+        val scale = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) { allowed = wallpaperMotionAllowed(context) }
+        }
+        ContextCompat.registerReceiver(context, listener, IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
+        }, ContextCompat.RECEIVER_NOT_EXPORTED)
+        resolver.registerContentObserver(Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, scale)
+        onDispose { context.unregisterReceiver(listener); resolver.unregisterContentObserver(scale) }
+    }
+    return allowed && !reduced
+}
+
+@Composable
+private fun rememberWallpaperFrames(moving: Boolean, speed: Float, interval: Long): State<Float> {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val elapsed = remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(lifecycle, moving, speed, interval) {
+        if (moving) lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            var lastFrame = withFrameNanos { it }
+            while (true) {
+                val frame = withFrameNanos { it }
+                val delta = frame - lastFrame
+                if (delta >= interval) {
+                    elapsed.floatValue += delta.toFloat().coerceAtMost(150_000_000f) / 1e9f * speed
+                    lastFrame = frame
+                }
+            }
+        }
+    }
+    return elapsed
+}
+
+@Composable
+internal fun hasHaloHomeWallpaper(): Boolean {
+    val context = LocalContext.current
+    val options by remember(context) { WallpaperPreferences.get(context) }.state.collectAsStateWithLifecycle()
+    return options.current.inApp && !rememberVisualPreferences().higherContrast
+}
+
+@Composable
+internal fun HaloWallpaperBackdrop(modifier: Modifier, kids: Boolean, home: Boolean) {
     val context = LocalContext.current
     val preferences = remember(context) { WallpaperPreferences.get(context) }
     val options by preferences.state.collectAsStateWithLifecycle()
     val visual = rememberVisualPreferences()
-    if (options.current.inApp && !visual.higherContrast && !kids) {
-        HaloWallpaperCanvas(options.current, modifier,
-            animate = !com.halo.app.ui.theme.LocalHaloDecorationPaused.current, useSchedule = true)
+    if (home && options.current.inApp && !visual.higherContrast && !kids) {
+        val base = MaterialTheme.colorScheme.background
+        val dark = base.luminance() < .5f
+        val scenes = with(options.current) {
+            if (schedule.enabled) WallpaperPeriod.entries.map { wallpaperAt(it) } else listOf(wallpaper)
+        }
+        val blend = when {
+            dark && scenes.all { it in darkScenes } -> listOf(.58f, .36f, .30f, .52f)
+            !dark && scenes.all { it in lightScenes } -> listOf(.63f, .36f, .31f, .57f)
+            dark -> listOf(.74f, .54f, .45f, .68f)
+            else -> listOf(.80f, .63f, .55f, .73f)
+        }
+        Box(modifier) {
+            HaloWallpaperCanvas(options.current, Modifier.matchParentSize(), useSchedule = true)
+            Box(Modifier.matchParentSize().background(Brush.verticalGradient(
+                0f to base.copy(alpha = blend[0]), .32f to base.copy(alpha = blend[1]),
+                .72f to base.copy(alpha = blend[2]), 1f to base.copy(alpha = blend[3]),
+            )))
+        }
     } else {
         com.halo.app.ui.theme.HaloAmbientBackdrop(modifier)
     }
 }
+
+private val darkScenes = setOf(HaloWallpaper.DRIFT, HaloWallpaper.AURORA, HaloWallpaper.CONSTELLATION,
+    HaloWallpaper.NORTHERN_FOREST, HaloWallpaper.RAIN_GLASS, HaloWallpaper.LUMEN_GARDEN,
+    HaloWallpaper.NIGHT_TRAIN, HaloWallpaper.DEEP_SEA)
+private val lightScenes = setOf(HaloWallpaper.PAPER, HaloWallpaper.BALTIC_DUNES, HaloWallpaper.PAPER_CUT,
+    HaloWallpaper.INK_WASH, HaloWallpaper.MEADOW_WIND)

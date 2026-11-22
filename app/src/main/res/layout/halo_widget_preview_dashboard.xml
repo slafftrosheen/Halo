@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- halo Zone 6 widget face. Drop-in: keeps every Zone 5 view id used by EverydayWidgetViews.kt; new ids are optional (gone by default). -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/everyday_widget_root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/halo_everyday_widget_background">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/halo_everyday_widget_background">
 <ImageView android:id="@+id/everyday_widget_background" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:importantForAccessibility="no" />
 <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:paddingStart="18dp" android:paddingEnd="10dp" android:paddingTop="10dp" android:paddingBottom="14dp">
 <!-- Header: small label + "ask halo about this" ring (48dp target) -->
 <LinearLayout android:id="@+id/everyday_widget_header" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:orientation="horizontal" android:gravity="center_vertical">
-<ImageView android:id="@+id/everyday_widget_orb" android:layout_width="18dp" android:layout_height="18dp" android:layout_marginEnd="8dp" android:src="@drawable/ic_halo_widget_ask" android:importantForAccessibility="no" />
+<ImageView android:id="@+id/everyday_widget_orb" android:layout_width="18dp" android:layout_height="18dp" android:layout_marginEnd="8dp" android:src="@drawable/halo_ic_calendar" android:tint="@color/everyday_widget_metadata" android:importantForAccessibility="no" />
 <TextView android:id="@+id/everyday_widget_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:textStyle="bold" android:textSize="14sp" android:maxLines="1" android:ellipsize="end" android:text="@string/everyday_widget_dashboard" android:textColor="@color/everyday_widget_metadata" />
+<ImageView android:layout_width="15dp" android:layout_height="15dp" android:layout_marginEnd="4dp"
+    android:src="@drawable/ic_halo_widget_ask" android:importantForAccessibility="no" />
 <FrameLayout android:id="@+id/everyday_widget_ask" android:layout_width="48dp" android:layout_height="48dp" android:visibility="gone" android:contentDescription="@string/everyday_widget_ask">
 <ImageView android:layout_width="36dp" android:layout_height="36dp" android:layout_gravity="center" android:background="@drawable/halo_widget_ask_disc" android:padding="8dp" android:src="@drawable/ic_halo_widget_ask" android:importantForAccessibility="no" />
 </FrameLayout>

@@ -17,7 +17,8 @@ data class MemoryReview(val candidate: MemoryCandidate, val conflict: MemoryConf
 data class MemoryListStatus(val loading: Boolean = true, val failed: Boolean = false)
 data class MemoryHubState(val items: List<MemoryUiItem> = emptyList(), val count: Int = 0,
     val loading: Boolean = true, val query: String = "", val group: MemoryGroup = MemoryGroup.ALL,
-    val scope: MemoryScope? = null, val sort: MemorySort = MemorySort.UPDATED, val error: String? = null)
+    val scope: MemoryScope? = null, val sort: MemorySort = MemorySort.UPDATED, val error: String? = null,
+    val pages: List<MemoryRecord> = emptyList(), val pageMetadata: MemoryPageMetadata = MemoryPageMetadata())
 
 /** Local presentation only. Retrieval never marks usage and mutations stay behind the repository. */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -64,12 +65,19 @@ class MemoryHubViewModel(
     private val filters = combine(query.debounce(250), group, scope, sort, ::Filters)
     private var lastLoaded = MemoryHubState()
     val state = combine(filters, refresh) { filters, _ -> filters }.flatMapLatest { filters ->
-        memories.observeMemories().mapLatest { records ->
-            val safe = records.filter { it.scope != MemoryScope.CONVERSATION &&
-                MemorySensitivityClassifier.classify(it.content) != MemorySensitivity.SECRET }
-            val selected = if (filters.query.isBlank()) safe else {
-                val hits = retriever.search(filters.query, filters.scope?.let { MemorySearchScope.valueOf(it.name) } ?: MemorySearchScope.ALL, 20)
-                hits.mapNotNull { hit -> safe.firstOrNull { it.id == hit.memoryId } }
+        combine(memories.observeMemories(), memories.observePageMetadata()) { records, metadata ->
+            val safe = records.filter(MemoryRecord::isMemoryPage)
+            val selected = when {
+                filters.query.isBlank() -> safe
+                filters.query.trimStart().startsWith('#') -> {
+                    val wanted = runCatching { memoryPageTag(filters.query).first }.getOrNull()
+                    val taggedIds = metadata.tags.asSequence().filter { it.key == wanted }.map { it.memoryId }.toSet()
+                    safe.filter { it.id in taggedIds }
+                }
+                else -> {
+                    val hits = retriever.search(filters.query, filters.scope?.let { MemorySearchScope.valueOf(it.name) } ?: MemorySearchScope.ALL, 20)
+                    hits.mapNotNull { hit -> safe.firstOrNull { it.id == hit.memoryId } }
+                }
             }
             val filtered = selected.filter { filters.group.includes(it.kind) && (filters.scope == null || it.scope == filters.scope) }
             // Preserve shared retrieval ranking when searching; sorting applies only to browsing.
@@ -80,7 +88,8 @@ class MemoryHubViewModel(
             }
             MemoryHubState(sorted.take(100).map { record -> MemoryPresentation.item(record,
                 record.scopeId?.let { scopeName(record.scope, it) }) }, safe.size, false,
-                filters.query, filters.group, filters.scope, filters.sort).also { lastLoaded = it }
+                filters.query, filters.group, filters.scope, filters.sort,
+                pages = safe, pageMetadata = metadata).also { lastLoaded = it }
         }.onStart { emit(lastLoaded.copy(items = if (lastLoaded.query == filters.query && lastLoaded.group == filters.group && lastLoaded.scope == filters.scope) lastLoaded.items else emptyList(),
             loading = true, query = filters.query, group = filters.group, scope = filters.scope, sort = filters.sort, error = null)) }
         .catch { emit(lastLoaded.copy(items = if (lastLoaded.query == filters.query && lastLoaded.group == filters.group && lastLoaded.scope == filters.scope) lastLoaded.items else emptyList(),
@@ -102,13 +111,23 @@ class MemoryHubViewModel(
     fun sort(value: MemorySort) { sort.value = value }
     fun useMemory(value: Boolean) = setMemoryUse(value)
     fun discardReview() { mutableReview.value = null }
-    fun act(block: suspend () -> Unit) = viewModelScope.launch {
+    fun act(block: suspend () -> Unit) = runAction("Could not save. Review the content, scope and available evidence, then try again.", block)
+    private fun runAction(failure: String, block: suspend () -> Unit) = viewModelScope.launch {
         if (mutableBusy.value) return@launch
         mutableBusy.value = true; error.value = null
         try { withContext(Dispatchers.IO) { block() } }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { error.value = "Could not save. Review the content, scope and available evidence, then try again." }
+        catch (_: Exception) { error.value = failure }
         finally { mutableBusy.value = false }
+    }
+    fun linkPage(source: MemoryRecord, target: MemoryRecord, linked: Boolean) = runAction("Could not change the link. Reopen the pages and try again.") {
+        check(memories.linkPage(source.id, source.updatedAt, target.id, target.updatedAt, linked))
+    }
+    fun linkNewPage(source: MemoryRecord, content: String) = runAction("Could not create a linked page. Review the new page and try again.") {
+        check(memories.linkNewPage(source.id, source.updatedAt, content) != null)
+    }
+    fun tagPage(page: MemoryRecord, label: String, tagged: Boolean) = runAction("Could not change the tag. Review the tag and try again.") {
+        check(memories.tagPage(page.id, page.updatedAt, label, tagged))
     }
     fun prepare(candidate: MemoryCandidate) = act {
         if (MemorySensitivityClassifier.classify(candidate.content) == MemorySensitivity.SECRET) {

@@ -44,7 +44,7 @@ class RoomContinuationWatchRepository(
                     }
                 }
             }
-            dao.insertWatch(watch.toEntity())
+            dao.savePublic(watch.toEntity())
         }
     }
 

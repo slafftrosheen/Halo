@@ -26,9 +26,11 @@ internal data class WidgetRenderedState(
     val sourceRevisions: List<String>,
     val briefId: String?,
     val completedOccurrences: Set<Pair<String, java.time.Instant>>,
+    val progress: Int? = null,
+    val eventSignal: String? = null,
 )
 
-internal enum class WidgetUpdateMotion { TASK_COMPLETE, NEW_ITEM, SOURCE_UPDATE }
+internal enum class WidgetUpdateMotion { TASK_COMPLETE, NEW_ITEM, SOURCE_UPDATE, PROGRESS_STEP }
 internal data class WidgetTransition(val motion: WidgetUpdateMotion, val previous: WidgetRenderedState, val affectedRow: String? = null)
 
 /** Keeps in-memory, privacy-filtered visual reviews only. Each one is replaced after a successful launcher publish. */
@@ -74,6 +76,18 @@ internal object EverydayWidgetMotion {
             snapshot.occurrences.filter { it.completed }.mapTo(mutableSetOf()) {
                 it.record.id to it.originalStart
             },
+            progress = when (config.kind) {
+                EverydayCardKind.LEARN -> snapshot.widgetLearning?.steps
+                EverydayCardKind.KIDS_SKY -> snapshot.widgetChildAttempts.takeIf { snapshot.kids }
+                else -> null
+            },
+            eventSignal = when (config.kind) {
+                EverydayCardKind.RECORD -> snapshot.widgetRecording.toString()
+                EverydayCardKind.FOCUS -> snapshot.widgetFocus?.deadlineElapsed?.toString()
+                EverydayCardKind.LITTLE_HABITS -> snapshot.widgetHabits.toString()
+                EverydayCardKind.OUR_HOME -> snapshot.widgetHomeCount.toString() + ":" + snapshot.widgetHomeDone
+                else -> null
+            },
         )
     }
 
@@ -94,10 +108,16 @@ internal object EverydayWidgetMotion {
         return when {
             config.kind == EverydayCardKind.TASKS && finishedTask != null ->
                 WidgetTransition(WidgetUpdateMotion.TASK_COMPLETE, before, finishedTask.value)
-            config.kind in setOf(EverydayCardKind.UPCOMING, EverydayCardKind.DASHBOARD) && (after.records.keys - before.records.keys).isNotEmpty() ->
+            config.kind in setOf(EverydayCardKind.UPCOMING, EverydayCardKind.DASHBOARD, EverydayCardKind.TODAY) &&
+                (after.records.keys - before.records.keys).isNotEmpty() ->
                 WidgetTransition(WidgetUpdateMotion.NEW_ITEM, before)
-            config.kind in setOf(EverydayCardKind.PLANNER_WEEK, EverydayCardKind.LEARN, EverydayCardKind.LITTLE_HABITS) &&
-                after.value != before.value -> WidgetTransition(WidgetUpdateMotion.NEW_ITEM, before)
+            after.progress != null && before.progress != null && after.progress > before.progress ->
+                WidgetTransition(WidgetUpdateMotion.PROGRESS_STEP, before)
+            config.kind == EverydayCardKind.PLANNER_WEEK && after.value != before.value ->
+                WidgetTransition(WidgetUpdateMotion.NEW_ITEM, before)
+            after.eventSignal != before.eventSignal ->
+                WidgetTransition(if (config.kind == EverydayCardKind.LITTLE_HABITS) WidgetUpdateMotion.PROGRESS_STEP
+                    else WidgetUpdateMotion.SOURCE_UPDATE, before)
             config.kind == EverydayCardKind.BRIEF && after.briefId != null && after.briefId != before.briefId ->
                 WidgetTransition(WidgetUpdateMotion.NEW_ITEM, before)
             after.sourceRevisions.isNotEmpty() && after.sourceRevisions != before.sourceRevisions ->
@@ -114,6 +134,7 @@ internal object EverydayWidgetMotion {
         if (level == HaloLookMotion.STILL) return current
         val outer = when {
             level == HaloLookMotion.GENTLE -> R.layout.halo_widget_transition_gentle
+            transition.motion == WidgetUpdateMotion.PROGRESS_STEP -> R.layout.halo_widget_transition_bloom
             transition.motion == WidgetUpdateMotion.SOURCE_UPDATE -> R.layout.halo_widget_transition_fade
             transition.motion == WidgetUpdateMotion.TASK_COMPLETE -> R.layout.halo_widget_transition_task
             else -> R.layout.halo_widget_transition_slide

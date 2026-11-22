@@ -41,35 +41,40 @@ private fun wallpaperSeason(date: LocalDate, southern: Boolean?): WallpaperSeaso
 
 /** Read existing local snapshots only and export decorative signals without names or record text. */
 @OptIn(ExperimentalCoroutinesApi::class)
-internal fun wallpaperEnvironment(weather: Boolean, garden: Boolean): Flow<WallpaperEnvironment> {
+internal fun wallpaperEnvironment(weather: Boolean, garden: Boolean, kidsSky: Boolean = false): Flow<WallpaperEnvironment> {
     val family = Graph.kidsPreferences
-    return combine(family.loadedState, family.enabled) { loaded, kids -> loaded && !kids }
+    return combine(family.loadedState, family.enabled) { loaded, kids -> loaded && kids == kidsSky }
         .distinctUntilChanged()
-        .flatMapLatest { adult ->
-            if (!adult || (!weather && !garden)) return@flatMapLatest flowOf(WallpaperEnvironment())
+        .flatMapLatest { allowed ->
+            if (!allowed || (!weather && !garden)) return@flatMapLatest flowOf(WallpaperEnvironment())
             val cachedWeather: Flow<List<CollectorState>> = if (weather) Graph.collectorRepository.observe() else flowOf(emptyList())
-            val organizer: Flow<List<OrganizerRecord>> = if (garden) Graph.organizerRepository.observe() else flowOf(emptyList())
+            val organizer: Flow<List<OrganizerRecord>> = if (garden && !kidsSky) Graph.organizerRepository.observe() else flowOf(emptyList())
+            val childCompletions = if (garden && kidsSky) combine(family.pictureTools.ticks, family.pictureTools.day) { ticks, rows ->
+                ticks.date to rows.count { it.id in ticks.ids }
+            } else flowOf(null to 0)
             val now = flow {
                 while (true) {
                     emit(Instant.now())
                     delay(60_000)
                 }
             }
-            combine(cachedWeather, organizer, now) { sources, records, instant ->
+            combine(cachedWeather, organizer, childCompletions, now) { sources, records, child, instant ->
                 val current = sources.asSequence().filter { it.source.selected && it.source.enabled && !it.source.muted }
+                    .filter { !kidsSky || it.source.childApproved }
                     .mapNotNull { state ->
                         state.snapshot?.takeIf { it.sourceVersion == state.source.version && it.expiresAt >= instant }
                     }.sortedByDescending { it.verifiedAt }
                     .mapNotNull { (it.payload as? CollectorPayload.Weather)?.fact }.firstOrNull()
                 val zone = ZoneId.systemDefault()
                 val today = instant.atZone(zone).toLocalDate()
-                val completed = records.count { it.kind == OrganizerKind.TASK && it.status == OrganizerStatus.COMPLETED &&
-                    it.deletedAt == null && it.updatedAt.atZone(zone).toLocalDate() == today }.coerceAtMost(12)
+                val completed = if (kidsSky) child.second.takeIf { child.first == today } ?: 0
+                    else records.count { it.kind == OrganizerKind.TASK && it.status == OrganizerStatus.COMPLETED &&
+                        it.deletedAt == null && it.updatedAt.atZone(zone).toLocalDate() == today }
                 val code = current?.weatherCode ?: 0
                 WallpaperEnvironment(
                     raining = code in 51..67 || code in 80..82 || code in 95..99,
                     snowing = code in 71..77 || code in 85..86,
-                    completedToday = completed,
+                    completedToday = completed.coerceAtMost(12),
                     wind = (current?.windKph?.toFloat()?.div(65f) ?: 0f).coerceIn(0f, 1f),
                     season = wallpaperSeason(today, current?.place?.latitude?.let { it < 0 }),
                 )

@@ -1,5 +1,7 @@
 <resources>
     <string name="home_chat_options">Chat options</string>
+    <string name="home_chat_title">Chat</string>
+    <string name="home_clear_chat">Clear chat</string>
     <string name="home_your_day">Your day</string>
     <string name="home_message_actions">Message actions</string>
     <string name="home_history_empty">Your saved conversations will appear here.</string>

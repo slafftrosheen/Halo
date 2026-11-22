@@ -19,6 +19,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph
+import com.halo.app.everyday.briefing.DayReportSettings
+import com.halo.app.ui.instruments.HaloInstrumentAction
+import com.halo.app.ui.instruments.HaloInstrumentBar
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.LocalShellHaloOrb
@@ -35,6 +38,8 @@ import kotlinx.coroutines.launch
 internal fun HaloFocusScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
     val context = LocalContext.current
     val owner = remember(context) { HaloFocusOwner.get(context) }
+    val journal = remember(context) { DayReportSettings.get(context) }
+    val note by journal.focusNote.collectAsStateWithLifecycle()
     val session by owner.state.collectAsStateWithLifecycle()
     val messageSource = remember { ManualDependencyGraph.notificationRepository.observeRecent() }
     val messages by messageSource.collectAsStateWithLifecycle(emptyList())
@@ -46,7 +51,11 @@ internal fun HaloFocusScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
     }
     var minutes by rememberSaveable { mutableIntStateOf(25) }
     var quiet by rememberSaveable { mutableStateOf(false) }
+    var restMinutes by rememberSaveable { mutableIntStateOf(5) }
     var edit by remember { mutableStateOf(false) }
+    var editBlocks by remember { mutableStateOf(false) }
+    var finish by remember { mutableStateOf(false) }
+    var reflection by remember { mutableStateOf("") }
     var error by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var left by remember { mutableLongStateOf(0) }
@@ -74,8 +83,11 @@ internal fun HaloFocusScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
         }
     }
     val active = session
-    val primary = if (active == null) stringResource(R.string.halo_focus_start)
-        else stringResource(R.string.halo_focus_end)
+    val primary = stringResource(when {
+        active == null -> R.string.halo_focus_start
+        active.rest -> R.string.halo11_focus_end_rest
+        else -> R.string.halo_focus_end
+    })
     val primaryAction = {
         safely {
             if (active == null) owner.start(minutes, quiet && systemAccess)
@@ -86,8 +98,9 @@ internal fun HaloFocusScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
     val help = stringResource(R.string.halo_focus_help)
     BindShellPageActions(ShellPageOwner("focus", sourceIdentity = active?.version,
         canonicalSourceVersion = active?.version, helpDescription = help,
-        statusLabel = if (active != null) stringResource(R.string.halo_focus_title) else null,
-        guidanceBlocked = edit || busy),
+        statusLabel = if (active?.rest == true) stringResource(R.string.halo11_focus_rest)
+            else if (active != null) stringResource(R.string.halo_focus_title) else null,
+        guidanceBlocked = edit || editBlocks || finish || busy),
         listOf(ShellPageAction("page.focus.run", primary, HaloGlyph.PLAY, !busy, primaryAction),
             ShellPageAction("page.focus.appearance", edition, HaloGlyph.SETTINGS, active == null) { edit = true },
             ShellPageAction("page.focus.back", stringResource(R.string.sheets_back), HaloGlyph.PREVIOUS, !busy, onBack)))
@@ -96,6 +109,14 @@ internal fun HaloFocusScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
         item {
             Text(stringResource(R.string.halo_focus_title), Modifier.haloEditablePageTitle(), style = MaterialTheme.typography.headlineMedium)
             Text(help, style = MaterialTheme.typography.bodyMedium)
+        }
+        item {
+            HaloInstrumentBar("focus", mapOf(
+                "focus.timer" to HaloInstrumentAction(primaryAction, !busy, selected = active != null),
+                "focus.blocks" to HaloInstrumentAction({ editBlocks = true }, !busy && active == null),
+                "focus.quiet" to HaloInstrumentAction({ edit = true }, !busy && active == null, selected = quiet),
+                "focus.done" to HaloInstrumentAction({ reflection = ""; finish = true }, !busy && active?.rest == false),
+            ), primary = "focus.timer")
         }
         item {
             Box(Modifier.fillMaxWidth().heightIn(min = 174.dp), contentAlignment = Alignment.Center) {
@@ -113,7 +134,10 @@ internal fun HaloFocusScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                 }
             }
             TextButton({ edit = true }) { Text(stringResource(R.string.halo_focus_options)) }
-        } else {
+            OutlinedButton({
+                safely { owner.start(restMinutes, quiet = false, rest = true) }
+            }, enabled = !busy) { Text(stringResource(R.string.halo11_focus_start_rest, restMinutes)) }
+        } else if (!active.rest) {
             item {
                 Text(stringResource(R.string.halo_focus_messages), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(if (active.quietApplied) R.string.halo_focus_quiet_active
@@ -127,6 +151,14 @@ internal fun HaloFocusScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                 key = { it.key }) { message ->
                 ListItem(headlineContent = { Text(message.content.title ?: message.appLabel.orEmpty()) },
                     supportingContent = { Text(message.appLabel.orEmpty()) })
+            }
+        }
+        note?.let { kept ->
+            item(key = "focus-note") {
+                ListItem(headlineContent = { Text(kept.text) }, supportingContent = { Text(stringResource(R.string.halo11_focus_kept)) },
+                    trailingContent = { TextButton({
+                        safely { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { journal.removeFocusNote(kept.sessionId) } }
+                    }, enabled = !busy) { Text(stringResource(R.string.halo11_focus_remove)) } })
             }
         }
         if (error) item { Text(stringResource(R.string.page_layout_error), color = MaterialTheme.colorScheme.error) }
@@ -147,4 +179,36 @@ internal fun HaloFocusScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
             }) { Text(stringResource(R.string.halo_focus_access)) }
         }
     }
+    if (editBlocks) Zone6ButtonSheet(stringResource(R.string.halo11_focus_blocks), { editBlocks = false }) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.halo11_focus_work_time), style = MaterialTheme.typography.titleSmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(5, 15, 25, 45, 60, 90).forEach { value ->
+                    FilterChip(minutes == value, { minutes = value }, label = { Text(value.toString()) })
+                }
+            }
+            Text(stringResource(R.string.halo11_focus_rest_time), style = MaterialTheme.typography.titleSmall)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(2, 5, 10, 15, 20).forEach { value ->
+                    FilterChip(restMinutes == value, { restMinutes = value }, label = { Text(value.toString()) })
+                }
+            }
+            TextButton({ editBlocks = false }) { Text(stringResource(android.R.string.ok)) }
+        }
+    }
+    if (finish && active?.rest == false) AlertDialog(
+        onDismissRequest = { finish = false },
+        title = { Text(stringResource(R.string.halo11_focus_done)) },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.halo11_focus_keep_hint))
+            OutlinedTextField(reflection, {
+                reflection = it.filterNot(Char::isISOControl).take(240)
+            }, label = { Text(stringResource(R.string.halo11_focus_done)) }, singleLine = true)
+        } },
+        confirmButton = { TextButton({
+            finish = false
+            safely { check(owner.end(active.version, note = reflection.ifBlank { null })) }
+        }, enabled = !busy) { Text(stringResource(R.string.halo11_focus_finish)) } },
+        dismissButton = { TextButton({ finish = false }) { Text(stringResource(android.R.string.cancel)) } },
+    )
 }

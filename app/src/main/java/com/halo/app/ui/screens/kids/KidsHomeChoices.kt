@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -44,8 +45,33 @@ internal fun kidsHomeChoicesStacked(fontScale: Float, widthDp: Int): Boolean =
 internal fun KidsHomeChoices(
     recentLessonTitle: String? = null,
     projectTitle: String? = null,
+    onIdentify: (() -> Unit)? = null,
+    onPlay: (() -> Unit)? = null,
+    playEnabled: Boolean = true,
     onSelect: (KidsDestination) -> Unit,
 ) {
+    if (onIdentify != null && onPlay != null) {
+        val colors = MaterialTheme.colorScheme
+        val choices = listOf(
+            KidsHomeTile(R.string.halo11_kids_learn, R.drawable.halo_ic_study, colors.secondaryContainer,
+                colors.onSecondaryContainer) { onSelect(KidsDestination.LEARN) },
+            KidsHomeTile(R.string.halo11_kids_make, R.drawable.halo_ic_sketch, colors.tertiaryContainer,
+                colors.onTertiaryContainer) { onSelect(KidsDestination.CREATE) },
+            KidsHomeTile(R.string.halo11_kids_identify, R.drawable.halo_ic_ask_mode, colors.primaryContainer,
+                colors.onPrimaryContainer, onOpen = onIdentify),
+            KidsHomeTile(R.string.halo11_kids_play, R.drawable.halo_ic_ask_mode, colors.surfaceContainerHighest,
+                colors.onSurface, enabled = playEnabled, onOpen = onPlay),
+        )
+        val columns = if (LocalDensity.current.fontScale >= 1.4f || LocalConfiguration.current.screenWidthDp < 300) 1 else 2
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            choices.chunked(columns).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    row.forEach { item -> KidsHomeTileCard(item, Modifier.weight(1f)) }
+                }
+            }
+        }
+        return
+    }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         KidsChoice("Ask a question", R.drawable.halo_ic_ask_mode, Modifier.fillMaxWidth()) {
             onSelect(KidsDestination.ASK)
@@ -59,6 +85,29 @@ internal fun KidsHomeChoices(
             subtitle = projectTitle?.let { uiText("Keep going: %1\$s", it) },
             highlighted = recentLessonTitle == null && projectTitle != null) {
             onSelect(KidsDestination.CREATE)
+        }
+    }
+}
+
+private data class KidsHomeTile(val title: Int, val icon: Int, val color: Color, val ink: Color,
+    val enabled: Boolean = true, val onOpen: () -> Unit)
+
+@Composable
+private fun KidsHomeTileCard(item: KidsHomeTile, modifier: Modifier) {
+    val title = stringResource(item.title)
+    val spoken = rememberKidsSpokenChoice(title, onChoose = item.onOpen)
+    val confirm = stringResource(R.string.kids_choice_tap_again)
+    Surface(onClick = spoken.onClick, enabled = item.enabled, modifier = modifier.heightIn(min = 104.dp)
+        .semantics { if (spoken.heard) stateDescription = confirm },
+        shape = RoundedCornerShape(22.dp), color = item.color, contentColor = item.ink) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = .7f),
+                modifier = Modifier.size(40.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(painterResource(item.icon), null, Modifier.size(23.dp), tint = item.ink)
+                }
+            }
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         }
     }
 }

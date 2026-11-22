@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_home_today">Сегодня</string>
+    <string name="halo11_home_library">Библиотека</string>
+    <string name="halo11_home_tools">Инструменты</string>
+    <string name="halo11_home_reads">Чтение</string>
+    <string name="halo11_search_title">Поиск</string>
+    <string name="halo11_search_hint">Найти в Halo</string>
+    <string name="halo11_search_previous_month_saved">Показаны материалы, сохранённые в прошлом месяце.</string>
+    <string name="halo11_search_saved_excerpt">Источник: %1$s</string>
+    <string name="halo11_search_empty">Подходящих инструментов и сохранённых материалов нет.</string>
+    <string name="halo11_tool_maps">halo карты</string>
+    <string name="halo11_tool_calc">halo калькулятор</string>
+    <string name="halo11_tool_measure">halo измерения</string>
+    <string name="halo11_tool_coach">halo разбор задач</string>
+    <string name="halo11_tool_focus">halo фокус</string>
+    <string name="halo11_search_connections">Подключения и ключи ИИ</string>
+    <string name="halo11_search_privacy">Контекст и конфиденциальность</string>
+    <string name="halo11_search_permissions">Разрешения</string>
+    <string name="halo11_search_speech_input">Ввод речи</string>
+    <string name="halo11_search_speech_output">Голос и чтение</string>
+    <string name="halo11_search_notifications">Уведомления</string>
+    <string name="halo11_search_backup">Хранилище и резервное копирование</string>
+    <string name="halo11_search_devices">Устройства</string>
+    <string name="halo11_search_setup">Пошаговая настройка</string>
+    <string name="halo11_search_family">Семейное пространство</string>
+    <string name="halo11_search_settings">Настройки</string>
+</resources>

@@ -1,8 +1,6 @@
 package com.halo.app.ui.screens.settings
 
 import com.halo.app.ui.presence.BindShellChildPage
-import com.halo.app.ui.presence.ShellPageAction
-import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.language.uiText
 
 import androidx.compose.foundation.layout.*
@@ -13,7 +11,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.app.ui.workspace.*
 import com.halo.runtime.cognition.memory.*
@@ -27,9 +27,27 @@ import com.halo.runtime.cognition.memory.*
     })
     val preferences by model.preferences.collectAsStateWithLifecycle()
     val memoryUse by model.memoryUse.collectAsStateWithLifecycle()
-    val shellHosted = BindShellChildPage("Memory & learning", onBack, sourceIdentity = "${preferences.mode}:$memoryUse")
+    val historyUse by graph.workspaceContext.referenceChatHistory.collectAsStateWithLifecycle()
+    val shellHosted = BindShellChildPage("Memory & learning", onBack, sourceIdentity = "${preferences.mode}:$memoryUse:$historyUse")
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!shellHosted) HaloWorkspaceHeader(uiText("Memory & learning"), onBack = onBack)
+        Text(uiText("Using memory"), style = MaterialTheme.typography.titleLarge)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.memory_reference_saved))
+                Text(stringResource(R.string.memory_reference_saved_detail), style = MaterialTheme.typography.bodySmall)
+            }
+            Switch(memoryUse, model::useMemory)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.memory_reference_history))
+                Text(stringResource(R.string.memory_reference_history_detail), style = MaterialTheme.typography.bodySmall)
+            }
+            Switch(memoryUse && historyUse, graph.workspaceContext::setReferenceChatHistory, enabled = memoryUse)
+        }
+        Text(stringResource(R.string.memory_reference_active_profile), style = MaterialTheme.typography.bodySmall)
+        HorizontalDivider()
         Text(uiText("Learning"), style = MaterialTheme.typography.titleLarge)
         LearningPreference.entries.forEach { mode ->
             HaloWorkspaceCard {
@@ -37,10 +55,10 @@ import com.halo.runtime.cognition.memory.*
                     RadioButton(preferences.mode == mode, { model.mode(mode) })
                     Text(uiText(when (mode) { LearningPreference.OFF -> "Off"; LearningPreference.EXPLICIT_ONLY -> "Explicit only"; LearningPreference.SUGGEST -> "Suggest" }))
                 }
-                Text(uiText(when (mode) {
-                    LearningPreference.OFF -> "Halo will not learn new personal memory from conversations. Existing memories remain available for manual use and editing."
-                    LearningPreference.EXPLICIT_ONLY -> "Halo remembers something only when you directly ask."
-                    LearningPreference.SUGGEST -> "Halo may quietly suggest useful memories and reusable workflows. Nothing is saved automatically."
+                Text(stringResource(when (mode) {
+                    LearningPreference.OFF -> R.string.memory_learning_off_detail
+                    LearningPreference.EXPLICIT_ONLY -> R.string.memory_learning_explicit_detail
+                    LearningPreference.SUGGEST -> R.string.memory_learning_suggest_detail
                 }))
             }
         }
@@ -53,11 +71,5 @@ import com.halo.runtime.cognition.memory.*
             }
             Text(uiText("Local reflection allows an eligible local model to propose memory after meaningful tasks. Off by default, runs only when system conditions allow, and suggestions require your approval."), style = MaterialTheme.typography.bodySmall)
         }
-        HorizontalDivider()
-        Text(uiText("Using memory"), style = MaterialTheme.typography.titleLarge)
-        Text(uiText("Memory sharing follows the Local / Power mode control beside the halo Orb."))
-        Text(uiText("Halo may retrieve relevant saved memories within the current scope and context budget."))
-        Text(uiText("Memory holds saved information. Learning controls suggestions. Notebook holds documents and files. Learning history describes past tasks, not current facts."))
-        Text(uiText("Memory retrieval depends on available search capabilities and your privacy settings."), style = MaterialTheme.typography.bodySmall)
     }
 }

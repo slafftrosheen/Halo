@@ -12,7 +12,8 @@ internal object HaloScreenRequests {
         val screen = expectedValue ?: return null
         if (!pending.compareAndSet(screen, null)) return null
         if (screen == "screen") return "home" // Saved requests from older versions.
-        return screen.takeIf { it in HaloScreenCatalog.screens || com.halo.app.ui.everyday.EverydayBriefEntry.acceptsRoute(it) || com.halo.app.ui.everyday.EverydayRoutes.acceptsEntry(it) }
+        return screen.takeIf { it in HaloScreenCatalog.screens || HaloDeepLinks.acceptsRequest(it) ||
+            com.halo.app.ui.everyday.EverydayBriefEntry.acceptsRoute(it) || com.halo.app.ui.everyday.EverydayRoutes.acceptsEntry(it) }
     }
 
     /** Collect requests directly: a repeated route must not depend on Compose state/key changes. */

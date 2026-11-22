@@ -9,6 +9,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 
 enum class EverydayCardKind { CLOCK, CLOCK_WEATHER, UPCOMING, AGENDA, TASKS, REMINDERS, ALARMS_TIMERS, WEATHER, HEADLINES, BRIEF, DEVICE, QUICK_ACTIONS, DASHBOARD,
+    TODAY,
     SCAN, RECORD, QUICK_NOTE, TRANSLATE, AIR_POLLEN, PLANNER_WEEK, FOCUS, LITTLE_HABITS,
     NEXT_RIDE, OUR_HOME, LEARN, KIDS_SKY, YOUR_THINGS, LOCK_NEXT_EVENT, LOCK_RAIN, SMART_STACK
 }
@@ -63,6 +64,7 @@ data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = 
 }
 
 sealed interface EverydayTarget {
+    data object Today : EverydayTarget
     data object Organizer : EverydayTarget
     data object Sources : EverydayTarget
     data object Clocks : EverydayTarget
@@ -89,7 +91,8 @@ data class EverydaySnapshot(val now: Instant, val zone: ZoneId, val records: Lis
     val batteryPercent: Int? = null, val charging: Boolean = false, val authorityStamp: String = "", val familyRevision: Long = 0, val modeRevision: Long = 0,
     val widgetLearning: WidgetLearning? = null, val widgetFocus: WidgetFocus? = null,
     val widgetHabits: List<List<Boolean>> = emptyList(), val widgetHabitNow: Boolean = false,
-    val widgetChildAttempts: Int = 0, val widgetHomeCount: Int = 0, val widgetHomeDone: Int = 0, val widgetRecording: Boolean = false)
+    val widgetChildAttempts: Int = 0, val widgetHomeCount: Int = 0, val widgetHomeDone: Int = 0, val widgetRecording: Boolean = false,
+    val dayNewsEnabled: Boolean = false, val phoneEventsToday: Int = 0)
 
 /** Shared deterministic read-only faces for Screen and launcher hosts. This never fetches or runs a model. */
 object EverydayCards {
@@ -99,7 +102,8 @@ object EverydayCards {
         "weather" to EverydayCardKind.WEATHER, "headlines" to EverydayCardKind.HEADLINES, "briefing" to EverydayCardKind.BRIEF,
         "everyday_dashboard" to EverydayCardKind.DASHBOARD, "quick_actions" to EverydayCardKind.QUICK_ACTIONS)
     val launcherKinds = listOf(EverydayCardKind.CLOCK, EverydayCardKind.CLOCK_WEATHER, EverydayCardKind.UPCOMING,
-        EverydayCardKind.TASKS, EverydayCardKind.BRIEF, EverydayCardKind.HEADLINES, EverydayCardKind.ALARMS_TIMERS, EverydayCardKind.DASHBOARD) +
+        EverydayCardKind.TASKS, EverydayCardKind.BRIEF, EverydayCardKind.HEADLINES, EverydayCardKind.ALARMS_TIMERS, EverydayCardKind.DASHBOARD,
+        EverydayCardKind.TODAY) +
         EverydayToolkitWidgets.launcherKinds
     fun title(kind: EverydayCardKind): String = when (kind) {
         EverydayCardKind.CLOCK -> "Clock & date"; EverydayCardKind.CLOCK_WEATHER -> "Clock and weather"
@@ -107,6 +111,7 @@ object EverydayCards {
         EverydayCardKind.REMINDERS -> "Reminders"; EverydayCardKind.ALARMS_TIMERS -> "Alarms and timers"; EverydayCardKind.WEATHER -> "Weather"
         EverydayCardKind.HEADLINES -> "Headlines"; EverydayCardKind.BRIEF -> "Your day in Halo"; EverydayCardKind.DEVICE -> "This phone"
         EverydayCardKind.QUICK_ACTIONS -> "Quick actions"; EverydayCardKind.DASHBOARD -> "Everyday dashboard"
+        EverydayCardKind.TODAY -> "Today"
         else -> EverydayToolkitWidgets.title(kind)
     }
 
@@ -254,7 +259,8 @@ object EverydayCards {
             }
             EverydayCardKind.BRIEF -> {
                 val brief = input.briefs.firstOrNull { (!input.kids || it.audience == BriefAudience.KIDS) && it.date == input.now.atZone(input.zone).toLocalDate() && it.zoneId == input.zone.id }
-                face(if (brief == null) text("Build your day from saved information") else BriefPresentation.title(brief.period,locale), brief?.facts.orEmpty().map { fact ->
+                face(if (brief == null) text("Build your day from saved information") else BriefPresentation.title(brief.period,locale), brief?.facts.orEmpty()
+                    .filter { it.kind != BriefFactKind.HEADLINE || input.dayNewsEnabled }.map { fact ->
                     EverydayCardRow(BriefPresentation.factText(fact, locale, input.zone), "", EverydayTarget.Brief(brief!!.id), true)
                 }, brief?.let { EverydayTarget.Brief(it.id) } ?: EverydayTarget.BriefLatest, true,
                     status = mode + " · " + text(if (brief == null) "No saved brief yet" else "Saved on this phone"), at = brief?.generatedAt)
@@ -263,6 +269,27 @@ object EverydayCards {
                 listOf(EverydayCardRow(text(if (input.charging) "Charging" else "On battery"))), EverydayTarget.Devices)
             EverydayCardKind.QUICK_ACTIONS -> face(text("Add to your plan"), listOf(EverydayCardRow(text("Add task"), target = EverydayTarget.Create(OrganizerKind.TASK)),
                 EverydayCardRow(text("Set alarm"), target = EverydayTarget.Create(OrganizerKind.ALARM)), EverydayCardRow(text("Start timer"), target = EverydayTarget.Create(OrganizerKind.TIMER))), EverydayTarget.Organizer)
+            EverydayCardKind.TODAY -> {
+                val date = input.now.atZone(zone).toLocalDate()
+                val format = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+                if (input.kids) face(format.format(date), emptyList(), EverydayTarget.WidgetTool(EverydayWidgetTool.KIDS))
+                else {
+                    val localEvents = occurrences.filter { it.record.kind == OrganizerKind.EVENT &&
+                        it.start >= input.now && it.start.atZone(zone).toLocalDate() == date }
+                    val eventCount = localEvents.size + input.phoneEventsToday
+                    val todayWeather = com.halo.app.everyday.briefing.todayWeather(input.sources)
+                    val weather = todayWeather?.let { project(config.copy(kind = EverydayCardKind.WEATHER, sourceId = it.source.id),
+                        input, locale, externalHost, locked, text) }
+                    val news = project(config.copy(kind = EverydayCardKind.HEADLINES, sourceId = null), input, locale, externalHost, locked, text)
+                    val rows = listOfNotNull(
+                        if (eventCount > 0) EverydayCardRow("${text("Events")} · $eventCount", target = EverydayTarget.Today) else null,
+                        weather?.takeIf { it.observedAt != null }?.let { EverydayCardRow(it.value,
+                            it.rows.firstOrNull()?.title.orEmpty(), it.target, savedAt = it.observedAt, stale = it.stale) },
+                        news.rows.firstOrNull(),
+                    )
+                    face(format.format(date), rows, EverydayTarget.Today, status = text("On this phone"))
+                }
+            }
             EverydayCardKind.DASHBOARD -> {
                 val faces=config.sections.map { section -> project(config.copy(kind=section,sourceId=when(section) {
                     EverydayCardKind.WEATHER -> config.sourceId;EverydayCardKind.HEADLINES -> config.headlineSourceId;else -> null }),input,locale,externalHost,locked,text) }

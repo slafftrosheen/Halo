@@ -542,6 +542,14 @@ private fun MemoryDetailCard(detail: MemoryDetailUi, busy: Boolean, onEdit: () -
                 modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Forget")) }
         }
         if (item.stale) Text(uiText("Confirmation keeps the original expiry rules. Correct the information if it has changed."), style = MaterialTheme.typography.bodySmall)
+        if (detail.tags.isNotEmpty()) Text(detail.tags.joinToString("  ") { "#$it" }, style = MaterialTheme.typography.bodySmall)
+        if (detail.pageLinks.isNotEmpty()) {
+            Text(uiText("Links from this page"), style = MaterialTheme.typography.titleSmall)
+            detail.pageLinks.forEach { page -> TextButton(onClick = { onOpenSource(page) }) { Text(page.title) } }
+        }
+        Text(uiText("Linked here from"), style = MaterialTheme.typography.titleSmall)
+        if (detail.backlinks.isEmpty()) Text(uiText("No pages link here yet."), style = MaterialTheme.typography.bodySmall)
+        detail.backlinks.forEach { page -> TextButton(onClick = { onOpenSource(page) }) { Text(page.title) } }
     }
 }
 

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_record_trim_title">Apgriezt ierakstu</string>
+    <string name="halo_record_trim_description">Pārvieto abus rokturus, lai izvēlētos saglabājamo daļu. Pilno ierakstu var atjaunot jebkurā laikā.</string>
+    <string name="halo_record_trim_unavailable">Neizdevās nolasīt ierakstu rediģēšanai.</string>
+    <string name="halo_record_trim_start">Sākums · %1$s</string>
+    <string name="halo_record_trim_end">Beigas · %1$s</string>
+    <string name="halo_record_trim_duration">Ilgums · %1$s</string>
+    <string name="halo_record_trim_listen">Lietot un atskaņot</string>
+    <string name="halo_record_trim_apply">Lietot apgriešanu</string>
+    <string name="halo_record_trim_restore">Atjaunot pilno ierakstu</string>
+    <string name="halo_record_trim_active">Apgrieztais fragments</string>
+    <string name="halo_record_trim_earlier">Par 0,1 s agrāk</string>
+    <string name="halo_record_trim_later">Par 0,1 s vēlāk</string>
+    <string name="halo_record_export">Eksportēt ierakstu</string>
+    <string name="halo_record_export_wave">WAV audio</string>
+    <string name="halo_record_export_txt">TXT atšifrējums</string>
+    <string name="halo_record_export_srt">SRT subtitri</string>
+    <string name="halo_record_export_no_words">Šajā fragmentā nav pilnu atšifrējuma rindu.</string>
+    <string name="halo_record_export_too_long">Atšifrējums pārsniedz eksporta ierobežojumu. Apgriez ierakstu līdz īsākam fragmentam.</string>
+    <string name="halo_record_export_audio_copy">Saglabā izvēlēto audio kā WAV kopiju norādītajā vietā.</string>
+    <string name="halo_record_export_review_words">Pirms kopijas saglabāšanas pārbaudi automātisko atšifrējumu. Laiks tiek skaitīts no fragmenta sākuma.</string>
+    <string name="halo_record_export_saved">Ieraksta eksports saglabāts.</string>
+    <string name="halo_record_export_failed">Eksportu neizdevās saglabāt. Atver eksportu, lai mēģinātu vēlreiz.</string>
+    <string name="halo_record_chapters">Nodaļas</string>
+    <string name="halo_record_chapters_hint">Ieteikumi balstīti uz pauzēm un ilgumu. Izvēlies nodaļu, lai atskaņotu to no sākuma.</string>
+    <string name="halo_record_chapter_number">%1$d. nodaļa</string>
+    <string name="halo_record_chapter_rename">Pārdēvēt nodaļu</string>
+</resources>

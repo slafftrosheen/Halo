@@ -1,0 +1,206 @@
+{
+ "version": "11.0",
+ "scheme": "halo://",
+ "dock": [
+  "Home",
+  "Search",
+  "halo",
+  "Devices",
+  "Settings"
+ ],
+ "kidsDock": [
+  "Home",
+  "halo",
+  "Grown-up (locked)"
+ ],
+ "routes": [
+  {
+   "route": "halo://home/today",
+   "opens": "Home › Today",
+   "params": []
+  },
+  {
+   "route": "halo://home/tools/{tool}",
+   "opens": "a tool, e.g. notes",
+   "params": [
+    "tool",
+    "file?"
+   ]
+  },
+  {
+   "route": "halo://home/reads/{source}",
+   "opens": "a Reads source or article (was Places)",
+   "params": [
+    "source",
+    "article?"
+   ]
+  },
+  {
+   "route": "halo://search?q=",
+   "opens": "Search",
+   "params": [
+    "q"
+   ]
+  },
+  {
+   "route": "halo://halo/ask",
+   "opens": "halo, new ask",
+   "params": [
+    "prompt?"
+   ]
+  },
+  {
+   "route": "halo://halo/activity",
+   "opens": "Activity",
+   "params": [
+    "item?"
+   ]
+  },
+  {
+   "route": "halo://halo/memory",
+   "opens": "Memory",
+   "params": []
+  },
+  {
+   "route": "halo://devices",
+   "opens": "Devices page",
+   "params": []
+  },
+  {
+   "route": "halo://devices/{id}",
+   "opens": "device control screen",
+   "params": [
+    "id"
+   ]
+  },
+  {
+   "route": "halo://devices/add",
+   "opens": "setup step 1",
+   "params": [
+    "type?"
+   ]
+  },
+  {
+   "route": "halo://album/glasses",
+   "opens": "From your glasses",
+   "params": [
+    "moment?"
+   ]
+  },
+  {
+   "route": "halo://settings/connections",
+   "opens": "Connections",
+   "params": []
+  },
+  {
+   "route": "halo://settings/connections/{key}",
+   "opens": "one key",
+   "params": [
+    "key"
+   ]
+  },
+  {
+   "route": "halo://settings/family",
+   "opens": "Family & Kids (locked)",
+   "params": []
+  },
+  {
+   "route": "halo://kids/home",
+   "opens": "Kids Home",
+   "params": []
+  },
+  {
+   "route": "halo://study/today",
+   "opens": "Study today",
+   "params": []
+  },
+  {
+   "route": "halo://study/course/{id}/lesson/{n}",
+   "opens": "a lesson",
+   "params": [
+    "id",
+    "n"
+   ]
+  },
+  {
+   "route": "halo://onboarding/{step}",
+   "opens": "resume first launch",
+   "params": [
+    "step"
+   ]
+  },
+  {
+   "route": "halo://home/library",
+   "opens": "Library",
+   "params": []
+  },
+  {
+   "route": "halo://home/library/c/{collection}",
+   "opens": "a collection",
+   "params": [
+    "collection"
+   ]
+  },
+  {
+   "route": "halo://home/library/item/{id}",
+   "opens": "one item",
+   "params": [
+    "id"
+   ]
+  },
+  {
+   "route": "halo://home/tools/maps",
+   "opens": "halo maps",
+   "params": [
+    "to?",
+    "q?"
+   ]
+  },
+  {
+   "route": "halo://home/tools/maps/nav",
+   "opens": "turn by turn",
+   "params": []
+  },
+  {
+   "route": "halo://study/coach",
+   "opens": "photo coach",
+   "params": [
+    "photo?"
+   ]
+  },
+  {
+   "route": "halo://kids/adventure/today",
+   "opens": "today’s adventure",
+   "params": []
+  },
+  {
+   "route": "halo://kids/homework",
+   "opens": "homework helper",
+   "params": [
+    "photo?"
+   ]
+  }
+ ],
+ "backRules": [
+  "One back = one step",
+  "Back never loses work (autosave)",
+  "Back from a graph start goes Home",
+  "Back on Home does nothing (no exit prompt)",
+  "Dock tap pops to that graph start and restores its state; re-tap pops to start",
+  "Deep links build a synthetic stack (Home › graph start › target)",
+  "Confirm sheets, popups and setup are sheets/dialogs, never stack entries",
+  "Kids graph is a separate root; leaving needs the family phone lock"
+ ],
+ "limits": {
+  "maxTapsToTool": 2,
+  "maxTapsToSetting": 3,
+  "maxTapsViaSearch": 2,
+  "maxTabRows": 1
+ },
+ "homeTabs": [
+  "Today",
+  "Library",
+  "Tools",
+  "Reads"
+ ]
+}

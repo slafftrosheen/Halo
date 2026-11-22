@@ -8,6 +8,7 @@ data class EpisodeEntity(@PrimaryKey val id: String, val runId: String, val json
     val importance: Int = 0, val usageCount: Long = 0, val lastReferencedAt: Long? = null)
 @Entity(tableName = "reflection_states")
 data class ReflectionStateEntity(@PrimaryKey val id: String, val policyVersion: Int, val status: String, val mode: String, val updatedAt: Long)
+data class PrivateHistoryPublicOwner(val id: String, val kind: String)
 @Entity(tableName = "personal_suggestions", indices = [Index(value = ["fingerprint"], unique = true)])
 data class PersonalSuggestionEntity(@PrimaryKey val id: String, val fingerprint: String, val kind: String, val json: String,
     val state: String, val createdAt: Long, val updatedAt: Long, val evidenceCount: Int, val dismissedAt: Long? = null, val neverAgain: Boolean = false)
@@ -16,6 +17,16 @@ data class PersonalSuggestionEntity(@PrimaryKey val id: String, val fingerprint:
     @Query("SELECT * FROM personal_episodes ORDER BY endedAt DESC LIMIT 30") fun episodes(): Flow<List<EpisodeEntity>>
     @Query("SELECT * FROM personal_episodes WHERE endedAt >= :since ORDER BY endedAt DESC LIMIT 30") suspend fun recent(since: Long): List<EpisodeEntity>
     @Query("SELECT * FROM personal_episodes WHERE id = :id") suspend fun episodeById(id: String): EpisodeEntity?
+    @Query("SELECT * FROM personal_episodes WHERE runId = :runId ORDER BY id") suspend fun privateRunEpisodes(runId: String): List<EpisodeEntity>
+    @Query("DELETE FROM personal_episodes WHERE runId = :runId") suspend fun withdrawPrivateRunEpisodes(runId: String): Int
+    @Query("DELETE FROM reflection_states WHERE id = :key AND status != 'PENDING'") suspend fun withdrawPrivateReflection(key: String): Int
+    @Query("""SELECT id, 'SUGGESTION' AS kind FROM personal_suggestions WHERE instr(json, :id) > 0
+        UNION SELECT id, 'MEMORY' AS kind FROM memory_records WHERE sourceObjectId = :id OR instr(evidenceJson, :id) > 0
+        UNION SELECT runId AS id, 'EPISODE_RUN' AS kind FROM personal_episodes WHERE instr(json, :id) > 0""")
+    suspend fun privateHistoryPublicOwners(id: String): List<PrivateHistoryPublicOwner>
+    @Query("""SELECT DISTINCT p.runId FROM personal_episodes p JOIN agent_runs r ON r.id = p.runId
+        WHERE p.id = :id OR instr(p.json, :id) > 0 ORDER BY p.runId""")
+    suspend fun privateEpisodeRunIds(id: String): List<String>
     @Query("UPDATE personal_episodes SET usageCount = MIN(usageCount + 1,1000000), lastReferencedAt = :at WHERE id = :id") suspend fun usedEpisode(id: String, at: Long)
     @Query("DELETE FROM personal_episodes WHERE endedAt < :before AND importance = 0 AND usageCount = 0") suspend fun pruneEpisodes(before: Long)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun claim(value: ReflectionStateEntity): Long
@@ -28,6 +39,8 @@ data class PersonalSuggestionEntity(@PrimaryKey val id: String, val fingerprint:
     @Query("SELECT COUNT(*) FROM personal_suggestions WHERE state = 'PENDING'") suspend fun pendingCount(): Int
     @Query("SELECT COUNT(*) FROM personal_suggestions WHERE createdAt >= :since") suspend fun newCount(since: Long): Int
     @Upsert suspend fun put(value: PersonalSuggestionEntity)
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun restorePrivateSuggestion(value: PersonalSuggestionEntity)
+    @Query("DELETE FROM personal_suggestions WHERE id = :id") suspend fun withdrawPrivateSuggestion(id: String): Int
     @Query("UPDATE personal_suggestions SET state = :state, updatedAt = :at, dismissedAt = :dismissedAt, neverAgain = :neverAgain WHERE id = :id") suspend fun decide(id: String,state: String,at: Long,dismissedAt: Long?,neverAgain: Boolean)
     @Query("SELECT * FROM personal_suggestions WHERE state = 'PENDING' AND createdAt < :before LIMIT 20") suspend fun expiring(before: Long): List<PersonalSuggestionEntity>
     @Query("SELECT * FROM personal_suggestions WHERE state != 'PENDING' ORDER BY updatedAt DESC LIMIT 1000") suspend fun durableDecisions(): List<PersonalSuggestionEntity>

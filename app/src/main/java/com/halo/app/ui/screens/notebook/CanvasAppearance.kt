@@ -104,14 +104,15 @@ internal fun canvasCardColor(appearance: CanvasAppearance, node: CanvasNode, ima
         CanvasColours.BY_ME -> appearance.cardColours[node.id] ?: CanvasCardPaint.NEUTRAL
         CanvasColours.BY_KIND -> when {
             image || node.type == CanvasNodeType.IMAGE -> CanvasCardPaint.PINK
-            node.type == CanvasNodeType.NOTE -> CanvasCardPaint.APRICOT
+            node.type == CanvasNodeType.NOTE || node.type == CanvasNodeType.STICKY -> CanvasCardPaint.APRICOT
             node.type == CanvasNodeType.TEXT || node.type == CanvasNodeType.SKETCH -> CanvasCardPaint.LILAC
             else -> CanvasCardPaint.NEUTRAL
         }
     }
     return if (tint == CanvasCardPaint.NEUTRAL) when (node.type) {
-        CanvasNodeType.GROUP -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .30f).compositeOver(surface)
+        CanvasNodeType.GROUP, CanvasNodeType.FRAME -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .30f).compositeOver(surface)
         CanvasNodeType.TAG -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = .50f).compositeOver(surface)
+        CanvasNodeType.STICKY -> CanvasCardPaint.APRICOT.color.copy(alpha = .24f).compositeOver(surface)
         else -> surface
     } else tint.color.copy(alpha = .14f).compositeOver(surface)
 }

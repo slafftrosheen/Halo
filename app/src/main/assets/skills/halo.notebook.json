@@ -27,8 +27,17 @@
     "halo_canvas_delete",
     "halo_canvas_ungroup",
     "halo_canvas_disconnect",
+    "halo_canvas_group_lock",
+    "halo_canvas_add_comment",
+    "halo_canvas_review_comment",
+    "halo_canvas_update_comment",
     "halo_note_get",
     "halo_note_read_block",
+    "halo_note_review_block",
+    "halo_note_set_format",
+    "halo_note_set_page_settings",
+    "halo_note_comment",
+    "halo_note_resolve_changes",
     "halo_note_rename",
     "halo_note_insert_block",
     "halo_note_edit_block",
@@ -173,12 +182,48 @@
       "risk": "DESTRUCTIVE"
     },
     {
+      "toolId": "halo_canvas_group_lock",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_canvas_add_comment",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_canvas_review_comment",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_canvas_update_comment",
+      "risk": "REVERSIBLE"
+    },
+    {
       "toolId": "halo_note_get",
       "risk": "READ_ONLY"
     },
     {
       "toolId": "halo_note_read_block",
       "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_note_review_block",
+      "risk": "READ_ONLY"
+    },
+    {
+      "toolId": "halo_note_set_format",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_set_page_settings",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_comment",
+      "risk": "REVERSIBLE"
+    },
+    {
+      "toolId": "halo_note_resolve_changes",
+      "risk": "DESTRUCTIVE"
     },
     {
       "toolId": "halo_note_rename",

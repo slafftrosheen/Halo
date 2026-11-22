@@ -14,8 +14,10 @@ import okio.buffer
 fun OkHttpClient.withRemoteDispatchPolicy(
     policy: RemoteDispatchPolicy,
     publicGetRedirects: Boolean = false,
+    allowPublicCollectorHttp: Boolean = false,
     classify: (okhttp3.Request) -> RemoteDispatchRequest,
 ): OkHttpClient {
+    require(!allowPublicCollectorHttp || publicGetRedirects)
     class Pending(val revision: Long, val conflictingRevision: Boolean, val host: String, val intent: RemoteDispatchIntent?, val costs: RemoteCostObservation?, val provenance: RemoteDispatchProvenance?) {
         @Volatile var lease: RemoteDispatchLease? = null
         @Volatile var httpSuccessful = false
@@ -68,6 +70,7 @@ fun OkHttpClient.withRemoteDispatchPolicy(
             val state = pending[call] ?: throw RemoteDispatchBlocked()
             if (state.conflictingRevision) throw RemoteDispatchBlocked()
             val classified = classify(chain.request())
+            val allowHttp = allowPublicCollectorHttp && classified.providerId == PUBLIC_COLLECTOR_OWNER
             val intent = state.intent
             if (intent != null && intent.request.providerId != classified.providerId) throw RemoteDispatchBlocked()
             val request = (intent?.request ?: classified).let { it.copy(categories = it.categories + state.provenance?.categories.orEmpty()) }
@@ -83,9 +86,13 @@ fun OkHttpClient.withRemoteDispatchPolicy(
                     while (true) {
                         lease.requireCurrent()
                         if (next.method != "GET") throw IOException("Public acquisition supports GET only")
-                        val url = PublicNetworkPolicy.validate(next.url.toString())
+                        val url = PublicNetworkPolicy.validate(next.url.toString(), allowPublicHttp = allowHttp)
                         if (!visited.add(url.toString())) throw IOException("Public redirect loop")
-                        next = next.newBuilder().url(url).build()
+                        next = next.newBuilder().url(url).apply {
+                            if (url.scheme == "http") {
+                                removeHeader("Authorization"); removeHeader("Cookie"); removeHeader("Proxy-Authorization"); removeHeader("Referer")
+                            }
+                        }.build()
                         val response = chain.proceed(next)
                         if (response.code !in setOf(301, 302, 303, 307, 308)) {
                             state.httpSuccessful = response.isSuccessful || response.code == 304
@@ -110,7 +117,7 @@ fun OkHttpClient.withRemoteDispatchPolicy(
                         response.close()
                         if (++redirects > 5 || location == null) throw IOException("Public redirect limit or missing destination")
                         val target = url.resolve(location) ?: throw IOException("Invalid redirect destination")
-                        PublicNetworkPolicy.validate(target.toString())
+                        PublicNetworkPolicy.validate(target.toString(), allowPublicHttp = allowHttp && url.scheme == "http")
                         next = next.newBuilder().url(target).apply {
                             if (url.host != target.host) {
                                 removeHeader("Authorization"); removeHeader("Cookie"); removeHeader("Proxy-Authorization")
@@ -129,7 +136,8 @@ fun OkHttpClient.withRemoteDispatchPolicy(
         }
         .addNetworkInterceptor { chain ->
             val state = pending[chain.call()] ?: throw RemoteDispatchBlocked()
-            if (publicGetRedirects) PublicNetworkPolicy.validate(chain.request().url.toString())
+            if (publicGetRedirects) PublicNetworkPolicy.validate(chain.request().url.toString(),
+                allowPublicHttp = allowPublicCollectorHttp && classify(chain.call().request()).providerId == PUBLIC_COLLECTOR_OWNER)
             else if (chain.request().url.host != state.host) throw RemoteDispatchBlocked()
             (state.lease ?: throw RemoteDispatchBlocked()).requireCurrent()
             chain.proceed(chain.request())

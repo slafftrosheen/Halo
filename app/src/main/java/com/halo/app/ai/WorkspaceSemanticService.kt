@@ -43,6 +43,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
     }
     init {
         db.invalidationTracker.addObserver(observer)
+        changed.trySend(Unit)
         scope.launch {
             try { for(ignored in changed) { mutation.withLock {
                 store.read()?.let { old ->
@@ -70,6 +71,7 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
             } } } finally { db.invalidationTracker.removeObserver(observer); changed.close() }
         }
     }
+    fun refreshAfterSourceSealed() { changed.trySend(Unit) }
     private fun selected(): Set<String> = try {
         storage.getString("semantic_source_ids")?.let { encoded ->
             val json=JSONArray(encoded)
@@ -191,15 +193,29 @@ class WorkspaceSemanticService(private val context: Context,private val db: AppD
         val hasSelectedImages = selected().any { imageSearchSourceExists(it) }
         val hasSelectedAudio = selected().any { audioSearchSourceExists(it) }
         val hasSelectedVideos = selected().any { it.startsWith("attachment:") && videoSourceMetadata(it) != null }
-        if (!hasSelectedImages && !hasSelectedAudio && !hasSelectedVideos) return text
+        if (!hasSelectedImages && !hasSelectedAudio && !hasSelectedVideos) return visibleSearchReferences(text)
         if (hasSelectedImages) synchronizeImageIndex(target.modelId,target.sha256,target.dimension)
         if (hasSelectedAudio) synchronizeAudioIndex(target.modelId,target.sha256,target.dimension)
         if (hasSelectedVideos) synchronizeVideoIndex(target.modelId,target.sha256,target.dimension)
         val images = if (hasSelectedImages) searchLocalImages(target.modelId,target.sha256,target.dimension,query.trim()) else emptyList()
         val audio = if (hasSelectedAudio) searchLocalAudio(target.modelId,target.sha256,target.dimension,query.trim()) else emptyList()
         val videos = if (hasSelectedVideos) searchLocalVideoFrames(target.modelId,target.sha256,target.dimension,query.trim()) else emptyList()
-        return (text + images + audio + videos)
-            .sortedByDescending { it.score }.take(8)
+        return visibleSearchReferences(text + images + audio + videos)
+    }
+
+    /** Earlier modalities may have finished before a later embedding call or a Private withdrawal. */
+    private suspend fun visibleSearchReferences(references: List<SemanticReference>): List<SemanticReference> {
+        val allowed = selected()
+        if (!storage.getBoolean("semantic_enabled", false)) return emptyList()
+        return references.sortedByDescending { it.score }.filter { result ->
+            val id = result.sourceId
+            id in allowed && when {
+                id.startsWith("attachment:") -> imageSourceMetadata(id) != null || audioSourceMetadata(id) != null || videoSourceMetadata(id) != null
+                id.startsWith("canvas-image:") -> canvasImageSourceMetadata(id) != null
+                id.startsWith("workspace-audio:") -> workspaceAudioSourceMetadata(id) != null
+                else -> permitted(result.workspace, id, result.sourceVersion)
+            }
+        }.take(8)
     }
     private suspend fun source(id: String): SemanticSource? {
         val parts=id.split(':',limit=2); if(parts.size!=2) return null

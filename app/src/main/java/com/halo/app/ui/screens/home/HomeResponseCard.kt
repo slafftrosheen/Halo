@@ -23,13 +23,15 @@ import com.halo.app.ui.glass.components.HaloMarkdownText
 @Composable
 internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActiveSession: Boolean,
     cloudReply: Boolean = false, onCopy: () -> Unit, onSave: () -> Unit, onEdit: (() -> Unit)? = null,
-    origin: HomeAnswerOrigin = if (cloudReply) HomeAnswerOrigin.ONLINE else HomeAnswerOrigin.UNKNOWN) {
+    origin: HomeAnswerOrigin = if (cloudReply) HomeAnswerOrigin.ONLINE else HomeAnswerOrigin.UNKNOWN,
+    answerCards: (@Composable () -> Unit)? = null) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val displayedText = uiState.nativeReceiptCopy?.let { uiText(it.english) } ?: responseText
     val identityKey = uiState.conversationId to (uiState.presentedIdentity?.turnId ?: uiState.presentedIdentity?.requestId)
     var readRequest by remember(identityKey) { mutableLongStateOf(0) }
     var shareFailed by remember(identityKey) { mutableStateOf(false) }
     var shareReview by remember(identityKey) { mutableStateOf(false) }
+    var showFullReply by remember(identityKey) { mutableStateOf(false) }
     val canAct = !isActiveSession && uiState.sessionState !is CognitiveSessionState.Failed && uiState.presentedIdentity?.turnId != null
     Surface(
         modifier = Modifier
@@ -79,25 +81,24 @@ internal fun HomeResponseCard(uiState: HomeUiState, responseText: String, isActi
                 Text(uiText("This reply is incomplete."), color = MaterialTheme.colorScheme.error)
                 Spacer(Modifier.height(8.dp))
             }
-            /*
-             * MINING-P2-001: a committed structured answer renders as a bounded card, with the
-             * assistant's own text kept underneath as the fallback. Text-only hosts, speech and
-             * the notebook never see the component tree.
-             */
-            uiState.structuredPresentation?.let { presentation ->
-                com.halo.app.interaction.StructuredPresentationRenderer(
-                    presentation = presentation,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(12.dp))
-            }
             if (uiState.sessionState is CognitiveSessionState.Streaming) {
                 Text(responseText, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
             } else {
-                HaloMarkdownText(markdown = displayedText, textColor = MaterialTheme.colorScheme.onSurface,
+                val prose = if (answerCards != null) remember(displayedText) { com.halo.app.ui.cards.cardPlainReply(displayedText) }
+                    else displayedText
+                HaloMarkdownText(markdown = if (showFullReply) displayedText else prose, textColor = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth())
+                if (prose != displayedText) TextButton(onClick = { showFullReply = !showFullReply }) {
+                    Text(androidx.compose.ui.res.stringResource(if (showFullReply) com.halo.app.R.string.halo_chat_show_cards
+                        else com.halo.app.R.string.halo_chat_show_full_answer))
+                }
             }
-
+            if (answerCards != null) {
+                if (!showFullReply) answerCards()
+            } else uiState.structuredPresentation?.let { presentation ->
+                Spacer(Modifier.height(12.dp))
+                com.halo.app.interaction.StructuredPresentationRenderer(presentation, Modifier.fillMaxWidth())
+            }
         }
     }
     if (shareReview && canAct) HomeShareReview({ shareReview = false }) {

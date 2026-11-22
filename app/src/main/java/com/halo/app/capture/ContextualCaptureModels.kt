@@ -1,6 +1,7 @@
 package com.halo.app.capture
 
 import com.halo.sdk.runtime.multimodal.MediaAssetRef
+import com.halo.sdk.runtime.multimodal.MediaLifetime
 
 enum class CaptureSource { PHONE_CAMERA, MANAGED_WEARABLE_CAMERA, IMPORTED_IMAGE, SHARED_IMAGE, ASSISTANT_SCREENSHOT }
 enum class CaptureQuality { ORIGINAL, AI_THUMBNAIL, UNKNOWN }
@@ -10,10 +11,18 @@ data class ContextualCaptureState(val captureId: String, val source: CaptureSour
     val mediaRef: MediaAssetRef, val width: Int, val height: Int, val quality: CaptureQuality,
     val workspaceObjectId: String? = null, val status: CaptureStatus = CaptureStatus.REVIEWABLE,
     val selectedAction: CaptureAction? = null, val error: String? = null,
-    val sourceAssetId: String? = null, val captureTimestampMs: Long? = null, val trigger: String? = null)
+    val sourceAssetId: String? = null, val captureTimestampMs: Long? = null, val trigger: String? = null,
+    val kidsHomeworkRevision: Long? = null)
+
+internal fun ContextualCaptureState.isPrivateHomeworkGlasses(): Boolean = kidsHomeworkRevision != null &&
+    source == CaptureSource.MANAGED_WEARABLE_CAMERA && workspaceObjectId == null &&
+    mediaRef.sourceDeviceId != null && mediaRef.lifetime == MediaLifetime.EPHEMERAL_INTERACTION
+
 sealed interface ContextualCaptureNavigation {
     data object Ask : ContextualCaptureNavigation
     data class Study(val objectId: String) : ContextualCaptureNavigation
+    data class PhotoCoach(val ticket: String) : ContextualCaptureNavigation
+    data class KidsHomeworkPhoto(val ticket: String) : ContextualCaptureNavigation
     data class OpenNote(val objectId: String) : ContextualCaptureNavigation
     data object Memory : ContextualCaptureNavigation
 }

@@ -70,8 +70,13 @@ import com.halo.app.data.watch.ContinuationWatchEntity
         WorkingSetEntry::class,
         ObjectProvenance::class,
         WorkspaceFileEntity::class,
+        com.halo.app.data.workspace.WorkspaceLibraryTitleAlias::class,
+        com.halo.app.data.workspace.PrivateLibraryChunk::class,
+        com.halo.app.data.workspace.PrivateLibraryClaim::class,
         MemoryRecordEntity::class,
         MemoryRevisionEntity::class,
+        com.halo.app.data.memory.MemoryPageLinkEntity::class,
+        com.halo.app.data.memory.MemoryPageTagEntity::class,
         com.halo.app.data.memory.EpisodeEntity::class,
         com.halo.app.data.memory.ReflectionStateEntity::class,
         com.halo.app.data.memory.PersonalSuggestionEntity::class,
@@ -115,6 +120,8 @@ import com.halo.app.data.watch.ContinuationWatchEntity
         com.halo.app.data.everyday.BriefBaselineEntity::class,
         com.halo.app.data.everyday.BriefSettingsEntity::class,
         com.halo.app.data.everyday.BriefDeliveryEntity::class,
+        com.halo.app.data.toolkit.AlbumPersonEntity::class,
+        com.halo.app.data.toolkit.AlbumPeopleMigrationEntity::class,
         com.halo.app.data.everyday.WorldClockEntity::class
     ],
     version = AppDatabase.VERSION,
@@ -137,6 +144,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun memoryDao(): MemoryDao
     abstract fun personalMemoryDao(): com.halo.app.data.memory.PersonalMemoryDao
     abstract fun memoryRecordDao(): MemoryRecordDao
+    abstract fun memoryPagesDao(): com.halo.app.data.memory.MemoryPagesDao
     abstract fun notebookDao(): NotebookDao
     abstract fun notebookDocumentDao(): NotebookDocumentDao
     abstract fun notebookOrganizationDao(): NotebookOrganizationDao
@@ -144,6 +152,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notebookCanvasDao(): NotebookCanvasDao
     abstract fun studyDao(): StudyDao
     abstract fun workspaceFileDao(): WorkspaceFileDao
+    abstract fun workspaceLibraryNameDao(): com.halo.app.data.workspace.WorkspaceLibraryNameDao
+    abstract fun privateLibraryDao(): com.halo.app.data.workspace.PrivateLibraryDao
+    abstract fun albumPeopleDao(): com.halo.app.data.toolkit.AlbumPeopleDao
     abstract fun workspaceAssetDao(): WorkspaceAssetDao
     abstract fun brainSnapshotDao(): BrainSnapshotDao
     abstract fun backupRecordDao(): BackupRecordDao
@@ -153,7 +164,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mcpDao(): com.halo.app.data.mcp.McpDao
 
     companion object {
-        const val VERSION = 34
+        const val VERSION = 37
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -1088,7 +1099,32 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE TABLE IF NOT EXISTS everyday_world_clocks (id TEXT NOT NULL PRIMARY KEY, label TEXT NOT NULL, zoneId TEXT NOT NULL, cityId TEXT, position INTEGER NOT NULL, version INTEGER NOT NULL, deletedAt INTEGER)")
             }
         }
-        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34)
+        val MIGRATION_34_35 = object : Migration(34, 35) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE notes ADD COLUMN pageSettings TEXT")
+                db.execSQL("ALTER TABLE note_blocks ADD COLUMN presentation TEXT")
+                db.execSQL("ALTER TABLE canvas_nodes ADD COLUMN locked INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("CREATE TABLE IF NOT EXISTS memory_page_links (sourceId TEXT NOT NULL, targetId TEXT NOT NULL, PRIMARY KEY (sourceId, targetId), FOREIGN KEY(sourceId) REFERENCES memory_records(id) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(targetId) REFERENCES memory_records(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_memory_page_links_targetId ON memory_page_links(targetId)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS memory_page_tags (memoryId TEXT NOT NULL, `key` TEXT NOT NULL, label TEXT NOT NULL, PRIMARY KEY (memoryId, `key`), FOREIGN KEY(memoryId) REFERENCES memory_records(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_memory_page_tags_key ON memory_page_tags(`key`)")
+            }
+        }
+        val MIGRATION_35_36 = object : Migration(35, 36) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE notebook_collection_members ADD COLUMN suggestionToken TEXT")
+                db.execSQL("CREATE TABLE IF NOT EXISTS workspace_library_title_aliases (objectId TEXT NOT NULL PRIMARY KEY, oldTitle TEXT NOT NULL, newTitle TEXT NOT NULL, expiresAt INTEGER NOT NULL, FOREIGN KEY(objectId) REFERENCES workspace_objects(id) ON UPDATE NO ACTION ON DELETE CASCADE)")
+            }
+        }
+        val MIGRATION_36_37 = object : Migration(36, 37) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS private_library_envelopes (envelopeId TEXT NOT NULL, part INTEGER NOT NULL, bytes BLOB NOT NULL, PRIMARY KEY(envelopeId, part))")
+                db.execSQL("CREATE TABLE IF NOT EXISTS private_library_claims (fingerprint TEXT NOT NULL PRIMARY KEY, envelopeId TEXT NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_private_library_claims_envelopeId ON private_library_claims(envelopeId)")
+                com.halo.app.data.toolkit.createAlbumPeopleTables(db)
+            }
+        }
+        val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35, MIGRATION_35_36, MIGRATION_36_37)
 
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "halo.db")

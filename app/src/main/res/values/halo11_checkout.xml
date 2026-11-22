@@ -1,0 +1,15 @@
+<resources>
+    <string name="halo11_checkout_title">Merchant checkout</string>
+    <string name="halo11_checkout_how">Review the merchant and quoted total. You pay and receive your receipt with the merchant.</string>
+    <string name="halo11_checkout_link">Public HTTPS merchant link</string>
+    <string name="halo11_checkout_total">Quoted total</string>
+    <string name="halo11_checkout_currency">Currency code</string>
+    <string name="halo11_checkout_review">Review checkout</string>
+    <string name="halo11_checkout_quote">Quoted total · %1$s %2$s</string>
+    <string name="halo11_checkout_confirm">Unlock and open checkout</string>
+    <string name="halo11_checkout_auth_failed">Halo could not verify your screen lock. Check your phone’s security settings.</string>
+    <string name="halo11_checkout_invalid">Enter a public HTTPS link without a query or sign-in token, a total and a currency code.</string>
+    <string name="halo11_checkout_open_failed">The phone could not open the merchant’s checkout.</string>
+    <string name="halo11_checkout_opened">Merchant checkout opened.</string>
+    <string name="halo11_checkout_expired">This checkout review expired. Enter the merchant details again.</string>
+</resources>

@@ -142,15 +142,16 @@ class InkTlsChannel private constructor(private val socket: SSLSocket, private v
 
 /** No wildcard binding, automatic discovery or unbounded accept loop. */
 class InkTlsListener(context: SSLContext, address: InetAddress, port: Int,
-    private val activation: InkActivationPolicy = InkActivationPolicy.QUALIFICATION_PENDING) : Closeable {
+    private val activation: InkActivationPolicy = InkActivationPolicy.QUALIFICATION_PENDING,
+    acceptTimeoutMs: Int = InkTlsChannel.TIMEOUT_MS) : Closeable {
     private val socket: SSLServerSocket
     val localPort: Int get() = socket.localPort
     init {
         check(activation.enabled()) { "Ink activation pending" }
-        requireLocal(address); require(port in 0..65535)
+        requireLocal(address); require(port in 0..65535 && acceptTimeoutMs in 1..120_000)
         socket = (context.serverSocketFactory.createServerSocket() as SSLServerSocket).apply {
             needClientAuth = true
-            soTimeout = InkTlsChannel.TIMEOUT_MS
+            soTimeout = acceptTimeoutMs
             bind(InetSocketAddress(address, port), 1)
         }
     }

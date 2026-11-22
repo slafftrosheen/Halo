@@ -225,6 +225,7 @@ class DefaultCognitiveResponseCommitter(
                         timestamp = System.currentTimeMillis(),
                         remoteDataCategories = commit.remoteProvenance?.categories?.map { it.name }?.toSet(),
                         remoteDispatchRevision = commit.remoteProvenance?.revision,
+                        conversationId = turn?.conversationId ?: commit.conversationId,
                     )
                 )
             }

@@ -19,6 +19,7 @@ interface AttentionQueue {
     val pending: StateFlow<List<QueuedAttentionRequest>>
     suspend fun enqueue(request: QueuedAttentionRequest)
     suspend fun remove(requestId: AttentionRequestId)
+    suspend fun isPending(requestId: AttentionRequestId): Boolean = pending.value.any { it.request.id == requestId }
     suspend fun releaseEligible(context: AttentionContext)
 }
 

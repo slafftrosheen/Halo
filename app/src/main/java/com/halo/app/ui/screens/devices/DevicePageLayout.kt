@@ -1,12 +1,17 @@
 package com.halo.app.ui.screens.devices
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.halo.app.R
@@ -101,15 +106,50 @@ internal fun DeviceAppearanceSheet(devices: List<GenericDeviceUiState>, selected
 }
 
 @Composable
-internal fun DevicePairingGuide(onFind: () -> Unit, onDismiss: () -> Unit) {
+internal fun DevicePairingGuide(onFind: (DeviceSetupKind) -> Unit, onDismiss: () -> Unit) {
+    val examples = listOf(
+        PairingExample(R.string.page_devices_glasses, R.drawable.halo_pairing_glasses, R.string.halo_pairing_prepare_glasses, DeviceSetupKind.GLASSES),
+        PairingExample(R.string.halo_pairing_headphones, R.drawable.halo_pairing_headphones, R.string.halo_pairing_prepare_headphones, DeviceSetupKind.AUDIO),
+        PairingExample(R.string.halo_pairing_ink, R.drawable.halo_pairing_ink, R.string.halo_pairing_prepare_ink, DeviceSetupKind.INK),
+        PairingExample(R.string.page_devices_robot, R.drawable.halo_pairing_buddy, R.string.halo_pairing_prepare_buddy, DeviceSetupKind.BUDDY),
+    )
+    var selectedTitle by rememberSaveable { mutableStateOf<Int?>(null) }
+    val example = examples.firstOrNull { it.title == selectedTitle }
+    val kind = example?.kind ?: DeviceSetupKind.GLASSES
     val directions = listOf(
         HaloGlyph.BATTERY to R.string.page_devices_step_prepare,
-        HaloGlyph.BLUETOOTH to R.string.page_devices_step_pair,
-        HaloGlyph.SEARCH to R.string.page_devices_step_find,
+        HaloGlyph.BLUETOOTH to (example?.prepare ?: R.string.page_devices_step_pair),
+        HaloGlyph.SEARCH to when (kind) {
+            DeviceSetupKind.GLASSES -> R.string.page_devices_step_find
+            DeviceSetupKind.AUDIO -> R.string.halo_pairing_audio_system
+            DeviceSetupKind.INK -> R.string.halo_pairing_ink_follow_me
+            DeviceSetupKind.BUDDY -> R.string.halo_pairing_buddy_wifi
+        },
+        HaloGlyph.SETTINGS to R.string.halo_pairing_permissions,
+        HaloGlyph.DEVICE to R.string.halo_pairing_try,
     )
     Zone6ButtonSheet(stringResource(R.string.page_devices_add), onDismiss) {
         Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.halo_pairing_device_type), style = MaterialTheme.typography.titleMedium)
+            examples.chunked(2).forEach { entries ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    entries.forEach { (title, photo) ->
+                        val selected = selectedTitle == title
+                        FilterChip(selected, onClick = { selectedTitle = if (selected) null else title },
+                            label = {
+                                Column(Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Image(painterResource(photo), contentDescription = null,
+                                        modifier = Modifier.fillMaxWidth().aspectRatio(1.65f).clip(MaterialTheme.shapes.small),
+                                        contentScale = ContentScale.Crop)
+                                    Text(stringResource(title))
+                                }
+                            }, modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+            Text(stringResource(R.string.halo_pairing_example), style = MaterialTheme.typography.bodySmall)
             directions.forEachIndexed { index, (glyph, message) ->
                 val instruction = stringResource(message)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -119,9 +159,18 @@ internal fun DevicePairingGuide(onFind: () -> Unit, onDismiss: () -> Unit) {
                     HaloReadAloud(instruction, compact = true, category = RemoteDataCategory.TEXT)
                 }
             }
-            Button(onClick = onFind, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
-                Text(stringResource(R.string.page_devices_find))
+            Button(onClick = { onFind(kind) }, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
+                Text(stringResource(when (kind) {
+                    DeviceSetupKind.GLASSES -> R.string.page_devices_find
+                    DeviceSetupKind.AUDIO -> R.string.halo_pairing_open_bluetooth
+                    DeviceSetupKind.INK -> R.string.halo_pairing_open_follow_me
+                    DeviceSetupKind.BUDDY -> R.string.halo_pairing_open_buddy
+                }))
             }
         }
     }
 }
+
+internal enum class DeviceSetupKind { GLASSES, AUDIO, INK, BUDDY }
+
+private data class PairingExample(val title: Int, val photo: Int, val prepare: Int, val kind: DeviceSetupKind)

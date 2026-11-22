@@ -204,6 +204,7 @@ class StudyUseCases(
     val narrationEvents: Flow<NarrationEvent> get() = narration?.events ?: emptyFlow()
 
     fun observeActiveSessions(): Flow<List<StudySessionRecord>> = repository.observeActiveSessions()
+    internal fun observeCourseSessions(): Flow<List<StudySessionRecord>> = repository.observeCourseSessions()
 
     fun observeSessionsForSource(objectId: String): Flow<List<StudySessionRecord>> =
         repository.observeSessionsForSource(objectId)
@@ -640,6 +641,30 @@ class StudyUseCases(
 
     suspend fun addGroundedPracticeDrafts(sessionId: String, drafts: List<StudyCardDraft>) {
         repository.addGroundedPracticeDrafts(sessionId, drafts)
+    }
+
+    internal suspend fun keepReviewedPhotoCoachCard(
+        lessonId: String,
+        reviewedAt: Long,
+        question: String,
+        answer: String,
+        requireAuthority: () -> Unit,
+    ): Boolean {
+        requireAuthority()
+        if (question.isBlank() || answer.isBlank()) return false
+        val lesson = repository.getSession(lessonId) ?: return false
+        if (lesson.updatedAtEpochMs != reviewedAt || lesson.lifecycle != StudySessionLifecycle.ACTIVE ||
+            lesson.learnerLevel != StudyLearnerLevel.ADULT) return false
+        return repository.withExactSession(lesson) {
+            requireAuthority()
+            val existing = repository.getPracticeItems(lessonId).any {
+                it.accepted && it.question == question && it.answer == answer
+            }
+            if (!existing) repository.addPracticeDraft(lessonId, question, answer, sourceObjectId = null,
+                sourceRevision = null, accepted = true)
+            requireAuthority()
+            true
+        }
     }
 
     suspend fun setPracticeItemAccepted(itemId: String, accepted: Boolean): Boolean =

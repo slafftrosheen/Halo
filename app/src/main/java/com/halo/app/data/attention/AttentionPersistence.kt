@@ -15,6 +15,8 @@ data class AttentionReceiptEntity(@PrimaryKey val id: String, val outcome: Strin
     @Query("DELETE FROM attention_pending WHERE id = :id OR (:dedup IS NOT NULL AND dedupKey = :dedup)") suspend fun removeDuplicates(id: String, dedup: String?)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun put(item: AttentionPendingEntity)
     @Query("DELETE FROM attention_pending WHERE id = :id") suspend fun remove(id: String)
+    @Query("DELETE FROM attention_pending WHERE id IN (:ids)") suspend fun withdrawPrivatePending(ids: List<String>)
+    @Query("DELETE FROM attention_receipts WHERE id IN (:ids)") suspend fun withdrawPrivateReceipts(ids: List<String>)
     @Query("SELECT * FROM attention_receipts WHERE id = :id") suspend fun receipt(id: String): AttentionReceiptEntity?
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun claim(receipt: AttentionReceiptEntity): Long
     @Upsert suspend fun receiptPut(receipt: AttentionReceiptEntity)

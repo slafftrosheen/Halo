@@ -68,6 +68,10 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
         if (publishForInference) preloadLocalModel()
         val device = driver.activeDeviceId
             ?: return Result.failure(IllegalStateException("No connected HeyCyan device"))
+        if (review && !publishForInference &&
+            (!com.halo.app.di.ManualDependencyGraph.contextualCapture.canReceiveWearableReview(device) || driver.activeDeviceId != device)) {
+            return Result.failure(IllegalStateException("Glasses capture is not available in this session"))
+        }
         val operationId = UUID.randomUUID().toString()
         events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "Requested", detail = "Capturing a fresh glasses thumbnail", sourceDeviceId = device))
         val result = driver.thumbnailCaptureCoordinator.capture(quality)
@@ -85,13 +89,15 @@ class HeyCyanCaptureCoordinator(private val context: Context, private val driver
         if (!hardwareThumbnailMutex.tryLock()) return
         try {
         val device = driver.activeDeviceId ?: return
+        val review = com.halo.app.di.ManualDependencyGraph.contextualCapture
+        if (!review.canReceiveWearableReview(device) || driver.activeDeviceId != device) return
         val operationId = UUID.randomUUID().toString()
         events.publish(ActionReceipt(operationId = operationId, category = "Vision", title = "AI thumbnail", stage = "DeviceReady", detail = "Glasses reported a fresh image", sourceDeviceId = device))
         val firstAttempt = driver.thumbnailCaptureCoordinator.receivePhotoReadyThumbnail(quality = thumbnailQuality)
-        val result = if (firstAttempt.isFailure && driver.activeDeviceId == device) {
+        val result = if (firstAttempt.isFailure && driver.activeDeviceId == device && review.canReceiveWearableReview(device)) {
             driver.thumbnailCaptureCoordinator.receivePhotoReadyThumbnail(quality = thumbnailQuality)
         } else firstAttempt
-        deliverHeyCyanThumbnail(result) { thumbnail -> com.halo.app.di.ManualDependencyGraph.contextualCapture.receive(
+        deliverHeyCyanThumbnail(result) { thumbnail -> review.receive(
                 com.halo.sdk.runtime.multimodal.MediaAssetContent(thumbnail.bytes, "image/jpeg"), CaptureSource.MANAGED_WEARABLE_CAMERA,
                 "Wearable camera", operationId, device, CaptureQuality.AI_THUMBNAIL, captureTimestampMs=thumbnail.photoReadyAtMs, trigger=if(thumbnail.commandAtMs == null) "HARDWARE_TRIGGER" else "SOFTWARE_REQUEST") }
             .onFailure { error ->

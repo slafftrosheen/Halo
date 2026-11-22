@@ -9,6 +9,8 @@ import com.halo.app.data.workspace.*
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -31,12 +33,19 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
     private data class Binding(val projectId: String, val token: String)
     private val active = java.util.concurrent.atomic.AtomicReference<Binding?>(null)
     fun attachProject(id: String): String = java.util.UUID.randomUUID().toString().also {
-        active.set(Binding(id, it)); uiRequests.attached(id)
+        val previous = active.getAndSet(Binding(id, it))
+        val pixels = mutablePixelSelection.value
+        if (previous != null && pixels != null && pixels.ownerToken == previous.token) mutablePixelSelection.compareAndSet(pixels, null)
+        uiRequests.attached(id)
     }
     fun acknowledgeAttachment(id: String) { if (active.get()?.projectId == id) uiRequests.attached(id) }
     fun detachProject(token: String) {
         val binding = active.get()
-        if (binding?.token == token && active.compareAndSet(binding, null)) clearSelection(binding.projectId)
+        if (binding?.token == token && active.compareAndSet(binding, null)) {
+            clearSelection(binding.projectId)
+            val pixels = mutablePixelSelection.value
+            if (pixels != null && pixels.ownerToken == token) mutablePixelSelection.compareAndSet(pixels, null)
+        }
     }
     suspend fun currentProject(): StudioProject? {
         val binding = active.get() ?: return null
@@ -159,6 +168,8 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
         return importImage(projectId, expectedRevision, file.objectId.value, ensureAbsent)
     }
     suspend fun edit(id: String, expectedRevision: Long, operation: String, fields: Map<String, Any?>): StudioProject {
+        val pixels = studioPixelEdit(operation, fields)
+        if (pixels != null) return applyPixelEdit(id, expectedRevision, pixels)
         val project = current(id, expectedRevision)
         if (operation == "delete_selected_ink") {
             require(fields.isEmpty())
@@ -183,6 +194,136 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
     suspend fun inkBackdrop(document: StudioDocument, layer: StudioLayer): Bitmap = renderer.inkBackdrop(document, layer)
     fun inkWidthFraction(document: StudioDocument, layer: StudioLayer): Float = renderer.inkWidthFraction(document, layer)
     suspend fun previewDocument(document: StudioDocument): Bitmap = renderer.render(document, true)
+    internal suspend fun fillBase(document: StudioDocument, preview: Boolean): Bitmap =
+        renderer.render(document.copy(recipe = com.halo.app.data.workspace.CanvasImageRecipe(maxEdge = 2048)), preview)
+
+    private val mutablePixelSelection = MutableStateFlow<StudioPixelSelection?>(null)
+    internal val pixelSelection = mutablePixelSelection.asStateFlow()
+
+    internal fun currentPixelSelection(id: String, revision: Long): StudioPixelSelection? {
+        val attached = active.get() ?: return null
+        val selected = mutablePixelSelection.value ?: return null
+        return selected.takeIf { it.projectId == id && it.projectRevision == revision &&
+            attached.projectId == id && attached.token == it.ownerToken }
+    }
+
+    internal suspend fun pixelArtboard(document: StudioDocument, layerId: String?, preview: Boolean): Bitmap {
+        val layer = if (layerId == null) null else requireNotNull(document.layers.find { it.id == layerId })
+        val source = document.copy(recipe = CanvasImageRecipe(maxEdge = 4096))
+        return renderer.render(if (layer == null) source else source.copy(
+            background = 0, layers = listOf(layer), selectedLayerId = layer.id), preview)
+    }
+
+    private suspend fun applyPixelEdit(id: String, revision: Long, request: StudioPixelEdit): StudioProject = when (request) {
+        is StudioPixelEdit.Select -> selectPixels(id, revision, request)
+        StudioPixelEdit.Clear -> {
+            val project = current(id, revision)
+            currentPixelSelection(id, revision)?.let { mutablePixelSelection.compareAndSet(it, null) }
+            project
+        }
+        is StudioPixelEdit.Apply -> applyPixels(id, revision, request)
+    }
+
+    internal suspend fun selectPixels(
+        id: String, revision: Long, request: StudioPixelEdit.Select, verifySelection: (StudioPixelSelection?) -> Unit = {},
+    ): StudioProject {
+        val owner = requireNotNull(active.get()).also { require(it.projectId == id) }
+        val project = current(id, revision)
+        val document = project.session.current
+        val old = mutablePixelSelection.value
+        val previous = currentPixelSelection(id, revision)
+        verifySelection(previous)
+        val selected = document.layers.firstOrNull { it.id == document.selectedLayerId && it.visible && it.opacity > 0 }
+        val layerId = if (request.sampleAll) null else requireNotNull(selected) { "Choose an artwork layer first" }.id
+        val artboard = pixelArtboard(document, layerId, preview = true)
+        val mask = try {
+            withContext(Dispatchers.Default) {
+                val measured = requireNotNull(studioPixelMask(artboard, request.shape, request.feather,
+                    maxOf(document.width, document.height))) { "The subject edge was uncertain" }
+                measured.combined(previous?.mask, request.combine)
+            }
+        } finally { artboard.recycle() }
+        current(id, revision)
+        check(active.get() == owner) { "Studio project closed" }
+        val value = if (mask.hasSelection) StudioPixelSelection(id, revision, owner.token, mask) else null
+        check(mutablePixelSelection.compareAndSet(old, value)) { "Selection changed; select again" }
+        return project
+    }
+
+    internal suspend fun applyPixels(
+        id: String, revision: Long, request: StudioPixelEdit.Apply, verifySelection: (StudioPixelSelection?) -> Unit = {},
+    ): StudioProject {
+        val owner = requireNotNull(active.get()).also { require(it.projectId == id) }
+        val initial = current(id, revision)
+        val document = initial.session.current
+        val selection = currentPixelSelection(id, revision)
+        verifySelection(selection)
+        val chosen = document.layers.firstOrNull { it.id == document.selectedLayerId && it.visible && it.opacity > 0 }
+        val layer = if (request.operation == StudioPixelOperation.COPY) chosen else
+            requireNotNull(chosen?.takeUnless { it.locked }) { "Choose an unlocked artwork layer first" }
+        if (request.operation == StudioPixelOperation.COPY) require(document.layers.size < StudioDocument.MAX_LAYERS)
+        if (request.operation != StudioPixelOperation.SMUDGE) requireNotNull(selection) { "Select pixels first" }
+        val sourceLayers = if (layer == null) document.layers.filter { it.visible && it.opacity > 0 } else listOf(layer)
+        val bitmap = pixelArtboard(document, layer?.id, preview = false)
+        val bytes = try {
+            val changed = withContext(Dispatchers.Default) {
+                when (request.operation) {
+                    StudioPixelOperation.COPY -> maskStudioPixels(bitmap, requireNotNull(selection).mask, copy = true)
+                    StudioPixelOperation.ERASE -> maskStudioPixels(bitmap, requireNotNull(selection).mask, copy = false)
+                    StudioPixelOperation.SMUDGE -> smudgeStudioPixels(bitmap, request.strokes, selection?.mask,
+                        maxOf(document.width, document.height))
+                }
+            }
+            require(changed) { "No pixels changed" }
+            CanvasImageTools.encodeBitmap(bitmap, CanvasImageFormat.PNG)
+        } finally { bitmap.recycle() }
+        val name = if (request.operation == StudioPixelOperation.COPY) requireNotNull(request.name) else requireNotNull(layer).name
+        var updated: StudioProject? = null
+        val metadata = JSONObject().put("operation", request.operation.receipt)
+            .put("layerId", layer?.id ?: JSONObject.NULL).put("sourceRevision", revision).toString()
+        files.createManagedFile(name.take(100) + ".png", CanvasImageFormat.PNG.mimeType, bytes, id, revision.toString(),
+            metadata, published = { file ->
+                check(active.get() == owner && currentPixelSelection(id, revision) === selection) { "Artwork or selection changed" }
+                val copy = request.operation == StudioPixelOperation.COPY
+                val layerId = if (copy) java.util.UUID.randomUUID().toString() else requireNotNull(layer).id
+                val replacement = StudioLayer(id = layerId, name = name, kind = StudioLayerKind.IMAGE,
+                    source = StudioSource(file.objectId.value, requireNotNull(file.sha256)))
+                val change = when {
+                    !copy -> StudioCommand.Replace(replacement)
+                    layer == null -> StudioCommand.Add(replacement)
+                    else -> StudioCommand.Batch(listOf(StudioCommand.Add(replacement),
+                        StudioCommand.Move(layerId, document.layers.indexOf(layer) + 1)))
+                }
+                updated = projects.apply(id, revision, change)
+                check(active.get() == owner) { "Studio project closed" }
+            }) {
+            current(id, revision)
+            check(active.get() == owner && currentPixelSelection(id, revision) === selection) { "Artwork or selection changed" }
+            for (source in sourceLayers.mapNotNull { it.source }.distinct()) {
+                require(workspace.get(WorkspaceObjectId(source.objectId))?.lifecycle == WorkspaceObjectLifecycle.ACTIVE &&
+                    files.getFile(WorkspaceObjectId(source.objectId))?.version == source.version) { "Image source changed before applying pixels" }
+            }
+        }
+        val result = requireNotNull(updated)
+        if (selection != null) mutablePixelSelection.compareAndSet(selection, selection.copy(projectRevision = result.revision))
+        return result
+    }
+
+    internal suspend fun fillArtboard(id: String, revision: Long, request: StudioFillRequest, name: String): StudioProject {
+        val source = current(id, revision)
+        require(source.session.current.layers.size < StudioDocument.MAX_LAYERS)
+        val artboard = fillBase(source.session.current, preview = false)
+        val bytes = try {
+            val layer = renderStudioFill(artboard, request)
+            try { CanvasImageTools.encodeBitmap(layer, CanvasImageFormat.PNG) } finally { layer.recycle() }
+        } finally { artboard.recycle() }
+        val file = files.createManagedFile(name.take(100) + ".png", CanvasImageFormat.PNG.mimeType, bytes, id, revision.toString(),
+            JSONObject().put("operation", "studio-fill").put("sourceRevision", revision).toString()) {
+            current(id, revision)
+        }
+        return projects.apply(id, revision, StudioCommand.Add(StudioLayer(name = name.take(120), kind = StudioLayerKind.IMAGE,
+            source = StudioSource(file.objectId.value, requireNotNull(file.sha256)))))
+    }
     suspend fun preview(id: String, expectedRevision: Long): Bitmap = renderer.render(current(id, expectedRevision).session.current, true)
     suspend fun aiReference(project: StudioProject): ByteArray {
         current(project.id, project.revision)

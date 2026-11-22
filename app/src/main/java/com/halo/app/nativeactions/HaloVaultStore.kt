@@ -19,7 +19,7 @@ import javax.crypto.spec.SecretKeySpec
 import org.json.JSONArray
 import org.json.JSONObject
 
-internal enum class VaultPaperKind { WARRANTY, RECEIPT, POLICY, DOCUMENT }
+internal enum class VaultPaperKind { WARRANTY, RECEIPT, POLICY, DOCUMENT, PRIVATE_NOTE }
 
 internal data class VaultPaper(
     val name: String = "",
@@ -30,12 +30,18 @@ internal data class VaultPaper(
     val id: String = UUID.randomUUID().toString(),
     val revision: Long = 0,
     val photo: Boolean = false,
+    val folder: String = "",
+    val text: String = "",
 ) {
     fun validate() {
         require(UUID.fromString(id).toString() == id)
         require(name.isNotBlank() && name.length <= 180 && revision >= 0)
+        require(folder.length <= 80 && folder.none(Char::isISOControl))
         require(bought == null || ends == null || bought <= ends)
         require(remind == null || ends == null || remind <= ends)
+        require(text.length <= 2400 && text.none { it.isISOControl() && it != '\n' && it != '\t' })
+        require(if (kind == VaultPaperKind.PRIVATE_NOTE) text.isNotBlank() && !photo && bought == null && ends == null && remind == null
+            else text.isEmpty())
     }
 }
 
@@ -119,6 +125,7 @@ internal class HaloVaultStore(context: Context) {
         val current = existing.firstOrNull { it.id == draft.id }
         check((current?.revision ?: 0) == draft.revision && (current != null || existing.size < maxPapers))
         require(photo == null || (current == null && photo.size in 1..maxPhotoBytes))
+        require(draft.kind != VaultPaperKind.PRIVATE_NOTE || photo == null && current?.photo != true)
         val updated = draft.copy(revision = draft.revision + 1, photo = current?.photo == true || photo != null)
         val attachment = attachment(updated.id)
         if (photo != null) session.withKey { key -> write(attachment, seal(encryptor(key, photoContext(updated.id)), photo)) }
@@ -136,6 +143,10 @@ internal class HaloVaultStore(context: Context) {
         check(load(session).any { it.id == paper.id && it.revision == paper.revision && it.photo })
         val bytes = requireNotNull(read(attachment(paper.id), maxPhotoBytes + headerBytes + 16))
         session.withKey { key -> open(key, photoContext(paper.id), bytes) }
+    }
+
+    fun current(session: VaultSession, paper: VaultPaper): VaultPaper = synchronized(lock) {
+        requireNotNull(load(session).firstOrNull { it.id == paper.id && it.revision == paper.revision })
     }
 
     fun delete(session: VaultSession, paper: VaultPaper) = synchronized(lock) {
@@ -157,7 +168,7 @@ internal class HaloVaultStore(context: Context) {
                 fun date(key: String) = row.optString(key).takeIf(String::isNotBlank)?.let(LocalDate::parse)
                 VaultPaper(row.getString("name"), VaultPaperKind.valueOf(row.getString("kind")),
                     date("bought"), date("ends"), date("remind"), row.getString("id"), row.getLong("revision"),
-                    row.getBoolean("photo")).also { it.validate(); require(it.revision > 0) }
+                    row.getBoolean("photo"), row.optString("folder"), row.optString("text")).also { it.validate(); require(it.revision > 0) }
             }.also { rows -> require(rows.distinctBy(VaultPaper::id).size == rows.size) }
         } finally { plain.fill(0) }
     }
@@ -166,7 +177,8 @@ internal class HaloVaultStore(context: Context) {
         val plain = JSONArray(rows.map { row ->
             JSONObject().put("name", row.name).put("kind", row.kind.name).put("bought", row.bought?.toString())
                 .put("ends", row.ends?.toString()).put("remind", row.remind?.toString()).put("id", row.id)
-                .put("revision", row.revision).put("photo", row.photo)
+                .put("revision", row.revision).put("photo", row.photo).put("folder", row.folder)
+                .put("text", row.text.takeIf(String::isNotEmpty))
         }).toString().toByteArray(Charsets.UTF_8)
         try {
             require(plain.size <= maxIndex - headerBytes - 16)

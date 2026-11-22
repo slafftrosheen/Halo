@@ -114,6 +114,7 @@ data class TtsRequested(
     /** Content-free source categories; null means unknown and cannot authorize hosted speech. */
     val remoteDataCategories: Set<String>? = null,
     val remoteDispatchRevision: Long? = null,
+    val conversationId: String? = null,
 ) : HaloEvent
 
 data class TtsRangeStarted(val transactionId: String, val start: Int, val end: Int,

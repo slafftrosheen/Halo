@@ -1,0 +1,10 @@
+<resources>
+    <string name="memory_reference_saved">Использовать сохранённую память</string>
+    <string name="memory_reference_saved_detail">Учитывать сохранённые факты и предпочтения в чате и голосовых ответах.</string>
+    <string name="memory_reference_history">Учитывать историю чатов</string>
+    <string name="memory_reference_history_detail">Учитывать нужные сведения и недавние предпочтения из прошлых чатов. Для этого включите сохранённую память.</string>
+    <string name="memory_reference_active_profile">Эти настройки действуют для текущего профиля Local или Power.</string>
+    <string name="memory_learning_off_detail">Сохранённую память можно редактировать в Библиотеке. Обучение выключено.</string>
+    <string name="memory_learning_explicit_detail">Сохранять новые сведения, когда вы просите Halo запомнить их.</string>
+    <string name="memory_learning_suggest_detail">Получать предложения о памяти и рабочих процессах для проверки и подтверждения.</string>
+</resources>

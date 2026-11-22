@@ -118,10 +118,13 @@ object ManualDependencyGraph {
             override suspend fun selectionIsCurrent(session: com.halo.sdk.runtime.ink.InkSession, expectedRevision: String,
                 selection: com.halo.sdk.runtime.ink.InkSelectionContext) = notebookCanvasRepository.remoteInkSelectionIsCurrent(session, expectedRevision, selection)
         }) }
+    private val inkActivation = com.halo.sdk.runtime.ink.InkActivationPolicy {
+        com.halo.app.BuildConfig.DEBUG && com.halo.app.BuildConfig.HALO_INK_QUALIFICATION
+    }
     private val crossDeviceInkOwner = lazy {
         val hostId = storage.getString("ink.local.host.id.v1")?.takeIf { it.matches(Regex("[A-Za-z0-9_-]{1,200}")) }
             ?: java.util.UUID.randomUUID().toString().also { storage.putString("ink.local.host.id.v1", it) }
-        com.halo.app.ink.CrossDeviceInkController(deviceSessionManager, notebookCanvasRepository, hostId)
+        com.halo.app.ink.CrossDeviceInkController(deviceSessionManager, notebookCanvasRepository, hostId, inkActivation)
     }
     val crossDeviceInk get() = crossDeviceInkOwner.value
     fun stopRemoteInkOnBackground() {
@@ -182,12 +185,33 @@ object ManualDependencyGraph {
             enrich = articleContentCollector::enrich, allowRefresh = { !haloPause.isPaused() })
     }
     val articleContentStore by lazy { com.halo.app.everyday.collectors.ArticleContentStore(java.io.File(applicationContext.filesDir, "source-content")) }
+    val offlineKnowledge by lazy {
+        val downloader = com.halo.app.everyday.collectors.ArticleDownloader(remoteDispatchPolicy)
+        com.halo.app.everyday.collectors.OfflineKnowledge(
+            java.io.File(applicationContext.noBackupFilesDir, "offline-knowledge"),
+            fetch = { url, accept -> downloader.fetch(url, accept = accept) },
+            downloadAuthority = {
+                val family = kidsPreferences.adultActionRevision()
+                val mode = privacyModes.revision
+                val verify: () -> Unit = {
+                    kidsPreferences.requireAdultAction(family)
+                    haloPause.requireActive()
+                    check(foregroundUnlocked() && powerModeEnabled() && privacyModes.revision == mode)
+                }
+                verify
+            })
+    }
+    val articlePictureSettings by lazy { com.halo.app.everyday.collectors.ArticlePictureSettings(applicationContext) }
     private val articleContentCollector by lazy {
-        com.halo.app.everyday.collectors.ArticleContentCollector(collectorRepository, articleContentStore,
-            com.halo.app.everyday.collectors.ArticleDownloader(remoteDispatchPolicy)::fetch)
+        val downloader = com.halo.app.everyday.collectors.ArticleDownloader(remoteDispatchPolicy)
+        com.halo.app.everyday.collectors.ArticleContentCollector(collectorRepository, articleContentStore, { downloader.fetch(it) },
+            picturesVisible = { articlePictureSettings.visible.value },
+            metered = { applicationContext.getSystemService(android.net.ConnectivityManager::class.java)?.isActiveNetworkMetered != false },
+            downloadSmall = { downloader.fetch(it, maxBytes = 256 * 1024) })
     }
     val collectorCoordinator: com.halo.app.everyday.collectors.CollectorCoordinator get() = collectorCoordinatorOwner.value
     val collectorBootstrap by lazy { com.halo.app.everyday.collectors.android.CollectorBootstrap(applicationContext, collectorRepository) }
+    internal val todayNews by lazy { com.halo.app.everyday.briefing.TodayNewsReportService(applicationContext) }
     val collectorPreview by lazy { com.halo.app.everyday.collectors.CollectorPreview(collectorRepository, collectorRegistry, remoteDispatchPolicy) }
     val offlineCities: com.halo.app.everyday.collectors.OfflineCityCatalogue by lazy {
         com.halo.app.everyday.collectors.OfflineCityCatalogue { applicationContext.assets.open("everyday/everyday-cities.bin") }
@@ -213,6 +237,7 @@ object ManualDependencyGraph {
         appDatabase,storage.getString("kids_project_library_v1")), notificationPolicies.changes.value, notificationBridge.isAccessGranted())
     val dayContext by lazy { com.halo.app.everyday.briefing.AndroidDayContext(appDatabase, collectorRepository, organizerUseCases,
         notificationRepository, notificationBridge::isAccessGranted, { notificationPolicies.changes.value }).reader }
+    internal val dayReportService by lazy { com.halo.app.everyday.briefing.DayReportService(applicationContext) }
     val briefService: com.halo.app.everyday.briefing.EverydayBriefService by lazy {
         com.halo.app.everyday.briefing.EverydayBriefService(briefRepository, collectorRepository, organizerRepository,
             attention = { briefAttention() }, audience = {
@@ -280,7 +305,10 @@ object ManualDependencyGraph {
         )
     }
     val notebookUseCases by lazy { NotebookUseCases(notebookRepository) }
-    val studyLessonStore by lazy { com.halo.app.ui.screens.study.StudyLessonStore(storage) }
+    val studyLessonStore by lazy {
+        com.halo.app.ui.screens.study.StudyLessonStore(storage,
+            sessionExists = { appDatabase.studyDao().getSession(it) != null })
+    }
     val privacyModes by lazy { com.halo.app.ai.PrivacyModeStore(securedStorage).apply {
         remoteAllowed = { kidsPreferences.loadedState.value }
         configuredProviders = { configuredRemoteProviderIds() }
@@ -370,7 +398,9 @@ object ManualDependencyGraph {
         allowOnline = { kidsPreferences.loadedState.value },
         client = com.halo.app.online.OpenRouterOnlineClient(remoteClient("openrouter", com.halo.sdk.provider.RemoteOperation.WEB,
             setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT), metadataOnlyForGet = true)),
-        privacyModes = privacyModes.mode) }
+        privacyModes = privacyModes.mode,
+        openAi = com.halo.app.online.OpenAiWebSearchClient(remoteClient("openai", com.halo.sdk.provider.RemoteOperation.WEB,
+            setOf(com.halo.sdk.provider.RemoteDataCategory.TEXT)))) }
     private fun remoteClient(provider: String, operation: com.halo.sdk.provider.RemoteOperation,
         categories: Set<com.halo.sdk.provider.RemoteDataCategory>,
         base: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
@@ -395,7 +425,8 @@ object ManualDependencyGraph {
     }
     val notebookCanvasRepository by lazy {
         com.halo.app.data.notebook.NotebookCanvasRepository(
-            appDatabase, appDatabase.notebookCanvasDao(), appDatabase.notebookDao()
+            appDatabase, appDatabase.notebookCanvasDao(), appDatabase.notebookDao(),
+            remoteInkActivation = inkActivation,
         )
     }
     val captures by lazy { com.halo.app.capture.LocalCaptureStore(applicationContext, appDatabase, notebookRepository, eventBus).also { recentCaptureProjection } }
@@ -476,7 +507,7 @@ object ManualDependencyGraph {
     val studyTutorGateway by lazy {
         com.halo.app.study.AiRouterTutorGateway(
             router = aiProviderRouter,
-            allowCloudSharing = { storage.readRuntimeAiContextPolicy().allowCloudWorkspace },
+            allowCloudSharing = { storage.readRuntimeAiContextPolicy().let { it.includeWorkspace && it.allowCloudWorkspace } },
             allowChildCloudSharing = { powerModeEnabled() },
             sessionAllowsRemote = { powerModeEnabled() },
             permitsText = { id, local ->
@@ -785,7 +816,13 @@ object ManualDependencyGraph {
     val contentPayloadStore by lazy {
         com.halo.app.data.payload.FileContentPayloadStore(appDatabase, java.io.File(applicationContext.filesDir, "payloads"))
     }
-    val conversationHistoryRetriever by lazy { com.halo.app.data.RoomConversationHistoryRetriever(appDatabase) }
+    val conversationHistoryRetriever by lazy {
+        com.halo.app.data.RoomConversationHistoryRetriever(appDatabase) { id, local ->
+            kidsPreferences.loadedState.value && !kidsPreferences.enabled.value &&
+                conversationContextPolicies.get(id)?.let { it.includeMemories != false && (local || it.allowCloudMemories != false) } != false &&
+                workspaceMediaAiPolicy.permitsObject(id, local)
+        }
+    }
     val delegatedTaskCoordinator by lazy {
         val builder = com.halo.runtime.cognition.delegation.DelegatedContextBuilder { parent, reference ->
             when (reference.kind) {
@@ -1185,6 +1222,7 @@ object ManualDependencyGraph {
         )
         // MINING-P2-001: choice surfaces can only resolve durable input requests.
         val presentationChoiceAuthority = com.halo.app.di.tools.PresentationChoiceAuthority(agentRunStore)
+        val localInstrumentExecutor = com.halo.app.di.tools.host.HaloLocalInstrumentTools(foregroundUnlocked)
         val presentationExecutor = com.halo.app.di.tools.PresentationToolExecutor(
             projection = presentationProjection,
             choiceBinding = { presentationChoiceAuthority.binding() },
@@ -1266,6 +1304,9 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.host.HaloRecordControls {
                     foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
                 },
+                com.halo.app.di.tools.host.HaloScanTranslationTools {
+                    foregroundUnlocked() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value
+                },
                 com.halo.app.di.tools.host.FollowMeTools(followMePreferences) {
                     check(foregroundUnlocked() && !isHaloPaused())
                     com.halo.app.ui.toolkit.requireAdultToolkit(applicationContext)
@@ -1296,14 +1337,36 @@ object ManualDependencyGraph {
                     bootId={com.halo.app.everyday.organizer.android.OrganizerAndroidClock.bootId(applicationContext)},
                     power={privacyModes.mode.value==com.halo.app.ai.PrivacyMode.CLOUD},
                     ready={(applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap();collectorBootstrap.ensureInitialized()},readState=::everydayDisclosureState,
-                    articleContent = articleContentStore::read,
-                    inspectImage = com.halo.app.everyday.collectors.SourceImageReader(articleContentStore, aiProviderRouter) {
-                        privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD
-                    }::read, dayContext = dayContext::read, localFactContent = { fact ->
+                    articleContent = articleContentStore::read, knowledge = { offlineKnowledge },
+                    inspectImage = com.halo.app.everyday.collectors.SourceImageReader(articleContentStore, aiProviderRouter,
+                        power = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD },
+                        permitted = { image -> articlePictureSettings.visible.value && image.fromArticle &&
+                            (!kidsPreferences.enabled.value || image.sensitivity == com.halo.app.everyday.collectors.ArticleImageSensitivity.CLEAR) }
+                    )::read, dayContext = dayContext::read, localFactContent = { fact ->
                         if (fact.kind == "NOTE") requireNotNull(appDatabase.notebookDocumentDao().getDocument(fact.id)).let { note ->
                             check(note.lifecycle == "ACTIVE" && "${note.updatedAt}:${note.revision}" == fact.revision)
                             note.body
                         } else null
+                    }, plannerStorage = storage, todayOverview = { com.halo.app.everyday.briefing.readTodayOverview() },
+                    receiptTotals = { merchant, month ->
+                        val cloud = privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD
+                        check(!cloud || powerModeEnabled() && workspaceContext.remoteAllowed("FILE"))
+                        com.halo.app.data.search.readLibraryReceiptTotals(
+                            com.halo.app.data.search.ReceiptQuery(merchant, java.time.YearMonth.parse(month)), cloudResult = cloud).json()
+                    }, examSchedule = { date, references ->
+                        haloPause.requireActive()
+                        val cloud = privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD
+                        val lessons = references.map { (id, version) ->
+                            studyUseCases.getSession(id)?.takeIf { it.updatedAtEpochMs == version &&
+                                it.learnerLevel == com.halo.sdk.runtime.study.StudyLearnerLevel.ADULT }
+                                ?: throw com.halo.app.everyday.organizer.OrganizerConflict("An exam lesson changed")
+                        }
+                        val sources = lessons.flatMap { it.sourceObjectIds }.distinct()
+                        for (source in sources) check(workspaceContext.permits(source, !cloud))
+                        com.halo.app.everyday.organizer.StudyExamSchedule(date, lessons.map {
+                            com.halo.app.everyday.organizer.StudyExamLesson(it.id,
+                                it.goal?.trim()?.take(120)?.takeIf(String::isNotBlank) ?: "Study lesson", it.updatedAtEpochMs)
+                        }) to sources.map { com.halo.app.everyday.organizer.OrganizerLink(it) }
                     }),
                 com.halo.app.di.tools.SavedDeviceToolExecutor(devicesViewModel.savedDeviceActions,
                     canConfigure = { foreground() && kidsPreferences.loadedState.value && !kidsPreferences.enabled.value }),
@@ -1451,6 +1514,8 @@ object ManualDependencyGraph {
                 routineCreationExecutor,
                 procedureExecutor,
                 presentationExecutor,
+                localInstrumentExecutor,
+                com.halo.app.di.tools.host.MerchantCheckoutTools(foregroundUnlocked),
                 useSkillExecutor,
                 workflowPlanExecutor,
                 // Discovery meta-tool is internal: it expands schemas without widening authorization.
@@ -1487,7 +1552,9 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ROUTINE to routineCreationExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.PROCEDURE to procedureExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.PRESENTATION to presentationExecutor,
-            ) + longTaskExecutor.descriptors() + listOf(com.halo.runtime.cognition.tools.WorkflowPlanTool.descriptor(),
+            ) + longTaskExecutor.descriptors() + localInstrumentExecutor.definitions().mapNotNull(
+                com.halo.app.di.tools.host.HaloLocalInstrumentTools.Companion::descriptor,
+            ) + listOf(com.halo.runtime.cognition.tools.WorkflowPlanTool.descriptor(),
                 com.halo.app.di.tools.HaloToolDescriptors.discoveryMeta(
                     com.halo.runtime.cognition.tools.ToolDiscoveryService.discoveryToolDefinition()
                 ),
@@ -1625,6 +1692,7 @@ object ManualDependencyGraph {
             responseLanguage = { appLanguagePreferences.language.value.tag },
             discoveryProvider = { toolDiscovery },
             memoryContextSource = memoryContextSource,
+            conversationHistory = conversationHistoryRetriever,
             toolExposureGate = toolExposureGate,
             conversationPolicyRepository = conversationContextPolicies,
             compactor = com.halo.runtime.cognition.context.ContextCompactor(
@@ -1699,7 +1767,21 @@ object ManualDependencyGraph {
     val workspaceMediaAiPolicy by lazy { com.halo.app.data.workspace.WorkspaceMediaAiPolicy(appDatabase, storage) }
     val contextualCapture by lazy {
         com.halo.app.capture.ContextualCaptureController(applicationContext, interactionMediaStore, captures,
-            visualAttachments, notebookAssetRepository, infra.scope, workspaceMediaAiPolicy, storage)
+            visualAttachments, notebookAssetRepository, infra.scope, workspaceMediaAiPolicy, storage,
+            wearableHomeworkRevision = { deviceId, expected ->
+                haloPause.requireActive()
+                val family = kidsPreferences
+                if (family.getEnabled() || expected != null) {
+                    family.homework.load()
+                    val origin = requireNotNull(deviceId)
+                    val revision = expected ?: family.presentationRevision()
+                    family.requireHomeworkGlasses(revision, origin)
+                    check(visualContextSource.isSavedHomeworkGlasses(origin))
+                    haloPause.requireActive()
+                    family.requireHomeworkGlasses(revision, origin)
+                    revision
+                } else null
+            })
     }
     val interactionMediaStore by lazy { com.halo.app.capture.WorkspaceInteractionMediaStore(mediaAssetStore, mediaAssetResolver) }
     val interactionContext by lazy {
@@ -2030,6 +2112,13 @@ object ManualDependencyGraph {
                     val endpoint = com.halo.runtime.cognition.continuity.RunContinuityResolver.endpoint(com.halo.sdk.runtime.responseTarget(interpretation.origin?.speechRoute), interpretation.origin?.toObservationOrigin())
                     interactionResponseHandler.respond(com.halo.runtime.cognition.interaction.InteractionResponseSubmission(response, endpoint))
                     true
+                } else if (pending.isEmpty() && interpretation.origin?.speechRoute == com.halo.sdk.runtime.SpeechInputRoute.Phone &&
+                    com.halo.app.ui.everyday.isDayReportQuestion(interpretation.transcript) &&
+                    kidsPreferences.loadedState.value && !kidsPreferences.enabled.value && !isHaloPaused() &&
+                    attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND &&
+                    applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked == false) {
+                    requestedHaloScreen.value = com.halo.app.ui.everyday.EverydayRoutes.BRIEF
+                    true
                 } else false
             },
             responseCommitter = cognitiveResponseCommitter,
@@ -2144,6 +2233,50 @@ object ManualDependencyGraph {
     }
     val storageUsageRepository by lazy { com.halo.app.storage.AndroidStorageUsageRepository(applicationContext, storageLayout) }
     val workspaceFileRepository by lazy { RoomWorkspaceFileRepository(applicationContext, appDatabase, storageLayout.managedWorkspaceFiles) }
+    internal val privateLibraryFileAdapter by lazy {
+        com.halo.app.nativeactions.WorkspacePrivateFileAdapter(applicationContext, appDatabase, storageLayout.managedWorkspaceFiles)
+    }
+    internal val privateLibraryNoteAssets by lazy {
+        com.halo.app.nativeactions.PrivateLibraryNoteAssets(applicationContext, appDatabase, storageLayout.managedWorkspaceFiles)
+    }
+    internal val privateLibraryStudySessions by lazy {
+        com.halo.app.nativeactions.PrivateLibraryStudySessionAdapter(appDatabase, studyLessonStore)
+    }
+    internal val privateLibraryToolPayloads by lazy {
+        com.halo.app.nativeactions.PrivateLibraryPayloads(appDatabase, contentPayloadStore,
+            java.io.File(applicationContext.noBackupFilesDir, "private-library-tool-results"))
+    }
+    internal val privateLibraryStore by lazy {
+        com.halo.app.nativeactions.PrivateLibraryStore(
+            appDatabase,
+            files = privateLibraryFileAdapter,
+            study = com.halo.app.nativeactions.PrivateLibraryStudyAdapter(appDatabase),
+            studySessions = privateLibraryStudySessions,
+            history = com.halo.app.nativeactions.PrivateLibraryHistory(appDatabase, conversationContextPolicies::privateRaw,
+                conversationStore = conversationStore, writeConversationPolicy = conversationContextPolicies::writePrivateRaw),
+            automation = com.halo.app.nativeactions.PrivateLibraryAutomation(
+                appDatabase, routineScheduler, attentionController, attentionContextProvider::cancelAutomationNotice,
+                withdrawScreen = screenStore::withdrawAutomationSources,
+            ),
+            chatDrafts = composerDraftStore,
+            toolPayloads = privateLibraryToolPayloads,
+            organizer = com.halo.app.nativeactions.PrivateLibraryOrganizerAdapter(appDatabase, organizerDelivery,
+                { com.halo.app.everyday.organizer.android.OrganizerScheduleWorker.enqueue(applicationContext) }),
+            noteAssets = privateLibraryNoteAssets,
+            people = com.halo.app.nativeactions.PrivateLibraryPersonAdapter(appDatabase, applicationContext),
+            reconcileLegacyOrigins = { com.halo.app.ui.toolkit.HaloAlbumIndex(applicationContext).backfillLegacyEditOrigins() },
+            withdrawPublicProjections = { ids ->
+                runCatching { com.halo.app.nativeactions.EverydayWidgetUpdates.withdrawPrivateSnapshots(applicationContext) }
+                runCatching { com.halo.app.ui.toolkit.AlbumStoryShares.revokeForSources(applicationContext, ids) }
+                runCatching {
+                    interactionContext.withdrawPrivateSources(ids).forEach(cognitiveSession::cancelInteraction)
+                }
+                runCatching { semanticWorkspace.refreshAfterSourceSealed() }
+                ids.forEach { workspaceSearchEngine.removeObject(com.halo.app.data.notebook.WorkspaceObjectId(it)) }
+            },
+            refreshWidgets = { com.halo.app.nativeactions.EverydayWidgetUpdates.enqueue(applicationContext) },
+        )
+    }
     val localMemoTranscriber by lazy {
         val speech = providers.speechRecognition as? com.halo.providers.sherpa.stt.ReloadableSpeechRecognitionProvider
         speech?.let { com.halo.app.capture.LocalMemoTranscriber(com.halo.app.capture.MemoPcmDecoder(applicationContext), { speech }, speech.readiness) }
@@ -2183,6 +2316,9 @@ object ManualDependencyGraph {
         val root = com.halo.app.storage.haloStorageLayout(applicationContext).speechModels
         com.halo.app.speech.diagnostics.SpeechDiagnosticRunner(
             capture = { duration, finish -> haloPause.whileActive { hostGraph.audioPerceptionEngine.captureDiagnosticAudio(duration, finish) } },
+            captureUtterance = { duration, finish -> haloPause.whileActive {
+                hostGraph.audioPerceptionEngine.captureDiagnosticAudio(duration, finish, stopAfterSpeech = true)
+            } },
             selected = providers.speechRecognition as com.halo.sdk.provider.BufferedSpeechRecognitionProvider,
             estimator = hostGraph.speechActivityEstimator,
             factory = { target ->
@@ -2211,12 +2347,56 @@ object ManualDependencyGraph {
             ))
     }
     val activityViewModel by lazy { ActivityViewModel(runtimeSnapshotManager, agentRunStore = agentRunStore) }
+    private val workspaceLibraryNames by lazy {
+        com.halo.app.data.workspace.WorkspaceLibraryNames(appDatabase)
+    }
+    private fun captureLibraryMutationAuthority(): (() -> Boolean)? {
+        val revision = runCatching { kidsPreferences.adultActionRevision() }.getOrNull() ?: return null
+        val keyguard = applicationContext.getSystemService(android.app.KeyguardManager::class.java) ?: return null
+        return {
+            !keyguard.isDeviceLocked && runCatching { kidsPreferences.requireAdultAction(revision) }.isSuccess
+        }
+    }
     val notebookViewModel by lazy {
         NotebookViewModel(
             workspaceUseCases, notebookUseCases, notebookOrganizationRepository, notebookCanvasRepository,
             study = studyUseCases,
             personalLearning = personalLearning,
             conversationStore = conversationStore,
+            libraryNames = workspaceLibraryNames,
+            aliasFlow = {
+                com.halo.app.ui.screens.notebook.grownUpLibraryValues(kidsPreferences.enabled, kidsPreferences.loadedState, emptyMap()) {
+                    workspaceLibraryNames.observe()
+                }
+            },
+            libraryAuthority = { captureLibraryMutationAuthority() },
+            librarySources = {
+                com.halo.app.ui.screens.notebook.grownUpLibrarySources(kidsPreferences.enabled, kidsPreferences.loadedState) {
+                    val origins = appDatabase.workspaceContextDao()
+                    val album = com.halo.app.ui.toolkit.HaloAlbumIndex(applicationContext)
+                    val scanStaging = "content://${applicationContext.packageName}.captures/workspace-owned/scan-staging/"
+                    com.halo.app.ui.screens.notebook.observeHaloLibrarySources(
+                        files = workspaceFileRepository.observeFiles(),
+                        places = origins.observeLibraryOriginIds(com.halo.app.ui.screens.notebook.LibraryPlaceOrigin),
+                        scans = origins.observeLibraryScanIds("${scanStaging}paper-", "${scanStaging}translation-"),
+                        captures = origins.observeLibraryCaptureOrigins(),
+                        cards = appDatabase.studyDao().observeLibraryPracticeCards(),
+                        people = kotlinx.coroutines.flow.combine(album.observePeople(), workspaceRepository.observe()) { people, active ->
+                            val activeIds = active.mapTo(hashSetOf()) { it.id.value }
+                            people.filter { it.referenceId in activeIds }.map {
+                                com.halo.app.ui.screens.notebook.LibraryPersonReference(it.id, it.name, it.referenceId, it.referenceVersion)
+                            }
+                        },
+                        albumFacts = album.observeNamingFacts(),
+                        glassesDeviceIds = {
+                            deviceRegistry.getSavedDevices().asSequence().filter { device ->
+                                device.descriptor.kind.name.endsWith("_GLASSES") ||
+                                    device.descriptor.kind == com.halo.sdk.runtime.embodiment.DeviceKind.BRILLIANT_FRAME
+                            }.map { it.identity.deviceId }.toSet()
+                        },
+                    )
+                }
+            },
             everyday={com.halo.app.everyday.presentation.EverydayLibraryProjection(organizerRepository,briefRepository,worldClocks,collectorRepository,
                 kidsPreferences.enabled,kidsPreferences.loadedState).observe()},
             openEveryday={entry ->
@@ -2382,6 +2562,7 @@ object ManualDependencyGraph {
             voiceSettings = { voiceExperienceSettings.state.value },
             allowOutput = { !isHaloPaused() },
             cancelGeneration = { cognitiveSession.cancel() },
+            reserveConversationOutput = conversationStore::reserveConversationExecution,
         )
     }
     val haloSpeechOutputCoordinator: HaloSpeechOutputCoordinator get() = speechOutputCoordinatorDelegate.value

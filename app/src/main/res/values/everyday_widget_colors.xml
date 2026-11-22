@@ -11,4 +11,7 @@
 <color name="everyday_widget_attention_fill">#29FF9F6B</color>
 <color name="everyday_widget_attention_ink">#8A3A0E</color>
 <color name="everyday_widget_stale">#805100</color>
+<color name="halo_widget_day_cell">#13060330</color>
+<color name="halo_widget_preview_action_text">#FFFFFF</color>
+<color name="halo_widget_glass_top">#F7F1E7</color>
 </resources>

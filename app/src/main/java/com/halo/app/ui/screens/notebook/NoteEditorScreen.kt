@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.data.notebook.isPendingDeletion
+
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
@@ -8,6 +10,8 @@ import com.halo.app.ui.zone5.Zone5ActionButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import com.halo.app.ui.zone5.Zone5Icon
+import com.halo.app.ui.instruments.HaloInstrumentAction
+import com.halo.app.ui.instruments.HaloInstrumentBar
 
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
@@ -138,6 +142,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.data.notebook.DocumentOperation
 import com.halo.app.data.notebook.DocumentSelection
+import com.halo.app.data.notebook.DocumentCommand
+import com.halo.app.data.notebook.NotebookDocumentCodec
 import com.halo.app.data.notebook.InlineStyle
 import com.halo.app.data.notebook.NoteBlock
 import com.halo.app.data.notebook.NoteBlockType
@@ -168,6 +174,7 @@ fun NoteEditorScreen(
     onOpenStudio: ((String, String) -> Unit)? = null,
     onOpenOffice: ((String) -> Unit)? = null,
     onExportCopy: (suspend (String, Long, com.halo.app.data.workspace.WorkspaceTextFormat) -> com.halo.app.data.workspace.WorkspaceFile)? = null,
+    onExportPaginatedNote: (suspend (String, Long, Boolean, Int?, Int?) -> com.halo.app.data.workspace.WorkspaceFile)? = null,
 ) {
     LaunchedEffect(viewModel) { viewModel.memoryReviewEvents.collect { onReviewMemory(it) } }
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -195,6 +202,12 @@ fun NoteEditorScreen(
     var exportFailed by remember { mutableStateOf(false) }
     var exportedRevision by rememberSaveable(viewModel.noteId) { mutableStateOf<Long?>(null) }
     var exported by remember { mutableStateOf<com.halo.app.data.workspace.WorkspaceFile?>(null) }
+    var pdfExportReview by remember(viewModel.noteId) { mutableStateOf(false) }
+    var noteReview by remember(viewModel.noteId) { mutableStateOf<NoteReviewRequest?>(null) }
+    val openNoteReview: (NoteReviewInstrument, String?) -> Unit = { instrument, preferredBlock ->
+        val current = viewModel.uiState.value
+        noteReview = NoteReviewRequest(instrument, current.noteInstrumentTarget(preferredBlock), current.pageSettings)
+    }
     val exitScope = rememberCoroutineScope()
     var leaving by remember(viewModel) { mutableStateOf(false) }
     val leaveSafely: () -> Unit = {
@@ -213,6 +226,12 @@ fun NoteEditorScreen(
     val referenceCandidates by viewModel.referenceCandidates.collectAsStateWithLifecycle()
 
     var showOutline by remember { mutableStateOf(false) }
+    var showTemplates by remember(viewModel.noteId) { mutableStateOf(false) }
+    var tableTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
+    var dictationRequest by remember(viewModel.noteId) { mutableStateOf(0L) }
+    var readRequest by remember(viewModel.noteId) { mutableStateOf(0L) }
+    var dictationTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
+    var dictationSelection by remember(viewModel.noteId) { mutableStateOf<DocumentSelection?>(null) }
     var insertTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
     var captureTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
     var imageTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
@@ -246,8 +265,9 @@ fun NoteEditorScreen(
         canonicalSourceVersion = state.revision.toString().takeIf { state.status == SaveStatus.SAVED },
         selectionIds = listOfNotNull(state.selection?.blockId),
         helpDescription = stringResource(R.string.zone5_help_note),
-        guidanceBlocked = pendingMode != null || state.isGenerating || exporting || exportDialog || exported != null || state.status in setOf(SaveStatus.LOADING, SaveStatus.FAILED, SaveStatus.CONFLICT, SaveStatus.MISSING, SaveStatus.TRASHED) ||
-            insertTarget != null || captureTarget != null || linkTarget != null || insertingFile || insertFeedback != null || showRename || toolsExpanded || showHaloSheet || showAssistMenu || showReferencePicker || showFindBar || showImageStudio || showNoteAppearance,
+        guidanceBlocked = pendingMode != null || noteReview != null || state.isGenerating || exporting || exportDialog || pdfExportReview ||
+            exported != null || state.status in setOf(SaveStatus.LOADING, SaveStatus.FAILED, SaveStatus.CONFLICT, SaveStatus.MISSING, SaveStatus.TRASHED) ||
+            insertTarget != null || captureTarget != null || linkTarget != null || tableTarget != null || showTemplates || insertingFile || insertFeedback != null || showRename || toolsExpanded || showHaloSheet || showAssistMenu || showReferencePicker || showFindBar || showImageStudio || showNoteAppearance,
         completedGuideIds = if (state.displayBody.isNotBlank() && (state.draftKept || state.status == SaveStatus.SAVED)) setOf("note-insert.v1", "library-new.v1") else emptySet(),
         helpSteps = listOf(
             com.halo.app.ui.presence.ShellGuideStep("note-insert.v1", "page.note.insert", stringResource(R.string.zone5_guide_note), state.displayBody.isNotBlank() && (state.draftKept || state.status == SaveStatus.SAVED)),
@@ -285,10 +305,11 @@ fun NoteEditorScreen(
             put("page.note.redo", stringResource(if (state.isGenerating) R.string.action_wait else R.string.action_no_redo))
         })
     var formatOpen by remember(viewModel) { mutableStateOf(false) }
+    var instrumentFormat by remember(viewModel) { mutableStateOf<String?>(null) }
     var formatLink by remember(viewModel) { mutableStateOf(false) }
     BindShellPageActions(pageOwner, listOf(
         ShellPageAction("page.note.format", stringResource(R.string.z6_sheet_format), HaloGlyph.TOOL, insertEnabled) {
-            formatOpen = true
+            instrumentFormat = null; formatOpen = true
         },
         ShellPageAction("page.note.insert", stringResource(R.string.zone5_insert), HaloGlyph.NOTE, insertEnabled) {
             val current = viewModel.uiState.value
@@ -382,6 +403,29 @@ fun NoteEditorScreen(
         scanTarget = null
         if (uri != null && target != null) insertFromImage(uri, target, scan = true)
     }
+    fun currentInsertTarget(): Pair<String?, Int> = viewModel.uiState.value.let { current ->
+        (current.selection?.blockId ?: current.blocks.lastOrNull()?.id) to noteInsertSignature(current)
+    }
+    tableTarget?.let { target ->
+        NoteInstrumentTableDialog(insertEnabled && canInsertAt(target), onInsert = { table ->
+            if (canInsertAt(target)) viewModel.insertBlock(target.first, NoteBlockType.PARAGRAPH, table)
+            tableTarget = null
+        }, onDismiss = { tableTarget = null })
+    }
+    if (showTemplates) NoteInstrumentTemplates { template ->
+        showTemplates = false
+        if (template != null) {
+            val current = viewModel.uiState.value
+            if (current.isEditable && current.mode == EditorMode.EDIT && !current.isGenerating) {
+                val blocks = NotebookDocumentCodec.parse(template) { java.util.UUID.randomUUID().toString() }.blocks
+                val index = current.blocks.indexOfFirst { it.id == current.selection?.blockId }
+                    .takeIf { it >= 0 }?.plus(1) ?: current.blocks.size
+                if (current.blocks.size + blocks.size <= com.halo.app.data.notebook.DocumentReducer.MAX_BLOCKS)
+                    viewModel.dispatch(DocumentCommand.ReplaceAll(current.blocks.take(index) + blocks + current.blocks.drop(index)))
+                else insertFeedback = "This note has reached its block limit."
+            }
+        }
+    }
     captureTarget?.let { target ->
         InboxCaptureDialog(onInsertMemo = { id ->
             if (!canInsertAt(target)) false
@@ -406,39 +450,51 @@ fun NoteEditorScreen(
             confirmButton = { TextButton(onClick = { insertFeedback = null }) { Text(uiText("Done")) } },
         )
     }
-    if (formatOpen) com.halo.app.ui.zone6.Zone6ButtonSheet(stringResource(R.string.z6_sheet_format), { formatOpen = false }) {
+    val formatTitle = when (instrumentFormat) {
+        "paragraph" -> uiText("Paragraph styles")
+        "emphasis" -> uiText("Bold, italic, underline")
+        "lists" -> uiText("Lists")
+        else -> stringResource(R.string.z6_sheet_format)
+    }
+    if (formatOpen) com.halo.app.ui.zone6.Zone6ButtonSheet(formatTitle, { formatOpen = false }) {
         Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val block = state.blocks.firstOrNull { it.id == state.selection?.blockId } ?: state.blocks.lastOrNull()
             val ready = insertEnabled && block != null
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (instrumentFormat == null || instrumentFormat == "paragraph") FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
                     Triple("Title", NoteBlockType.HEADING, MaterialTheme.typography.headlineSmall),
                     Triple("Heading", NoteBlockType.HEADING_2, MaterialTheme.typography.titleMedium),
                     Triple("Body", NoteBlockType.PARAGRAPH, MaterialTheme.typography.bodyMedium),
                     Triple("Small", NoteBlockType.HEADING_3, MaterialTheme.typography.bodySmall),
+                    Triple("Quote", NoteBlockType.QUOTE, MaterialTheme.typography.bodyMedium),
                 ).forEach { (label, type, style) ->
                     androidx.compose.material3.FilterChip(block?.type == type,
                         { block?.let { viewModel.changeBlockType(it.id, type) } }, enabled = ready,
                         label = { Text(uiText(label), style = style) }, modifier = Modifier.heightIn(min = 48.dp))
                 }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Bold" to InlineStyle.BOLD, "Italic" to InlineStyle.ITALIC, "Highlight" to InlineStyle.HIGHLIGHT)
+            if (instrumentFormat == null || instrumentFormat == "emphasis") FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Bold" to InlineStyle.BOLD, "Italic" to InlineStyle.ITALIC, "Underline" to InlineStyle.UNDERLINE,
+                    "Highlight" to InlineStyle.HIGHLIGHT).filter { instrumentFormat == null || it.second != InlineStyle.HIGHLIGHT }
                     .forEach { (label, style) ->
                         TextButton(onClick = { viewModel.toggleInlineStyle(style) },
                             enabled = insertEnabled && state.selection != null, modifier = Modifier.heightIn(min = 48.dp)) {
                             Text(uiText(label))
                         }
                     }
-                TextButton(onClick = { formatOpen = false; formatLink = true }, enabled = ready && state.selection != null,
+                if (instrumentFormat == null) TextButton(onClick = { formatOpen = false; formatLink = true }, enabled = ready && state.selection != null,
                     modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Add link")) }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (instrumentFormat == null || instrumentFormat == "lists") FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(NoteBlockType.QUOTE, NoteBlockType.CODE, NoteBlockType.BULLET_LIST, NoteBlockType.NUMBERED_LIST,
-                    NoteBlockType.CHECKLIST).forEach { type ->
+                    NoteBlockType.CHECKLIST).filter { instrumentFormat == null || it.isList }.forEach { type ->
                     TextButton(onClick = { block?.let { viewModel.changeBlockType(it.id, type) } },
                         enabled = ready, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText(type.label)) }
+                }
+                if (instrumentFormat == "lists") {
+                    TextButton(onClick = { block?.let { viewModel.indentBlock(it.id, -1) } }, enabled = ready && (block?.indent ?: 0) > 0) { Text(uiText("Outdent")) }
+                    TextButton(onClick = { block?.let { viewModel.indentBlock(it.id, 1) } }, enabled = ready && (block?.type?.isList == true)) { Text(uiText("Indent")) }
                 }
             }
         }
@@ -741,6 +797,63 @@ fun NoteEditorScreen(
             MissingNoteState(onBack, Modifier.weight(1f))
             return@Column
         }
+        if (literalFileFormat == null && state.status != SaveStatus.LOADING) {
+            val localSpeechReady by com.halo.app.di.ManualDependencyGraph.speechRecognitionAvailability.collectAsStateWithLifecycle()
+            val blockSelected = state.selection != null || state.blocks.isNotEmpty()
+            val noteTarget = state.noteInstrumentTarget()
+            val canRead = noteAppearance.readBack && state.mode != EditorMode.SOURCE && state.displayBody.isNotBlank()
+            val canExport = onExportCopy != null && state.status == SaveStatus.SAVED && state.mode != EditorMode.SOURCE && !state.isGenerating && !exporting
+            HaloInstrumentBar("notes", mapOf(
+                "notes.font_size" to HaloInstrumentAction({ openNoteReview(NoteReviewInstrument.FONT, null) },
+                    insertEnabled && noteTarget?.selection?.isEmpty == false),
+                "notes.align_spacing" to HaloInstrumentAction({ openNoteReview(NoteReviewInstrument.PARAGRAPH, null) },
+                    insertEnabled && noteTarget != null),
+                "notes.header_footer_page_numbers" to HaloInstrumentAction({ openNoteReview(NoteReviewInstrument.FURNITURE, null) }, insertEnabled),
+                "notes.page_setup" to HaloInstrumentAction({ openNoteReview(NoteReviewInstrument.PAGE, null) }, insertEnabled),
+                "notes.comments" to HaloInstrumentAction({ openNoteReview(NoteReviewInstrument.COMMENTS, null) },
+                    state.mode != EditorMode.SOURCE && noteTarget != null),
+                "notes.track_changes" to HaloInstrumentAction({ openNoteReview(NoteReviewInstrument.TRACK_CHANGES, null) },
+                    state.mode != EditorMode.SOURCE, selected = state.pageSettings.trackChanges),
+                "notes.paragraph_styles" to HaloInstrumentAction({ instrumentFormat = "paragraph"; formatOpen = true }, insertEnabled && blockSelected),
+                "notes.bold_italic_underline" to HaloInstrumentAction({ instrumentFormat = "emphasis"; formatOpen = true }, insertEnabled && state.selection != null),
+                "notes.highlight" to HaloInstrumentAction({ viewModel.toggleInlineStyle(InlineStyle.HIGHLIGHT) }, insertEnabled && state.selection != null),
+                "notes.lists" to HaloInstrumentAction({ instrumentFormat = "lists"; formatOpen = true }, insertEnabled && blockSelected),
+                "notes.insert_picture" to HaloInstrumentAction({ imageTarget = currentInsertTarget(); imagePicker.launch(arrayOf("image/*")) }, insertEnabled, working = insertingFile),
+                "notes.table" to HaloInstrumentAction({ tableTarget = currentInsertTarget() }, insertEnabled),
+                "notes.link" to HaloInstrumentAction({ if (viewModel.uiState.value.selection != null) formatLink = true else linkTarget = currentInsertTarget() }, insertEnabled),
+                "notes.spelling_easier_words" to HaloInstrumentAction({ viewModel.requestAssistance(DocumentOperation.REVIEW) }, insertEnabled && state.displayBody.isNotBlank(), working = state.isGenerating),
+                "notes.find_replace" to HaloInstrumentAction({ showFindBar = !showFindBar }, selected = showFindBar),
+                "notes.outline" to HaloInstrumentAction({ showOutline = true }),
+                "notes.read_aloud" to HaloInstrumentAction({ readRequest++ }, canRead),
+                "notes.dictate" to HaloInstrumentAction({
+                    dictationTarget = currentInsertTarget(); dictationSelection = viewModel.uiState.value.selection; dictationRequest++
+                }, insertEnabled && localSpeechReady && noteAppearance.dictation),
+                "notes.templates" to HaloInstrumentAction({ showTemplates = true }, insertEnabled),
+                "notes.export" to HaloInstrumentAction({ exportDialog = true }, canExport, working = exporting),
+            ), primary = "notes.paragraph_styles")
+            val selection = state.selection
+            val selectedIndex = state.blocks.indexOfFirst { it.id == selection?.blockId }
+            val readFromSelection = if (selection != null && selectedIndex >= 0) {
+                val first = state.blocks[selectedIndex]
+                val caret = selection.normalized(first.text.length).start
+                NotebookDocumentCodec.plainText(listOf(first.copy(text = first.text.substring(caret))) + state.blocks.drop(selectedIndex + 1))
+            } else state.displayBody
+            HaloVoiceTextActions(text = "", onText = { spoken ->
+                val target = dictationTarget
+                if (target != null && canInsertAt(target)) {
+                    val range = dictationSelection
+                    val block = viewModel.uiState.value.blocks.firstOrNull { it.id == range?.blockId }
+                    if (range != null && block != null && block.type != NoteBlockType.REFERENCE) {
+                        val normalized = range.normalized(block.text.length)
+                        viewModel.updateBlock(block.id, block.text.replaceRange(normalized.start, normalized.end, spoken))
+                    } else viewModel.insertBlock(target.first, text = spoken)
+                } else insertFeedback = "The note changed. Dictate again."
+                dictationTarget = null
+            }, enabled = !state.isGenerating, allowDictation = insertEnabled && noteAppearance.dictation,
+                dictationRequest = dictationRequest, onRequestConsumed = { dictationRequest = 0 },
+                readText = readFromSelection.takeIf { canRead }, readRequest = readRequest, onReadRequestConsumed = { readRequest = 0 },
+                readSourceIds = setOf(viewModel.noteId), showReadAction = false, fieldContent = {})
+        }
 
         Spacer(Modifier.height(8.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -782,10 +895,13 @@ fun NoteEditorScreen(
 
         CompositionLocalProvider(LocalNotePresentation provides noteAppearance) { when (state.mode) {
             EditorMode.SOURCE -> SourceModeEditor(state, viewModel) { requestMode(EditorMode.EDIT) }
-            EditorMode.READ -> ReadModeView(state, readScroll, viewModel.noteId, Modifier.weight(1f))
+            EditorMode.READ -> ReadModeView(state, readScroll, viewModel.noteId, Modifier.weight(1f)) {
+                openNoteReview(NoteReviewInstrument.COMMENTS, it)
+            }
             EditorMode.EDIT -> EditModeView(
                 state = state,
                 listState = editScroll,
+                onOpenComments = { openNoteReview(NoteReviewInstrument.COMMENTS, it) },
                 viewModel = viewModel,
                 showTools = toolsExpanded && literalFileFormat == null,
                 onImage = { attachment -> viewModel.imageStudio?.prepare(attachment); showImageStudio = true },
@@ -825,7 +941,9 @@ fun NoteEditorScreen(
             }) })
         if (!shellOwnsOrb || state.status in setOf(SaveStatus.CONFLICT, SaveStatus.FAILED, SaveStatus.MISSING, SaveStatus.TRASHED)) EditorStatusBar(state)
     }
-    if (exportDialog && onExportCopy != null) AlertDialog(onDismissRequest = { if (!exporting) exportDialog = false },
+    val advancedNote = noteReview
+    if (advancedNote != null) NoteReviewDialogs(advancedNote, state, viewModel) { noteReview = null }
+    if (exportDialog && onExportCopy != null && !pdfExportReview) AlertDialog(onDismissRequest = { if (!exporting) exportDialog = false },
         title = { Text(stringResource(R.string.note_export_copy)) }, text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.note_export_format))
@@ -833,6 +951,10 @@ fun NoteEditorScreen(
                 if (exportFailed) Text(stringResource(R.string.note_export_failed), color = MaterialTheme.colorScheme.error)
                 val formats = literalFileFormat?.let(::listOf) ?: listOf(
                     com.halo.app.data.workspace.WorkspaceTextFormat.MARKDOWN, com.halo.app.data.workspace.WorkspaceTextFormat.TXT)
+                if (literalFileFormat == null && onExportPaginatedNote != null) {
+                    TextButton(onClick = { pdfExportReview = true }, enabled = !exporting,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("PDF · print layout")) }
+                }
                 formats.forEach { format -> TextButton(onClick = {
                     exporting = true; exportFailed = false
                     scope.launch {
@@ -849,6 +971,23 @@ fun NoteEditorScreen(
                 }, enabled = !exporting, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(format.extension.uppercase()) } }
             }
         }, confirmButton = { TextButton(onClick = { exportDialog = false }, enabled = !exporting) { Text(uiText("Cancel")) } })
+    if (pdfExportReview && onExportPaginatedNote != null) NotePdfExportDialog(exporting, exportFailed,
+        onApply = { comments, first, last ->
+            exporting = true
+            exportFailed = false
+            scope.launch {
+                try {
+                    check(viewModel.flushBeforeStudy())
+                    val sourceRevision = viewModel.uiState.value.revision
+                    exported = onExportPaginatedNote(viewModel.noteId, sourceRevision, comments, first, last)
+                    exportedRevision = sourceRevision
+                    exportDialog = false
+                    pdfExportReview = false
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { exportFailed = true }
+                finally { exporting = false }
+            }
+        }, onDismiss = { if (!exporting) { pdfExportReview = false; exportFailed = false } })
     exported?.let { file -> AlertDialog(onDismissRequest = { exported = null },
         title = { Text(stringResource(R.string.file52_output_saved)) },
         text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text(file.displayName); com.halo.app.ui.workspace.WorkspaceExportButton(file)
@@ -1052,6 +1191,7 @@ private fun ColumnScope.EditModeView(
     showAssistMenu: Boolean,
     context: android.content.Context,
     onOpenCanvas: (String, String) -> Unit,
+    onOpenComments: (String) -> Unit,
 ) {
     val enabled = state.isEditable
     val appearance = LocalNotePresentation.current
@@ -1177,7 +1317,11 @@ private fun ColumnScope.EditModeView(
                 CircularProgressIndicator()
             }
         }
+        item(key = "page-header") { NotePageFurniture(state.pageSettings, top = true) }
         items(state.blocks, key = NoteBlock::id) { block ->
+            Column {
+            NoteInlineReview(block)
+            if (!block.isPendingDeletion()) {
             NoteBlockEditor(
                 block = block,
                 showTools = showTools,
@@ -1205,7 +1349,11 @@ private fun ColumnScope.EditModeView(
                 unlinkedReference = block.id in state.unlinkedReferenceIds,
                 onRelink = { onPickExistingReference(block.id) },
             )
+            }
+            NoteAnchoredCommentMarkers(block) { onOpenComments(block.id) }
+            }
         }
+        item(key = "page-footer") { NotePageFurniture(state.pageSettings, top = false) }
         item(key = "halo-draft") {
     state.proposal?.let { proposal ->
         ProposalCard(
@@ -1553,7 +1701,7 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
 
 @Composable
 private fun ReadModeView(state: NoteEditorUiState, scrollState: androidx.compose.foundation.ScrollState,
-    noteId: String, modifier: Modifier = Modifier) {
+    noteId: String, modifier: Modifier = Modifier, onOpenComments: (String) -> Unit) {
     val appearance = LocalNotePresentation.current
     Column(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)
         .notePaper(appearance.paper, MaterialTheme.colorScheme.outline.copy(alpha = .22f))
@@ -1579,7 +1727,12 @@ private fun ReadModeView(state: NoteEditorUiState, scrollState: androidx.compose
             return@Column
         }
         if (appearance.readBack) NoteReadBack(noteId, state.displayBody)
-        state.blocks.forEach { block -> ReadBlock(block) }
+        NotePageFurniture(state.pageSettings, top = true)
+        state.blocks.forEach { block ->
+            if (!block.isPendingDeletion()) ReadBlock(block)
+            NoteAnchoredCommentMarkers(block) { onOpenComments(block.id) }
+        }
+        NotePageFurniture(state.pageSettings, top = false)
     }
 }
 
@@ -1587,7 +1740,8 @@ private fun ReadModeView(state: NoteEditorUiState, scrollState: androidx.compose
 private fun ReadBlock(block: NoteBlock) {
     val indent = 16.dp * block.indent
     val appearance = LocalNotePresentation.current
-    val body = appearance.textStyle(MaterialTheme.typography.bodyMedium)
+    val body = noteParagraphStyle(appearance.textStyle(MaterialTheme.typography.bodyMedium), block.presentation)
+    val styles = noteStyledRanges(block)
     when (block.type) {
         NoteBlockType.DIVIDER -> {
             Spacer(Modifier.height(6.dp))
@@ -1609,7 +1763,7 @@ private fun ReadBlock(block: NoteBlock) {
         NoteBlockType.QUOTE -> Row(Modifier.padding(start = indent, top = 4.dp, bottom = 4.dp)) {
             Box(Modifier.width(3.dp).height(38.dp).background(MaterialTheme.colorScheme.primary))
             Spacer(Modifier.width(8.dp))
-            Text(renderInline(block.text, MaterialTheme.colorScheme.primary), style = body, fontStyle = FontStyle.Italic)
+            Text(renderInline(block.text, MaterialTheme.colorScheme.primary, styles), Modifier.weight(1f), style = body, fontStyle = FontStyle.Italic)
         }
         NoteBlockType.REFERENCE -> Surface(
             Modifier.padding(start = indent, top = 4.dp, bottom = 4.dp)
@@ -1637,7 +1791,7 @@ private fun ReadBlock(block: NoteBlock) {
                 tint = if (block.checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.width(8.dp))
-            Text(renderInline(block.text, MaterialTheme.colorScheme.primary), style = body)
+            Text(renderInline(block.text, MaterialTheme.colorScheme.primary, styles), Modifier.weight(1f), style = body)
         }
         NoteBlockType.BULLET_LIST, NoteBlockType.NUMBERED_LIST -> Row(
             Modifier.padding(start = indent, top = 3.dp, bottom = 3.dp),
@@ -1649,18 +1803,20 @@ private fun ReadBlock(block: NoteBlock) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.width(8.dp))
-            Text(renderInline(block.text, MaterialTheme.colorScheme.primary), style = body)
+            Text(renderInline(block.text, MaterialTheme.colorScheme.primary, styles), Modifier.weight(1f), style = body)
         }
-        else -> Text(
-            text = renderInline(block.text.ifBlank { " " }, MaterialTheme.colorScheme.primary),
-            style = appearance.textStyle(when (block.type) {
+        else -> if (block.type == NoteBlockType.PARAGRAPH && isNoteInstrumentTable(block.text)) {
+            NoteInstrumentTable(block.text)
+        } else Text(
+            text = renderInline(block.text.ifBlank { " " }, MaterialTheme.colorScheme.primary, styles),
+            style = noteParagraphStyle(appearance.textStyle(when (block.type) {
                 NoteBlockType.HEADING -> MaterialTheme.typography.headlineSmall
                 NoteBlockType.HEADING_2 -> MaterialTheme.typography.titleLarge
                 NoteBlockType.HEADING_3 -> MaterialTheme.typography.titleMedium
                 else -> MaterialTheme.typography.bodyLarge
-            }, heading = block.type.isHeading),
+            }, heading = block.type.isHeading), block.presentation),
             fontWeight = if (block.type.isHeading) FontWeight.SemiBold else FontWeight.Normal,
-            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp),
         )
     }
 }
@@ -1835,7 +1991,8 @@ private fun NoteBlockEditor(
                         onSelectionChange(value.selection.start, value.selection.end)
                     },
                     enabled = enabled,
-                    textStyle = when (block.type) {
+                    visualTransformation = noteEditorTransformation(block),
+                    textStyle = noteParagraphStyle(when (block.type) {
                         NoteBlockType.HEADING -> MaterialTheme.typography.headlineSmall.copy(color = MaterialTheme.colorScheme.onBackground)
                         NoteBlockType.HEADING_2 -> MaterialTheme.typography.titleLarge.copy(color = MaterialTheme.colorScheme.onBackground)
                         NoteBlockType.HEADING_3 -> MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onBackground)
@@ -1848,7 +2005,7 @@ private fun NoteBlockEditor(
                             color = MaterialTheme.colorScheme.onBackground,
                             lineHeight = 25.sp,
                         ))
-                    },
+                    }, block.presentation),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.secondary),
                     modifier = Modifier.weight(1f).padding(horizontal = 4.dp, vertical = 8.dp)
                         .focusRequester(focusRequester),
@@ -2038,33 +2195,27 @@ private fun noteSaveLabel(state: NoteEditorUiState): String = when (state.status
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun EditorStatusBar(state: NoteEditorUiState) {
-    val label = noteSaveLabel(state)
-    val color = when (state.status) {
-        SaveStatus.LOADING -> MaterialTheme.colorScheme.onSurfaceVariant
-        SaveStatus.SAVING -> MaterialTheme.colorScheme.primary
-        SaveStatus.SAVED -> MaterialTheme.colorScheme.primary
-        SaveStatus.CONFLICT, SaveStatus.FAILED, SaveStatus.MISSING, SaveStatus.TRASHED ->
-            MaterialTheme.colorScheme.error
-    }
+    val motion = com.halo.app.ui.instruments.HaloInstrumentMotion.level()
     FlowRow(
         modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (state.status == SaveStatus.SAVED) {
-                HaloIcon(HaloGlyph.LOCAL, contentDescription = null,
-                    modifier = Modifier.size(18.dp), tint = color)
-            } else {
-                Box(Modifier.size(8.dp).background(color, RoundedCornerShape(3.dp)))
+        androidx.compose.animation.Crossfade(state.status,
+            animationSpec = com.halo.app.ui.instruments.HaloInstrumentMotion.spec(160, motion), label = "Note save status") { status ->
+            val label = noteSaveLabel(state.copy(status = status))
+            val color = when (status) {
+                SaveStatus.LOADING -> MaterialTheme.colorScheme.onSurfaceVariant
+                SaveStatus.SAVING -> MaterialTheme.colorScheme.primary
+                SaveStatus.SAVED -> MaterialTheme.colorScheme.tertiary
+                SaveStatus.CONFLICT, SaveStatus.FAILED, SaveStatus.MISSING, SaveStatus.TRASHED -> MaterialTheme.colorScheme.error
             }
-            Text(
-                uiText(label),
-                style = MaterialTheme.typography.labelMedium,
-                color = color,
-                // Announce save-state changes to TalkBack without stealing focus.
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (status == SaveStatus.SAVED) HaloIcon(HaloGlyph.LOCAL, null, Modifier.size(18.dp), tint = color)
+                else Box(Modifier.size(8.dp).background(color, RoundedCornerShape(3.dp)))
+                Text(uiText(label), style = MaterialTheme.typography.labelMedium, color = color,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+            }
         }
         Text(
             pluralStringResource(R.plurals.note_word_count, state.wordCount, state.wordCount),
@@ -2092,28 +2243,38 @@ private fun MissingNoteState(onBack: () -> Unit, modifier: Modifier = Modifier) 
 
 /** Minimal inline markdown renderer for the block surface. */
 @Composable
-private fun renderInline(text: String, linkColor: androidx.compose.ui.graphics.Color): AnnotatedString {
+private fun renderInline(text: String, linkColor: androidx.compose.ui.graphics.Color,
+    ranges: List<AnnotatedString.Range<SpanStyle>> = emptyList()): AnnotatedString {
     val highlight = MaterialTheme.colorScheme.tertiaryContainer
     return buildAnnotatedString {
+        fun appendStyled(from: Int, to: Int) {
+            val offset = length
+            append(text.substring(from, to))
+            ranges.forEach { range ->
+                val first = maxOf(range.start, from)
+                val last = minOf(range.end, to)
+                if (first < last) addStyle(range.item, offset + first - from, offset + last - from)
+            }
+        }
         var index = 0
         while (index < text.length) {
             when {
                 text.startsWith("**", index) -> {
                     val end = text.indexOf("**", index + 2)
                     if (end > index) {
-                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(text.substring(index + 2, end)) }
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { appendStyled(index + 2, end) }
                         index = end + 2
                     } else {
-                        append(text[index]); index++
+                        appendStyled(index, index + 1); index++
                     }
                 }
                 text.startsWith("==", index) -> {
                     val end = text.indexOf("==", index + 2)
                     if (end > index + 2) {
-                        withStyle(SpanStyle(background = highlight)) { append(text.substring(index + 2, end)) }
+                        withStyle(SpanStyle(background = highlight)) { appendStyled(index + 2, end) }
                         index = end + 2
                     } else {
-                        append(text[index])
+                        appendStyled(index, index + 1)
                         index++
                     }
                 }
@@ -2121,29 +2282,40 @@ private fun renderInline(text: String, linkColor: androidx.compose.ui.graphics.C
                     val end = text.indexOf("~~", index + 2)
                     if (end > index) {
                         withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
-                            append(text.substring(index + 2, end))
+                            appendStyled(index + 2, end)
                         }
                         index = end + 2
                     } else {
-                        append(text[index]); index++
+                        appendStyled(index, index + 1); index++
+                    }
+                }
+                text.startsWith("<u>", index) -> {
+                    val end = text.indexOf("</u>", index + 3)
+                    if (end >= index + 3) {
+                        withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
+                            appendStyled(index + 3, end)
+                        }
+                        index = end + 4
+                    } else {
+                        appendStyled(index, index + 1); index++
                     }
                 }
                 text[index] == '`' -> {
                     val end = text.indexOf('`', index + 1)
                     if (end > index) {
-                        withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) { append(text.substring(index + 1, end)) }
+                        withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) { appendStyled(index + 1, end) }
                         index = end + 1
                     } else {
-                        append(text[index]); index++
+                        appendStyled(index, index + 1); index++
                     }
                 }
                 text[index] == '*' -> {
                     val end = text.indexOf('*', index + 1)
                     if (end > index) {
-                        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(text.substring(index + 1, end)) }
+                        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { appendStyled(index + 1, end) }
                         index = end + 1
                     } else {
-                        append(text[index]); index++
+                        appendStyled(index, index + 1); index++
                     }
                 }
                 text[index] == '[' -> {
@@ -2151,16 +2323,18 @@ private fun renderInline(text: String, linkColor: androidx.compose.ui.graphics.C
                     val urlEnd = if (labelEnd > index) text.indexOf(')', labelEnd) else -1
                     if (labelEnd > index && urlEnd > labelEnd) {
                         withStyle(SpanStyle(color = linkColor)) {
-                            append(text.substring(index + 1, labelEnd))
+                            appendStyled(index + 1, labelEnd)
                         }
                         index = urlEnd + 1
                     } else {
-                        append(text[index]); index++
+                        appendStyled(index, index + 1); index++
                     }
                 }
                 else -> {
-                    append(text[index])
-                    index++
+                    var end = index + 1
+                    while (end < text.length && text[end] !in "*=~<`[") end++
+                    appendStyled(index, end)
+                    index = end
                 }
             }
         }

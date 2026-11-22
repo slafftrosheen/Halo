@@ -68,6 +68,7 @@ android {
     buildConfigField("String", "HALO_GIT_COMMIT", "\"${getGitCommitHash()}\"")
     buildConfigField("Boolean", "HALO_GIT_DIRTY", getGitDirty().toString())
     buildConfigField("String", "HALO_SOURCE_ID", "\"${getGitCommitHash()}${if (getGitDirty()) "+dirty" else ""}\"")
+    buildConfigField("Boolean", "HALO_INK_QUALIFICATION", "false")
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -99,6 +100,8 @@ android {
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
+      buildConfigField("Boolean", "HALO_INK_QUALIFICATION",
+        (providers.gradleProperty("haloInkQualification").orNull == "true").toString())
       val debugConfig = signingConfigs.findByName("debugConfig")
       if (debugConfig != null) {
         signingConfig = debugConfig
@@ -116,6 +119,11 @@ android {
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+    isCoreLibraryDesugaringEnabled = true
+  }
+  androidResources {
+    // Organic Maps reads these assets in place through an APK file descriptor.
+    noCompress += listOf("mwm", "twm", "ttf", "packed_polygons.bin")
   }
   buildFeatures {
     compose = true
@@ -155,6 +163,12 @@ secrets {
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
 dependencies {
+  coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+  // Pin the published Android package for the Organic Maps engine. Maps use a separate data licence.
+  implementation("io.github.fred-apina:organicmaps-sdk:0.3.1") {
+    // The SDK uses the same HTTP ABI as Halo's existing client. Keep one version for all providers.
+    exclude(group = "com.squareup.okhttp3", module = "okhttp")
+  }
   // Parse feed HTML locally; never use jsoup's network-fetch API.
   implementation("org.jsoup:jsoup:1.23.2")
     implementation("com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")

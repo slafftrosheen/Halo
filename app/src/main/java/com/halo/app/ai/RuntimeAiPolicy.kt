@@ -23,13 +23,15 @@ fun Storage.readRuntimeAiContextPolicy(): AiContextPolicy = (this as? ModeProfil
     allowCloudWorkspace = savedPrivacyMode() != PrivacyMode.PRIVATE && getBoolean(KEY_CLOUD_WORKSPACE, false),
     allowCloudScreenContext = savedPrivacyMode() != PrivacyMode.PRIVATE && getBoolean(KEY_CLOUD_SCREEN, false),
     allowCloudImages = savedPrivacyMode() != PrivacyMode.PRIVATE && getBoolean(KEY_CLOUD_IMAGES, false),
-    allowCloudMemories = savedPrivacyMode() != PrivacyMode.PRIVATE && getBoolean("policy_cloud_memories", false)
+    allowCloudMemories = savedPrivacyMode() != PrivacyMode.PRIVATE && getBoolean("policy_cloud_memories", false),
+    referenceChatHistory = getBoolean(KEY_REFERENCE_CHAT_HISTORY, false),
 )
 
 fun Storage.writeRuntimeAiContextPolicy(policy: AiContextPolicy) {
     putBatch(booleans = mapOf(KEY_CONVERSATION to policy.includeConversation,
         KEY_DEVICE_STATE to policy.includeDeviceState, KEY_RECENT_EVENTS to policy.includeRecentEvents,
-        KEY_MEMORIES to policy.includeMemories, KEY_TOOLS to policy.includeAvailableTools,
+        KEY_MEMORIES to policy.includeMemories, KEY_REFERENCE_CHAT_HISTORY to policy.referenceChatHistory,
+        KEY_TOOLS to policy.includeAvailableTools,
         KEY_LOCATION to policy.includeLocation, KEY_IMAGES to policy.includeImages,
         KEY_AUDIO to policy.includeAudio, KEY_VIDEO to policy.includeVideo,
         KEY_WORKSPACE to policy.includeWorkspace, KEY_CLOUD_WORKSPACE to policy.allowCloudWorkspace,
@@ -41,6 +43,7 @@ const val KEY_CONVERSATION = "policy_conversation"
 const val KEY_DEVICE_STATE = "policy_device_state"
 const val KEY_RECENT_EVENTS = "policy_recent_events"
 const val KEY_MEMORIES = "policy_memories"
+const val KEY_REFERENCE_CHAT_HISTORY = "policy_reference_chat_history"
 const val KEY_TOOLS = "policy_tools"
 const val KEY_LOCATION = "policy_location"
 const val KEY_IMAGES = "policy_images"

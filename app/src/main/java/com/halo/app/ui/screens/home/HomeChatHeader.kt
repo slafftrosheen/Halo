@@ -17,13 +17,40 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun HomeChatActions(
+    canStartNew: Boolean,
+    canClear: Boolean,
+    onNew: () -> Unit,
+    onClear: () -> Unit,
+    onHistory: () -> Unit,
+) {
+    FlowRow(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        IconButton(onClick = onHistory, modifier = Modifier.size(48.dp)) {
+            Icon(painterResource(R.drawable.halo_ic_history), uiText("Conversation history"), Modifier.size(21.dp))
+        }
+        TextButton(onClick = onNew, enabled = canStartNew, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.zone5_new_chat))
+        }
+        TextButton(onClick = onClear, enabled = canClear, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.home_clear_chat))
+        }
+    }
+}
+
 /** Conversation navigation stays above the thread; processing privacy stays in its existing shell owner. */
 @Composable
 internal fun HomeChatHeader(mode: String, modeEnabled: Boolean, onMode: () -> Unit,
     onHistory: () -> Unit, onNew: () -> Unit, onUpdates: () -> Unit,
     onActivity: () -> Unit, onClear: () -> Unit, onToday: (() -> Unit)? = null,
     modeMenu: (@Composable () -> Unit)? = null,
-    surfaceSwitcher: (@Composable () -> Unit)? = null) {
+    surfaceSwitcher: (@Composable () -> Unit)? = null, onMakePrivate: (() -> Unit)? = null,
+    chatActionsEnabled: Boolean = true, clearEnabled: Boolean = true) {
     var menu by remember { mutableStateOf(false) }
     val shortScreen = LocalConfiguration.current.screenHeightDp < 480
     @Composable fun ModeControl() {
@@ -50,7 +77,7 @@ internal fun HomeChatHeader(mode: String, modeEnabled: Boolean, onMode: () -> Un
                     uiText("halo"), Modifier.width(64.dp).height(28.dp),
                     colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onSurface))
             }
-            IconButton(onClick = onNew, modifier = Modifier.size(48.dp)) {
+            IconButton(onClick = onNew, enabled = chatActionsEnabled, modifier = Modifier.size(48.dp)) {
                 Icon(painterResource(R.drawable.halo_ic_new_chat), uiText("New conversation"), Modifier.size(24.dp))
             }
             Box {
@@ -64,7 +91,12 @@ internal fun HomeChatHeader(mode: String, modeEnabled: Boolean, onMode: () -> Un
                         DropdownMenuItem(text = { Text(stringResource(R.string.home_your_day)) }, onClick = { menu = false; action() })
                     }
                     DropdownMenuItem(text = { Text(uiText("Open Activity")) }, onClick = { menu = false; onActivity() })
-                    DropdownMenuItem(text = { Text(uiText("Clear conversation")) }, onClick = { menu = false; onClear() })
+                    onMakePrivate?.let { protect ->
+                        DropdownMenuItem(text = { Text(stringResource(R.string.halo11_private_lock_chat)) },
+                            onClick = { menu = false; protect() })
+                    }
+                    DropdownMenuItem(text = { Text(stringResource(R.string.home_clear_chat)) },
+                        enabled = clearEnabled, onClick = { menu = false; onClear() })
                 }
             }
         }

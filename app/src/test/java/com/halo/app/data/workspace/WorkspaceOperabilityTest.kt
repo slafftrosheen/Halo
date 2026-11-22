@@ -21,12 +21,15 @@ class WorkspaceOperabilityTest {
         WorkspaceFileToolsFixture().use { f ->
             val actions = WorkspaceCanvasActions(f.database, f.canvases)
             val destructive = setOf("halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect")
-            val names = destructive + setOf("halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange")
+            val names = destructive + setOf("halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag",
+                "halo_canvas_duplicate", "halo_canvas_arrange", "halo_canvas_group_lock", "halo_canvas_add_comment", "halo_canvas_update_comment")
             for (name in names) {
                 val descriptor = requireNotNull(HaloToolDescriptors.workspace(actions.definitions().single { it.name == name }))
                 val contract = requireNotNull(descriptor.operability)
                 assertEquals(CapabilityId("workspace.write"), contract.capabilityId)
-                assertEquals(setOf("version") + if (name in setOf("halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup")) setOf("selectionToken") else emptySet(), contract.sourceVersionArguments)
+                assertEquals(setOf("version") + if (name in setOf("halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange",
+                    "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_group_lock", "halo_canvas_update_comment"))
+                    setOf("selectionToken") else emptySet(), contract.sourceVersionArguments)
                 assertTrue((contract.resultSchema["required"] as List<*>).contains("version"))
                 assertEquals(ReplaySafety.NEVER_REPLAY, descriptor.security.replaySafety)
                 assertNull(descriptor.presentation!!.targetArgument)

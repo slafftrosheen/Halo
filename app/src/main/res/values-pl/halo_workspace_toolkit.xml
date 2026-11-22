@@ -1,0 +1,12 @@
+<resources>
+    <string name="toolkit_find_tool">Znajdź narzędzie</string>
+    <string name="toolkit_empty_search">Brak pasujących narzędzi</string>
+    <string name="toolkit_in_dock">Na pasku</string>
+    <string name="toolkit_on_shelf">Wśród narzędzi</string>
+    <string name="toolkit_translated_scan_title">Skan z tłumaczeniem</string>
+    <string name="toolkit_keep_translation">Zapisz tłumaczenie</string>
+    <string name="toolkit_keeping_translation">Zapisywanie tłumaczenia</string>
+    <string name="toolkit_open_translation">Otwórz tłumaczenie</string>
+    <string name="toolkit_translation_kept">Zdjęcie i tłumaczenie zapisano razem w obszarze roboczym.</string>
+    <string name="toolkit_translation_error">Nie udało się zapisać tłumaczenia. Spróbuj ponownie.</string>
+</resources>

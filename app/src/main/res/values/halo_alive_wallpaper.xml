@@ -9,7 +9,7 @@
     <string name="alive_wallpaper_day">Day</string>
     <string name="alive_wallpaper_evening">Evening</string>
     <string name="alive_wallpaper_night">Night</string>
-    <string name="alive_wallpaper_in_app">Show in halo</string>
+    <string name="alive_wallpaper_in_app">Wallpaper on Halo Home</string>
     <string name="alive_wallpaper_react">Reacts to halo</string>
     <string name="alive_wallpaper_calm">Calmer at night</string>
     <string name="alive_wallpaper_restore">Put back how it was</string>
@@ -60,4 +60,20 @@
     <string name="wallpaper_ring_top">Top</string>
     <string name="wallpaper_ring_center">Centre</string>
     <string name="wallpaper_ring_lower">Lower</string>
+    <string name="wallpaper_photo_example">Photo example</string>
+    <string name="wallpaper_preview_name">Previewing %1$s</string>
+    <string name="wallpaper_apply">Apply wallpaper</string>
+    <string name="wallpaper_contrast_note">Halo Home uses your high-contrast background. The Android wallpaper can still be set separately.</string>
+    <string name="wallpaper_applied_home">Applied to Halo Home.</string>
+    <string name="wallpaper_apply_home_hint">Apply to show this wallpaper on Halo Home.</string>
+    <string name="wallpaper_apply_style_hint">Apply to save this style. Turn on Show on Halo Home to use it there.</string>
+    <string name="wallpaper_activate_android">Set on Android home screen</string>
+    <string name="wallpaper_android_hint">Halo saves your design and opens Android. Confirm where to set it in the Android preview.</string>
+    <string name="wallpaper_android_error">Android could not open a live wallpaper picker for this device or profile.</string>
+    <string name="wallpaper_see_reactions">Preview a reaction</string>
+    <string name="wallpaper_reaction_idle">Calm</string>
+    <string name="wallpaper_reaction_listening">Listening</string>
+    <string name="wallpaper_reaction_working">Working</string>
+    <string name="wallpaper_reaction_needs_you">Needs you</string>
+    <string name="wallpaper_gallery_schedule">Gallery selections change this schedule slot: %1$s.</string>
 </resources>

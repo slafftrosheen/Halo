@@ -12,7 +12,10 @@ interface RoutineDao {
     suspend fun compareAndSet(expected: RoutineEntity, replacement: RoutineEntity?): Boolean {
         if (get(expected.id) != expected) return false
         require(replacement == null || replacement.id == expected.id)
-        if (replacement == null) delete(expected.id) else upsert(replacement)
+        if (replacement == null) delete(expected.id) else {
+            if (hasPrivateReferences(replacement)) return false
+            upsert(replacement)
+        }
         return true
     }
     @Transaction
@@ -24,6 +27,36 @@ interface RoutineDao {
     @Query("SELECT * FROM routines") suspend fun all(): List<RoutineEntity>
     @Query("SELECT * FROM routines WHERE id = :id") suspend fun get(id: String): RoutineEntity?
     @Upsert suspend fun upsert(entity: RoutineEntity)
+    @Query("SELECT EXISTS(SELECT 1 FROM private_library_claims WHERE fingerprint = :hash)")
+    suspend fun isPrivateClaimed(hash: String): Boolean
+    @Query("SELECT EXISTS(SELECT 1 FROM private_library_claims WHERE fingerprint IN (:hashes))")
+    suspend fun containsPrivateClaims(hashes: List<String>): Boolean
+
+    suspend fun hasPrivateReferences(entity: RoutineEntity): Boolean = automationClaimKeys(listOf(entity.id),
+        entity.name, entity.triggerJson, entity.conditionsJson, entity.actionsJson, entity.deliveryJson)
+        .chunked(400).any { containsPrivateClaims(it) }
+
+    @Transaction
+    suspend fun upsertPublic(entity: RoutineEntity, expectedAbsent: Boolean = false): Boolean {
+        if (hasPrivateReferences(entity) || expectedAbsent && get(entity.id) != null) return false
+        upsert(entity)
+        return true
+    }
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertRestored(entity: RoutineEntity)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertRestoredRuns(rows: List<RoutineRunEntity>)
+    @Query("SELECT * FROM routine_runs WHERE routineId = :routineId ORDER BY triggerAt, id LIMIT :limit")
+    suspend fun privateRuns(routineId: String, limit: Int): List<RoutineRunEntity>
+    @Query("DELETE FROM routine_runs WHERE routineId = :routineId")
+    suspend fun withdrawPrivateRuns(routineId: String): Int
+    @Query("""SELECT id FROM routines WHERE id = :sourceId OR instr(name, :sourceId) > 0 OR instr(triggerJson, :sourceId) > 0
+        OR instr(conditionsJson, :sourceId) > 0 OR instr(actionsJson, :sourceId) > 0 OR instr(deliveryJson, :sourceId) > 0
+        UNION SELECT routineId FROM routine_runs WHERE id = :sourceId OR agentRunId = :sourceId
+        OR rootOccurrenceId = :sourceId OR causedByOccurrenceId = :sourceId OR signalId = :sourceId OR instr(reason, :sourceId) > 0
+        ORDER BY 1""")
+    suspend fun privateCandidates(sourceId: String): List<String>
     @Query("UPDATE routines SET enabled = :enabled WHERE id = :id")
     suspend fun setEnabled(id: String, enabled: Boolean)
     @Query("UPDATE routines SET nextRunAt = :at WHERE id = :id") suspend fun nextRun(id: String, at: Long?)

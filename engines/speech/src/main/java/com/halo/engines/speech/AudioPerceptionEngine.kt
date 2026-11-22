@@ -82,7 +82,8 @@ class AudioPerceptionEngine(
     /** Shares the physical owner and preprocessor, without publishing production events. */
     suspend fun captureDiagnosticAudio(
         maxDurationMs: Long = 15_000,
-        finish: kotlinx.coroutines.Deferred<Unit>? = null
+        finish: kotlinx.coroutines.Deferred<Unit>? = null,
+        stopAfterSpeech: Boolean = false,
     ): DiagnosticAudioCapture {
         require(maxDurationMs in 1..15_000)
         check(transactionMutex.tryLock()) { "Microphone transaction is busy" }
@@ -95,23 +96,40 @@ class AudioPerceptionEngine(
             ownsInput = true
             diagnosticJob = currentCoroutineContext()[Job]
             preprocessor.reset()
+            if (stopAfterSpeech) audioPipeline.resetIsolatedCaptureDetector()
             selectedSource = audioSource
             sourceStarted.set(true)
             audioSource.start()
             kotlinx.coroutines.coroutineScope {
+                val endpoint = kotlinx.coroutines.CompletableDeferred<Unit>()
                 val reader = launch {
+                    var capturedSamples = 0L
+                    var heardSpeech = false
                     audioSource.frames.collect { raw ->
                         if (originalRate == 0) originalRate = raw.sampleRate
                         val processed = try { preprocessor.process(raw) } catch (error: Exception) {
                             throw SpeechDiagnosticException(SpeechDiagnosticStage.PREPROCESS, error)
                         }
-                        val remaining = maxDurationMs * 16 - frames.sumOf { it.samples.size }
-                        if (remaining > 0) frames.add(processed.copy(samples = processed.samples.take(remaining.toInt()).toShortArray()))
+                        val remaining = maxDurationMs * 16 - capturedSamples
+                        if (remaining > 0 && !endpoint.isCompleted) {
+                            val samples = processed.samples.copyOf(minOf(remaining.toInt(), processed.samples.size))
+                            frames.add(processed.copy(samples = samples))
+                            capturedSamples += samples.size
+                        }
+                        if (stopAfterSpeech) {
+                            val speech = audioPipeline.isolatedCaptureHasSpeech(processed)
+                            if (heardSpeech && !speech) endpoint.complete(Unit)
+                            heardSpeech = heardSpeech || speech
+                        }
                     }
                 }
                 try {
                     kotlinx.coroutines.withTimeoutOrNull(maxDurationMs) {
-                        if (finish != null) finish.await() else reader.join()
+                        kotlinx.coroutines.selects.select<Unit> {
+                            if (finish != null) finish.onAwait { }
+                            if (stopAfterSpeech) endpoint.onAwait { }
+                            reader.onJoin { }
+                        }
                     }
                 } finally {
                     withContext(NonCancellable) { stopAudioSource(); reader.cancel(); reader.join() }
@@ -127,6 +145,7 @@ class AudioPerceptionEngine(
             if (ownsInput) {
                 withContext(NonCancellable) { stopAudioSource() }
                 preprocessor.reset()
+                if (stopAfterSpeech) audioPipeline.resetIsolatedCaptureDetector()
                 diagnosticJob = null
             }
             transactionMutex.unlock()

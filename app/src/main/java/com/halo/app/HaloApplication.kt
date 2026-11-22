@@ -170,6 +170,23 @@ class HaloApplication :
             try {
                 val layout = haloStorageLayout(this@HaloApplication)
                 layout.ensureDirectories()
+                com.halo.app.ui.toolkit.AlbumStoryShares.purgeLegacyStage(this@HaloApplication)
+                try {
+                    ManualDependencyGraph.privateLibraryToolPayloads.recover()
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    Log.w("PrivateLibrary", "A tool-result transition needs recovery.")
+                }
+                try {
+                    try { ManualDependencyGraph.privateLibraryFileAdapter.settle() }
+                    finally { ManualDependencyGraph.privateLibraryNoteAssets.settle() }
+                    ManualDependencyGraph.privateLibraryStudySessions.settle()
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    Log.w("PrivateLibrary", "A managed file transition needs recovery.")
+                }
                 LocalAssetStorageMigration(this@HaloApplication, layout).migrate()
                 val secretStore = AndroidKeystoreSecretStore(layout)
                 SecretMigration(
@@ -221,15 +238,23 @@ class HaloApplication :
                             com.halo.runtime.cognition.agent.AgentRunState.FAILED,
                             com.halo.runtime.cognition.agent.AgentRunState.INTERRUPTED)
                 }.forEach { run ->
-                    ManualDependencyGraph.attentionController.submit(com.halo.runtime.cognition.attention.AttentionRequest(
-                        id = com.halo.runtime.cognition.attention.AttentionRequestId("run:${run.id.value}:${run.state}"),
-                        source = com.halo.runtime.cognition.attention.AttentionSource.AgentCompletion,
-                        interactionId = run.interactionId,
-                        deliveryIntent = com.halo.runtime.cognition.attention.DeliveryIntent.Inform(
-                            com.halo.runtime.cognition.attention.UserFacingContent("Action ${run.state.name.lowercase()}",
-                                run.failureReason ?: "Execution recorded in Activity")),
-                        deduplicationKey = "run:${run.id.value}",
-                        expiresAt = java.time.Instant.now().plusSeconds(300)))
+                    val graph = ManualDependencyGraph
+                    val owner = graph.routineRepository.dao.run(run.id.value)?.routineId ?: return@forEach
+                    val fence = com.halo.app.automation.AutomationPrivacyFence
+                    fence.withOwner(fence.routine(owner)) {
+                        val latest = graph.agentRunStore.get(run.id) ?: return@withOwner
+                        if (latest.state != run.state || latest.updatedAt != run.updatedAt ||
+                            graph.routineRepository.dao.run(run.id.value) == null) return@withOwner
+                        graph.attentionController.submit(com.halo.runtime.cognition.attention.AttentionRequest(
+                            id = com.halo.runtime.cognition.attention.AttentionRequestId("run:${run.id.value}:${run.state}"),
+                            source = com.halo.runtime.cognition.attention.AttentionSource.AgentCompletion,
+                            interactionId = run.interactionId,
+                            deliveryIntent = com.halo.runtime.cognition.attention.DeliveryIntent.Inform(
+                                com.halo.runtime.cognition.attention.UserFacingContent("Action ${run.state.name.lowercase()}",
+                                    run.failureReason ?: "Execution recorded in Activity")),
+                            deduplicationKey = "run:${run.id.value}",
+                            expiresAt = java.time.Instant.now().plusSeconds(300)))
+                    }
                 }
             }
         }
@@ -277,12 +302,19 @@ class HaloApplication :
                 com.halo.app.everyday.collectors.android.CollectorRefreshWorker.maintain(this@HaloApplication)
                 com.halo.app.everyday.collectors.android.CollectorRefreshWorker.enqueue(this@HaloApplication)
                 com.halo.app.everyday.briefing.android.BriefWorker.maintain(this@HaloApplication, ManualDependencyGraph.briefRepository.settings().proactive)
+                com.halo.app.everyday.briefing.android.DayReportWorker.maintain(this@HaloApplication)
             } catch (cancelled: CancellationException) { throw cancelled }
               catch (error: Exception) { Log.e("CollectorRecovery", "Source setup needs retry", error) }
         }
         automationBootstrap = resourceScope.async {
             storageBootstrap.await()
             awaitOrganizerBootstrap()
+            try {
+                val database = ManualDependencyGraph.appDatabase
+                ManualDependencyGraph.attentionContextProvider.reconcilePrivateAutomationNotices(database)
+                ManualDependencyGraph.screenStore.reconcileAutomationPrivacy(database)
+            } catch (cancelled: CancellationException) { throw cancelled }
+              catch (error: Exception) { Log.w("HaloApplication", "Automation privacy cache reconciliation failed", error) }
             ManualDependencyGraph.agentRunCoordinator.prepareOutstandingRunsForRecovery()
             ManualDependencyGraph.routineRepository.dao.interruptUnfinished()
             ManualDependencyGraph.notificationRepository.reconcilePolicies()

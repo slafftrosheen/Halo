@@ -27,12 +27,13 @@ catch (_: SecurityException) { false }
 @Composable
 internal fun HomeTranscriptMessage(identity: String, text: String, user: Boolean,
     onEdit: (() -> Unit)? = null, onSave: (() -> Unit)? = null, canRead: Boolean = false,
-    origin: HomeAnswerOrigin = HomeAnswerOrigin.UNKNOWN) {
+    origin: HomeAnswerOrigin = HomeAnswerOrigin.UNKNOWN, answerCards: (@Composable () -> Unit)? = null) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     var readRequest by remember(identity) { mutableLongStateOf(0) }
     var shareFailed by remember(identity) { mutableStateOf(false) }
     var shareReview by remember(identity) { mutableStateOf(false) }
+    var showFullReply by remember(identity) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().padding(start = if (user) 32.dp else 0.dp,
         end = if (user) 0.dp else 16.dp)) {
         Surface(shape = MaterialTheme.shapes.medium,
@@ -50,7 +51,15 @@ internal fun HomeTranscriptMessage(identity: String, text: String, user: Boolean
                 }
                 if (!user) HomeAnswerOriginChip(origin)
                 if (user) Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 12.dp))
-                else HaloMarkdownText(text, textColor = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(bottom = 12.dp))
+                else {
+                    val prose = if (answerCards != null) remember(text) { com.halo.app.ui.cards.cardPlainReply(text) } else text
+                    HaloMarkdownText(if (showFullReply) text else prose, textColor = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 12.dp))
+                    if (prose != text) TextButton(onClick = { showFullReply = !showFullReply }) {
+                        Text(stringResource(if (showFullReply) R.string.halo_chat_show_cards else R.string.halo_chat_show_full_answer))
+                    }
+                }
+                if (!showFullReply) answerCards?.invoke()
             }
         }
         if (shareReview) HomeShareReview({ shareReview = false }) {

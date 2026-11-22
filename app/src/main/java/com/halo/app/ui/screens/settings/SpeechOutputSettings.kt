@@ -22,9 +22,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import com.halo.app.ui.design.HaloFocusAction
 import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.halo.app.ai.label
+import com.halo.app.audio.SpeechOutputTestState
 import com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider
 import com.halo.sdk.provider.Credential
 import kotlinx.coroutines.CancellationException
@@ -222,7 +226,15 @@ fun SpeechOutputSettings(viewModel: VoiceSettingsViewModel, onElevenLabs: () -> 
 }
 
 @Composable
-fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit, onTestVoice: () -> Unit, onUseProvider: () -> Unit = {}) {
+fun ElevenLabsSettingsScreen(
+    provider: ElevenLabsTtsProvider,
+    onBack: () -> Unit,
+    onTestVoice: () -> String?,
+    onUseProvider: () -> Unit = {},
+    outputTest: SpeechOutputTestState = SpeechOutputTestState(),
+    onStopTest: (String) -> Unit = {},
+    powerMode: Boolean = true,
+) {
     SettingsChildZone("ElevenLabs", onBack)
     val state by provider.state.collectAsStateWithLifecycle()
     var draft by remember(provider) { mutableStateOf("") }
@@ -236,6 +248,11 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
     val catalogue = state.catalogue
     val voice = state.voiceId
     val model = state.modelId
+    var manualVoice by remember(voice) { mutableStateOf(voice.orEmpty()) }
+    var manualModel by remember(model) { mutableStateOf(model.orEmpty()) }
+    var manualSelection by rememberSaveable { mutableStateOf(false) }
+    var previewId by remember { mutableStateOf<String?>(null) }
+    val activeTest = outputTest.transactionId != null && outputTest.outcome in setOf("Preparing", "Route verified · Playing")
 
     LazyColumn(Modifier.fillMaxSize().padding(com.halo.app.ui.design.HaloSpacing.screen), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloScreenHeader(uiText("ElevenLabs speech"), navigation = onBack) }
@@ -257,17 +274,20 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                     try {
                         withContext(Dispatchers.IO) { provider.setCredential(Credential(ElevenLabsTtsProvider.ID, value)) }
                         draft = ""
-                        message = "Key saved; loading voices and models..."
-                        try {
-                            withContext(Dispatchers.IO) { provider.refreshCatalogue() }
-                            message = "Key saved. Choose a voice and TTS model below."
-                        } catch (cancelled: CancellationException) { throw cancelled }
-                          catch (error: Exception) { message = (error as? com.halo.sdk.provider.SpeechProviderException)?.message ?: "Key saved, but loading choices failed. Check key permissions and network, then refresh." }
+                        message = "Key saved. Switch to Power to load voices and models."
+                        if (powerMode) {
+                            message = "Key saved. Loading voices and models…"
+                            try {
+                                withContext(Dispatchers.IO) { provider.refreshCatalogue() }
+                                message = "Key saved. Choose a voice and TTS model below."
+                            } catch (cancelled: CancellationException) { throw cancelled }
+                              catch (error: Exception) { message = (error as? com.halo.sdk.provider.SpeechProviderException)?.message ?: "Key saved, but loading choices failed. Check key permissions and network, then refresh." }
+                        }
                     } catch (cancelled: CancellationException) { throw cancelled }
                     catch (_: Exception) { message = "Unable to save credential; your entered key is retained for retry." }
                     finally { busy = false }
                 }
-            }) { Text(if (busy) "Working..." else "Save key and load choices") }
+            }) { Text(uiText(if (busy) "Working..." else if (powerMode) "Save key and load choices" else "Save key")) }
             TextButton(enabled = !busy, onClick = {
                 busy = true
                 scope.launch {
@@ -280,8 +300,9 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
         }
         item {
             Text("Authentication: ${if (state.authenticated) "Ready" else "Not checked"} · Synthesis: ${if (state.ready) "Proven" else "Not tested"}")
-            Button(enabled = configured && !busy, onClick = { busy = true; scope.launch { try { message = if (withContext(Dispatchers.IO) { provider.health() }) "Authentication ready; synthesis is checked separately" else provider.state.value.error ?: "Connection failed. Check your key and network connection." } finally { busy = false } } }) { Text(uiText("Test connection")) }
-            Button(enabled = configured && !busy, onClick = {
+            if (!powerMode) com.halo.app.ui.components.CloudModeResolution()
+            Button(enabled = configured && powerMode && !busy, onClick = { busy = true; scope.launch { try { message = if (withContext(Dispatchers.IO) { provider.health() }) "Authentication ready; synthesis is checked separately" else provider.state.value.error ?: "Connection failed. Check your key and network connection." } finally { busy = false } } }) { Text(uiText("Test connection")) }
+            Button(enabled = configured && powerMode && !busy, onClick = {
                 busy = true
                 scope.launch {
                     try { withContext(Dispatchers.IO) { provider.refreshCatalogue() }; message = "Voice and TTS model metadata refreshed" }
@@ -292,7 +313,31 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
             }) { Text(if (busy) "Refreshing…" else "Refresh voices and TTS models") }
             Text(if (catalogue == null) "Catalogue unavailable" else if (catalogue.stale) "Cached catalogue · Stale" else "Cached catalogue")
             message?.let { Text(uiText(it)) }
-            state.error?.takeIf { it != message && it != "SECURE_STORAGE_UNREADABLE" }?.let { Text(uiText("Speech output is unavailable. Check authorization, voice selection and your connection.")) }
+            state.error?.takeIf { it != message && it != "SECURE_STORAGE_UNREADABLE" }?.let { Text(uiText(it)) }
+        }
+        if (configured) item {
+            TextButton(onClick = { manualSelection = !manualSelection }) {
+                Text(uiText(if (manualSelection) "Hide manual setup" else "Enter voice and model IDs"))
+            }
+            if (manualSelection) {
+                HaloTextField(manualVoice, { manualVoice = it.take(200) }, kind = VoiceFieldKind.URL_ID,
+                    enabled = !busy, label = { Text(uiText("Voice ID")) })
+                HaloTextField(manualModel, { manualModel = it.take(200) }, kind = VoiceFieldKind.URL_ID,
+                    enabled = !busy, label = { Text(uiText("Model ID")) })
+                OutlinedButton(enabled = !busy && manualVoice.isNotBlank() && manualModel.isNotBlank(), onClick = {
+                    val voiceId = manualVoice
+                    val modelId = manualModel
+                    busy = true
+                    scope.launch {
+                        try {
+                            withContext(Dispatchers.IO) { provider.configureById(voiceId, modelId) }
+                            message = "Voice and model saved. Use the test phrase to verify playback."
+                        } catch (cancelled: CancellationException) { throw cancelled }
+                        catch (_: Exception) { message = "Could not save the voice and model IDs. Check both IDs and try again." }
+                        finally { busy = false }
+                    }
+                }) { Text(uiText("Save voice and model")) }
+            }
         }
         item { Text(uiText("TTS model"), style = MaterialTheme.typography.titleMedium) }
         items(catalogue?.models.orEmpty(), key = { "model:${it.id}" }) { choice ->
@@ -331,7 +376,7 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                         }
                     })
             }
-            Button(enabled = configured && voice != null && model != null && !busy, onClick = {
+            Button(enabled = configured && voice != null && model != null && powerMode && !busy, onClick = {
                 busy = true
                 scope.launch {
                     try { withContext(Dispatchers.IO) { onUseProvider() }; message = "ElevenLabs selected for speech output" }
@@ -340,7 +385,12 @@ fun ElevenLabsSettingsScreen(provider: ElevenLabsTtsProvider, onBack: () -> Unit
                     finally { busy = false }
                 }
             }) { Text(uiText("Use ElevenLabs for speech output")) }
-            Button(enabled = configured && voice != null && model != null && !busy, onClick = onTestVoice) { Text(uiText("Speak test phrase on phone")) }
+            Button(enabled = configured && voice != null && model != null && powerMode && !busy && !activeTest,
+                onClick = { previewId = onTestVoice() }) { Text(uiText("Speak test phrase on phone")) }
+            previewId?.takeIf { it == outputTest.transactionId }?.let { id ->
+                Text(uiText(outputTest.outcome), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                if (activeTest) TextButton(onClick = { onStopTest(id) }) { Text(uiText("Stop")) }
+            }
         }
     }
 }

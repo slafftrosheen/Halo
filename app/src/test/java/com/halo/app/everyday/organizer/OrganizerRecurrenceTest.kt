@@ -120,6 +120,36 @@ class OrganizerRecurrenceTest {
         assertThrows(IllegalArgumentException::class.java) { time.validate() }
         time.copy(end = LocalDateTime.parse("2026-03-29T05:00")).validate()
     }
+    @Test fun snappedMoveAcrossSpringGapKeepsElapsedLength() {
+        val time = OrganizerTime(LocalDateTime.parse("2026-03-29T02:45"), LocalDateTime.parse("2026-03-29T04:15"), riga.id)
+        val event = record(time)
+        val occurrence = requireNotNull(OrganizerRecurrence.exact(event, emptyList(), time.instant(riga), riga))
+        val moved = rescheduledEventTime(time, occurrence, OrganizerScheduleEdit.MOVE, 1, riga)
+        assertEquals(LocalDateTime.parse("2026-03-29T04:00"), moved.start)
+        assertEquals(LocalDateTime.parse("2026-03-29T04:30"), moved.end)
+        assertEquals(Duration.ofMinutes(30), moved.duration())
+    }
+    @Test fun snapResizeResolvesSecondPassOfRepeatedHour() {
+        val time = OrganizerTime(LocalDateTime.parse("2026-10-25T03:45"), LocalDateTime.parse("2026-10-25T04:15"), riga.id)
+        val event = record(time)
+        val occurrence = requireNotNull(OrganizerRecurrence.exact(event, emptyList(), time.instant(riga), riga))
+        val resized = rescheduledEventTime(time, occurrence, OrganizerScheduleEdit.RESIZE, -4, riga)
+        assertEquals(time.start, resized.start)
+        assertEquals(LocalDateTime.parse("2026-10-25T03:15"), resized.end)
+        assertEquals(ZoneOffset.ofHours(2), resized.endOffset)
+        val projected = requireNotNull(OrganizerRecurrence.exact(event.copy(time = resized), emptyList(), occurrence.originalStart, riga))
+        assertEquals(Instant.parse("2026-10-25T01:15:00Z"), projected.end)
+        assertEquals(Duration.ofMinutes(30), resized.duration())
+    }
+    @Test fun allDayMoveSnapsToCalendarDatesAcrossDaylightChange() {
+        val time = OrganizerTime(LocalDateTime.parse("2026-03-28T00:00"), LocalDateTime.parse("2026-03-29T00:00"), riga.id, allDay = true)
+        val event = record(time)
+        val occurrence = requireNotNull(OrganizerRecurrence.exact(event, emptyList(), time.instant(riga), riga))
+        val moved = rescheduledEventTime(time, occurrence, OrganizerScheduleEdit.MOVE, 1, riga)
+        assertEquals(time.start.plusDays(1), moved.start)
+        assertEquals(requireNotNull(time.end).plusDays(1), moved.end)
+        assertEquals(Duration.ofHours(23), moved.duration())
+    }
     @Test fun floatingReplacementKeepsAuthoredPositiveDurationAfterTravel() {
         val time = OrganizerTime(LocalDateTime.parse("2026-03-28T03:30"), LocalDateTime.parse("2026-03-28T04:00"), "UTC", followDeviceZone = true)
         val record = record(time, RepeatRule(RepeatFrequency.DAILY, count = 2))

@@ -38,7 +38,7 @@ class WorkspaceNoteActionsTest {
 
     @Test fun registrationContractsBundledRisksAndDestructivePolicyMatchActualOwners() = fixture {
         val definitions = actions.definitions()
-        assertEquals(18, definitions.size)
+        assertEquals(23, definitions.size)
         val executor = WorkspaceToolExecutor(f.notes, f.workspace, context, noteActions = actions)
         assertTrue(executor.definitions().containsAll(definitions))
         val descriptors = definitions.map { requireNotNull(HaloToolDescriptors.workspace(it)) }
@@ -48,8 +48,9 @@ class WorkspaceNoteActionsTest {
         val bundled = JSONObject(f.context.assets.open("skills/halo.notebook.json").bufferedReader().use { it.readText() }).getJSONArray("toolDefinitions")
         val bundledRisks = (0 until bundled.length()).associate { bundled.getJSONObject(it).let { row -> row.getString("toolId") to row.getString("risk") } }
         for (descriptor in descriptors) {
-            val read = descriptor.name in setOf("halo_note_get", "halo_note_read_block")
-            val destructive = descriptor.name in setOf("halo_note_delete_block", "halo_note_replace_content", "halo_note_trash")
+            val read = descriptor.name in setOf("halo_note_get", "halo_note_read_block", "halo_note_review_block")
+            val destructive = descriptor.name in setOf("halo_note_delete_block", "halo_note_replace_content", "halo_note_trash",
+                "halo_note_resolve_changes")
             assertEquals(bundledRisks[descriptor.name], skill.toolDefinitions.single { it.toolId == descriptor.name }.risk.name)
             assertEquals(if (read) ReplaySafety.SAFE else ReplaySafety.NEVER_REPLAY, descriptor.security.replaySafety)
             assertEquals(CapabilityId(if (read) "workspace.read" else "workspace.write"), descriptor.operability!!.capabilityId)
@@ -62,6 +63,33 @@ class WorkspaceNoteActionsTest {
                 assertTrue(authorization is ToolAuthorization.Rejected)
             } else assertTrue(authorization is ToolAuthorization.Authorized)
         }
+    }
+
+    @Test fun formatLayoutCommentsAndChangeReviewUseVersionedCanonicalState() = fixture {
+        val id = create("Original sentence")
+        val first = blockArgs(id)
+        val style = mapOf("start" to 0, "end" to 8, "font" to "Serif", "size" to 22, "alignment" to "CENTER", "spacingTenths" to 20)
+        json(call("halo_note_set_format", first + style))
+        val formatted = document(id).blocks.first().presentation
+        assertEquals(NoteFontSpan(0, 8, "Serif", 22), formatted.fonts.single())
+        assertEquals(NoteAlignment.CENTER, formatted.alignment)
+        assertTrue(call("halo_note_set_format", first + style) is ToolExecutionResult.Rejected)
+        json(call("halo_note_set_page_settings", args(id) + mapOf("paper" to "A5", "columns" to 2,
+            "header" to "Chapter", "footer" to "Draft", "pageNumbers" to "FOOTER_RIGHT", "trackChanges" to true)))
+        assertEquals(NotePageSize.A5, document(id).pageSettings.size)
+        val comment = json(call("halo_note_comment", blockArgs(id) + mapOf("operation" to "ADD", "author" to "AB",
+            "start" to 0, "end" to 8, "text" to "Check wording")))
+        val commentId = comment.getString("commentId")
+        json(call("halo_note_comment", blockArgs(id) + mapOf("operation" to "REPLY", "commentId" to commentId,
+            "author" to "CD", "text" to "Reviewed")))
+        json(call("halo_note_comment", blockArgs(id) + mapOf("operation" to "RESOLVE", "commentId" to commentId)))
+        assertTrue(document(id).blocks.first().presentation.comments.single().resolved)
+        json(call("halo_note_edit_block", blockArgs(id) + ("text" to "Revised sentence")))
+        val review = json(call("halo_note_review_block", blockArgs(id))).getJSONObject("review")
+        assertEquals(1, review.getJSONArray("changes").length())
+        json(call("halo_note_resolve_changes", blockArgs(id) + mapOf("accept" to false, "hunkIndex" to 0)))
+        assertEquals("Original sentence", document(id).blocks.single().text)
+        assertNull(document(id).blocks.single().presentation.change)
     }
 
     @Test fun readingLegacyNoteInitializesStableBlocksWithoutChangingCommittedRevisionOrText() = fixture {

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_family_safe_places">Безопасные места</string>
+    <string name="halo11_family_safe_unlock">Настройте или подтвердите блокировку телефона, чтобы управлять безопасными местами.</string>
+    <string name="halo11_family_safe_privacy">Список знакомых мест хранится на этом телефоне. Halo не отслеживает поездки и не показывает карту в детском режиме.</string>
+    <string name="halo11_family_safe_empty">Сохранённых мест нет. Сначала сохраните место в картах.</string>
+    <string name="halo11_family_safe_failed">Не удалось обновить безопасные места.</string>
+    <string name="halo11_family_safe_add">Добавить «%1$s» в безопасные места?</string>
+    <string name="halo11_family_safe_remove">Убрать «%1$s» из безопасных мест?</string>
+</resources>

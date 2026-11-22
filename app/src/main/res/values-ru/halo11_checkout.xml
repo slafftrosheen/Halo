@@ -1,0 +1,15 @@
+<resources>
+    <string name="halo11_checkout_title">Оплата у продавца</string>
+    <string name="halo11_checkout_how">Проверьте продавца и указанную сумму. Оплата и получение чека происходят у продавца.</string>
+    <string name="halo11_checkout_link">Публичная HTTPS-ссылка продавца</string>
+    <string name="halo11_checkout_total">Указанная сумма</string>
+    <string name="halo11_checkout_currency">Код валюты</string>
+    <string name="halo11_checkout_review">Проверить оплату</string>
+    <string name="halo11_checkout_quote">Указанная сумма · %1$s %2$s</string>
+    <string name="halo11_checkout_confirm">Разблокировать и открыть оплату</string>
+    <string name="halo11_checkout_auth_failed">Не удалось подтвердить блокировку экрана. Проверьте настройки безопасности телефона.</string>
+    <string name="halo11_checkout_invalid">Введите публичную HTTPS-ссылку без параметров и токена входа, сумму и код валюты.</string>
+    <string name="halo11_checkout_open_failed">Не удалось открыть страницу оплаты продавца.</string>
+    <string name="halo11_checkout_opened">Страница оплаты продавца открыта.</string>
+    <string name="halo11_checkout_expired">Проверка оплаты устарела. Введите данные продавца снова.</string>
+</resources>

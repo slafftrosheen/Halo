@@ -12,22 +12,31 @@ import com.halo.app.data.notebook.WorkspaceObject
 import com.halo.app.data.notebook.WorkspaceObjectLifecycle
 import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.data.notebook.NotebookCollection
+import com.halo.app.data.notebook.LibraryCollectionAddition
+import com.halo.app.data.notebook.LibraryCollectionSuggestion
 import com.halo.app.data.notebook.NotebookOrganizationRepository
 import com.halo.app.data.notebook.NotebookCanvasRepository
 import com.halo.app.data.study.StudyPracticeItem
+import com.halo.app.data.study.LibraryPracticeCard
 import com.halo.app.data.study.StudySessionRecord
 import com.halo.app.data.workspace.WorkspaceQuery
+import com.halo.app.data.workspace.WorkspaceLibraryNames
+import com.halo.app.data.workspace.WorkspaceLibraryTitleAlias
+import com.halo.app.data.workspace.ContentOwnership
+import com.halo.app.data.workspace.WorkspaceFileAvailability
 import com.halo.app.notebook.NotebookUseCases
 import com.halo.app.notebook.WorkspaceUseCases
 import com.halo.app.study.StudyUseCases
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -61,11 +70,14 @@ internal fun notebookReviewableMemoryCount(rows: List<PersonalSuggestionEntity>)
     }
 
 enum class NotebookFilter(val label: String) {
-    ALL("All"), ORGANIZER("Organizer"), BRIEFS("Daily briefs"), SOURCES("Saved sources"), CLOCKS("World clocks"), NOTES("Notes"), FILES("Files"), CANVASES("Canvases"), CHATS("Chats"), MEMORY("Memory"),
+    ALL("All"), ORGANIZER("Plans"), BRIEFS("Daily briefs"), SOURCES("Saved sources"), CLOCKS("World clocks"), NOTES("Notes"), FILES("Files"), CANVASES("Canvases"), CHATS("Chats"), MEMORY("Memory"),
+    PHOTOS("Photos"), GLASSES_PHOTOS("From glasses"), SCANS("Scans"), CARDS("Cards"), PLACES("Places"), RECORDINGS("Recordings"), PEOPLE("People"),
     FAVORITES("Favorites"), INBOX("Inbox"), ARCHIVED("Archived"), TRASH("Trash")
 }
 
-data class NotebookWorkspaceItem(val objectRef: WorkspaceObject, val snippet: String? = null, val canvasNodeId: String? = null)
+data class NotebookWorkspaceItem(val objectRef: WorkspaceObject, val snippet: String? = null, val canvasNodeId: String? = null,
+    val libraryKind: HaloLibraryKind? = null, val fromGlasses: Boolean = false, val previousTitle: String? = null,
+    val nameFacts: LibraryNameFacts? = null, val renamableFileVersion: String? = null)
 
 data class NotebookUiState(
     val isLoaded: Boolean = false,
@@ -88,6 +100,12 @@ data class NotebookUiState(
     val loadError: Boolean = false,
     val everyday: List<com.halo.app.everyday.presentation.EverydayLibraryEntry> = emptyList(),
     val everydayError: Boolean = false,
+    val libraryCards: List<LibraryPracticeCard> = emptyList(),
+    val libraryPeople: List<LibraryPersonReference> = emptyList(),
+    val librarySourcesError: Boolean = false,
+    val collectionLinks: Map<String, Set<String>> = emptyMap(),
+    val collectionSuggestion: LibraryCollectionSuggestion? = null,
+    val suggestionUndo: LibraryCollectionAddition? = null,
 )
 
 sealed interface NotebookNavigation {
@@ -99,7 +117,7 @@ sealed interface NotebookNavigation {
     data class OpenStudio(val id: String) : NotebookNavigation
     data class OpenFileTools(val id: String) : NotebookNavigation
     data class OpenCanvas(val id: String, val nodeId: String? = null) : NotebookNavigation
-    data class OpenStudy(val sessionId: String, val review: Boolean = false) : NotebookNavigation
+    data class OpenStudy(val sessionId: String, val review: Boolean = false, val cardId: String? = null) : NotebookNavigation
     data class StartStudyFromSource(val objectId: String) : NotebookNavigation
     data class ReviewAutomation(val routineId: String,val suggestionId: String) : NotebookNavigation
     data object ReviewCapabilities : NotebookNavigation
@@ -117,6 +135,10 @@ class NotebookViewModel(
     private val batchOwner: NotebookLibraryBatchOwner? = null,
     private val everyday: ()->kotlinx.coroutines.flow.Flow<List<com.halo.app.everyday.presentation.EverydayLibraryEntry>> = {flowOf(emptyList())},
     private val openEveryday: suspend (com.halo.app.everyday.presentation.EverydayLibraryEntry)->Boolean = {false},
+    private val librarySources: () -> kotlinx.coroutines.flow.Flow<HaloLibrarySources> = { flowOf(HaloLibrarySources()) },
+    private val libraryNames: WorkspaceLibraryNames? = null,
+    private val aliasFlow: () -> kotlinx.coroutines.flow.Flow<Map<String, WorkspaceLibraryTitleAlias>> = { flowOf(emptyMap()) },
+    private val libraryAuthority: () -> (() -> Boolean)? = { { true } },
 ) : ViewModel() {
     private val studySessionsFlow: kotlinx.coroutines.flow.Flow<List<StudySessionRecord>> =
         study?.observeActiveSessions() ?: flowOf(emptyList())
@@ -149,6 +171,9 @@ class NotebookViewModel(
     private val filter = MutableStateFlow(NotebookFilter.ALL)
     private val selectedCollection = MutableStateFlow<String?>(null)
     private val refreshRevision = MutableStateFlow(0L)
+    private val dismissedLibrarySuggestions = MutableStateFlow(emptySet<LibraryCollectionSuggestion>())
+    private val suggestionUndo = MutableStateFlow<LibraryCollectionAddition?>(null)
+    private var suggestionUndoUntil = 0L
     private val navigationChannel = Channel<NotebookNavigation>(Channel.BUFFERED)
     private val creatingNote = AtomicBoolean(false)
     private val creatingCanvas = AtomicBoolean(false)
@@ -176,7 +201,8 @@ class NotebookViewModel(
     private data class OrganizationState(
         val collections: List<NotebookCollection>,
         val favorites: Set<String>,
-        val members: Set<String>,
+        val links: Map<String, Set<String>>,
+        val aliases: Map<String, WorkspaceLibraryTitleAlias>,
     )
 
     private data class AuxState(
@@ -200,10 +226,10 @@ class NotebookViewModel(
                 else -> WorkspaceObjectLifecycle.ACTIVE
             }
             val types = when (selectedFilter) {
-                NotebookFilter.NOTES -> setOf(WorkspaceObjectType.NOTE)
                 NotebookFilter.FILES -> setOf(
                     WorkspaceObjectType.FILE,
                     WorkspaceObjectType.MEDIA,
+                    WorkspaceObjectType.CANVAS,
                     WorkspaceObjectType.ARTIFACT,
                 )
                 NotebookFilter.CANVASES -> setOf(WorkspaceObjectType.CANVAS, WorkspaceObjectType.ARTIFACT)
@@ -215,12 +241,14 @@ class NotebookViewModel(
                 inboxOnly = selectedFilter == NotebookFilter.INBOX))
             val sessions = studySessionsFlow
             val due = duePracticeFlow
-            val hits = workspace.observe(WorkspaceQuery()).mapLatest { if (text.isBlank()) null else workspace.search(text) }
-            val members = queryState.collectionId?.let(organization::observeMembers) ?: flowOf(emptySet<String>())
+            val searchPrompt = parseLibrarySearchPrompt(text)
+            val lookup = searchPrompt.terms
+            val hits = workspace.observe(WorkspaceQuery()).mapLatest { if (lookup.isBlank()) null else workspace.search(lookup) }
             val organizationState = combine(
-                organization.observeCollections(), organization.observeFavorites(), members,
-            ) { collections, favorites, collectionMembers ->
-                OrganizationState(collections, favorites, collectionMembers)
+                organization.observeCollections(), organization.observeFavorites(), organization.observeCollectionLinks(),
+                aliasFlow().catch { emit(emptyMap()) },
+            ) { collections, favorites, links, aliases ->
+                OrganizationState(collections, favorites, links, aliases)
             }
             val auxState = combine(organizationState, sessions, due) { organizationState, sessionRows, dueRows ->
                 AuxState(organizationState, sessionRows, dueRows)
@@ -233,21 +261,18 @@ class NotebookViewModel(
                 auxState,
             ) { rows, result, selected, allObjects, aux ->
                 val organized = aux.organization
+                val collectionMembers = organized.links[queryState.collectionId].orEmpty()
                 val sessionRows = aux.sessions
                 val matches = result?.hits?.groupBy { it.objectId.value }?.mapValues { (_, hits) ->
                     hits.firstOrNull { it.nodeId != null } ?: hits.first()
                 }.orEmpty()
-                var visible = if (text.isBlank()) rows else rows.filter { row ->
-                    row.id.value in matches || row.title.contains(text, ignoreCase = true)
+                var visible = if (lookup.isBlank()) rows else rows.filter { row ->
+                    searchPrompt.includes(row.createdAt) && (row.id.value in matches || row.title.contains(lookup, ignoreCase = true) ||
+                        organized.aliases[row.id.value]?.let { it.newTitle == row.title && matchesLibraryTerms(lookup, it.oldTitle) } == true)
                 }
                 if(selectedFilter in setOf(NotebookFilter.ORGANIZER,NotebookFilter.BRIEFS,NotebookFilter.SOURCES,NotebookFilter.CLOCKS)) visible=emptyList()
                 if (selectedFilter == NotebookFilter.FAVORITES) {
                     visible = visible.filter { it.id.value in organized.favorites }
-                }
-                if (selectedFilter == NotebookFilter.FILES) {
-                    visible = visible.filterNot {
-                        it.type == WorkspaceObjectType.ARTIFACT && it.contentRef.startsWith("canvas:")
-                    }
                 }
                 if (selectedFilter == NotebookFilter.CANVASES) {
                     visible = visible.filter {
@@ -255,12 +280,13 @@ class NotebookViewModel(
                     }
                 }
                 if (queryState.collectionId != null) {
-                    visible = visible.filter { it.id.value in organized.members }
+                    visible = visible.filter { it.id.value in collectionMembers }
                 }
                 NotebookUiState(
                     isLoaded = true,
                     items = visible.sortedByDescending { it.updatedAt }.map { row ->
-                        NotebookWorkspaceItem(row, matches[row.id.value]?.snippet.takeUnless { row.contentRef == "file-tools:${row.id.value}" }, matches[row.id.value]?.nodeId)
+                        NotebookWorkspaceItem(row, matches[row.id.value]?.snippet.takeUnless { row.contentRef == "file-tools:${row.id.value}" },
+                            matches[row.id.value]?.nodeId, previousTitle = organized.aliases[row.id.value]?.takeIf { it.newTitle == row.title }?.oldTitle)
                     },
                     query = rawText,
                     resolvedQuery = text,
@@ -274,7 +300,8 @@ class NotebookViewModel(
                     collections = organized.collections,
                     selectedCollectionId = queryState.collectionId,
                     favorites = organized.favorites,
-                    selectedCollectionMembers = organized.members,
+                    selectedCollectionMembers = collectionMembers,
+                    collectionLinks = organized.links,
                     studySessions = sessionRows,
                     duePractice = aux.duePractice,
                 )
@@ -292,10 +319,10 @@ class NotebookViewModel(
         }
         .combine(refreshRevision.flatMapLatest {everyday().map {it to false}.catch {emit(emptyList<com.halo.app.everyday.presentation.EverydayLibraryEntry>() to true)}}) {state,domain ->
             val wanted=when(state.filter) {NotebookFilter.ALL -> null;NotebookFilter.ORGANIZER -> "ORGANIZER";NotebookFilter.BRIEFS -> "BRIEF";NotebookFilter.SOURCES -> "SOURCE";NotebookFilter.CLOCKS -> "CLOCK";else -> "NONE"}
-            val rows=if(state.selectedCollectionId!=null || wanted=="NONE") emptyList() else domain.first.filter {entry ->
-                (wanted==null || entry.kind==wanted) && state.resolvedQuery.trim().split(Regex("\\s+")).filter(String::isNotBlank).all {word ->
-                    entry.title.contains(word,true) || entry.detail.contains(word,true) || entry.code.contains(word,true)
-                }
+            val rows=if(wanted=="NONE") emptyList() else domain.first.filter {entry ->
+                (wanted==null || entry.kind==wanted) &&
+                    (state.selectedCollectionId == null || entry.linkedObjects.any(state.selectedCollectionMembers::contains)) &&
+                    matchesLibraryTerms(state.resolvedQuery, "${entry.title} ${entry.detail} ${entry.code}")
             }
             state.copy(everyday = when (state.sort) {
                 NotebookSort.TITLE -> rows.sortedBy { it.title.lowercase() }
@@ -304,6 +331,51 @@ class NotebookViewModel(
                 else -> rows.sortedByDescending { it.updatedAt }
             }, everydayError = domain.second)
         }
+        .combine(refreshRevision.flatMapLatest {
+            librarySources().map { it to false }.catch { emit(HaloLibrarySources() to true) }
+        }) { state, projection ->
+            val sources = projection.first
+            val kind = state.filter.libraryKind()
+            val items = state.items.map { item ->
+                val objectRef = item.objectRef
+                val file = sources.files[objectRef.id.value]
+                val renamable = file?.takeIf { it.ownership == ContentOwnership.HALO_OWNED && it.availability == WorkspaceFileAvailability.OWNED_LOCAL }
+                item.copy(libraryKind = sources.kind(objectRef), fromGlasses = objectRef.id.value in sources.glassesPhotos,
+                    nameFacts = sources.nameFacts[objectRef.id.value], renamableFileVersion = renamable?.version)
+            }.filter { item ->
+                when (state.filter) {
+                    NotebookFilter.ALL -> item.objectRef.type != WorkspaceObjectType.MEMORY
+                    NotebookFilter.GLASSES_PHOTOS -> item.libraryKind == HaloLibraryKind.PHOTO && item.fromGlasses
+                    else -> kind == null || item.libraryKind == kind
+                }
+            }
+            val topLevel = state.selectedCollectionId == null
+            val sessionSources = state.studySessions.associate { it.id to it.sourceObjectIds }
+            val cards = if (state.filter == NotebookFilter.ALL || state.filter == NotebookFilter.CARDS) {
+                val matching = sources.cards.filter {
+                    val member = it.sourceObjectId?.let(state.selectedCollectionMembers::contains) == true ||
+                        sessionSources[it.sessionId].orEmpty().any(state.selectedCollectionMembers::contains)
+                    (topLevel || member) && matchesLibraryTerms(state.resolvedQuery, it.question)
+                }
+                when (state.sort) {
+                    NotebookSort.TITLE -> matching.sortedWith(compareBy<LibraryPracticeCard> { it.question.lowercase() }.thenBy { it.id })
+                    NotebookSort.CREATED -> matching
+                    NotebookSort.UPDATED, NotebookSort.TOOL -> matching.sortedWith(compareByDescending<LibraryPracticeCard> {
+                        it.lastReviewedAtEpochMs ?: it.createdAtEpochMs
+                    }.thenBy { it.id })
+                }
+            } else emptyList()
+            val people = if (state.filter == NotebookFilter.PEOPLE || !topLevel && state.filter == NotebookFilter.ALL) {
+                sources.people.filter { (topLevel || it.photoId in state.selectedCollectionMembers) &&
+                    matchesLibraryTerms(state.resolvedQuery, it.name) }.sortedBy { it.name.lowercase() }
+            } else emptyList()
+            state.copy(items = items, libraryCards = cards, libraryPeople = people,
+                librarySourcesError = projection.second)
+        }
+        .combine(dismissedLibrarySuggestions) { state, dismissed ->
+            state.copy(collectionSuggestion = suggestLibraryCollection(state, dismissed))
+        }
+        .combine(suggestionUndo) { state, undo -> state.copy(suggestionUndo = undo) }
         .flowOn(kotlinx.coroutines.Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotebookUiState())
 
@@ -356,6 +428,104 @@ class NotebookViewModel(
     fun setQuery(value: String) { libraryRevision++; query.value = value; selection.value = emptySet(); keepView() }
     fun setFilter(value: NotebookFilter) { libraryRevision++; if (value == NotebookFilter.MEMORY) { openMemoryHub(); return }; filter.value = value; selection.value = emptySet(); keepView() }
     fun selectCollection(id: String?) { libraryRevision++; selectedCollection.value = id; selection.value = emptySet(); keepView() }
+    internal suspend fun openLibraryCollection(id: String, authority: () -> Unit = {}): Boolean {
+        if (!com.halo.app.data.workspace.WorkspaceActionIds.isValid(id) || !organization.containsCollection(id)) return false
+        authority()
+        setFilter(NotebookFilter.ALL)
+        setQuery("")
+        selectCollection(id)
+        return true
+    }
+    internal suspend fun librarySourcesSnapshot(): HaloLibrarySources =
+        librarySources().first().copy(people = emptyList(), nameFacts = emptyMap())
+    internal suspend fun libraryAliasIds(query: String): Set<String> {
+        if (query.isBlank() || query.length > 500) return emptySet()
+        val authority = libraryAuthority() ?: return emptySet()
+        val aliases = aliasFlow().first()
+        if (!authority()) return emptySet()
+        return aliases.values.filter { matchesLibraryTerms(query, it.oldTitle) }
+            .mapTo(hashSetOf()) { it.objectId }
+    }
+
+    internal val libraryNamingEnabled: Boolean get() = libraryNames != null
+
+    internal fun renameLibraryItem(item: NotebookWorkspaceItem, newTitle: String) {
+        val state = uiState.value
+        if (item in state.items) runLibraryContent(state, LibraryContentChange(LibraryContentOperation.RENAME_ITEM, item.objectRef.id.value, newTitle))
+    }
+
+    internal fun dismissLibrarySuggestion(expected: LibraryCollectionSuggestion) {
+        val state = uiState.value
+        if (expected == state.collectionSuggestion) runLibraryContent(state, LibraryContentChange(LibraryContentOperation.DISMISS_SUGGESTION, expected.collectionId))
+    }
+
+    internal fun addLibrarySuggestion(expected: LibraryCollectionSuggestion) {
+        val state = uiState.value
+        if (expected == state.collectionSuggestion) runLibraryContent(state, LibraryContentChange(LibraryContentOperation.ADD_SUGGESTED, expected.collectionId))
+    }
+
+    internal fun undoLibrarySuggestion(expected: LibraryCollectionAddition) {
+        val state = uiState.value
+        if (expected == state.suggestionUndo) runLibraryContent(state, LibraryContentChange(LibraryContentOperation.UNDO_SUGGESTION, expected.collectionId))
+    }
+
+    private fun runLibraryContent(expected: NotebookUiState, change: LibraryContentChange) = viewModelScope.launch {
+        val result = try { applyLibraryContent(expected, change) { true } }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { null }
+        if (result == null) postNotice("This item changed. Open its instrument and review the current information.")
+    }
+
+    internal suspend fun applyLibraryContent(expected: NotebookUiState, change: LibraryContentChange,
+        admission: suspend () -> Boolean): Int? {
+        val authority = libraryAuthority() ?: return null
+        if (!authority() || mutating.value || expected != uiState.value || !isCurrentView(expected) || selection.value.isNotEmpty()) return null
+        val revision = libraryRevision
+        val admit: suspend () -> Boolean = {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main.immediate) {
+                revision == libraryRevision && authority() && admission()
+            }
+        }
+        mutating.value = true
+        try {
+            val count = when (change.operation) {
+                LibraryContentOperation.RENAME_ITEM -> {
+                    val owner = libraryNames ?: return null
+                    val item = expected.visibleLibraryObjects().firstOrNull { it.objectRef.id.value == change.target } ?: return null
+                    if (!canRenameLibraryItem(item) ||
+                        !owner.rename(item.objectRef, change.title.orEmpty(), item.renamableFileVersion, admit)) return null
+                    1
+                }
+                LibraryContentOperation.ADD_SUGGESTED, LibraryContentOperation.DISMISS_SUGGESTION -> {
+                    val suggestion = expected.collectionSuggestion?.takeIf { it.collectionId == change.target } ?: return null
+                    if (change.operation == LibraryContentOperation.DISMISS_SUGGESTION) {
+                        if (!admit()) return null
+                        dismissedLibrarySuggestions.value = (dismissedLibrarySuggestions.value + suggestion).toList().takeLast(20).toSet()
+                        0
+                    } else {
+                        val addition = organization.applyLibrarySuggestion(suggestion, admit) ?: return null
+                        suggestionUndoUntil = android.os.SystemClock.elapsedRealtime() + 10_000L
+                        suggestionUndo.value = addition
+                        viewModelScope.launch {
+                            delay(10_000L)
+                            if (suggestionUndo.value == addition) suggestionUndo.value = null
+                        }
+                        addition.ids.size
+                    }
+                }
+                LibraryContentOperation.UNDO_SUGGESTION -> {
+                    val addition = expected.suggestionUndo?.takeIf { it.collectionId == change.target } ?: return null
+                    val affected = organization.undoLibrarySuggestion(addition) {
+                        admit() && suggestionUndo.value == addition && android.os.SystemClock.elapsedRealtime() < suggestionUndoUntil
+                    } ?: return null
+                    suggestionUndo.value = null
+                    affected
+                }
+            }
+            libraryRevision++
+            return count
+        } finally { mutating.value = false }
+    }
     fun setSort(value: NotebookSort) { libraryRevision++; sort.value = value; keepView() }
     fun clearSelection() { libraryRevision++; selection.value = emptySet(); keepView() }
     internal suspend fun libraryOrganizationSnapshot(objectId: String?, collectionId: String?) =
@@ -403,6 +573,20 @@ class NotebookViewModel(
             val opened=try {openEveryday(entry)} catch(cancelled: kotlinx.coroutines.CancellationException) {throw cancelled} catch(_: Exception) {false}
             if(!opened) postNotice("This item changed. Open its instrument and review the current information.")
         }
+    }
+    fun openLibraryCard(card: LibraryPracticeCard) {
+        if (card in uiState.value.libraryCards) navigationChannel.trySend(NotebookNavigation.OpenStudy(card.sessionId, cardId = card.id))
+        else postNotice("This item changed. Open its instrument and review the current information.")
+    }
+    fun openLibraryPerson(person: LibraryPersonReference) = viewModelScope.launch {
+        val photo = try {
+            workspace.getObject(person.photoId)?.takeIf {
+                it.lifecycle == WorkspaceObjectLifecycle.ACTIVE && workspace.getFile(person.photoId)?.version == person.photoVersion
+            }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { null }
+        if (photo != null && person in uiState.value.libraryPeople) openObject(photo)
+        else postNotice("This item changed. Open its instrument and review the current information.")
     }
     fun selectVisible() { libraryRevision++;
         selection.value = uiState.value.items.map { it.objectRef.id.value }.filterNot { it.startsWith("learning:") }.take(100).toSet()
@@ -559,8 +743,7 @@ class NotebookViewModel(
     }
     fun openObject(item: WorkspaceObject) {
         val id = item.id.value
-        viewState?.set("library.lastOpened", id)
-        keepView()
+        rememberLibraryItemReturn(id)
         navigationChannel.trySend(when (item.type) {
             WorkspaceObjectType.NOTE -> if (item.contentRef == "file-tools:$id") NotebookNavigation.OpenFileTools(id) else NotebookNavigation.OpenNote(id)
             WorkspaceObjectType.CONVERSATION -> NotebookNavigation.OpenConversation(id)
@@ -575,6 +758,10 @@ class NotebookViewModel(
             WorkspaceObjectType.FILE, WorkspaceObjectType.MEDIA -> NotebookNavigation.OpenFile(id)
             WorkspaceObjectType.MEMORY -> NotebookNavigation.OpenMemory(id)
         })
+    }
+    internal fun rememberLibraryItemReturn(id: String) {
+        viewState?.set("library.lastOpened", id)
+        keepView()
     }
     fun openSearchItem(item: NotebookWorkspaceItem) {
         if (item.canvasNodeId != null) navigationChannel.trySend(NotebookNavigation.OpenCanvas(item.objectRef.id.value, item.canvasNodeId))

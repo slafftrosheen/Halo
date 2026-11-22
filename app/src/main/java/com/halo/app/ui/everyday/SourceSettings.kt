@@ -7,10 +7,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.halo.app.everyday.collectors.*
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloAlertDialog
+import com.halo.app.R
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -36,12 +38,12 @@ internal fun SourceSettings(model: SourcesViewModel, state: SourcesPageState, so
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Source settings"), style = MaterialTheme.typography.headlineSmall)
             state.error?.let { EverydayMessage(it, true) }
-            if (invalid) EverydayMessage("Check the source name, public HTTPS address, language and refresh interval.", true)
+            if (invalid) Text(stringResource(R.string.halo_source_check_public_url), color = MaterialTheme.colorScheme.error)
             OutlinedTextField(title, { title = it.take(200) }, enabled = !state.busy, label = { Text(uiText("Source name")) }, modifier = Modifier.fillMaxWidth())
             val air = source.kind == CollectorKind.AIR_QUALITY
             OutlinedTextField(publisher, { publisher = it.take(200) }, enabled = !state.busy && !air, label = { Text(uiText("Publisher")) }, modifier = Modifier.fillMaxWidth())
             if (source.external && !source.kind.usesCityCoordinates) OutlinedTextField(url, { url = it.take(4096) }, enabled = !state.busy,
-                label = { Text(uiText("Public HTTPS feed address")) }, modifier = Modifier.fillMaxWidth())
+                label = { Text(stringResource(R.string.halo_source_public_url)) }, modifier = Modifier.fillMaxWidth())
             if (source.kind.usesCityCoordinates) {
                 Text(cityName.orEmpty(), style = MaterialTheme.typography.titleMedium)
                 Text(cityZone.orEmpty())
@@ -82,7 +84,8 @@ internal fun SourceSettings(model: SourcesViewModel, state: SourcesPageState, so
             TextButton({ discard = true }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) { Text(uiText("Cancel")) }
         }
     }
-    if (picker) OfflineCityPicker(state.busy, onDismiss = { picker = false }) { city ->
+    if (picker) OfflineCityPicker(state.busy, onDismiss = { picker = false }, weather = true) { city ->
+        if (source.kind == CollectorKind.WEATHER && title == cityName) title = city.name
         cityName = city.name; latitude = city.latitude; longitude = city.longitude; cityZone = city.zoneId; picker = false
     }
     if (discard) HaloAlertDialog({ discard = false }, title = { Text(uiText("Discard this edit?")) },

@@ -23,6 +23,30 @@ class WorkspaceCanvasEditingParityTest {
     private suspend fun saved(f: WorkspaceFileToolsFixture, board: String, name: String, args: Map<String, Any> = emptyMap()): JSONObject =
         JSONObject((call(f, board, name, args) as ToolExecutionResult.Success).output).also { assertEquals(version(f, board), it.getString("version")) }
 
+    @Test fun canvasGroupLocksAndVersionedCommentPinsUseTheSameCanvasOwner() = runBlocking {
+        WorkspaceFileToolsFixture().use { f ->
+            val board = f.canvases.create()
+            val first = f.canvases.addTextNode(board, 4f, 5f)
+            val second = f.canvases.addTextNode(board, 60f, 70f)
+            val group = saved(f, board, "halo_canvas_group_lock",
+                mapOf("nodeIds" to listOf(first, second), "operation" to "GROUP")).getString("nodeId")
+            saved(f, board, "halo_canvas_group_lock", mapOf("nodeIds" to listOf(group), "operation" to "LOCK"))
+            assertTrue(call(f, board, "halo_canvas_move", mapOf("nodeId" to first, "x" to 0, "y" to 0)) is ToolExecutionResult.Rejected)
+            saved(f, board, "halo_canvas_group_lock", mapOf("nodeIds" to listOf(group), "operation" to "UNLOCK"))
+            val pin = saved(f, board, "halo_canvas_add_comment",
+                mapOf("x" to 40, "y" to 60, "author" to "AB", "text" to "Review this")).getString("nodeId")
+            val observed = version(f, board)
+            saved(f, board, "halo_canvas_update_comment",
+                mapOf("nodeId" to pin, "operation" to "REPLY", "author" to "CD", "text" to "Checked"))
+            assertTrue(call(f, board, "halo_canvas_update_comment",
+                mapOf("nodeId" to pin, "operation" to "RESOLVE"), observed) is ToolExecutionResult.Rejected)
+            saved(f, board, "halo_canvas_update_comment", mapOf("nodeId" to pin, "operation" to "RESOLVE"))
+            val review = saved(f, board, "halo_canvas_review_comment", mapOf("nodeId" to pin)).getJSONObject("comment")
+            assertTrue(review.getBoolean("resolved"))
+            assertEquals("Checked", review.getJSONArray("replies").getJSONObject(0).getString("text"))
+        }
+    }
+
     @Test fun maximumLegalSelectionReceiptFitsTheRegisteredOutputBudgetWithoutLosingIds() = runBlocking {
         WorkspaceFileToolsFixture().use { f ->
             val board = f.canvases.create("Boundary")

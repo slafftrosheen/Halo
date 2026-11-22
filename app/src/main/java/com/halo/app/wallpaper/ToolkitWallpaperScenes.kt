@@ -34,9 +34,9 @@ internal class ToolkitWallpaperScenes {
             HaloWallpaper.BALTIC_DUNES -> dunes(c, h, t, signal, environment.wind)
             HaloWallpaper.RAIN_GLASS -> rain(c, h, t, signal ?: accent, environment.raining)
             HaloWallpaper.LUMEN_GARDEN -> garden(c, h, t, signal ?: accent, environment.completedToday)
-            HaloWallpaper.NIGHT_TRAIN -> train(c, h, t, signal ?: accent)
+            HaloWallpaper.NIGHT_TRAIN -> train(c, h, t, time, signal ?: accent)
             HaloWallpaper.SEASONS -> seasons(c, h, t, environment)
-            HaloWallpaper.RIGA_ROOFTOPS -> rooftops(c, h, time, signal)
+            HaloWallpaper.RIGA_ROOFTOPS -> rooftops(c, h, t, time, signal)
             HaloWallpaper.DEEP_SEA -> deepSea(c, h, t, signal ?: palette[0])
             HaloWallpaper.PAPER_CUT -> paperCut(c, h, signal)
             HaloWallpaper.YOUR_PHOTO -> photo(c, h, photo, signal, ringPosition)
@@ -124,7 +124,7 @@ internal class ToolkitWallpaperScenes {
         }
     }
 
-    private fun train(c: Canvas, h: Float, t: Float, accent: Int) {
+    private fun train(c: Canvas, h: Float, t: Float, time: Float, accent: Int) {
         sky(c, h, 0xFF05031C.toInt(), 0xFF120C3A.toInt())
         for (i in 0..52) oval(c, rand(i + 1) * 390, rand(i + 2) * h * .48f, .8f, .8f, withAlpha(Color.WHITE, .18f + rand(i) * .55f))
         ring(c, 300f, h * .16f, 29f, 0xBFFFFFFF.toInt(), 7f)
@@ -136,7 +136,8 @@ internal class ToolkitWallpaperScenes {
         paintPath(c, 0xFF07051A.toInt())
         for (i in 0..14) {
             val y = h * (.48f + rand(i + 7) * .16f)
-            val x = (rand(i + 11) * 570 + t * (19 + rand(i) * 17)) % 570 - 140
+            val commuteSpeed = if (time in .68f..(.89f)) 1.2f else .8f
+            val x = (rand(i + 11) * 570 + t * (19 + rand(i) * 17) * commuteSpeed) % 570 - 140
             val length = 30 + rand(i) * 91
             val color = if (i % 4 == 0) accent else palette[2]
             line.color = Color.WHITE
@@ -177,6 +178,11 @@ internal class ToolkitWallpaperScenes {
             val y = h * .43f + sin(angle) * minOf(radius * .64f, h * .19f)
             oval(c, x, y, 2.5f + rand(i + 2) * 4, 4f, withAlpha(colors[3], .79f))
         }
+        if (env.season == WallpaperSeason.AUTUMN) for (i in 0..12) {
+            val y = h * .42f + (rand(i + 56) * h * .33f + t * (4 + rand(i) * 5)) % (h * .42f)
+            val x = 65 + rand(i + 18) * 260 + sin(t * .45f + i) * 12f
+            oval(c, x, y, 2.7f, 3.8f, withAlpha(colors[3], .58f))
+        }
         if (env.raining || env.snowing) for (i in 0..55) {
             val x = rand(i + 3) * 390
             val y = (rand(i + 4) * h + t * if (env.snowing) 6 else 23) % h
@@ -184,13 +190,19 @@ internal class ToolkitWallpaperScenes {
         }
     }
 
-    private fun rooftops(c: Canvas, h: Float, time: Float, signal: Int?) {
+    private fun rooftops(c: Canvas, h: Float, t: Float, time: Float, signal: Int?) {
         val dark = time < .24f || time > .72f
         sky(c, h, if (dark) 0xFF0B0A2E.toInt() else 0xFF7FB0D8.toInt(),
             if (dark) 0xFF3A2A5A.toInt() else 0xFFF3D9B8.toInt())
         val moon = signal ?: 0xFFDCFFF0.toInt()
-        glow(c, 289f, h * .20f, 133f, moon, .24f)
+        glow(c, 289f, h * .20f, 133f, moon, .24f + sin(t * .15f) * .07f)
         ring(c, 289f, h * .20f, 36f, moon, 8f)
+        if (dark) for (i in 0..24) {
+            val brightness = .16f + rand(i + 4) * .3f + sin(t * .23f + i) * .09f
+            oval(c, rand(i + 13) * 390, rand(i + 77) * h * .51f, 1f, 1f, withAlpha(0xFFE5EAFE.toInt(), brightness))
+        } else {
+            glow(c, 72f + sin(t * .12f) * 25f, h * .30f, 110f, 0xFFE2F2FA.toInt(), .40f)
+        }
         path.rewind()
         path.moveTo(0f, h)
         roof.forEach { (x, y) -> path.lineTo(x, y * h) }

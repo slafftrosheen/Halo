@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected as semanticsSelected
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -38,11 +39,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.room.withTransaction
 import coil.compose.AsyncImage
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloVoiceTextActions
 import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.instruments.HaloInstrumentAction
+import com.halo.app.ui.instruments.HaloInstrumentBar
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
@@ -52,6 +56,8 @@ import java.time.format.FormatStyle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -68,14 +74,24 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
     val context = LocalContext.current
     val index = remember(context) { HaloAlbumIndex(context.applicationContext) }
     val scope = rememberCoroutineScope()
-    var library by remember { mutableStateOf(emptyList<HaloAlbumPhoto>()) }
+    var photoRows by remember { mutableStateOf(emptyList<HaloAlbumPhoto>()) }
     var people by remember { mutableStateOf(emptyList<AlbumPerson>()) }
+    val currentPeople = remember(people) { people.toSet() }
+    val library = remember(photoRows, currentPeople) { photoRows.map { it.withVisiblePeople(currentPeople) } }
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf("") }
     var spokenRequest by remember { mutableLongStateOf(0L) }
     var showGuide by rememberSaveable { mutableStateOf(false) }
     var customize by rememberSaveable { mutableStateOf(false) }
     var largePhotos by rememberSaveable { mutableStateOf(false) }
+    var customColumns by rememberSaveable { mutableIntStateOf(0) }
+    var showGridZoom by rememberSaveable { mutableStateOf(false) }
+    var selecting by rememberSaveable { mutableStateOf(false) }
+    var selection by remember { mutableStateOf(emptySet<String>()) }
+    var browse by rememberSaveable { mutableStateOf(false) }
+    var searchPanel by rememberSaveable { mutableStateOf(false) }
+    var photoEditor by remember { mutableStateOf<Pair<HaloAlbumPhoto, Boolean>?>(null) }
+    var comparingPhoto by remember { mutableStateOf<Pair<HaloAlbumPhoto, HaloAlbumPhoto>?>(null) }
     var loading by remember { mutableStateOf(true) }
     var busy by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
@@ -97,7 +113,6 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
     var exportBusy by remember { mutableStateOf(false) }
     var keptVideo by remember { mutableStateOf<String?>(null) }
     var retryRender by remember { mutableIntStateOf(0) }
-    val sharedFiles = remember { hashSetOf<String>() }
     var pickerAuthority by remember { mutableStateOf<Long?>(null) }
     val dateFormat = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
     fun addSelected(values: List<Uri>) {
@@ -115,12 +130,12 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
                     } catch (cancel: CancellationException) { throw cancel }
                     catch (_: Exception) { Graph.kidsPreferences.requireAdultAction(revision) }
                 }
-                library = index.photos()
+                photoRows = index.photos()
                 var matched = true
                 if (kept > 0 && people.isNotEmpty()) {
                     try {
                         index.refreshPeople(revision) { done, total -> personProgress = done.toFloat() / total }
-                        library = index.photos()
+                        photoRows = index.photos()
                     } catch (cancel: CancellationException) { throw cancel }
                     catch (_: Exception) { matched = false }
                     finally { personProgress = null }
@@ -141,14 +156,54 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
         try {
             if (!Graph.kidsPreferences.getEnabled()) {
                 val adult = Graph.kidsPreferences.adultActionRevision()
-                library = index.photos()
-                people = index.people()
+                photoRows = index.photos()
                 index.refreshPlaces(adult)
-                library = index.photos()
+                photoRows = index.photos()
             }
         } catch (cancel: CancellationException) { throw cancel }
         catch (_: Exception) { notice = "Could not open the album." }
         finally { loading = false }
+    }
+    LaunchedEffect(index) {
+        try {
+            index.observePeople().collect { current ->
+                // Update the identity projection before any suspended image lookup. Old
+                // pane and search snapshots immediately stop resolving withdrawn people.
+                people = current
+                photoRows = index.photos()
+            }
+        } catch (cancel: CancellationException) { throw cancel }
+        catch (_: Exception) {
+            people = emptyList()
+            notice = "Could not open the Album people index."
+        }
+    }
+    LaunchedEffect(index) {
+        val owners = Graph.workspaceRepository.observe()
+        val versions = Graph.workspaceFileRepository.observeFiles()
+        combine(owners, versions) { objects, files ->
+            val active = objects.mapTo(hashSetOf()) { it.id.value }
+            files.filter { it.objectId.value in active }.associateBy { it.objectId.value }
+        }.collectLatest { current ->
+            fun currentSource(photo: HaloAlbumPhoto) = current[photo.id]?.let { it.uri == photo.uri && it.version == photo.version } == true
+            photoRows = photoRows.filter(::currentSource)
+            selected = selected?.takeIf(::currentSource)
+            personReference = personReference?.takeIf(::currentSource)
+            photoEditor = photoEditor?.takeIf { currentSource(it.first) }
+            comparingPhoto = comparingPhoto?.takeIf { currentSource(it.first) && currentSource(it.second) }
+            if (story.any { !currentSource(it) }) {
+                playing = false
+                review = null
+                story = emptyList()
+                val stale = rendered
+                rendered = null
+                keptVideo = null
+                stale?.let { AlbumStoryShares.remove(it.file) }
+            }
+            try { photoRows = index.photos() }
+            catch (cancel: CancellationException) { throw cancel }
+            catch (_: Exception) { notice = "Could not refresh the album." }
+        }
     }
 
     fun addPhotos(original: Boolean) {
@@ -173,7 +228,7 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
         keptVideo = null
         val previous = rendered
         rendered = null
-        if (previous != null && previous.file.name !in sharedFiles) withContext(Dispatchers.IO) { previous.file.delete() }
+        if (previous != null) withContext(Dispatchers.IO) { AlbumStoryShares.release(previous.file) }
         if (storyDraft == null) return@LaunchedEffect
         rendering = true
         notice = null
@@ -184,12 +239,13 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
         finally { rendering = false }
     }
     DisposableEffect(Unit) {
-        onDispose { rendered?.file?.takeUnless { it.name in sharedFiles }?.delete() }
+        onDispose { rendered?.file?.let(AlbumStoryShares::release) }
     }
 
     fun makeStory() {
-        val beginning = results.firstOrNull() ?: return
-        val photos = if (beginning.date != null) results.filter { it.date == beginning.date } else results
+        val chosen = results.filter { it.id in selection }
+        val beginning = (chosen.firstOrNull() ?: results.firstOrNull()) ?: return
+        val photos = if (chosen.isNotEmpty()) chosen else if (beginning.date != null) results.filter { it.date == beginning.date } else results
         story = photos.distinctBy(HaloAlbumPhoto::id).take(5)
         storyTitle = query.trim().ifBlank { beginning.date?.format(dateFormat) ?: dayDefault }.take(80)
         playing = false
@@ -205,23 +261,30 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
 
     fun send(reviewed: AlbumShareReview) {
         scope.launch {
+            var grant: Uri? = null
             try {
                 val video = reviewed.video
                 check(video == rendered && video.file.isFile)
                 Graph.kidsPreferences.requireAdultAction(reviewed.adultRevision)
-                val uri = video.uri(context)
+                val uri = Graph.appDatabase.withTransaction {
+                    video.draft.requireCurrentSources()
+                    Graph.kidsPreferences.requireAdultAction(reviewed.adultRevision)
+                    Graph.haloPause.requireActive()
+                    AlbumStoryShares.grant(context.applicationContext, video)
+                }.also { grant = it }
                 val send = Intent(Intent.ACTION_SEND).apply {
                     type = "video/mp4"
                     putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, video.draft.title)
-                    clipData = ClipData.newRawUri(video.draft.title, uri)
+                    clipData = ClipData.newRawUri("Album story", uri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 Graph.kidsPreferences.requireAdultAction(reviewed.adultRevision)
-                context.startActivity(Intent.createChooser(send, video.draft.title))
-                sharedFiles += video.file.name
+                Graph.haloPause.requireActive()
+                context.startActivity(Intent.createChooser(send, null))
+                grant = null
             } catch (cancel: CancellationException) { throw cancel }
             catch (_: Exception) { notice = "Could not open sharing for this video." }
+            finally { grant?.let { AlbumStoryShares.revoke(context.applicationContext, it) } }
         }
     }
 
@@ -232,9 +295,23 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
         scope.launch {
             try {
                 val revision = Graph.kidsPreferences.adultActionRevision()
-                val title = video.draft.title.replace(Regex("[\\p{Cntrl}/\\\\]+"), " ").trim().ifBlank { dayDefault }
+                val title = video.draft.title.replace(Regex("[\\p{Cntrl}/\\\\]+"), " ").trim().ifBlank { dayDefault }.take(110)
                 Graph.kidsPreferences.requireAdultAction(revision)
-                val saved = Graph.workspaceUseCases.importForCanvas(video.uri(context), "$title.mp4", "video/mp4")
+                val input = withContext(Dispatchers.IO) {
+                    video.draft.requireCurrentSources()
+                    check(video.file.length() in 12..(64L * 1024 * 1024))
+                    video.file.readBytes()
+                }
+                val source = video.draft.photos.first()
+                val metadata = albumSourceProvenance("ALBUM_STORY_V1", video.draft.photos)
+                val saved = try {
+                    Graph.workspaceFileRepository.createManagedFile("$title.mp4", "video/mp4", input, source.id,
+                        requireNotNull(source.version), metadata.toString(), validateSource = {
+                            Graph.kidsPreferences.requireAdultAction(revision)
+                            Graph.haloPause.requireActive()
+                            video.draft.requireCurrentSources()
+                        })
+                } finally { input.fill(0) }
                 Graph.kidsPreferences.requireAdultAction(revision)
                 keptVideo = saved.objectId.value
                 notice = "Video kept in Workspace."
@@ -243,6 +320,43 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
             finally { exportBusy = false }
         }
     }
+
+    fun canEdit(photo: HaloAlbumPhoto) = photo.sourceLink.isBlank() && photo.sourceLicense.isBlank()
+
+    fun savePhotoEdit(photo: HaloAlbumPhoto, edits: AlbumPhotoAdjustments) {
+        if (busy || !canEdit(photo)) return
+        busy = true
+        scope.launch {
+            try {
+                val revision = Graph.kidsPreferences.adultActionRevision()
+                val bytes = withContext(Dispatchers.IO) {
+                    requireCurrentAlbumPhoto(photo)
+                    val original = requireNotNull(loadAlbumBitmap(context, photo.uri, 2800))
+                    try {
+                        val adjusted = edits.render(original)
+                        try {
+                            java.io.ByteArrayOutputStream().use { target ->
+                                check(adjusted.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, target))
+                                target.toByteArray()
+                            }
+                        } finally { if (adjusted !== original) adjusted.recycle() }
+                    } finally { original.recycle() }
+                }
+                val copy = try { index.addEdited(photo, bytes, revision) }
+                finally { bytes.fill(0) }
+                photoRows = index.photos()
+                selection = setOf(copy)
+                selecting = true
+                photoEditor = null
+                notice = "Edited copy kept."
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { notice = "Could not save the edited photo."; photoEditor = null }
+            finally { busy = false }
+        }
+    }
+
+    val selectedEdit = library.firstOrNull { it.id in selection && it.editedFromId != null }
+    val selectedOriginal = selectedEdit?.editedFromId?.let { id -> library.firstOrNull { it.id == id } }
 
     val photoLibraryEmpty = library.isEmpty()
     val primary = if (isStory) ({ startReview() }) else if (photoLibraryEmpty) ({ showPickerChoice = true }) else ({ makeStory() })
@@ -271,6 +385,8 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
                 story = emptyList()
                 review = null
                 selected = null
+                selecting = false
+                selection = emptySet()
                 personReference = null
                 personSettings = false
                 showPickerChoice = false
@@ -293,6 +409,32 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
             onTitleLongClick = { customize = true }) {
             TextButton(onClick = { showGuide = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Show me")) }
         }
+        HaloInstrumentBar("album", mapOf(
+            "album.library_sidebar" to HaloInstrumentAction({ browse = true }, !loading && !isStory),
+            "album.search_by_memory" to HaloInstrumentAction({ searchPanel = true }, !loading && !isStory),
+            "album.grid_zoom" to HaloInstrumentAction({ showGridZoom = true }, !isStory),
+            "album.select" to HaloInstrumentAction({ selecting = !selecting; if (!selecting) selection = emptySet() }, results.isNotEmpty() && !isStory, selecting),
+            "album.adjust" to HaloInstrumentAction({ results.firstOrNull { it.id in selection && canEdit(it) }?.let { photoEditor = it to false } },
+                !busy && !isStory && results.any { it.id in selection && canEdit(it) }),
+            "album.crop" to HaloInstrumentAction({ results.firstOrNull { it.id in selection && canEdit(it) }?.let { photoEditor = it to true } },
+                !busy && !isStory && results.any { it.id in selection && canEdit(it) }),
+            "album.compare" to HaloInstrumentAction({
+                if (selectedEdit != null && selectedOriginal != null) comparingPhoto = selectedEdit to selectedOriginal
+            }, !busy && !isStory && selectedEdit != null && selectedOriginal != null),
+            "album.revert" to HaloInstrumentAction({
+                if (selectedOriginal != null) {
+                    selection = setOf(selectedOriginal.id)
+                    selected = selectedOriginal
+                    tagDraft = selectedOriginal.tags
+                }
+            }, !busy && !isStory && selectedOriginal != null),
+            "album.make_a_story" to HaloInstrumentAction(::makeStory, results.isNotEmpty() && !isStory && primaryEnabled, working = rendering),
+            "album.info" to HaloInstrumentAction({
+                val photo = results.firstOrNull { it.id in selection }
+                if (photo != null) { selected = photo; tagDraft = photo.tags }
+            }, results.any { it.id in selection } && !isStory),
+            "album.share" to HaloInstrumentAction(::startReview, rendered?.draft == storyDraft && rendered != null && primaryEnabled),
+        ), modifier = Modifier.padding(horizontal = 16.dp), primary = "album.make_a_story")
         if (isStory) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val video = rendered?.takeIf { it.draft == storyDraft }
@@ -342,16 +484,23 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
                     Text("${date?.format(dateFormat) ?: uiText("Date unknown")} · ${uiText("%s photos", rows.size)}",
                         style = MaterialTheme.typography.titleSmall)
                 }
-                items(rows.chunked(if (largePhotos) 2 else 3)) { photos ->
+                val columns = if (customColumns == 0) (if (largePhotos) 2 else 3) else customColumns
+                items(rows.chunked(columns)) { photos ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         photos.forEach { photo ->
+                            Box(Modifier.weight(1f).aspectRatio(1f).clip(RoundedCornerShape(13.dp))
+                                .clickable {
+                                    if (selecting) selection = if (photo.id in selection) selection - photo.id else selection + photo.id
+                                    else { selected = photo; tagDraft = photo.tags }
+                                }.semantics { this.semanticsSelected = photo.id in selection }) {
                             AsyncImage(model = photo.uri, contentDescription = photo.tags.ifBlank { photo.name },
-                                modifier = Modifier.weight(1f).aspectRatio(1f).clip(RoundedCornerShape(13.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                    .clickable { selected = photo; tagDraft = photo.tags },
+                                modifier = Modifier.matchParentSize().background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                 contentScale = ContentScale.Crop)
+                                if (selecting && photo.id in selection) Surface(Modifier.align(Alignment.TopEnd).padding(4.dp),
+                                    shape = RoundedCornerShape(8.dp), color = albumMint, contentColor = Color(0xFF16372E)) { Text("✓", Modifier.padding(5.dp)) }
+                            }
                         }
-                        repeat((if (largePhotos) 2 else 3) - photos.size) { Spacer(Modifier.weight(1f)) }
+                        repeat(columns - photos.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
             }
@@ -376,17 +525,53 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
         }
     }
 
-    selected?.let { photo ->
+    if (browse) AlertDialog(onDismissRequest = { browse = false }, title = { Text(uiText("Album library")) },
+        text = { Column {
+            TextButton(onClick = { query = ""; filter = ""; browse = false }) { Text(uiText("All photos")) }
+            TextButton(onClick = { browse = false; personSettings = true }) { Text(uiText("People")) }
+            TextButton(onClick = { browse = false; showPickerChoice = true }) { Text(uiText("Choose photos")) }
+        } }, confirmButton = { TextButton(onClick = { browse = false }) { Text(uiText("Done")) } })
+    if (showGridZoom) AlertDialog(onDismissRequest = { showGridZoom = false }, title = { Text(uiText("Grid zoom")) },
+        text = { Column {
+            val count = if (customColumns == 0) (if (largePhotos) 2 else 3) else customColumns
+            Text(uiText("%1\$d photos per row", count))
+            Slider(count.toFloat(), { customColumns = it.toInt().coerceIn(2, 8) }, valueRange = 2f..8f, steps = 5)
+        } }, confirmButton = { TextButton(onClick = { showGridZoom = false }) { Text(uiText("Done")) } })
+    if (searchPanel) AlertDialog(onDismissRequest = { searchPanel = false }, title = { Text(uiText("Search by memory")) },
+        text = { com.halo.app.ui.components.HaloTextField(query, { query = it.take(180); filter = query },
+            com.halo.app.ui.components.VoiceFieldKind.SEARCH, label = { Text(uiText("Search")) }) },
+        confirmButton = { TextButton(onClick = { searchPanel = false }) { Text(uiText("Done")) } })
+    comparingPhoto?.let { (edited, original) ->
+        var showOriginal by remember(edited.id) { mutableStateOf(false) }
+        AlertDialog(onDismissRequest = { comparingPhoto = null }, title = { Text(uiText("Compare photos")) },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                val visiblePhoto = if (showOriginal) original else edited
+                AsyncImage(visiblePhoto.uri, visiblePhoto.name, Modifier.fillMaxWidth().height(220.dp),
+                    contentScale = ContentScale.Fit)
+                FilterChip(showOriginal, onClick = { showOriginal = !showOriginal },
+                    label = { Text(uiText(if (showOriginal) "Showing original" else "Show original")) })
+            } }, confirmButton = { TextButton(onClick = { comparingPhoto = null }) { Text(uiText("Done")) } })
+    }
+    photoEditor?.let { (photo, crop) ->
+        HaloAlbumPhotoEditor(photo, crop, busy, onClose = { photoEditor = null }, onSave = { savePhotoEdit(photo, it) })
+    }
+    selected?.withVisiblePeople(currentPeople)?.let { photo ->
         AlertDialog(
             onDismissRequest = { selected = null }, title = { Text(photo.name) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     AsyncImage(photo.uri, photo.tags.ifBlank { photo.name },
                         Modifier.fillMaxWidth().heightIn(min = 140.dp, max = 210.dp), contentScale = ContentScale.Fit)
+                    if (photo.sourceCredit.isNotBlank()) Text(photo.sourceCredit, style = MaterialTheme.typography.bodyMedium)
+                    if (photo.sourceLink.isNotBlank()) Text(photo.sourceLink, style = MaterialTheme.typography.bodySmall)
+                    if (photo.sourceLicense.isNotBlank()) Text(photo.sourceLicense, style = MaterialTheme.typography.bodySmall)
                     if (photo.nearbyCity.isNotBlank()) Text(uiText("Near %s", photo.nearbyCity), style = MaterialTheme.typography.bodyMedium)
                     if (photo.suggestedPeople.isNotEmpty()) Text(uiText("People matches · %s", photo.suggestedPeople.joinToString(", ")),
                         style = MaterialTheme.typography.bodyMedium)
                     OutlinedTextField(tagDraft, { tagDraft = it.take(500) }, label = { Text(uiText("Names, places and words")) })
+                    if (canEdit(photo)) TextButton(onClick = { selected = null; photoEditor = photo to false }, enabled = !busy) {
+                        Text(uiText("Edit photo"))
+                    }
                     TextButton(onClick = {
                         selected = null
                         personName = ""
@@ -400,7 +585,7 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
                 scope.launch {
                     try {
                         index.putTags(photo.id, replacement, Graph.kidsPreferences.adultActionRevision())
-                        library = index.photos()
+                        photoRows = index.photos()
                     } catch (cancel: CancellationException) { throw cancel }
                     catch (_: Exception) { notice = "Could not save photo names and places." }
                 }
@@ -435,8 +620,7 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
                     try {
                         val revision = Graph.kidsPreferences.adultActionRevision()
                         index.enroll(photo, name, revision) { done, total -> personProgress = done.toFloat() / total }
-                        people = index.people()
-                        library = index.photos()
+                        photoRows = index.photos()
                         notice = "Person added. Search their name to see matches."
                     } catch (cancel: CancellationException) { throw cancel }
                     catch (_: AlbumReferenceFaceUnavailable) { notice = "Choose a clear reference photo that shows one person." }
@@ -460,8 +644,7 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
                             scope.launch {
                                 try {
                                     index.removePerson(person.id, Graph.kidsPreferences.adultActionRevision())
-                                    people = index.people()
-                                    library = index.photos()
+                                    photoRows = index.photos()
                                 } catch (cancel: CancellationException) { throw cancel }
                                 catch (_: Exception) { notice = "Could not remove this person from People search." }
                                 finally { busy = false }

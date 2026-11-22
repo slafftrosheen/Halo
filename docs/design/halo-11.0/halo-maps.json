@@ -1,0 +1,36 @@
+{
+ "version": "11.0",
+ "status": "reference · unverified · not tested on a device",
+ "tool": "halo maps",
+ "entry": [
+  "Home › Tools › maps",
+  "Today route block",
+  "Library Place item",
+  "Ask halo “how do I get to…”",
+  "Glasses: “halo, take me home”"
+ ],
+ "surfaces": {
+  "phone": "next-turn card on top, map below, ETA bar",
+  "glasses": "arrow + distance in the lens, nothing else",
+  "buds": "spoken turns, short",
+  "ink": "route summary only, no live map",
+  "kids": "no map for children; the grown-up sets Safe places on Family & Kids"
+ },
+ "privacy": [
+  "Location stays on the phone",
+  "Location history is off by default",
+  "Share arrival sends a time, not a position, and stops on arrival (asks first)",
+  "Photo places are removed when sharing (as before)"
+ ],
+ "openDecisions": [
+  "map data provider",
+  "live transit times source (carried over)",
+  "privacy review of Safe places"
+ ],
+ "routes": [
+  "halo://home/tools/maps",
+  "halo://home/tools/maps?to={place}",
+  "halo://home/tools/maps?q={query}",
+  "halo://home/tools/maps/nav"
+ ]
+}

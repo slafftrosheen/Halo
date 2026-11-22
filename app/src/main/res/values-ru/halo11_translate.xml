@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_translate_title">Перевод</string>
+    <string name="halo11_translate_swap">Поменять местами</string>
+    <string name="halo11_translate_turns">Говорите по очереди, каждый в своём поле.</string>
+    <string name="halo11_translate_spoken_turns">Автоматически переводить каждую реплику</string>
+    <string name="halo11_translate_cloud_voice">Разрешить облачному голосу читать перевод</string>
+    <string name="halo11_translate_speaker">Скажите или введите текст (%1$s)</string>
+    <string name="halo11_translate_say_turns">Читать перевод вслух</string>
+    <string name="halo11_translate_local">Перевод выполняется на этом телефоне.</string>
+    <string name="halo11_translate_pack_needed">Загрузите языки для перевода без интернета.</string>
+    <string name="halo11_translate_checking">Проверяем установленные языки…</string>
+    <string name="halo11_translate_packs">Офлайн-языки</string>
+    <string name="halo11_translate_input">Введите текст</string>
+    <string name="halo11_translate_listen">Прочитать вслух</string>
+    <string name="halo11_translate_keep">Сохранить фразу</string>
+    <string name="halo11_translate_saved">Открыть сохранённую фразу</string>
+    <string name="halo11_translate_packs_explain">Языковые пакеты загружаются по Wi-Fi. Во время перевода текст остаётся на телефоне.</string>
+    <string name="halo11_translate_download">Загрузить по Wi-Fi</string>
+    <string name="halo11_translate_phrasebook">Разговорник</string>
+    <string name="halo11_translate_review">%1$s\n\n%2$s</string>
+    <string name="halo11_translate_pack_failed">Не удалось загрузить языковой пакет. Подключитесь к Wi-Fi и повторите попытку.</string>
+    <string name="halo11_translate_failed">Не удалось перевести текст. Повторите попытку.</string>
+    <string name="halo11_translate_keep_failed">Не удалось сохранить фразу. Повторите попытку.</string>
+</resources>

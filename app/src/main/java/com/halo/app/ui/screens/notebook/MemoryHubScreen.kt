@@ -23,6 +23,8 @@ import androidx.compose.runtime.saveable.listSaver
 import com.halo.app.ui.design.HaloFocusAction
 import com.halo.app.ui.icons.HaloGlyph
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.Alignment
 import com.halo.app.ui.fx.HaloFxAnimation
 import com.halo.app.ui.fx.HaloFxMoment
@@ -79,24 +81,27 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         ), presentation, { draftLayout = it }, { draftLayout = null })
     val suggestionIntro = rememberZone6PageSetting("memory.suggestions.intro")
     val scope = rememberCoroutineScope()
-    var section by rememberSaveable(initialCandidate?.content, initialSection) {
+    val initialContent = initialCandidate?.content
+    var section by rememberSaveable(initialContent, initialSection) {
         mutableStateOf(initialSection.takeIf { it in listOf("Memories", "Suggestions", "Learning history") } ?: "Memories")
     }
-    var editor by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate != null) }
-    var draft by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate?.content.orEmpty()) }
-    var kind by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf(initialCandidate?.kind ?: MemoryKind.FACT) }
+    var editor by rememberSaveable(initialContent, initialSection) { mutableStateOf(initialCandidate != null) }
+    var draft by rememberSaveable(initialContent, initialSection) { mutableStateOf(initialContent.orEmpty()) }
+    var kind by rememberSaveable(initialContent, initialSection) { mutableStateOf(initialCandidate?.kind ?: MemoryKind.FACT) }
     var scopeChoice by rememberSaveable(stateSaver = listSaver<MemoryScopeChoice, String>(
         save = { listOf(it.scope.name, it.id.orEmpty(), it.label) },
         restore = { MemoryScopeChoice(MemoryScope.valueOf(it[0]), it[1].takeIf(String::isNotEmpty), it[2]) },
     )) { mutableStateOf(MemoryScopeChoice(MemoryScope.GLOBAL, null, "Everywhere")) }
-    var search by rememberSaveable(initialCandidate?.content, initialSection) { mutableStateOf("") }
+    var search by rememberSaveable(initialContent, initialSection) { mutableStateOf("") }
     LaunchedEffect(search, viewModel) { viewModel.search(search) }
+    var pageTool by remember { mutableStateOf<MemoryPageTool?>(null) }
     val shellOwnsOrb = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val pageOwner = com.halo.app.ui.presence.ShellPageOwner("memory", sourceIdentity = "$savedRevision:$section:${state.group}:${state.scope}:${state.sort}:${search.hashCode()}:${state.query.hashCode()}:$editor:${review.hashCode()}:$busy",
-        canonicalToolIds = listOf("halo_search_memory", "halo_read_memory", "halo_remember", "halo_propose_memory"),
+        canonicalToolIds = listOf("halo_search_memory", "halo_read_memory", "halo_remember", "halo_propose_memory",
+            "halo_memory_page_link", "halo_memory_page_tag", "halo_memory_page_connections"),
         helpDescription = stringResource(R.string.zone5_help_memory),
         defaultDisabledActionReason = stringResource(R.string.action_wait),
-        guidanceBlocked = busy || editor || review != null || state.loading || state.error != null,
+        guidanceBlocked = busy || editor || review != null || pageTool != null || state.loading || state.error != null,
         completedGuideIds = if (state.count > 0 && !state.loading && state.error == null) setOf("memory-add.v1") else emptySet(),
         helpSteps = listOf(com.halo.app.ui.presence.ShellGuideStep("memory-add.v1", "page.memory.add", stringResource(R.string.zone5_guide_memory), state.count > 0 && !state.loading && state.error == null)),
         nextStep = if (state.count == 0 && !state.loading && state.error == null && !busy && !editor && review == null &&
@@ -119,7 +124,28 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
     val focus = LocalFocusManager.current
     var showUsage by rememberSaveable { mutableStateOf(false) }
     val headingBeforeTabs = shellOwnsOrb && androidx.compose.ui.platform.LocalDensity.current.fontScale < 1.4f
-    Box(Modifier.fillMaxSize()) {
+    var openMemorySearch by remember { mutableStateOf(false) }
+    var exportMemories by remember { mutableStateOf(false) }
+    var searchFocused by remember { mutableStateOf(false) }
+    var lastBracketAt by remember { mutableLongStateOf(0) }
+    Box(Modifier.fillMaxSize().onPreviewKeyEvent { key ->
+        val event = key.nativeKeyEvent
+        if (section != "Memories" || searchFocused || editor || review != null || pageTool != null || busy ||
+            state.pages.isEmpty() || event.action != android.view.KeyEvent.ACTION_DOWN || event.repeatCount != 0 ||
+            event.isCtrlPressed || event.isAltPressed) return@onPreviewKeyEvent false
+        when (event.unicodeChar) {
+            '['.code -> {
+                val next = event.eventTime
+                if (lastBracketAt > 0 && next - lastBracketAt in 0L..700L) {
+                    lastBracketAt = 0
+                    pageTool = MemoryPageTool.LINK
+                } else lastBracketAt = next
+                true
+            }
+            '#'.code -> { pageTool = MemoryPageTool.TAG; true }
+            else -> { lastBracketAt = 0; false }
+        }
+    }) {
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
     if (headingBeforeTabs) Zone5InstrumentHeading(uiText("Memory"), "tool_memory",
         state = uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size))
@@ -131,6 +157,19 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!shellOwnsOrb) item { HaloWorkspaceHeader(uiText("Memory"), uiText("What Halo remembers and may use as context"), onBack = onBack) }
         else if (!headingBeforeTabs) item { Zone5InstrumentHeading(uiText("Memory"), "tool_memory", state = uiText("%1\$d remembered · %2\$d suggestions", state.count, pending.size)) }
+        item {
+            com.halo.app.ui.instruments.HaloInstrumentBar("memory", mapOf(
+                "memory.page" to com.halo.app.ui.instruments.HaloInstrumentAction({ editor = true }, !busy),
+                "memory.link" to com.halo.app.ui.instruments.HaloInstrumentAction({ pageTool = MemoryPageTool.LINK }, !busy && state.pages.isNotEmpty()),
+                "memory.tag" to com.halo.app.ui.instruments.HaloInstrumentAction({ pageTool = MemoryPageTool.TAG }, !busy && state.pages.isNotEmpty()),
+                "memory.backlinks" to com.halo.app.ui.instruments.HaloInstrumentAction({ pageTool = MemoryPageTool.BACKLINKS }, !busy && state.pages.isNotEmpty()),
+                "memory.link_map" to com.halo.app.ui.instruments.HaloInstrumentAction({ pageTool = MemoryPageTool.MAP }, !busy && state.pages.isNotEmpty()),
+                "memory.timeline" to com.halo.app.ui.instruments.HaloInstrumentAction({ section = "Learning history" }, !busy, section == "Learning history"),
+                "memory.search" to com.halo.app.ui.instruments.HaloInstrumentAction({ openMemorySearch = true }, !busy),
+                "memory.ask_before_using" to com.halo.app.ui.instruments.HaloInstrumentAction(onSettings, !busy),
+                "memory.export" to com.halo.app.ui.instruments.HaloInstrumentAction({ exportMemories = true }, !busy && state.items.isNotEmpty()),
+            ), primary = "memory.page")
+        }
         item {
             Row(Modifier.fillMaxWidth()) { Text(uiText("Use memory in conversations"), Modifier.weight(1f)); Switch(useMemory, viewModel::useMemory) }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -150,8 +189,10 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         when (section) {
             "Memories" -> {
                 item {
-                    HaloTextField(search, { search = it; viewModel.search(it) }, label = { Text(uiText("Search memory")) }, modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.SEARCH)
-                    Text(uiText("Search by words in your saved memories."), style = MaterialTheme.typography.bodyMedium)
+                    HaloTextField(search, { search = it; viewModel.search(it) }, label = { Text(uiText("Search memory")) },
+                        modifier = Modifier.fillMaxWidth().onFocusChanged { searchFocused = it.hasFocus },
+                        singleLine = true, kind = VoiceFieldKind.SEARCH)
+                    Text(uiText("Search by words or enter #tag."), style = MaterialTheme.typography.bodyMedium)
                 }
                 item {
                     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -180,6 +221,12 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
                     HaloWorkspaceCard {
                         if (!simple) Text(uiText(item.kindLabel), style = MaterialTheme.typography.labelMedium)
                         Text(item.record.content, style = MaterialTheme.typography.bodyLarge)
+                        val tags = state.pageMetadata.tagsOf(item.record.id)
+                        if (tags.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            tags.forEach { tag ->
+                                AssistChip(onClick = { search = "#${tag.label}" }, label = { Text("#${tag.label}") })
+                            }
+                        }
                         com.halo.app.ui.components.HaloReadAloud(item.record.content, category = com.halo.sdk.provider.RemoteDataCategory.MEMORIES)
                         if (!simple) {
                             Text(uiText(item.originLabel), style = MaterialTheme.typography.bodySmall)
@@ -249,6 +296,17 @@ fun MemoryHubScreen(viewModel: MemoryHubViewModel, notebook: NotebookViewModel, 
         )
     }
     }
+    com.halo.app.ui.instruments.HaloInstrumentTextExport("text/plain", "Halo memories.txt", "Export visible memories",
+        state.items.map { "${it.record.id}:${it.record.updatedAt}" },
+        content = { state.items.joinToString("\n\n") { it.record.content } },
+        request = exportMemories, onClose = { exportMemories = false })
+    val activePageTool = pageTool
+    if (activePageTool != null) MemoryPageToolsDialog(activePageTool, state.pages, state.pageMetadata, busy, state.error,
+        viewModel, close = { pageTool = null }, openPage = onOpenMemory)
+    if (openMemorySearch) StudioAlertDialog(onDismissRequest = { openMemorySearch = false }, title = { Text(uiText("Search memory")) },
+        text = { HaloTextField(search, { search = it }, kind = VoiceFieldKind.SEARCH, label = { Text(uiText("Search")) }) },
+        confirmButton = { TextButton(onClick = { section = "Memories"; openMemorySearch = false }) { Text(uiText("Done")) } },
+        dismissButton = {})
     if (editor && review == null) StudioAlertDialog(onDismissRequest = { if (!busy) editor = false }, title = { Text(uiText("Remember something")) }, text = {
         Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (initialCandidate != null) Text(uiText("Review what becomes memory. The original note stays in Notebook."))

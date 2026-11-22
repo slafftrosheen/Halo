@@ -9,10 +9,14 @@ import kotlinx.coroutines.asContextElement
 
 /** Public sources and model artifacts have no authority to reach a private network. No DNS in validate. */
 object PublicNetworkPolicy {
-    fun validate(value: String): HttpUrl {
+    fun validate(value: String): HttpUrl = validate(value, allowPublicHttp = false)
+
+    internal fun validate(value: String, allowPublicHttp: Boolean): HttpUrl {
         require(value.length <= 8192 && value.none { it.isISOControl() }) { "Invalid or oversized public URL" }
-        val url = requireNotNull(value.toHttpUrlOrNull()) { "Enter an HTTPS URL" }
-        require(url.scheme == "https" && url.port == 443) { "Public downloads require HTTPS on the standard port" }
+        val url = requireNotNull(value.toHttpUrlOrNull()) { "Enter a valid public URL" }
+        require(url.scheme == "https" && url.port == 443 || allowPublicHttp && url.scheme == "http" && url.port == 80) {
+            "Public downloads require an allowed scheme on its standard port"
+        }
         require(url.username.isEmpty() && url.password.isEmpty()) { "Credentials in URLs are not supported" }
         val host = url.host.trimEnd('.')
         require(host != "localhost" && !host.endsWith(".localhost") && !host.endsWith(".local") &&
@@ -22,6 +26,9 @@ object PublicNetworkPolicy {
             require(publicAddress(InetAddress.getByName(host))) { "Destination address is not public" }
         return url.newBuilder().fragment(null).build()
     }
+
+    /** Public feeds may be unauthenticated HTTP. Provider and model transports retain HTTPS validation. */
+    fun validateCollector(value: String): HttpUrl = validate(value, allowPublicHttp = true)
 
     fun publicAddress(address: InetAddress): Boolean {
         if (address.isAnyLocalAddress || address.isLoopbackAddress || address.isLinkLocalAddress || address.isSiteLocalAddress || address.isMulticastAddress) return false

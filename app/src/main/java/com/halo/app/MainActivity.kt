@@ -335,6 +335,18 @@ open class MainActivity : ComponentActivity() {
     }
 
     private fun handleHaloScreenIntent(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_VIEW && intent.data?.scheme == "halo") {
+            val route = intent.data?.let { runCatching { com.halo.app.ui.shell.HaloDeepLinks.resolve(it) }.getOrNull() }
+            intent.action = null
+            intent.data = null
+            intent.removeExtra(com.halo.app.ui.shell.HaloScreenCatalog.EXTRA_SCREEN)
+            if (route != null) {
+                widgetEntries.cancelPending()
+                ManualDependencyGraph.explicitHaloScreenRequested = true
+                ManualDependencyGraph.requestedHaloScreen.value = route
+            }
+            return
+        }
         if (intent?.hasExtra(com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_ID) == true) {
             val widgetId = intent.getIntExtra(com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_ID,-1)
             val revision = intent.getLongExtra(com.halo.app.nativeactions.EverydayWidgetViews.EXTRA_VERSION,-1)
@@ -643,6 +655,9 @@ open class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean =
+        com.halo.app.ui.instruments.HaloInstrumentKeyboard.dispatch(this, event) || super.dispatchKeyEvent(event)
 
     override fun onResume() {
         super.onResume()

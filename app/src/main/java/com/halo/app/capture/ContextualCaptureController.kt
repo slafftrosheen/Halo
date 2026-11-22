@@ -2,6 +2,7 @@ package com.halo.app.capture
 
 import android.content.Context
 import android.net.Uri
+import android.os.SystemClock
 import com.halo.sdk.runtime.multimodal.*
 import com.halo.sdk.provider.*
 import com.halo.app.ai.readRuntimeAiContextPolicy
@@ -20,7 +21,11 @@ class ContextualCaptureController(private val context: Context, private val medi
     private val captures: LocalCaptureStore, private val attachments: VisualAttachmentStore,
     private val assets: NotebookAssetRepository, private val scope: CoroutineScope,
     private val mediaPolicy: com.halo.app.data.workspace.WorkspaceMediaAiPolicy,
-    private val workflowStorage: com.halo.sdk.runtime.Storage? = null) {
+    private val workflowStorage: com.halo.sdk.runtime.Storage? = null,
+    private val wearableHomeworkRevision: suspend (deviceId: String?, expectedRevision: Long?) -> Long? = { _, existing ->
+        check(existing == null)
+        null
+    }) {
     private val mutable = MutableStateFlow<ContextualCaptureState?>(null)
     val state = mutable.asStateFlow()
     val visible = MutableStateFlow(false)
@@ -35,15 +40,19 @@ class ContextualCaptureController(private val context: Context, private val medi
     val saveDescription = MutableStateFlow("")
     private val events = Channel<ContextualCaptureNavigation>(Channel.BUFFERED)
     val navigation = events.receiveAsFlow()
+    private data class PhotoCoachOffer(val ticket: String, val captureId: String, val assetId: String,
+        val familyRevision: Long, val child: Boolean, val issuedAt: Long)
+    private var photoCoachOffer: PhotoCoachOffer? = null
     var memoryCandidate: MemoryCandidate? = null
         private set
 
     suspend fun receive(content: MediaAssetContent, source: CaptureSource, label: String,
         operationId: String = UUID.randomUUID().toString(), deviceId: String? = null,
         quality: CaptureQuality = CaptureQuality.ORIGINAL, sourceAssetId: String? = null,
-        captureTimestampMs: Long? = null, trigger: String? = null) = lock.withLock {
+        captureTimestampMs: Long? = null, trigger: String? = null): Unit = lock.withLock {
         if (operationId in seen) return@withLock
         check(mutable.value == null) { "Finish or discard the current capture first" }
+        val kidsRevision = if (source == CaptureSource.MANAGED_WEARABLE_CAMERA) wearableHomeworkRevision(deviceId, null) else null
         require(content.bytes.size in 1..ImageInputLimits().maxSourceBytes)
         val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
         android.graphics.BitmapFactory.decodeByteArray(content.bytes, 0, content.bytes.size, bounds)
@@ -57,11 +66,36 @@ class ContextualCaptureController(private val context: Context, private val medi
         }
         val ref = media.ingest(MediaAssetContent(content.bytes, bounds.outMimeType ?: content.mimeType), provenance,
             "capture:$operationId", deviceId)
-        mutable.value = ContextualCaptureState(operationId, source, label, ref, bounds.outWidth, bounds.outHeight, quality, sourceAssetId=sourceAssetId, captureTimestampMs=captureTimestampMs, trigger=trigger)
+        if (kidsRevision != null) {
+            try { requireHomeworkPhotoAuthority(kidsRevision, deviceId) }
+            catch (error: Exception) {
+                withContext(NonCancellable) { ref.interactionId?.let { media.releaseInteraction(it) } }
+                throw error
+            }
+        }
+        mutable.value = ContextualCaptureState(operationId, source, label, ref, bounds.outWidth, bounds.outHeight, quality,
+            sourceAssetId = sourceAssetId, captureTimestampMs = captureTimestampMs, trigger = trigger,
+            kidsHomeworkRevision = kidsRevision)
         seen.add(operationId); while(seen.size > 256) seen.remove(seen.first())
-        workflowStorage?.putBoolean(pendingKey,true); notice.value = null
+        workflowStorage?.putBoolean(pendingKey, kidsRevision == null); notice.value = null
         saveTitle.value = ""; saveDescription.value = ""
         visible.value = true
+        if (kidsRevision != null) scope.launch {
+            delay(120_000)
+            discardHomeworkPhoto(operationId, ref.id)
+        }
+    }
+
+    internal suspend fun canReceiveWearableReview(deviceId: String): Boolean {
+        return try {
+            wearableHomeworkRevision(deviceId, null) == null || state.value == null
+        } catch (_: com.halo.app.privacy.HaloPausedCancellation) { false }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { false }
+    }
+
+    private suspend fun requireHomeworkPhotoAuthority(revision: Long, deviceId: String?) {
+        check(wearableHomeworkRevision(requireNotNull(deviceId), revision) == revision)
     }
     /** Future cameras supply receipt through the existing host-owned still-image seam. */
     suspend fun captureStill(source: com.halo.sdk.driver.StillImageSource, request: com.halo.sdk.driver.StillCaptureRequest,
@@ -108,8 +142,82 @@ class ContextualCaptureController(private val context: Context, private val medi
         check(allowed() && mutable.value?.captureId == captureId && mutable.value?.mediaRef?.id == assetId) { "Capture changed" }
         saveLocked(allowed)
     }
+    internal suspend fun openPhotoCoach(captureId: String, assetId: String, adultRevision: Long) = lock.withLock {
+        val graph = com.halo.app.di.ManualDependencyGraph
+        graph.kidsPreferences.requireAdultAction(adultRevision)
+        graph.haloPause.requireActive()
+        val current = requireNotNull(mutable.value)
+        check(visible.value && current.captureId == captureId && current.mediaRef.id == assetId)
+        check(current.kidsHomeworkRevision == null)
+        check(media.metadata(current.mediaRef) != null)
+        val offer = PhotoCoachOffer(UUID.randomUUID().toString(), captureId, assetId, adultRevision, false, SystemClock.elapsedRealtime())
+        photoCoachOffer = offer
+        if (events.trySend(ContextualCaptureNavigation.PhotoCoach(offer.ticket)).isFailure) {
+            photoCoachOffer = null
+            error("Photo Coach is unavailable")
+        }
+        visible.value = false
+    }
+
+    internal suspend fun openKidsHomeworkPhoto(captureId: String, assetId: String) = lock.withLock {
+        val source = requireNotNull(mutable.value?.takeIf { it.captureId == captureId && it.mediaRef.id == assetId })
+        val revision = requireNotNull(source.kidsHomeworkRevision)
+        check(visible.value && source.isPrivateHomeworkGlasses())
+        val deviceId = source.mediaRef.sourceDeviceId
+        requireHomeworkPhotoAuthority(revision, deviceId)
+        check(media.metadata(source.mediaRef) != null)
+        requireHomeworkPhotoAuthority(revision, deviceId)
+        val offer = PhotoCoachOffer(UUID.randomUUID().toString(), captureId, assetId, revision, true, SystemClock.elapsedRealtime())
+        photoCoachOffer = offer
+        if (events.trySend(ContextualCaptureNavigation.KidsHomeworkPhoto(offer.ticket)).isFailure) {
+            photoCoachOffer = null
+            error("Homework photo is unavailable")
+        }
+        visible.value = false
+    }
+
+    /** A transient grant lets the local coach copy this exact image without saving it to Workspace. */
+    internal suspend fun takePhotoCoachCopy(ticket: String, child: Boolean = false): MediaAssetContent = lock.withLock {
+        val offer = requireNotNull(photoCoachOffer?.takeIf { it.ticket == ticket && it.child == child })
+        photoCoachOffer = null
+        val capture = requireNotNull(mutable.value?.takeIf { it.captureId == offer.captureId && it.mediaRef.id == offer.assetId })
+        val graph = com.halo.app.di.ManualDependencyGraph
+        suspend fun requireAuthority() {
+            check(SystemClock.elapsedRealtime() - offer.issuedAt in 0L..60_000L)
+            if (child) {
+                check(capture.isPrivateHomeworkGlasses() && capture.kidsHomeworkRevision == offer.familyRevision)
+                requireHomeworkPhotoAuthority(offer.familyRevision, capture.mediaRef.sourceDeviceId)
+            } else {
+                check(capture.kidsHomeworkRevision == null)
+                graph.kidsPreferences.requireAdultAction(offer.familyRevision)
+                graph.haloPause.requireActive()
+            }
+        }
+        var content: MediaAssetContent? = null
+        try {
+            val read = try {
+                requireAuthority()
+                media.open(capture.mediaRef).also { content = it }
+            } finally {
+                if (child) withContext(NonCancellable) { discardLocked() }
+            }
+            requireAuthority()
+            require(read.bytes.size in 1..ImageInputLimits().maxSourceBytes)
+            read
+        } catch (error: Exception) {
+            content?.bytes?.fill(0)
+            throw error
+        }
+    }
+
+    internal suspend fun discardHomeworkPhoto(captureId: String, assetId: String): Unit = lock.withLock {
+        if (mutable.value?.let { it.kidsHomeworkRevision != null && it.captureId == captureId && it.mediaRef.id == assetId } == true)
+            discardLocked()
+    }
+
     private suspend fun saveLocked(allowed: () -> Boolean = { true }): String {
         val capture = requireNotNull(mutable.value)
+        check(capture.kidsHomeworkRevision == null) { "Homework photos stay in the local coach" }
         capture.workspaceObjectId?.let { return it }
         mutable.value = capture.copy(status = CaptureStatus.SAVING, error = null)
         val pending = try { captures.preparePhoneCapture() }
@@ -137,6 +245,7 @@ class ContextualCaptureController(private val context: Context, private val medi
     fun action(action: CaptureAction, mode: CaptureExtractionMode? = null) = scope.launch {
         try { lock.withLock {
             val capture = requireNotNull(mutable.value)
+            check(capture.kidsHomeworkRevision == null) { "Homework photos stay in the local coach" }
             if(action in setOf(CaptureAction.ASK, CaptureAction.EXTRACT, CaptureAction.STUDY)) {
                 val graph = com.halo.app.di.ManualDependencyGraph
                 val policy = graph.storage.readRuntimeAiContextPolicy()
@@ -224,6 +333,7 @@ class ContextualCaptureController(private val context: Context, private val medi
         val provenance = assets.captureProvenance(objectId)
         val kind = runCatching { CaptureSource.valueOf(provenance?.optString("sourceKind").orEmpty()) }.getOrDefault(CaptureSource.IMPORTED_IMAGE)
         val quality = runCatching { CaptureQuality.valueOf(provenance?.optString("quality").orEmpty()) }.getOrDefault(CaptureQuality.UNKNOWN)
+        photoCoachOffer = null
         mutable.value = ContextualCaptureState(image.assetId,kind,provenance?.optString("sourceLabel")?.takeIf { it.isNotBlank() } ?: "Notebook image",ref,
             image.width ?: 0,image.height ?: 0,quality,objectId,CaptureStatus.SAVED,
             captureTimestampMs=provenance?.optLong("captureTimestampMs")?.takeIf { it > 0 },trigger=provenance?.optString("trigger"))
@@ -236,15 +346,26 @@ class ContextualCaptureController(private val context: Context, private val medi
         discardCurrent(captureId, assetId, allowed)
     private suspend fun discardCurrent(captureId: String? = null, assetId: String? = null, allowed: () -> Boolean = { true }) = lock.withLock {
         check(allowed())
-        if (captureId != null) check(mutable.value?.captureId == captureId && mutable.value?.mediaRef?.id == assetId) { "Capture changed" }
+        if (captureId != null) check(mutable.value?.let {
+            it.kidsHomeworkRevision == null && it.captureId == captureId && it.mediaRef.id == assetId
+        } == true) { "Capture changed" }
+        discardLocked()
+    }
+    private suspend fun discardLocked() {
         val capture = mutable.value
+        photoCoachOffer = null
         val pending = attachments.state.value
-        if(pending != null && capture != null && (pending.ref.id == capture.mediaRef.id ||
-            capture.workspaceObjectId != null && pending.ref.workspaceObjectId == capture.workspaceObjectId)) attachments.remove()
-        mutable.value?.mediaRef?.id?.let { mediaPolicy.releaseTemporary(it) }
-        mutable.value?.mediaRef?.interactionId?.let { media.releaseInteraction(it) }
-        mutable.value = null; visible.value = false
-        workflowStorage?.putBoolean(pendingKey,false); notice.value = null
+        try {
+            if (pending != null && capture != null && (pending.ref.id == capture.mediaRef.id ||
+                capture.workspaceObjectId != null && pending.ref.workspaceObjectId == capture.workspaceObjectId)) attachments.remove()
+            capture?.mediaRef?.id?.let { mediaPolicy.releaseTemporary(it) }
+        } finally {
+            try { capture?.mediaRef?.interactionId?.let { media.releaseInteraction(it) } }
+            finally {
+                mutable.value = null; visible.value = false
+                workflowStorage?.putBoolean(pendingKey, false); notice.value = null
+            }
+        }
     }
     fun reopen() { if(state.value != null) visible.value = true }
 }

@@ -5,11 +5,14 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.RemoteViews
 import android.widget.TextView
+import android.widget.ViewFlipper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.halo.app.R
 import com.halo.app.language.uiCatalogue
+import com.halo.app.ui.theme.HaloLookMotion
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -19,6 +22,29 @@ import java.util.Locale
 /** Actual Android RemoteViews/font measurement; no widget binding or click execution. */
 @RunWith(AndroidJUnit4::class)
 class WidgetPhysicalLayoutTest {
+    @Test fun animatedRemoteViewsBindTheNewFrameAndStillModeKeepsThePlainWidget() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        val current = RemoteViews(context.packageName, R.layout.halo_widget_transition_previous).apply {
+            setTextViewText(R.id.widget_previous_title, "New frame")
+        }
+        val prior = WidgetRenderedState(1, 1, 1, "en", "auto", "Old frame", "Old value",
+            emptyMap(), emptyList(), null, emptySet())
+        val transition = WidgetTransition(WidgetUpdateMotion.NEW_ITEM, prior)
+        assertTrue(current === EverydayWidgetMotion.wrap(context, current, transition, HaloLookMotion.STILL, 0, 0))
+        instrumentation.runOnMainSync {
+            for (level in listOf(HaloLookMotion.GENTLE, HaloLookMotion.FULL)) {
+                val root = EverydayWidgetMotion.wrap(context, current, transition, level, 0, 0)
+                    .apply(context, FrameLayout(context))
+                val flipper = root.findViewById<ViewFlipper>(R.id.widget_transition_flipper)
+                assertEquals(2, flipper.childCount)
+                assertEquals(1, flipper.displayedChild)
+                assertTrue(checkNotNull(flipper.inAnimation).duration > 0)
+                assertEquals("New frame", flipper.currentView.findViewById<TextView>(R.id.widget_previous_title).text.toString())
+            }
+        }
+    }
+
     @Test fun shortWidgetReapplyRestoresDecorativeIconsAndTextPaddingAfterResize() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val base = instrumentation.targetContext

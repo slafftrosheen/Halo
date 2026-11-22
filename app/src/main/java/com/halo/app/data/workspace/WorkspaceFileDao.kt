@@ -21,6 +21,9 @@ interface WorkspaceFileDao {
     @Query("SELECT * FROM workspace_files WHERE objectId = :objectId LIMIT 1")
     suspend fun getFile(objectId: String): WorkspaceFileEntity?
 
+    @Query("UPDATE workspace_files SET displayName = :name WHERE objectId = :id")
+    suspend fun renameDisplayName(id: String, name: String): Int
+
     @Query("SELECT * FROM workspace_files")
     fun observeFiles(): Flow<List<WorkspaceFileEntity>>
 

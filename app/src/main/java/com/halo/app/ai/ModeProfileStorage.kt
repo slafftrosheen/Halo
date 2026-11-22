@@ -25,7 +25,7 @@ internal val profileStringKeys: Set<String> = buildSet {
         RemoteProviderIds.CUSTOM_OPENAI_COMPATIBLE).forEach { add("ai_last_model_$it") }
 }
 internal val profileBooleanKeys: Set<String> = setOf(KEY_CONVERSATION, KEY_DEVICE_STATE,
-    KEY_RECENT_EVENTS, KEY_MEMORIES, KEY_TOOLS, KEY_LOCATION, KEY_IMAGES, KEY_AUDIO,
+    KEY_RECENT_EVENTS, KEY_MEMORIES, KEY_REFERENCE_CHAT_HISTORY, KEY_TOOLS, KEY_LOCATION, KEY_IMAGES, KEY_AUDIO,
     KEY_VIDEO, KEY_WORKSPACE, KEY_CLOUD_WORKSPACE, KEY_CLOUD_SCREEN, KEY_CLOUD_IMAGES,
     "policy_cloud_memories", "active_ai_selection_migrated_v1", "policy_dynamic_web_extraction")
 
@@ -118,6 +118,7 @@ internal data class ModeProfiles(
             return ModeProfile(mapOf("ai_routing_policy" to if (cloud) "EXPLICIT" else "LOCAL_ONLY"),
                 profileBooleanKeys.associateWith { key -> when (key) {
                     "active_ai_selection_migrated_v1" -> false
+                    KEY_REFERENCE_CHAT_HISTORY -> !cloud
                     "policy_dynamic_web_extraction" -> cloud
                     KEY_CLOUD_WORKSPACE, KEY_CLOUD_SCREEN, KEY_CLOUD_IMAGES, "policy_cloud_memories" -> cloud
                     else -> true
@@ -130,7 +131,8 @@ internal data class ModeProfiles(
             require(json.keys().asSequence().toSet() == setOf("strings", "booleans", "onlineFeatures", "localFallback"))
             require(json.get("localFallback") is Boolean)
             require(strings.keys().asSequence().toSet().all { it in profileStringKeys })
-            require(booleans.keys().asSequence().toSet() == profileBooleanKeys)
+            val storedBooleanKeys = booleans.keys().asSequence().toSet()
+            require(storedBooleanKeys == profileBooleanKeys || storedBooleanKeys == profileBooleanKeys - KEY_REFERENCE_CHAT_HISTORY)
             require(booleans.keys().asSequence().toSet().all { booleans.get(it) is Boolean })
             require(strings.keys().asSequence().toSet().all { strings.isNull(it) || strings.get(it) is String })
             strings.optString("ai_routing_policy").takeIf { it.isNotBlank() }?.let {
@@ -142,7 +144,7 @@ internal data class ModeProfiles(
             require(mode != PrivacyMode.PRIVATE || features.isEmpty())
             return ModeProfile(strings.keys().asSequence().toSet().associateWith { key ->
                 if (strings.isNull(key)) null else strings.getString(key).also { require(it.length <= 16384) }
-            }, booleans.keys().asSequence().toSet().associateWith { booleans.getBoolean(it) }, features,
+            }, profileBooleanKeys.associateWith { booleans.optBoolean(it, it == KEY_REFERENCE_CHAT_HISTORY && mode == PrivacyMode.PRIVATE) }, features,
                 json.getBoolean("localFallback"))
         }
     }

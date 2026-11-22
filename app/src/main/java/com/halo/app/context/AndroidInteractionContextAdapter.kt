@@ -187,11 +187,44 @@ class AndroidInteractionContextAdapter(
     suspend fun refresh() {
         lock.withLock { refreshLocked() }
     }
+    /** Remove retained names, drafts, and image leases that were selected before a Private commit. */
+    suspend fun withdrawPrivateSources(ids: Set<String>): Set<String> = lock.withLock {
+        if (ids.isEmpty()) return@withLock emptySet()
+        val withdrawn = owner.state.value.filter { focus ->
+            when (val reference = focus.reference) {
+                is ContextReference.WorkspaceObject -> reference.objectId in ids
+                is ContextReference.MediaAsset -> visualWorkspaceBindings[reference]?.objectId?.let(ids::contains) == true ||
+                    leases[focus.conversationId]?.takeIf { it.id == reference.assetId }?.workspaceObjectId?.let(ids::contains) == true
+                is ContextReference.StudySession -> reference.sessionId in ids || studyReferenceVersion(reference.sessionId) != reference.version
+                else -> false
+            }
+        }
+        for (focus in withdrawn) {
+            if (focus.reference is ContextReference.MediaAsset) releaseVisual(focus.conversationId)
+            owner.remove(focus.conversationId, focus.category)
+            titles.remove(focus.reference)
+            visualContextText.remove(focus.reference)
+            visualWorkspaceBindings.remove(focus.reference)
+            visualReferences.remove(focus.reference)
+        }
+        if (withdrawn.isNotEmpty()) message.value = null
+        refreshLocked()
+        withdrawn.mapNotNullTo(linkedSetOf()) { it.sourceInteractionId }
+    }
     private suspend fun refreshLocked() {
-        val conversation = conversations.activeConversationId() ?: return
+        val conversation = conversations.activeConversationId() ?: run {
+            mutableChips.value = emptyList()
+            return
+        }
         val global = effectivePolicy(conversation)
-        mutableChips.value = owner.current(conversation).filter { it.category != ContextCategory.RESULT }.map {
-            val objectId = (it.reference as? ContextReference.WorkspaceObject)?.objectId ?: leases[conversation]?.workspaceObjectId
+        mutableChips.value = owner.current(conversation).filter { it.category != ContextCategory.RESULT }.mapNotNull {
+            val objectId = when (val reference = it.reference) {
+                is ContextReference.WorkspaceObject -> reference.objectId
+                is ContextReference.MediaAsset -> visualWorkspaceBindings[reference]?.objectId
+                    ?: leases[conversation]?.takeIf { ref -> ref.id == reference.assetId }?.workspaceObjectId
+                else -> null
+            }
+            if (objectId != null && workspace.versionFor(objectId) == null) return@mapNotNull null
             val visual = it.reference in visualReferences
             val enabled = if(visual) global.includeImages else global.includeWorkspace
             val cloud = if(visual) global.allowCloudImages else global.allowCloudWorkspace

@@ -26,7 +26,9 @@ object PersonalConfigurationToolAccess {
         "halo_procedure_set_enabled", "halo_procedure_delete")
     val activeStudy = setOf("halo_study_current", "halo_study_session_action")
     val speechInventory = setOf("halo_speech_inventory", "halo_speech_model_action")
-    val everyday=setOf("halo_day_context","halo_organizer_query","halo_organizer_get","halo_organizer_create","halo_organizer_edit","halo_organizer_action","halo_organizer_occurrence","halo_organizer_delivery",
+    val everyday=setOf("halo_knowledge_catalogue","halo_knowledge_search","halo_knowledge_download",
+        "halo_today_overview","halo_today_weather_city","halo_day_context","halo_organizer_query","halo_organizer_get","halo_organizer_create","halo_organizer_edit","halo_organizer_action","halo_organizer_occurrence","halo_organizer_delivery",
+        "halo_planner_reschedule", "halo_planner_calendars", "halo_planner_calendar_appearance",
         "halo_clock_query","halo_clock_save","halo_clock_action","halo_source_query","halo_source_get","halo_source_image","halo_source_preview","halo_source_save","halo_source_action",
         "halo_brief_query","halo_brief_action","halo_brief_settings","halo_everyday_open","halo_widget_query","halo_widget_configure","halo_widget_pin")
     val all = everyday + currentScreen + library + savedChats + mcpSettings + localRoles + preferences + screenLayout + savedDevices + notificationSettings + voice + learning + providers + routines + procedures + activeStudy + speechInventory
@@ -37,6 +39,10 @@ object WorkspaceToolAccess {
     val canvasWorkflowTools = setOf("halo_canvas_workflow_status", "halo_canvas_image_palette", "halo_canvas_transcribe_file",
         "halo_canvas_save_reviewed_text", "halo_canvas_edit_reviewed_text", "halo_canvas_discard_reviewed_text", "halo_canvas_export_note")
     val remoteInkTools = setOf("halo_ink_status", "halo_ink_document", "halo_ink_selection", "halo_ink_start", "halo_ink_stop")
+    val noteReviewTools = setOf("halo_note_review_block", "halo_note_set_format", "halo_note_set_page_settings",
+        "halo_note_comment", "halo_note_resolve_changes")
+    val canvasReviewTools = setOf("halo_canvas_group_lock", "halo_canvas_add_comment", "halo_canvas_review_comment",
+        "halo_canvas_update_comment")
     val readTools = setOf("halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect", "halo_canvas_get", "halo_canvas_create", "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_clear_sketch", "halo_canvas_move", "halo_canvas_connect", "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status", "halo_workspace_open_with", "halo_workspace_insert", "halo_workspace_select", "halo_search_notebook", "halo_get_workspace_object", "halo_search_memory",
         "halo_search_files", "halo_get_file_metadata", "halo_read_text_file", "halo_list_reminders", "halo_notification_digest",
         "halo_note_get", "halo_note_read_block", "halo_note_rename", "halo_note_insert_block", "halo_note_edit_block", "halo_note_move_block", "halo_note_indent_block",
@@ -47,7 +53,8 @@ object WorkspaceToolAccess {
         "halo_study_card_get", "halo_study_card_create", "halo_study_card_edit", "halo_study_card_accept", "halo_study_card_review", "halo_study_card_delete",
         "halo_file_tool_capabilities", "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_get", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_get", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image", "halo_file_attach_canvas",
         "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status",
-        "halo_canvas_current", "halo_context_used_sources") + remoteInkTools + PersonalConfigurationToolAccess.all + canvasWorkflowTools
+        "halo_canvas_current", "halo_context_used_sources") + remoteInkTools + PersonalConfigurationToolAccess.all + canvasWorkflowTools +
+        noteReviewTools + canvasReviewTools
 }
 
 /** Content-free provenance from canonical tool identities; never inspect or parse result text. */
@@ -64,7 +71,7 @@ internal fun remoteToolResultCategories(toolName: String): Set<com.halo.sdk.prov
     if(toolName=="halo_screen_card_configuration") add(com.halo.sdk.provider.RemoteDataCategory.LOCATION)
     if(toolName in PersonalConfigurationToolAccess.everyday) {
         // A selected source/brief may contain a manual weather city and scoped local activity/device facts.
-        if(toolName.startsWith("halo_clock_") || toolName.startsWith("halo_source_") || toolName.startsWith("halo_brief_") || toolName.startsWith("halo_widget_") || toolName=="halo_everyday_open")
+        if(toolName.startsWith("halo_clock_") || toolName.startsWith("halo_source_") || toolName.startsWith("halo_brief_") || toolName.startsWith("halo_widget_") || toolName in setOf("halo_everyday_open", "halo_today_overview", "halo_today_weather_city"))
             add(com.halo.sdk.provider.RemoteDataCategory.LOCATION)
         if(toolName=="halo_day_context" || toolName=="halo_source_get" || toolName=="halo_brief_query" || toolName=="halo_brief_action") {
             add(com.halo.sdk.provider.RemoteDataCategory.RECENT_EVENTS)

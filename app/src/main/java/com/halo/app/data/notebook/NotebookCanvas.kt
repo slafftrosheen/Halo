@@ -4,6 +4,7 @@ import com.halo.app.data.workspace.contentVersion
 import com.halo.app.data.workspace.isReadable
 
 import androidx.room.Dao
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -17,7 +18,7 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-enum class CanvasNodeType { TEXT, NOTE, IMAGE, FILE, SKETCH, INK_SELECTION, GROUP, TAG }
+enum class CanvasNodeType { TEXT, NOTE, IMAGE, FILE, SKETCH, INK_SELECTION, GROUP, TAG, STICKY, SHAPE, FRAME, COMMENT }
 
 @Entity(
     tableName = "canvas_documents",
@@ -61,6 +62,7 @@ data class CanvasNodeEntity(
     val zIndex: Int,
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
+    @ColumnInfo(defaultValue = "0") val locked: Boolean = false,
 )
 
 @Entity(
@@ -94,6 +96,7 @@ data class CanvasNode(
     val height: Float,
     val zIndex: Int,
     val revision: Long = 0,
+    val locked: Boolean = false,
 )
 
 data class CanvasEdge(val id: String, val fromNodeId: String, val toNodeId: String, val label: String?)
@@ -101,15 +104,24 @@ data class CanvasEdge(val id: String, val fromNodeId: String, val toNodeId: Stri
 /** Shared saved/editor drag semantics: explicit group membership wins over spatial fallback. */
 fun canvasDragTargets(nodes: List<CanvasNode>, edges: List<CanvasEdge>, selectedIds: Set<String>): Set<String> {
     val targets = selectedIds.toMutableSet()
-    nodes.filter { it.id in selectedIds && it.type == CanvasNodeType.GROUP }.forEach { group ->
+    val containers = nodes.filter { it.type.isCanvasContainer() }.associateBy(CanvasNode::id)
+    val pending = ArrayDeque(selectedIds)
+    while (pending.isNotEmpty()) {
+        val group = containers[pending.removeFirst()] ?: continue
         val explicit = edges.filter { it.fromNodeId == group.id && it.label == "group" }.map { it.toNodeId }
-        if (explicit.isNotEmpty()) targets.addAll(explicit)
-        else targets.addAll(nodes.filter { other -> other.type != CanvasNodeType.GROUP &&
-            other.x + other.width / 2 in group.x..(group.x + group.width) &&
-            other.y + other.height / 2 in group.y..(group.y + group.height) }.map { it.id })
+        val members = explicit.ifEmpty { nodes.filter { !it.type.isCanvasContainer() && group.containsCenter(it) }.map { it.id } }
+        for (id in members) if (targets.add(id) && id in containers) pending.add(id)
     }
     return targets
 }
+
+fun canvasLockedIds(nodes: List<CanvasNode>, edges: List<CanvasEdge>): Set<String> =
+    canvasDragTargets(nodes, edges, nodes.filter(CanvasNode::locked).mapTo(hashSetOf(), CanvasNode::id))
+
+internal fun CanvasNodeEntity.toCanvasNode(): CanvasNode = CanvasNode(
+    id, runCatching { CanvasNodeType.valueOf(type) }.getOrDefault(CanvasNodeType.TEXT),
+    refObjectId, text, x, y, width, height, zIndex, updatedAtEpochMs, locked,
+)
 
 data class NotebookCanvas(
     val id: String,
@@ -206,6 +218,9 @@ interface NotebookCanvasDao {
     @Query("UPDATE canvas_nodes SET x = :x, y = :y, updatedAtEpochMs = :updatedAt WHERE id = :nodeId AND canvasId = :canvasId")
     suspend fun updateNodePosition(canvasId: String, nodeId: String, x: Float, y: Float, updatedAt: Long): Int
 
+    @Query("UPDATE canvas_nodes SET locked = :locked, updatedAtEpochMs = :updatedAt WHERE id = :nodeId AND canvasId = :canvasId")
+    suspend fun updateNodeLock(canvasId: String, nodeId: String, locked: Boolean, updatedAt: Long): Int
+
     @Query("DELETE FROM canvas_nodes WHERE id = :nodeId AND canvasId = :canvasId")
     suspend fun deleteNode(canvasId: String, nodeId: String): Int
 
@@ -289,8 +304,9 @@ class NotebookCanvasRepository(
         val (beforeNodes, beforeEdges) = snapshot(canvasId)
         check(proposal.sourceEdgesFingerprint == null || proposal.sourceEdgesFingerprint == canvasEdgesFingerprint(
             beforeEdges.filter { it.fromNodeId in proposal.sourceFingerprints || it.toNodeId in proposal.sourceFingerprints })) { "Source connections changed. Create a new preview." }
-        val domain = beforeNodes.associate { it.id to CanvasNode(it.id, CanvasNodeType.valueOf(it.type), it.refObjectId,
-            it.text, it.x, it.y, it.width, it.height, it.zIndex, it.updatedAtEpochMs) }
+        val domain = beforeNodes.associate { it.id to it.toCanvasNode() }
+        val prohibited = lockedIds(beforeNodes, beforeEdges)
+        require(proposal.groups.flatMap { it.memberIds }.none { it in prohibited }) { "Unlock these objects first." }
         check(proposal.sourceFingerprints.all { (id, fingerprint) -> domain[id]?.let(::canvasNodeFingerprint) == fingerprint }) { "Source cards changed. Create a new preview." }
         check(proposal.sourceObjectVersions.all { (id, revision) -> sourceObjectVersion(id) == revision }) { "Source items changed. Create a new preview." }
         val originX = proposal.sourceFingerprints.keys.mapNotNull(domain::get).minOf { it.x }
@@ -330,6 +346,7 @@ class NotebookCanvasRepository(
                         append("- ").append(when (node.type) {
                             CanvasNodeType.SKETCH -> "[Sketch]"
                             CanvasNodeType.INK_SELECTION -> "[Saved ink selection]"
+                            CanvasNodeType.SHAPE -> CanvasVisualShape.decode(node.text)?.kind?.label ?: "Shape"
                             else -> CanvasFileMarkupCodec.displayTitle(node.text).take(300)
                         }).append('\n')
                         append("  Source: ").append(node.refObjectId ?: "canvas:$canvasId#${node.id}").append('\n')
@@ -359,11 +376,68 @@ class NotebookCanvasRepository(
         val (nodes, edges) = snapshot(canvasId)
         require(ids.isNotEmpty() && ids.all { id -> nodes.any { it.id == id } })
         val selected = nodes.filter { it.id in ids }
+        if (action != "Lock" && action != "Unlock") {
+            val prohibited = lockedIds(nodes, edges)
+            require(ids.none { it in prohibited }) { "Unlock these objects first." }
+        }
         when (action) {
+            "Lock", "Unlock" -> {
+                val stamp = now()
+                selected.forEach { check(canvasDao.updateNodeLock(canvasId, it.id, action == "Lock", stamp) == 1) }
+            }
+            "Group selection" -> {
+                require(selected.size >= 2 && selected.none { it.type == CanvasNodeType.COMMENT.name })
+                val stamp = now()
+                val groupId = newId()
+                val x = selected.minOf { it.x } - 22f
+                val y = selected.minOf { it.y } - 58f
+                val width = selected.maxOf { it.x + it.width } - x + 22f
+                val height = selected.maxOf { it.y + it.height } - y + 22f
+                canvasDao.insertNode(CanvasNodeEntity(groupId, canvasId, CanvasNodeType.GROUP.name, null,
+                    "", x, y, width, height, -1, stamp, stamp))
+                edges.filter { it.label == "group" && it.toNodeId in ids }.forEach { canvasDao.deleteEdge(canvasId, it.id) }
+                selected.forEach { canvasDao.insertEdge(CanvasEdgeEntity(newId(), canvasId, groupId, it.id, "group", stamp)) }
+            }
             "Clear" -> selected.forEach { canvasDao.deleteNodeEdges(canvasId, it.id); canvasDao.deleteNode(canvasId, it.id) }
             "Ungroup" -> selected.filter { it.type == "GROUP" }.forEach { canvasDao.deleteNodeEdges(canvasId, it.id); canvasDao.deleteNode(canvasId, it.id) }
             "Arrange" -> selected.forEachIndexed { index, node -> canvasDao.updateNodePosition(canvasId, node.id,
                 selected.minOf { it.x } + index % 3 * 280f, selected.minOf { it.y } + index / 3 * 320f, now()) }
+            "Align left", "Align center", "Align right", "Align top", "Align middle", "Align bottom" -> {
+                val left = selected.minOf { it.x }
+                val right = selected.maxOf { it.x + it.width }
+                val top = selected.minOf { it.y }
+                val bottom = selected.maxOf { it.y + it.height }
+                val stamp = now()
+                selected.forEach { node ->
+                    val x = when (action) {
+                        "Align left" -> left
+                        "Align center" -> (left + right - node.width) / 2f
+                        "Align right" -> right - node.width
+                        else -> node.x
+                    }
+                    val y = when (action) {
+                        "Align top" -> top
+                        "Align middle" -> (top + bottom - node.height) / 2f
+                        "Align bottom" -> bottom - node.height
+                        else -> node.y
+                    }
+                    canvasDao.updateNodePosition(canvasId, node.id, x, y, stamp)
+                }
+            }
+            "Distribute horizontally", "Distribute vertically" -> {
+                val horizontal = action == "Distribute horizontally"
+                val ordered = selected.sortedBy { if (horizontal) it.x else it.y }
+                require(ordered.size >= 3)
+                val start = if (horizontal) ordered.first().x else ordered.first().y
+                val end = if (horizontal) ordered.last().x else ordered.last().y
+                val step = (end - start) / (ordered.size - 1)
+                val stamp = now()
+                ordered.forEachIndexed { index, node ->
+                    val offset = start + index * step
+                    canvasDao.updateNodePosition(canvasId, node.id, if (horizontal) offset else node.x,
+                        if (horizontal) node.y else offset, stamp)
+                }
+            }
             "Bring forward" -> selected.forEachIndexed { index, node -> canvasDao.layerNode(canvasId, node.id, (nodes.maxOfOrNull { it.zIndex } ?: 0) + index + 1) }
             else -> error("Unknown local operation")
         }
@@ -385,16 +459,7 @@ class NotebookCanvasRepository(
             viewportX = document.viewportX,
             viewportY = document.viewportY,
             viewportScale = document.viewportScale,
-            nodes = nodes.map { node ->
-                CanvasNode(
-                    id = node.id,
-                    type = runCatching { CanvasNodeType.valueOf(node.type) }.getOrDefault(CanvasNodeType.TEXT),
-                    refObjectId = node.refObjectId,
-                    text = node.text,
-                    x = node.x, y = node.y, width = node.width, height = node.height, zIndex = node.zIndex,
-                    revision = node.updatedAtEpochMs,
-                )
-            },
+            nodes = nodes.map(CanvasNodeEntity::toCanvasNode),
             edges = edges.map { CanvasEdge(it.id, it.fromNodeId, it.toNodeId, it.label) },
         )
     }
@@ -438,9 +503,34 @@ class NotebookCanvasRepository(
     suspend fun addTextNode(canvasId: String, x: Float, y: Float, text: String = ""): String =
         addNode(canvasId, CanvasNodeType.TEXT, null, text, x, y)
 
+    suspend fun addStickyNode(canvasId: String, x: Float, y: Float): String =
+        addNode(canvasId, CanvasNodeType.STICKY, null, "", x, y)
+
+    suspend fun addVisualShape(canvasId: String, x: Float, y: Float, shape: CanvasVisualShape): String =
+        addNode(canvasId, CanvasNodeType.SHAPE, null, shape.encode(), x, y, 188f to 132f)
+
+    suspend fun addFrame(canvasId: String, x: Float, y: Float, title: String, preset: CanvasFramePreset): String =
+        addNode(canvasId, CanvasNodeType.FRAME, null, title.take(80), x, y, preset.width to preset.height)
+
     /** Group is a persistent spatial zone. Moving it moves cards currently inside its bounds. */
     suspend fun addGroupNode(canvasId: String, x: Float, y: Float, title: String): String =
         addNode(canvasId, CanvasNodeType.GROUP, null, title.trim().ifBlank { "Group" }.take(80), x, y)
+
+    suspend fun addReviewPin(canvasId: String, x: Float, y: Float, pin: CanvasReviewPin): String {
+        require(pin.valid())
+        return addNode(canvasId, CanvasNodeType.COMMENT, null, pin.encode(), x, y, 48f to 48f)
+    }
+
+    suspend fun updateReviewPin(canvasId: String, nodeId: String, current: String, pin: CanvasReviewPin): Boolean =
+        database.withTransaction {
+            requireWritable(canvasId)
+            require(pin.valid())
+            val node = requireNotNull(canvasDao.getNode(canvasId, nodeId))
+            require(node.type == CanvasNodeType.COMMENT.name && node.text == current) { "The comment changed. Open it again." }
+            val updated = canvasDao.updateNodeText(canvasId, nodeId, pin.encode(), now()) == 1
+            if (updated) touch(canvasId)
+            updated
+        }
 
     /** A reusable-looking, editable label card; the tagged card links to it with edge label 'tag'. */
     suspend fun addTagNode(canvasId: String, x: Float, y: Float, title: String): String {
@@ -504,7 +594,8 @@ class NotebookCanvasRepository(
         addNode(canvasId, if (imageSource) CanvasNodeType.IMAGE else type, objectId, item.title, x, y)
     }
 
-    private suspend fun addNode(canvasId: String, type: CanvasNodeType, reference: String?, text: String, x: Float, y: Float): String = database.withTransaction {
+    private suspend fun addNode(canvasId: String, type: CanvasNodeType, reference: String?, text: String, x: Float, y: Float,
+        dimensions: Pair<Float, Float>? = null): String = database.withTransaction {
         val item = requireNotNull(notebookDao.getWorkspaceObject(canvasId))
         require(item.lifecycle == WorkspaceObjectLifecycle.ACTIVE.name)
         require(x.isFinite() && y.isFinite())
@@ -512,8 +603,8 @@ class NotebookCanvasRepository(
         val timestamp = now()
         val layer = (canvasDao.getNodes(canvasId).maxOfOrNull { it.zIndex } ?: -1) + 1
         canvasDao.insertNode(CanvasNodeEntity(id, canvasId, type.name, reference, text, x, y,
-            if (type == CanvasNodeType.GROUP) 460f else if (type == CanvasNodeType.TAG) 168f else 240f,
-            when (type) {
+            dimensions?.first ?: if (type == CanvasNodeType.GROUP) 460f else if (type == CanvasNodeType.TAG) 168f else 240f,
+            dimensions?.second ?: when (type) {
                 CanvasNodeType.GROUP -> 340f
                 CanvasNodeType.TAG -> 96f
                 CanvasNodeType.IMAGE, CanvasNodeType.SKETCH, CanvasNodeType.FILE -> 280f
@@ -525,7 +616,9 @@ class NotebookCanvasRepository(
 
     suspend fun duplicateNode(canvasId: String, nodeId: String): String = database.withTransaction {
         val node = requireNotNull(canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId })
-        addNode(canvasId, CanvasNodeType.valueOf(node.type), node.refObjectId, node.text, node.x + 32f, node.y + 32f)
+        val type = CanvasNodeType.valueOf(node.type)
+        val dimensions = (node.width to node.height).takeIf { type == CanvasNodeType.FRAME || type == CanvasNodeType.SHAPE }
+        addNode(canvasId, type, node.refObjectId, node.text, node.x + 32f, node.y + 32f, dimensions)
     }
 
     suspend fun connect(canvasId: String, from: String, to: String, label: String?): String = database.withTransaction {
@@ -551,10 +644,11 @@ class NotebookCanvasRepository(
     suspend fun updateText(canvasId: String, nodeId: String, text: String, expectedText: String? = null): Boolean = database.withTransaction {
         requireWritable(canvasId)
         val node = canvasDao.getNodes(canvasId).firstOrNull { it.id == nodeId } ?: return@withTransaction false
-        if (node.refObjectId != null) return@withTransaction false
+        if (node.refObjectId != null || node.type == CanvasNodeType.COMMENT.name) return@withTransaction false
         check(expectedText == null || node.text == expectedText) { "Source changed. Review it again." }
         // Clearing the final stroke is a valid edit; corrupt input must still fail closed.
         if (node.type == CanvasNodeType.SKETCH.name) require(com.halo.sdk.runtime.ink.InkCodec.decode(text) != null)
+        if (node.type == CanvasNodeType.SHAPE.name) require(CanvasVisualShape.decode(text) != null)
         val changed = canvasDao.updateNodeText(canvasId, nodeId, text, now()) == 1
         if (changed) touch(canvasId)
         changed
@@ -689,8 +783,12 @@ class NotebookCanvasRepository(
 
     suspend fun moveNodes(canvasId: String, positions: Map<String, Pair<Float, Float>>): Boolean = database.withTransaction {
         requireWritable(canvasId)
-        val available = canvasDao.getNodes(canvasId).map { it.id }.toSet()
+        val nodes = canvasDao.getNodes(canvasId)
+        val available = nodes.mapTo(hashSetOf(), CanvasNodeEntity::id)
         require(positions.keys.all { it in available })
+        if (positions.isEmpty()) return@withTransaction true
+        val prohibited = lockedIds(nodes, canvasDao.getEdges(canvasId))
+        require(positions.keys.none { it in prohibited }) { "Unlock these objects first." }
         val stamp = now()
         positions.forEach { (id, point) ->
             require(point.first.isFinite() && point.second.isFinite())
@@ -705,8 +803,7 @@ class NotebookCanvasRepository(
         require(x.isFinite() && y.isFinite())
         val nodes = canvasDao.getNodes(canvasId)
         val root = nodes.firstOrNull { it.id == nodeId } ?: return@withTransaction false
-        val domain = nodes.map { CanvasNode(it.id, CanvasNodeType.valueOf(it.type), it.refObjectId,
-            it.text, it.x, it.y, it.width, it.height, it.zIndex, it.updatedAtEpochMs) }
+        val domain = nodes.map(CanvasNodeEntity::toCanvasNode)
         val edges = canvasDao.getEdges(canvasId).map { CanvasEdge(it.id, it.fromNodeId, it.toNodeId, it.label) }
         val targets = canvasDragTargets(domain, edges, setOf(nodeId))
         val dx = x - root.x
@@ -718,11 +815,15 @@ class NotebookCanvasRepository(
 
     suspend fun deleteNode(canvasId: String, nodeId: String): Boolean = database.withTransaction {
         requireWritable(canvasId)
+        require(nodeId !in lockedIds(canvasDao.getNodes(canvasId), canvasDao.getEdges(canvasId))) { "Unlock these objects first." }
         canvasDao.deleteNodeEdges(canvasId, nodeId)
         val changed = canvasDao.deleteNode(canvasId, nodeId) == 1
         if (changed) touch(canvasId)
         changed
     }
+
+    private fun lockedIds(nodes: List<CanvasNodeEntity>, edges: List<CanvasEdgeEntity>): Set<String> =
+        canvasLockedIds(nodes.map(CanvasNodeEntity::toCanvasNode), edges.map { CanvasEdge(it.id, it.fromNodeId, it.toNodeId, it.label) })
 
     suspend fun saveViewport(canvasId: String, x: Float, y: Float, scale: Float): Boolean {
         require(x.isFinite() && y.isFinite() && scale.isFinite())

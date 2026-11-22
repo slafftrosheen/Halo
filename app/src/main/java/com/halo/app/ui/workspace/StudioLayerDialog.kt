@@ -16,7 +16,8 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun StudioLayerDialog(layer: StudioLayer, onApply: (StudioLayer) -> Unit, onDismiss: () -> Unit) {
+internal fun StudioLayerDialog(layer: StudioLayer, onApply: (StudioLayer) -> Unit, onDismiss: () -> Unit,
+    geometryFirst: Boolean = false) {
     var name by remember(layer) { mutableStateOf(layer.name) }
     var text by remember(layer) { mutableStateOf(layer.text) }
     var color by remember(layer) { mutableStateOf("#" + layer.color.toUInt().toString(16).padStart(8, '0')) }
@@ -29,7 +30,7 @@ internal fun StudioLayerDialog(layer: StudioLayer, onApply: (StudioLayer) -> Uni
     var rotation by remember(layer) { mutableStateOf(layer.rotation.toString()) }
     var fontSize by remember(layer) { mutableStateOf((layer.fontSize / 10f).toString()) }
     var strokeWidth by remember(layer) { mutableStateOf((layer.strokeWidth / 10f).toString()) }
-    var advanced by remember { mutableStateOf(false) }
+    var advanced by remember(layer, geometryFirst) { mutableStateOf(geometryFirst) }
     var masked by remember(layer) { mutableStateOf(layer.mask != null) }
     val geometry = remember(layer) { listOf(layer.bounds.x, layer.bounds.y, layer.bounds.width, layer.bounds.height)
         .map { mutableStateOf((it / 10f).toString()) } }

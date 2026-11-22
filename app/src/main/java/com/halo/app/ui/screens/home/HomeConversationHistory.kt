@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -22,7 +23,8 @@ import java.util.Date
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeConversationHistory(conversations: List<PersistedConversation>, currentId: String?,
-    onSelect: (String) -> Unit, onNew: () -> Unit, onDismiss: () -> Unit) {
+    onSelect: (String) -> Unit, onNew: () -> Unit, onDismiss: () -> Unit,
+    onMakePrivate: ((PersistedConversation) -> Unit)? = null) {
     val locale = LocalConfiguration.current.locales[0]
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
@@ -38,8 +40,15 @@ internal fun HomeConversationHistory(conversations: List<PersistedConversation>,
                             Text(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale)
                                 .format(Date(conversation.updatedAt.takeIf { it > 0 } ?: conversation.createdAt)))
                         },
-                        trailingContent = if (conversation.id == currentId) ({
-                            HaloIcon(HaloGlyph.SUCCESS, stringResource(R.string.home_current_chat))
+                        trailingContent = if (conversation.id == currentId || onMakePrivate != null) ({
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (conversation.id == currentId) HaloIcon(HaloGlyph.SUCCESS, stringResource(R.string.home_current_chat))
+                                onMakePrivate?.let { protect ->
+                                    IconButton(onClick = { protect(conversation) }) {
+                                        HaloIcon(HaloGlyph.SECURITY, stringResource(R.string.halo11_private_lock_chat))
+                                    }
+                                }
+                            }
                         }) else null,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable { onSelect(conversation.id) },
                     )

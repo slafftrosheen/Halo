@@ -2,12 +2,15 @@ package com.halo.app.nativeactions
 
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -37,20 +40,24 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloShapes
 import com.halo.app.ui.theme.rememberVisualPreferences
 import com.halo.app.ui.workspace.HaloWorkspaceToggleRow
+import com.halo.app.wallpaper.HaloWallpaper
 import com.halo.app.wallpaper.HaloWallpaperCanvas
 import com.halo.app.wallpaper.WallpaperPreferences
+import com.halo.app.wallpaper.haloWallpaperTime
+import com.halo.app.wallpaper.wallpaperAt
+import com.halo.app.wallpaper.wallpaperPeriod
 import kotlinx.coroutines.CancellationException
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-internal fun EverydayWidgetPicker(onDismiss: () -> Unit) {
+internal fun EverydayWidgetPicker(initialKind: EverydayCardKind = EverydayCardKind.DASHBOARD, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val manager = remember(context) { AppWidgetManager.getInstance(context) }
     val supportsPin = remember(manager) { manager.isRequestPinAppWidgetSupported }
     val installed = remember { EverydayWidgetProviders.ids(context).mapNotNull { id ->
         EverydayWidgetProviders.kind(context, id)?.let { id to it }
     } }
-    var kind by rememberSaveable { mutableStateOf(EverydayCardKind.DASHBOARD.name) }
+    var kind by rememberSaveable(initialKind) { mutableStateOf(initialKind.name) }
     var size by rememberSaveable { mutableStateOf<String?>(null) }
     var style by rememberSaveable { mutableStateOf(EverydayWidgetStyle.GLASS.name) }
     var shows by rememberSaveable { mutableStateOf(EverydayWidgetShows.DEFAULT.name) }
@@ -74,7 +81,7 @@ internal fun EverydayWidgetPicker(onDismiss: () -> Unit) {
             val easy = rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
             var moreKinds by rememberSaveable { mutableStateOf(false) }
             val groups = if (easy && !moreKinds) listOf(
-                R.string.widget_toolkit_original to listOf(EverydayCardKind.DASHBOARD, EverydayCardKind.TASKS,
+                R.string.widget_toolkit_original to listOf(EverydayCardKind.TODAY, EverydayCardKind.DASHBOARD, EverydayCardKind.TASKS,
                     EverydayCardKind.CLOCK_WEATHER, EverydayCardKind.BRIEF, config.kind).distinct()
             ) else listOf(
                 R.string.widget_toolkit_capture to EverydayToolkitWidgets.capture,
@@ -152,17 +159,36 @@ internal fun EverydayWidgetPicker(onDismiss: () -> Unit) {
 internal fun WidgetDisplayChoices(config: EverydayCardConfig, enabled: Boolean = true, allowAuto: Boolean = true,
     onChange: (EverydayCardConfig) -> Unit) {
     Text(stringResource(R.string.alive_widget_size), style = MaterialTheme.typography.titleMedium)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (allowAuto) FilterChip(config.widgetSize == null, { onChange(config.copy(widgetSize = null)) },
-            enabled = enabled, label = { Text(stringResource(R.string.alive_widget_auto)) }, modifier = Modifier.heightIn(min = 48.dp))
+    val scheme = MaterialTheme.colorScheme
+    val previewSize = config.widgetSize ?: EverydayToolkitWidgets.defaultSize(config.kind)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         EverydayWidgetSize.entries.forEach { size ->
-            FilterChip(config.widgetSize == size, { onChange(config.copy(widgetSize = size)) }, enabled = enabled,
-                label = { Text(stringResource(when (size) {
-                    EverydayWidgetSize.SMALL -> R.string.alive_widget_small
-                    EverydayWidgetSize.WIDE -> R.string.alive_widget_wide
-                    EverydayWidgetSize.TALL -> R.string.widget_toolkit_big
-                })) }, modifier = Modifier.heightIn(min = 48.dp))
+            val chosen = previewSize == size
+            val (sampleWidth, sampleHeight, label) = when (size) {
+                EverydayWidgetSize.SMALL -> Triple(15.dp, 15.dp, R.string.alive_widget_small)
+                EverydayWidgetSize.WIDE -> Triple(32.dp, 15.dp, R.string.alive_widget_wide)
+                EverydayWidgetSize.TALL -> Triple(28.dp, 22.dp, R.string.widget_toolkit_big)
+            }
+            Surface(onClick = { onChange(config.copy(widgetSize = size)) }, enabled = enabled,
+                color = if (chosen) scheme.primaryContainer else scheme.surfaceContainerHigh,
+                contentColor = if (chosen) scheme.onPrimaryContainer else scheme.onSurfaceVariant,
+                border = if (chosen) BorderStroke(1.dp, scheme.primary) else null,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.weight(1f).heightIn(min = 62.dp).semantics { selected = chosen }) {
+                Column(Modifier.padding(horizontal = 2.dp, vertical = 7.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.height(24.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(sampleWidth, sampleHeight).background(
+                            if (chosen) scheme.primary.copy(alpha = .40f) else scheme.outlineVariant,
+                            MaterialTheme.shapes.extraSmall))
+                    }
+                    Text(stringResource(label), style = MaterialTheme.typography.labelMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                }
+            }
         }
+    }
+    if (allowAuto) TextButton({ onChange(config.copy(widgetSize = null)) }, enabled = enabled,
+        modifier = Modifier.heightIn(min = 48.dp).semantics { selected = config.widgetSize == null }) {
+        Text(stringResource(R.string.alive_widget_auto))
     }
     Text(stringResource(R.string.alive_widget_size_explanation), style = MaterialTheme.typography.bodySmall)
     Text(stringResource(R.string.widget_toolkit_style), style = MaterialTheme.typography.titleMedium)
@@ -199,7 +225,14 @@ internal fun EverydayWidgetPreview(config: EverydayCardConfig, snapshot: Everyda
     val size = config.widgetSize ?: EverydayToolkitWidgets.defaultSize(config.kind)
     val height = EverydayToolkitWidgets.previewHeight(config)
     val wallpaper by remember(context) { WallpaperPreferences.get(context) }.state.collectAsStateWithLifecycle()
+    val previewTime = haloWallpaperTime()
+    val previewScene = wallpaper.current.wallpaperAt(wallpaperPeriod(previewTime))
     val nativeContext = remember(context) { context }
+    val previewDark = when (previewScene) {
+        HaloWallpaper.PAPER, HaloWallpaper.PAPER_CUT, HaloWallpaper.INK_WASH, HaloWallpaper.BALTIC_DUNES -> false
+        HaloWallpaper.YOUR_PHOTO, HaloWallpaper.DAY_ARC, HaloWallpaper.SEASONS, HaloWallpaper.MEADOW_WIND -> null
+        else -> true
+    }
     val appearance by Graph.appearancePreferences.mode.collectAsStateWithLifecycle()
     val palette by Graph.palettePreferences.state.collectAsStateWithLifecycle()
     val visual = rememberVisualPreferences()
@@ -208,15 +241,17 @@ internal fun EverydayWidgetPreview(config: EverydayCardConfig, snapshot: Everyda
     val pager = rememberPagerState { toolKinds.size }
     Text(uiText("Preview"), style = MaterialTheme.typography.labelLarge)
     BoxWithConstraints(Modifier.fillMaxWidth().clip(HaloShapes.hero), contentAlignment = Alignment.Center) {
-        HaloWallpaperCanvas(wallpaper.current.copy(reactsToHalo = false), Modifier.matchParentSize(), animate = false)
+        HaloWallpaperCanvas(wallpaper.current.copy(wallpaper = previewScene, reactsToHalo = false),
+            Modifier.matchParentSize(), previewTime = previewTime, animate = false)
         val width = minOf(size.widthDp.dp, maxWidth - 24.dp)
         HorizontalPager(pager, Modifier.padding(12.dp).width(width), userScrollEnabled = toolKinds.size > 1) { index ->
             val card = config.copy(kind = toolKinds[index], limit = minOf(config.limit, size.rowLimit))
-            key(card, snapshot, locale, width, height, visual, palette, appearance, wallpaper) {
+            key(card, snapshot, locale, width, height, visual, palette, appearance, wallpaper, previewScene) {
                 AndroidView(factory = {
                     EverydayWidgetViews.render(nativeContext, EverydayWidgetInstance(0, 0, card), snapshot,
                         width.value.toInt().coerceAtLeast(84), height, locale = locale,
-                        label = { text -> resolveUiText(nativeContext.resources, text) }, preview = true)
+                        label = { text -> resolveUiText(nativeContext.resources, text) }, preview = true,
+                        previewWallpaperDark = previewDark)
                         .apply(nativeContext, null)
                 }, modifier = Modifier.fillMaxWidth().height(height.dp)
                     .border(2.dp, MaterialTheme.colorScheme.primary, HaloShapes.hero))

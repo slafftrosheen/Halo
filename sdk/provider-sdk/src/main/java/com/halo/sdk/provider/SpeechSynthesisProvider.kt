@@ -14,7 +14,7 @@ data class SpeechRequest(
     val remoteProvenance: RemoteDispatchProvenance? = null,
 )
 
-enum class SpeechErrorCode { NOT_CONFIGURED, AUTHENTICATION_FAILED, RATE_LIMITED, NETWORK_ERROR, VOICE_NOT_FOUND, MODEL_NOT_AVAILABLE, SYNTHESIS_FAILED, INVALID_AUDIO_RESPONSE, CANCELLED }
+enum class SpeechErrorCode { NOT_CONFIGURED, AUTHENTICATION_FAILED, RATE_LIMITED, NETWORK_ERROR, VOICE_NOT_FOUND, MODEL_NOT_AVAILABLE, SYNTHESIS_FAILED, INVALID_AUDIO_RESPONSE, CANCELLED, INSUFFICIENT_CREDITS }
 class SpeechProviderException(val code: SpeechErrorCode, message: String = code.name) : Exception(message)
 
 data class SpeechResult(

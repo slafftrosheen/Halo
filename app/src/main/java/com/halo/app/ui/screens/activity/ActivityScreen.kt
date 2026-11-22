@@ -545,14 +545,14 @@ internal fun ActivitySegmentedPill(
     val largeText = LocalDensity.current.fontScale >= 1.3f
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = colors.surfaceContainerLow,
-        shape = com.halo.app.ui.design.HaloShapes.pill,
+        color = colors.onSurface.copy(alpha = .06f),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, colors.outlineVariant),
     ) {
         Row(
             Modifier.fillMaxWidth().then(
                 if (largeText) Modifier.horizontalScroll(rememberScrollState()) else Modifier
-            ).padding(4.dp),
+            ).padding(3.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
@@ -568,8 +568,8 @@ internal fun ActivitySegmentedPill(
                         onClick = { onSelect(option) },
                         modifier = (if (largeText) Modifier.widthIn(min = 118.dp)
                             else Modifier.weight(1f)).heightIn(min = 48.dp).bringIntoViewRequester(reveal).onGloballyPositioned { placed = true },
-                        shape = com.halo.app.ui.design.HaloShapes.pill,
-                        color = if (selectedTab) colors.primaryContainer.copy(alpha = 0.70f)
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        color = if (selectedTab) colors.primaryContainer
                             else androidx.compose.ui.graphics.Color.Transparent,
                     ) {
                         Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp),

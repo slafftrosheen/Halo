@@ -34,7 +34,7 @@ class CaptureReviewTools(private val owner: () -> ContextualCaptureController, p
                 else controller.discardExpected(capture, asset, allowed)
             }
             if (!allowed()) return reject(ToolRejectionKind.PERMISSION_REQUIRED)
-            val current = controller.state.value
+            val current = controller.state.value?.takeIf { it.kidsHomeworkRevision == null }
             val result = JSONObject().put("available", current != null)
                 .put("captureId", current?.captureId ?: JSONObject.NULL).put("assetId", current?.mediaRef?.id ?: JSONObject.NULL)
                 .put("objectId", objectId ?: current?.workspaceObjectId ?: JSONObject.NULL)

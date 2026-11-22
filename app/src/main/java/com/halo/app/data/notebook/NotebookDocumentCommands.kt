@@ -35,6 +35,17 @@ sealed interface DocumentCommand {
 
     data class SetLanguage(val blockId: String, val language: String?) : DocumentCommand
 
+    data class SetFont(val selection: DocumentSelection, val font: String, val size: Int) : DocumentCommand
+
+    data class SetParagraph(val blockId: String, val alignment: NoteAlignment, val spacing: Int) : DocumentCommand
+
+    data class AddComment(val selection: DocumentSelection, val author: String, val message: String) : DocumentCommand
+
+    data class UpdateComment(val blockId: String, val commentId: String, val author: String = "",
+        val reply: String? = null, val resolved: Boolean? = null) : DocumentCommand
+
+    data class ResolveChanges(val blockId: String?, val accept: Boolean, val hunkIndex: Int? = null) : DocumentCommand
+
     data class MoveBlock(val blockId: String, val delta: Int) : DocumentCommand
 
     data class IndentBlock(val blockId: String, val delta: Int) : DocumentCommand
@@ -83,7 +94,7 @@ object DocumentReducer {
         newId: () -> String,
     ): DocumentReduction = when (command) {
         is DocumentCommand.InsertBlock -> insert(blocks, command, newId)
-        is DocumentCommand.SetText -> update(blocks, command.blockId) { it.copy(text = command.text) }
+        is DocumentCommand.SetText -> update(blocks, command.blockId) { it.withEditedText(command.text) }
         is DocumentCommand.SetType -> update(blocks, command.blockId) { block ->
             block.copy(
                 type = command.type,
@@ -96,6 +107,40 @@ object DocumentReducer {
             it.copy(checked = command.checked, type = if (it.type == NoteBlockType.CHECKLIST) it.type else NoteBlockType.CHECKLIST)
         }
         is DocumentCommand.SetLanguage -> update(blocks, command.blockId) { it.copy(language = command.language) }
+        is DocumentCommand.SetFont -> update(blocks, command.selection.blockId) { it.fontOver(command.selection, command.font, command.size) }
+        is DocumentCommand.SetParagraph -> update(blocks, command.blockId) {
+            it.copy(presentation = it.presentation.copy(alignment = command.alignment, spacing = command.spacing.coerceIn(10, 30)))
+        }
+        is DocumentCommand.AddComment -> update(blocks, command.selection.blockId) { block ->
+            val range = command.selection.normalized(block.text.length)
+            val current = block.presentation.comments
+            val message = command.message.trim().take(1200)
+            if (message.isEmpty() || current.size >= 40) block
+            else block.copy(presentation = block.presentation.copy(comments = current + NoteComment(
+                newId(), range.start, range.end, block.text.substring(range.start, range.end).take(240),
+                command.author.trim().take(24), message,
+            )))
+        }
+        is DocumentCommand.UpdateComment -> update(blocks, command.blockId) { block ->
+            val comments = block.presentation.comments.map { comment ->
+                if (comment.id != command.commentId) comment
+                else {
+                    val message = command.reply.orEmpty().trim().take(1200)
+                    val replies = if (message.isNotEmpty() && comment.replies.size < 25) {
+                        comment.replies + NoteCommentReply(command.author.trim().take(24), message)
+                    } else comment.replies
+                    comment.copy(replies = replies, resolved = command.resolved ?: comment.resolved)
+                }
+            }
+            block.copy(presentation = block.presentation.copy(comments = comments))
+        }
+        is DocumentCommand.ResolveChanges -> {
+            val resolved = blocks.mapNotNull { block ->
+                if (command.blockId == null || block.id == command.blockId) resolveNoteChange(block, command.accept, command.hunkIndex)
+                else block
+            }
+            DocumentReduction(normalize(resolved), changed = resolved != blocks)
+        }
         is DocumentCommand.MoveBlock -> move(blocks, command.blockId, command.delta)
         is DocumentCommand.IndentBlock -> update(blocks, command.blockId) { block ->
             if (!block.type.isList) block
@@ -206,12 +251,22 @@ object DocumentReducer {
         if (previous.type == NoteBlockType.DIVIDER || previous.type == NoteBlockType.REFERENCE) {
             return DocumentReduction.unchanged(blocks)
         }
-        val merged = previous.copy(
-            text = when {
+        val mergedText = when {
                 previous.text.isEmpty() -> current.text
                 current.text.isEmpty() -> previous.text
                 else -> previous.text + "\n" + current.text
-            },
+        }
+        val offset = mergedText.length - current.text.length
+        val merged = previous.copy(
+            text = mergedText,
+            presentation = previous.presentation.copy(
+                fonts = (previous.presentation.fonts + current.presentation.fonts.map {
+                    it.copy(start = it.start + offset, end = it.end + offset)
+                }).take(120),
+                comments = (previous.presentation.comments + current.presentation.comments.map {
+                    it.copy(start = it.start + offset, end = it.end + offset)
+                }).take(40),
+            ),
         )
         val next = blocks.toMutableList().apply {
             this[index - 1] = merged
@@ -250,9 +305,23 @@ object DocumentReducer {
             checked = false,
             indent = block.indent,
             language = block.language,
+            presentation = block.presentation.copy(
+                fonts = block.presentation.fonts.mapNotNull { span ->
+                    if (span.end <= at) null else span.copy(start = (span.start - at).coerceAtLeast(0), end = span.end - at)
+                },
+                comments = block.presentation.comments.filter { it.start >= at }.map {
+                    it.copy(start = it.start - at, end = it.end - at)
+                },
+                change = null,
+            ),
         )
         val next = blocks.toMutableList().apply {
-            this[index] = block.copy(text = head)
+            val first = block.withEditedText(head)
+            this[index] = first.copy(presentation = first.presentation.copy(
+                comments = first.presentation.comments.filter { comment ->
+                    block.presentation.comments.any { it.id == comment.id && it.start < at }
+                },
+            ))
             add(index + 1, splitBlock)
         }
         return DocumentReduction(normalize(next), focusBlockId = splitBlock.id, focusOffset = 0)
@@ -262,7 +331,9 @@ object DocumentReducer {
         if (blocks.size >= MAX_BLOCKS) return DocumentReduction.unchanged(blocks)
         val index = blocks.indexOfFirst { it.id == blockId }
         if (index < 0) return DocumentReduction.unchanged(blocks)
-        val copy = blocks[index].copy(id = newId(), position = index + 1)
+        val original = blocks[index]
+        val copy = original.copy(id = newId(), position = index + 1,
+            presentation = original.presentation.copy(comments = emptyList(), change = null))
         val next = blocks.toMutableList().apply { add(index + 1, copy) }
         return DocumentReduction(normalize(next), focusBlockId = copy.id, focusOffset = 0)
     }
@@ -301,16 +372,17 @@ object DocumentSearch {
                 from = index + query.length
             }
             builder.append(block.text, from, block.text.length)
-            block.copy(text = builder.toString())
+            block.withEditedText(builder.toString())
         }
     }
 }
 
-enum class InlineStyle(val marker: String) {
+enum class InlineStyle(val marker: String, val closingMarker: String = marker) {
     BOLD("**"),
     ITALIC("*"),
     STRIKE("~~"),
     HIGHLIGHT("=="),
+    UNDERLINE("<u>", "</u>"),
     CODE("`"),
 }
 
@@ -330,29 +402,30 @@ object InlineFormatting {
         val text = block.text
         val range = selection.normalized(text.length)
         val marker = style.marker
+        val close = style.closingMarker
         val start = range.start
         val end = range.end
 
         if (start == end) {
-            val inserted = text.substring(0, start) + marker + marker + text.substring(start)
+            val inserted = text.substring(0, start) + marker + close + text.substring(start)
             val caret = start + marker.length
             return InlineEdit(inserted, range.copy(start = caret, end = caret))
         }
 
         val inner = text.substring(start, end)
-        if (inner.length >= marker.length * 2 && inner.startsWith(marker) && inner.endsWith(marker)) {
-            val unwrapped = inner.removePrefix(marker).removeSuffix(marker)
+        if (inner.length >= marker.length + close.length && inner.startsWith(marker) && inner.endsWith(close)) {
+            val unwrapped = inner.removePrefix(marker).removeSuffix(close)
             val next = text.substring(0, start) + unwrapped + text.substring(end)
             return InlineEdit(next, range.copy(end = start + unwrapped.length))
         }
         val before = text.substring(0, start)
         val after = text.substring(end)
-        if (before.endsWith(marker) && after.startsWith(marker)) {
-            val next = before.dropLast(marker.length) + inner + after.drop(marker.length)
+        if (before.endsWith(marker) && after.startsWith(close)) {
+            val next = before.dropLast(marker.length) + inner + after.drop(close.length)
             val newStart = start - marker.length
             return InlineEdit(next, range.copy(start = newStart, end = newStart + inner.length))
         }
-        val next = before + marker + inner + marker + after
+        val next = before + marker + inner + close + after
         return InlineEdit(next, range.copy(start = start + marker.length, end = end + marker.length))
     }
 
@@ -368,6 +441,7 @@ object InlineFormatting {
 
     /** Remove inline markers for plain-text projection (search snippets, narration). */
     fun stripInlineMarkers(text: String): String = text
+        .replace(Regex("<u>([\\s\\S]*?)</u>"), "$1")
         .replace(Regex("\\*\\*(.+?)\\*\\*"), "$1")
         .replace(Regex("~~(.+?)~~"), "$1")
         .replace(Regex("==([^=]+)=="), "$1")

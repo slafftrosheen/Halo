@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_scan_import">Import into Scan</string>
+    <string name="halo_scan_import_photo">Choose photo</string>
+    <string name="halo_scan_import_pdf">Choose PDF</string>
+    <string name="halo_scan_read_page">Read this page</string>
+    <string name="halo_scan_pdf_limit">This scan holds up to eight pages. Keep or clear pages before adding more.</string>
+    <string name="halo_scan_open_study">Use saved scan in Study</string>
+</resources>

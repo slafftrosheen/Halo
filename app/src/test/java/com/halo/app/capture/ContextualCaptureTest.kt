@@ -219,6 +219,57 @@ class ContextualCaptureTest {
         }
     }
 
+    @Test fun homeworkPhotoIsPrivateAndItsExactTicketCanBeReadOnlyOnce() = runBlocking {
+        fixture { store, scope, db, prefs ->
+            val notes = RoomNotebookRepository(db.notebookDao())
+            val controller = ContextualCaptureController(context, store, LocalCaptureStore(context, db, notes, Events()),
+                VisualAttachmentStore(context, store), NotebookAssetRepository(context, db), scope, WorkspaceMediaAiPolicy(db, prefs),
+                wearableHomeworkRevision = { device, revision ->
+                    check(device == "approved" && (revision == null || revision == 7L))
+                    7L
+                })
+            val photo = image()
+            assertTrue(runCatching {
+                controller.receive(photo, CaptureSource.MANAGED_WEARABLE_CAMERA, "Glasses", deviceId = "other")
+            }.isFailure)
+            assertNull(controller.state.value)
+            controller.receive(photo, CaptureSource.MANAGED_WEARABLE_CAMERA, "Glasses", deviceId = "approved")
+            val review = requireNotNull(controller.state.value)
+            assertTrue(review.isPrivateHomeworkGlasses())
+            assertTrue(runCatching { controller.save() }.isFailure)
+            assertTrue(runCatching { controller.openKidsHomeworkPhoto(review.captureId, "another-image") }.isFailure)
+            controller.openKidsHomeworkPhoto(review.captureId, review.mediaRef.id)
+            val ticket = (controller.navigation.first() as ContextualCaptureNavigation.KidsHomeworkPhoto).ticket
+            assertTrue(runCatching { controller.takePhotoCoachCopy(ticket) }.isFailure)
+            assertArrayEquals(photo.bytes, controller.takePhotoCoachCopy(ticket, child = true).bytes)
+            assertNull(controller.state.value)
+            assertNull(store.metadata(review.mediaRef))
+            assertTrue(runCatching { controller.takePhotoCoachCopy(ticket, child = true) }.isFailure)
+            assertTrue(notes.observeNotes().first().isEmpty())
+        }
+    }
+
+    @Test fun revokedHomeworkApprovalDiscardsPrivatePhotoBeforeAnyCoachCopyIsReturned() = runBlocking {
+        fixture { store, scope, db, prefs ->
+            val notes = RoomNotebookRepository(db.notebookDao())
+            var approved = true
+            val controller = ContextualCaptureController(context, store, LocalCaptureStore(context, db, notes, Events()),
+                VisualAttachmentStore(context, store), NotebookAssetRepository(context, db), scope, WorkspaceMediaAiPolicy(db, prefs),
+                wearableHomeworkRevision = { device, revision ->
+                    check(approved && device == "approved" && (revision == null || revision == 8L))
+                    8L
+                })
+            controller.receive(image(), CaptureSource.MANAGED_WEARABLE_CAMERA, "Glasses", deviceId = "approved")
+            val review = requireNotNull(controller.state.value)
+            controller.openKidsHomeworkPhoto(review.captureId, review.mediaRef.id)
+            val ticket = (controller.navigation.first() as ContextualCaptureNavigation.KidsHomeworkPhoto).ticket
+            approved = false
+            assertTrue(runCatching { controller.takePhotoCoachCopy(ticket, child = true) }.isFailure)
+            assertNull(controller.state.value)
+            assertNull(store.metadata(review.mediaRef))
+        }
+    }
+
     @Test fun invalidReceiptCannotBecomeReviewable()=runBlocking {
         fixture {store,scope,db,prefs->
             val controller=ContextualCaptureController(context,store,LocalCaptureStore(context,db,RoomNotebookRepository(db.notebookDao()),Events()),VisualAttachmentStore(context,store),NotebookAssetRepository(context,db),scope,WorkspaceMediaAiPolicy(db,prefs))

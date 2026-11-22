@@ -7,6 +7,12 @@ import java.util.UUID
 /** Source pixels remain in Workspace. A layer pins the exact version it was edited against. */
 data class StudioSource(val objectId: String, val version: String)
 enum class StudioLayerKind { IMAGE, INK, TEXT, RECTANGLE, ELLIPSE }
+enum class StudioSymmetryAxis { VERTICAL, HORIZONTAL, RADIAL }
+
+data class StudioSymmetry(val axis: StudioSymmetryAxis, val repeats: Int = 2) {
+    init { require(repeats in 2..12 && (axis == StudioSymmetryAxis.RADIAL || repeats == 2)) }
+}
+
 data class StudioRect(val x: Int = 0, val y: Int = 0, val width: Int = 1000, val height: Int = 1000) {
     fun requireValid() {
         require(x in -1000..2000 && y in -1000..2000 && width in 1..3000 && height in 1..3000)
@@ -32,6 +38,8 @@ data class StudioLayer(
     val brightness: Int = 0,
     val contrast: Int = 1000,
     val saturation: Int = 1000,
+    val pencil: Boolean = false,
+    val symmetry: StudioSymmetry? = null,
 ) {
     fun requireValid() {
         require(id.matches(Regex("[A-Za-z0-9_-]{1,100}")))
@@ -44,6 +52,8 @@ data class StudioLayer(
             requireNotNull(source).let { require(com.halo.app.data.workspace.WorkspaceActionIds.isValid(it.objectId) && it.version.length in 1..200) }
         } else require(source == null)
         if (kind == StudioLayerKind.INK) require(InkCodec.decode(ink) != null) else require(ink.isEmpty())
+        require(!pencil || kind == StudioLayerKind.INK)
+        require(symmetry == null || kind == StudioLayerKind.INK)
         if (kind != StudioLayerKind.TEXT) require(text.isEmpty())
     }
 }

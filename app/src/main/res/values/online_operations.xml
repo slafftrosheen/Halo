@@ -3,8 +3,11 @@
     <string name="online_title">Search with sources</string>
     <string name="online_query">What should Halo look up?</string>
     <string name="online_search">Review web search</string>
-    <string name="online_query_only">Only this query is shared with OpenRouter and Exa, its selected search service. Chats, notes and attachments are not included.</string>
-    <string name="online_search_price">Free text model; web search is paid separately. The search fee estimate is USD 0.007 per request, reviewed 21 October 2026. Prices can change; this is not a quote or a cap.</string>
+    <string name="online_query_only">The reviewed search provider receives the query and response language. Chats, notes and attachments stay in Halo.</string>
+    <string name="online_search_engine_openai">Search engine: OpenAI native web search</string>
+    <string name="online_search_price">Model and search charges vary. The reservation records the reviewed amount in Halo. Your provider determines the final charge.</string>
+    <string name="online_search_engine_exa">Search engine: Exa</string>
+    <string name="online_search_engine_auto">Search engine: native grounding when available, otherwise Exa</string>
     <string name="online_approve">Approve this request</string>
     <string name="online_paid_title">Approve a paid operation</string>
     <string name="online_image_unknown">The exact image price is not available from this adapter. Check the selected model pricing. Every generation, regeneration and edit needs separate approval.</string>

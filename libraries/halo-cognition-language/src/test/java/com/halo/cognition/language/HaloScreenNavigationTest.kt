@@ -4,6 +4,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class HaloScreenNavigationTest {
+    @Test fun observedSpeechSpellingStillRequiresAnExactHaloPageCommand() {
+        assertEquals(NativeHaloScreenIntent("home/today"), NativeCommandParser.parse("Open Halu today."))
+        assertEquals(NativeHaloScreenIntent("screen/sources"), NativeCommandParser.parse("Open Halu sources."))
+        assertFalse(NativeCommandParser.parse("open halu unknown") is NativeHaloScreenIntent)
+        assertFalse(NativeCommandParser.parse("explain why open halu today") is NativeHaloScreenIntent)
+    }
+
     @Test fun primaryPagesResolveWithoutAModelInEverySupportedLanguage() {
         val commands = mapOf(
             "notebook" to listOf("open workspace", "открой рабочее пространство", "atver darbvietu", "otwórz obszar roboczy"),

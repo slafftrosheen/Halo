@@ -338,14 +338,18 @@ object HaloToolDescriptors {
                 "halo_canvas_ungroup" -> "Ungroup"
                 else -> "Remove connection"
             }, actionVerb = "Remove"))
-        "halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange" -> descriptor(
+        "halo_canvas_rename", "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_arrange",
+        "halo_canvas_group_lock", "halo_canvas_add_comment", "halo_canvas_update_comment" -> descriptor(
             definition.name, definition, ToolCategory.WORKSPACE, reversible(ReplaySafety.NEVER_REPLAY),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 16000),
-            keywords = setOf("canvas", "board", "card", "rename", "group", "tag", "duplicate", "arrange", "layer"),
+            keywords = setOf("canvas", "board", "card", "rename", "group", "lock", "comment", "reply", "resolve", "tag", "duplicate", "arrange", "layer"),
             presentation = ToolPresentation(title = when (definition.name) {
                 "halo_canvas_rename" -> "Rename canvas"
                 "halo_canvas_add_group" -> "Add group"
                 "halo_canvas_duplicate" -> "Duplicate"
+                "halo_canvas_group_lock" -> "Group or lock selection"
+                "halo_canvas_add_comment" -> "Pin a comment"
+                "halo_canvas_update_comment" -> "Update a comment"
                 else -> "Edit"
             }, actionVerb = "Edit"))
         "halo_canvas_clear_sketch" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, ToolSecurityPolicy.DESTRUCTIVE,
@@ -354,8 +358,8 @@ object HaloToolDescriptors {
         "halo_canvas_current" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, readOnly(definition.name),
             keywords = setOf("canvas", "current", "this", "selected", "selection", "board", "cards"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 16000))
-        "halo_canvas_get" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, readOnly(definition.name),
-            keywords = setOf("canvas", "board", "cards", "read", "drawing"),
+        "halo_canvas_get", "halo_canvas_review_comment" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE, readOnly(definition.name),
+            keywords = setOf("canvas", "board", "cards", "read", "drawing", "comment", "reply"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
         "halo_canvas_create", "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_move", "halo_canvas_connect" -> descriptor(
             definition.name, definition, ToolCategory.WORKSPACE, reversible(ReplaySafety.NEVER_REPLAY),
@@ -395,11 +399,11 @@ object HaloToolDescriptors {
             ToolSecurityPolicy.DESTRUCTIVE, keywords = setOf("note", "attachment", "remove", "unlink"),
             presentation = ToolPresentation(title = "Notebook", actionVerb = "Remove"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
-        "halo_note_get", "halo_note_read_block", "halo_note_purge_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
-            readOnly(definition.name), keywords = setOf("note", "notebook", "read", "block"),
+        "halo_note_get", "halo_note_read_block", "halo_note_review_block", "halo_note_purge_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            readOnly(definition.name), keywords = setOf("note", "notebook", "read", "block", "review", "comment", "changes"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
-        "halo_note_replace_content" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
-            ToolSecurityPolicy.DESTRUCTIVE, keywords = setOf("note", "notebook", "replace", "source"),
+        "halo_note_replace_content", "halo_note_resolve_changes" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            ToolSecurityPolicy.DESTRUCTIVE, keywords = setOf("note", "notebook", "replace", "source", "track", "accept", "reject", "changes"),
             presentation = ToolPresentation(title = "Notebook", actionVerb = "Save"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
         "halo_note_delete_block", "halo_note_trash", "halo_note_purge", "halo_note_purge_retry" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
@@ -408,8 +412,10 @@ object HaloToolDescriptors {
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
         "halo_note_rename", "halo_note_insert_block", "halo_note_edit_block", "halo_note_move_block", "halo_note_indent_block",
         "halo_note_split_block", "halo_note_merge_block", "halo_note_duplicate_block", "halo_note_insert_reference", "halo_note_set_reference",
-        "halo_note_archive", "halo_note_restore", "halo_note_remove_from_inbox" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
-            reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("note", "notebook", "edit", "block", "save", "archive", "restore"),
+        "halo_note_archive", "halo_note_restore", "halo_note_remove_from_inbox", "halo_note_set_format", "halo_note_set_page_settings",
+        "halo_note_comment" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("note", "notebook", "edit", "block", "save", "archive", "restore",
+                "font", "alignment", "spacing", "page", "header", "footer", "comment", "reply"),
             presentation = ToolPresentation(title = "Notebook", actionVerb = "Save"),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(maxOutputChars = 24000))
         "halo_study_sessions", "halo_study_state", "halo_study_card_get" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
@@ -476,6 +482,11 @@ object HaloToolDescriptors {
     }
 
     fun memory(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        "halo_memory_page_connections" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            readOnly(definition.name), keywords = setOf("memory", "backlinks", "link map", "tags"))
+        "halo_memory_page_link", "halo_memory_page_tag" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
+            ToolSecurityPolicy(ToolRiskClass.REVERSIBLE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY),
+            keywords = setOf("memory", "link", "tag"), presentation = ToolPresentation(title = "Change memory page", actionVerb = "Review", targetArgument = "id"))
         "halo_search_memory", "halo_read_memory", "halo_read_working_memory" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("memory", "recall", "fact"))
         "halo_set_working_memory" -> descriptor(definition.name,definition,ToolCategory.WORKSPACE,
@@ -617,7 +628,7 @@ object HaloToolDescriptors {
             requirements = setOf(ToolRequirement.Capability(CapabilityId("host.web.fetch"))),
             execution = ToolExecutionPolicy(timeoutMs = 110_000L),
             presentation = ToolPresentation(title = if (definition.name == com.halo.app.di.tools.host.GroundedWebSearchTools.SEARCH)
-                "Search web using OpenRouter (variable cost)" else "Prepare web search", targetArgument = "query"))
+                "Search the web (variable cost)" else "Prepare web search", targetArgument = "query"))
             .copy(operability = com.halo.app.di.tools.host.GroundedWebSearchTools.operability(definition.name))
         "halo_fetch_url" -> descriptor(definition.name, definition, ToolCategory.INFORMATION,
             ToolSecurityPolicy(
@@ -741,6 +752,8 @@ object HaloToolDescriptors {
         )
 
     fun assistant(definition: ToolDefinition): ToolDescriptor? = when (definition.name) {
+        in com.halo.app.di.tools.host.HaloScanTranslationTools.NAMES ->
+            com.halo.app.di.tools.host.HaloScanTranslationTools.descriptor(definition)
         in com.halo.app.di.tools.host.HaloRecordControls.NAMES -> descriptor(definition.name, definition, ToolCategory.HOST_CONTROL,
             if (definition.name == com.halo.app.di.tools.host.HaloRecordControls.STATUS) readOnly(definition.name)
             else reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("record", "microphone", "stop"))
@@ -750,8 +763,10 @@ object HaloToolDescriptors {
         com.halo.app.di.tools.host.HaloPauseTools.STATUS, com.halo.app.di.tools.host.HaloPauseTools.START ->
             com.halo.app.di.tools.host.HaloPauseTools.descriptor(definition)
         com.halo.app.di.tools.host.AlbumFindTools.FIND -> com.halo.app.di.tools.host.AlbumFindTools.descriptor(definition)
+        com.halo.app.di.tools.host.MerchantCheckoutTools.OPEN -> com.halo.app.di.tools.host.MerchantCheckoutTools.descriptor(definition)
         com.halo.app.di.tools.host.FocusTools.STATUS, com.halo.app.di.tools.host.FocusTools.START,
-        com.halo.app.di.tools.host.FocusTools.END -> com.halo.app.di.tools.host.FocusTools.descriptor(definition)
+        com.halo.app.di.tools.host.FocusTools.END, com.halo.app.di.tools.host.FocusTools.COMPLETE ->
+            com.halo.app.di.tools.host.FocusTools.descriptor(definition)
         in com.halo.app.di.tools.host.NotebookLibraryTools.NAMES ->
             com.halo.app.di.tools.host.NotebookLibraryTools.descriptor(definition)
         in com.halo.app.di.tools.host.NotebookOrganizationTools.NAMES ->
@@ -851,6 +866,8 @@ object HaloToolDescriptors {
         val everyday=definition.name in EverydayToolContracts.names
         val always = !query && (!screen && !everyday || definition.name == "halo_screen_settings" || definition.name == "halo_screen_remove_preset")
         val security = when {
+            definition.name == "halo_knowledge_download" -> ToolSecurityPolicy(
+                ToolRiskClass.EXTERNAL_SIDE_EFFECT, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY)
             definition.name == "halo_source_image" -> ToolSecurityPolicy(ToolRiskClass.READ_ONLY, ConfirmationPolicy.USER_POLICY, ReplaySafety.NEVER_REPLAY)
             query -> readOnly(definition.name)
             always -> ToolSecurityPolicy(
@@ -921,16 +938,19 @@ object HaloToolDescriptors {
             else -> if(everyday) EverydayToolContracts.title(definition.name) else return null
         }
         return descriptor(definition.name, definition, if (query) ToolCategory.INFORMATION else ToolCategory.HOST_CONTROL,
-            security, keywords = if(everyday) setOf("organizer","calendar","tasks","reminders","alarms","timer","world clock","weather","sources","news","brief","widget") else if (screen) setOf("screen", "layout", "card", "preset", "typography")
+            security, keywords = if(definition.name.startsWith("halo_knowledge_")) setOf("offline knowledge", "wiki", "Wikipedia", "ZIM", "archive", "dataset", "база знаний", "энциклопедия")
+                else if(definition.name == "halo_library_receipt_totals") setOf("receipt", "spent", "merchant", "total", "чек", "потратил")
+                else if(everyday) setOf("organizer","calendar","tasks","reminders","alarms","timer","world clock","weather","sources","news","brief","widget") else if (screen) setOf("screen", "layout", "card", "preset", "typography")
                 else setOf("saved device", "connection", "notification", "digest", "preferences", "voice", "learning", "routine", "provider", "study", "canvas", "review draft", "speech model"),
             requirements = setOf(ToolRequirement.Capability(contract.capabilityId)),
             execution = com.halo.runtime.cognition.tools.ToolExecutionPolicy(
-                timeoutMs = if (definition.name == "halo_source_image" || definition.name == "halo_source_action") 180_000L else 30_000L,
+                timeoutMs = if (definition.name in setOf("halo_library_receipt_totals", "halo_source_image", "halo_source_action")) 180_000L else 30_000L,
                 maxOutputChars = if(everyday) 128000 else if (contract.capabilityId.value == "host.voice.configuration") 12000 else 24000),
             presentation = ToolPresentation(title = title, actionVerb = if (query) "Read" else "Apply",
                 targetArgument = when {
                     definition.name.startsWith("halo_saved_device_") -> "deviceId"
                     definition.name.startsWith("halo_notification_policy_") -> "packageName"
+                    definition.name == "halo_knowledge_download" -> "packId"
                     else -> null
                 }, sensitiveArguments = (if(everyday) (definition.parameters["properties"] as Map<*,*>).keys.filterIsInstance<String>().toSet() else emptySet()) + setOf("settings", "topics", "name", "text", "sourceVersions", "trigger", "conditions", "actions", "delivery", "patch")))
             .copy(operability = contract)

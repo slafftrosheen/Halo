@@ -155,8 +155,20 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
     private fun drawInk(canvas: Canvas, layer: StudioLayer, target: RectF, paint: Paint) {
         val document = requireNotNull(InkCodec.decode(layer.ink))
         val rect = inkFrame(layer, target)
-        com.halo.app.data.workspace.WorkspaceInkBitmapRenderer.draw(canvas, document, rect, paint,
-            layer.strokeWidth * maxOf(canvas.width, canvas.height) / 1000f)
+        val thickness = layer.strokeWidth * maxOf(canvas.width, canvas.height) / 1000f
+        val symmetry = layer.symmetry
+        repeat(symmetry?.repeats ?: 1) { index ->
+            val restore = canvas.save()
+            try {
+                if (symmetry != null) canvas.clipRect(rect)
+                if (index > 0 && symmetry != null) when (symmetry.axis) {
+                    StudioSymmetryAxis.VERTICAL -> canvas.scale(-1f, 1f, rect.centerX(), rect.centerY())
+                    StudioSymmetryAxis.HORIZONTAL -> canvas.scale(1f, -1f, rect.centerX(), rect.centerY())
+                    StudioSymmetryAxis.RADIAL -> canvas.rotate(index * 360f / symmetry.repeats, rect.centerX(), rect.centerY())
+                }
+                com.halo.app.data.workspace.WorkspaceInkBitmapRenderer.draw(canvas, document, rect, paint, thickness, hardPencil = layer.pencil)
+            } finally { canvas.restoreToCount(restore) }
+        }
     }
 
     private fun StudioRect.pixels(width: Int, height: Int) = RectF(x * width / 1000f, y * height / 1000f,

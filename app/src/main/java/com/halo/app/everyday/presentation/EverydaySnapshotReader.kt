@@ -47,7 +47,8 @@ suspend fun readEverydaySnapshot(context: Context, now: Instant = Instant.now(),
             if (kids) emptyList() else Graph.worldClocks.all(), records.flatMap { Graph.organizerRepository.receipts(it.id) },
             kids, settings.childRecordIds, Graph.privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD,
             if (level >= 0 && scale > 0) (level * 100 / scale).coerceIn(0,100) else null,
-            (battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0,readEverydayAuthorityStamp(),familyRevision,modeRevision)
+            (battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0,readEverydayAuthorityStamp(),familyRevision,modeRevision,
+            dayNewsEnabled = !kids && Graph.dayReportService.settings.choices.value.news)
     }
     if (kids != Graph.kidsPreferences.enabled.value || runCatching { Graph.kidsPreferences.requirePresentation(familyRevision) }.isFailure ||
         epoch != null && runCatching { Graph.kidsPreferences.requireAdultAction(epoch) }.isFailure)
@@ -65,6 +66,7 @@ suspend fun readEverydayAuthorityStamp(): String = Graph.appDatabase.withTransac
             .append(':').append(it.snapshot?.contentRevision).append(':').append(it.attempt).append(';') }
         Graph.briefRepository.recent(60).forEach { append(it.id).append(';') }
         append(Graph.briefRepository.settings().version)
+        append(':').append(Graph.dayReportService.settings.choices.value.news)
         Graph.worldClocks.all().forEach { append(it.id).append(':').append(it.version).append(';') }
         append(Graph.kidsPreferences.presentationRevision()).append(':').append(Graph.privacyModes.revision)
     }
@@ -73,6 +75,10 @@ suspend fun readEverydayAuthorityStamp(): String = Graph.appDatabase.withTransac
 
 /** A face is a review, not authority. Recheck the canonical source at the user's tap. */
 suspend fun EverydayTarget.route(): String = when (this) {
+    EverydayTarget.Today -> {
+        check(!Graph.kidsPreferences.getEnabled())
+        "home/today"
+    }
     EverydayTarget.Organizer -> EverydayRoutes.ORGANIZER
     EverydayTarget.Sources -> EverydayRoutes.SOURCES
     EverydayTarget.Clocks -> EverydayRoutes.CLOCKS

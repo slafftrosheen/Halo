@@ -1,0 +1,10 @@
+<resources>
+    <string name="halo11_private_preview">Просмотр</string>
+    <string name="halo11_private_preview_loading">Открываем файл…</string>
+    <string name="halo11_private_preview_empty">Пустой документ</string>
+    <string name="halo11_private_preview_truncated">Начало документа</string>
+    <string name="halo11_private_preview_restore">Верните файл в Библиотеку, чтобы открыть его.</string>
+    <string name="halo11_private_preview_play">Воспроизвести запись</string>
+    <string name="halo11_private_preview_stop">Остановить воспроизведение</string>
+    <string name="halo11_private_preview_first_page">Страница 1 из %1$d</string>
+</resources>

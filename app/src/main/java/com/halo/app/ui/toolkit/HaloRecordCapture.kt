@@ -13,13 +13,16 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.takeWhile
 
-internal data class HaloRecordCaption(val elapsedSeconds: Int, val text: String, val speaker: Char? = null)
+internal data class HaloRecordCaption(val startMs: Int, val endMs: Int, val text: String, val speaker: Char? = null) {
+    val elapsedSeconds: Int get() = startMs / 1000
+}
 internal data class HaloRecordDraft(val file: File, val elapsedSeconds: Int, val interrupted: Boolean = false)
 
 private const val sampleRate = 16_000
@@ -30,9 +33,13 @@ private const val maxSamples = sampleRate * RECORD_MAX_SECONDS
 /** A foreground recording owns the same phone microphone lease as the voice interaction. */
 internal class HaloRecordCapture(private val context: Context) {
     private val stopRequested = AtomicBoolean(false)
+    private val paused = AtomicBoolean(false)
+    private val activeSamples = AtomicInteger()
     private var captionJob: Job? = null
     @Volatile private var claim: String? = null
     fun owns(token: String) = claim == token
+    fun setPaused(value: Boolean) { paused.set(value) }
+    fun recordedSeconds(): Int = activeSamples.get() / sampleRate
     fun stop() {
         stopRequested.set(true)
         claim?.let { HaloRecordSessions.stop(it) }
@@ -111,7 +118,11 @@ internal class HaloRecordCapture(private val context: Context) {
                                 val result = model.recognizeLocal(AudioBuffer(listOf(AudioFrame(
                                     clip, sampleRate, 1, position * 1_000_000_000L / sampleRate)), "$id:$position"))
                                 val line = result.text.trim()
-                                if (line.isNotEmpty() && allowed()) onCaption(HaloRecordCaption(position / sampleRate, line, span.speaker))
+                                if (line.isNotEmpty() && allowed()) onCaption(HaloRecordCaption(
+                                    startMs = (position * 1000L / sampleRate).toInt(),
+                                    endMs = (((position + clip.size) * 1000L + sampleRate - 1) / sampleRate).toInt(),
+                                    text = line, speaker = span.speaker,
+                                ))
                             } finally { clip.fill(0) }
                         }
                     } finally { samples.fill(0) }
@@ -148,25 +159,41 @@ internal class HaloRecordCapture(private val context: Context) {
                     writeRecordHeader(output, 0)
                     try {
                         withTimeoutOrNull(RECORD_MAX_SECONDS * 1000L) {
-                            microphone.frames.flowOn(Dispatchers.IO).takeWhile {
-                                !stopRequested.get() && allowed() && recordedSamples < maxSamples
-                            }.collect { frame ->
-                                check(frame.sampleRate == sampleRate && frame.channels == 1)
-                                val count = frame.samples.size.coerceAtMost(maxSamples - recordedSamples)
-                                for (index in 0 until count) {
-                                    val sample = frame.samples[index]
-                                    output.writeShort(java.lang.Short.reverseBytes(sample).toInt())
-                                    if (captions?.isActive == true) {
-                                        if (captionCount == 0) captionOffset = recordedSamples
-                                        captionSamples[captionCount++] = sample
-                                        if (captionCount == clipSamples) {
-                                            val clip = captionSamples.copyOf()
-                                            if (batches.trySend(captionOffset to clip).isFailure) clip.fill(0)
-                                            captionCount = 0
-                                        }
-                                    }
-                                    recordedSamples++
+                            var needsStart = false
+                            fun mayCapture() = !stopRequested.get() && allowed() && recordedSamples < maxSamples
+                            while (mayCapture()) {
+                                if (paused.get()) {
+                                    if (!needsStart) { microphone.stop(); needsStart = true }
+                                    delay(40)
+                                    continue
                                 }
+                                if (needsStart) { microphone.start(); needsStart = false }
+                                microphone.frames.flowOn(Dispatchers.IO).takeWhile {
+                                    mayCapture() && !paused.get()
+                                }.collect { frame ->
+                                    check(frame.sampleRate == sampleRate && frame.channels == 1)
+                                    if (paused.get()) {
+                                        frame.samples.fill(0)
+                                        return@collect
+                                    }
+                                    val count = frame.samples.size.coerceAtMost(maxSamples - recordedSamples)
+                                    for (index in 0 until count) {
+                                        val sample = frame.samples[index]
+                                        output.writeShort(java.lang.Short.reverseBytes(sample).toInt())
+                                        if (captions?.isActive == true) {
+                                            if (captionCount == 0) captionOffset = recordedSamples
+                                            captionSamples[captionCount++] = sample
+                                            if (captionCount == clipSamples) {
+                                                val clip = captionSamples.copyOf()
+                                                if (batches.trySend(captionOffset to clip).isFailure) clip.fill(0)
+                                                captionCount = 0
+                                            }
+                                        }
+                                        recordedSamples++
+                                    }
+                                    activeSamples.set(recordedSamples)
+                                }
+                                if (mayCapture()) { microphone.stop(); needsStart = true }
                             }
                         }
                     } catch (cancel: CancellationException) { throw cancel }
@@ -208,7 +235,7 @@ internal class HaloRecordCapture(private val context: Context) {
 
 internal const val recordDraftFolder = "workspace/owned/record-staging"
 
-private fun writeRecordHeader(output: DataOutputStream, size: Int) {
+internal fun writeRecordHeader(output: DataOutputStream, size: Int) {
     output.writeBytes("RIFF")
     output.writeInt(Integer.reverseBytes(36 + size))
     output.writeBytes("WAVEfmt ")

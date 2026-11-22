@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_family_safe_places">Safe places</string>
+    <string name="halo11_family_safe_unlock">Set or unlock your phone screen lock to manage Safe places.</string>
+    <string name="halo11_family_safe_privacy">Keep a list of familiar places on this phone. Halo does not track trips or show a map in Kids mode.</string>
+    <string name="halo11_family_safe_empty">No saved places. Keep a place in Maps first.</string>
+    <string name="halo11_family_safe_failed">Could not update Safe places.</string>
+    <string name="halo11_family_safe_add">Add %1$s to Safe places?</string>
+    <string name="halo11_family_safe_remove">Remove %1$s from Safe places?</string>
+</resources>

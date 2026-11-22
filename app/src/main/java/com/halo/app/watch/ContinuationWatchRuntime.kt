@@ -1,6 +1,7 @@
 package com.halo.app.watch
 
 import android.util.Log
+import com.halo.app.automation.AutomationPrivacyFence
 import com.halo.app.data.watch.RoomContinuationWatchRepository
 import com.halo.runtime.cognition.agent.AgentRunCoordinator
 import com.halo.runtime.cognition.agent.AgentRunState
@@ -19,12 +20,10 @@ import com.halo.runtime.cognition.routine.AutomationSignalRegistry
 import com.halo.runtime.cognition.routine.AutomationTrust
 import com.halo.runtime.cognition.watch.ContinuationWakePolicy
 import com.halo.runtime.cognition.watch.ContinuationWatch
-import com.halo.runtime.cognition.watch.ContinuationWatchId
 import com.halo.runtime.cognition.watch.ContinuationWatchMatcher
 import com.halo.runtime.cognition.watch.WatchBehavior
 import com.halo.runtime.cognition.watch.WatchCondition
 import com.halo.runtime.cognition.watch.WatchMatchMode
-import com.halo.runtime.cognition.watch.WatchStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,20 +47,7 @@ class ContinuationWatchRuntime(
         val active = repository.getAllActiveWatches()
         for (watch in active) {
             if (watch.expiresAt != null && !now.isBefore(watch.expiresAt)) {
-                repository.markExpired(watch.id)
-                Log.i("HALO_WATCH_EXPIRED", "watch=${watch.id.value} condition=${watch.condition::class.simpleName}")
-                val rId = watch.runId
-                if (rId != null) {
-                    agentRunCoordinator?.recordStep(
-                        AgentStep.ExternalConditionExpired(
-                            id = AgentStepId(UUID.randomUUID().toString()),
-                            runId = rId,
-                            createdAt = now,
-                            watchId = watch.id.value,
-                            conditionType = watch.condition::class.simpleName ?: "UNKNOWN",
-                        )
-                    )
-                }
+                expire(watch, now, recordEvidence = true)
             } else if (watch.matchMode == WatchMatchMode.CURRENT_OR_NEXT && environmentSnapshot != null) {
                 val satisfied = evaluateLevelCondition(watch.condition, environmentSnapshot)
                 if (satisfied) {
@@ -81,9 +67,9 @@ class ContinuationWatchRuntime(
 
             val activeWatches = repository.getAllActiveWatches()
             for (watch in activeWatches) {
-                if (watch.expiresAt != null && Instant.now().isAfter(watch.expiresAt)) {
-                    repository.markExpired(watch.id)
-                    Log.i("HALO_WATCH_EXPIRED", "watch=${watch.id.value}")
+                val now = Instant.now()
+                if (watch.expiresAt != null && !now.isBefore(watch.expiresAt)) {
+                    expire(watch, now, recordEvidence = false)
                     continue
                 }
 
@@ -95,7 +81,23 @@ class ContinuationWatchRuntime(
         }
     }
 
-    private suspend fun processWatchMatch(watch: ContinuationWatch, occurredAt: Instant, source: String) {
+    private suspend fun expire(watch: ContinuationWatch, now: Instant, recordEvidence: Boolean): Unit =
+        AutomationPrivacyFence.withOwner(AutomationPrivacyFence.watch(watch.id.value)) {
+            if (repository.findById(watch.id) != watch || !repository.markExpired(watch.id)) return@withOwner
+            Log.i("HALO_WATCH_EXPIRED", "watch=${watch.id.value}")
+            val runId = watch.runId
+            if (recordEvidence && runId != null) agentRunCoordinator?.recordStep(
+                AgentStep.ExternalConditionExpired(AgentStepId(UUID.randomUUID().toString()), runId, now,
+                    watch.id.value, watch.condition::class.simpleName ?: "UNKNOWN")
+            )
+        }
+
+    private suspend fun processWatchMatch(watch: ContinuationWatch, occurredAt: Instant, source: String): Unit =
+        AutomationPrivacyFence.withOwner(AutomationPrivacyFence.watch(watch.id.value)) {
+            if (repository.findById(watch.id) == watch) matchCurrent(watch, occurredAt, source)
+        }
+
+    private suspend fun matchCurrent(watch: ContinuationWatch, occurredAt: Instant, source: String) {
         if (!allowMatch()) return
         val claimed = repository.claimMatch(watch.id, occurredAt)
         if (!claimed) return
@@ -116,7 +118,7 @@ class ContinuationWatchRuntime(
                     if (attentionController != null) {
                         attentionController.submit(
                             AttentionRequest(
-                                id = AttentionRequestId(UUID.randomUUID().toString()),
+                                id = AttentionRequestId("watch:${watch.id.value}"),
                                 source = AttentionSource.FollowUp,
                                 importance = AttentionImportance.NORMAL,
                                 deliveryIntent = DeliveryIntent.Inform(
@@ -153,7 +155,7 @@ class ContinuationWatchRuntime(
                             val text = watch.presentationText ?: "Condition met; task ready to continue."
                             attentionController.submit(
                                 AttentionRequest(
-                                    id = AttentionRequestId(UUID.randomUUID().toString()),
+                                    id = AttentionRequestId("watch:${watch.id.value}"),
                                     source = AttentionSource.FollowUp,
                                     importance = AttentionImportance.NORMAL,
                                     deliveryIntent = DeliveryIntent.Inform(

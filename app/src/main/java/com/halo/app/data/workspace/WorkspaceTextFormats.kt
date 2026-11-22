@@ -13,7 +13,8 @@ enum class WorkspaceTextFormat(val mime: String, val extension: String, val bloc
         fun fromFile(name: String, mime: String): WorkspaceTextFormat? {
             val extension = name.substringAfterLast('.', "").lowercase(java.util.Locale.ROOT)
             return when {
-                mime == "text/csv" || mime == "application/csv" || extension == "csv" && mime in setOf("text/plain", "application/octet-stream") -> CSV
+                mime in setOf("text/csv", "application/csv", "text/comma-separated-values") ||
+                    extension == "csv" && mime in setOf("text/plain", "application/octet-stream", "application/vnd.ms-excel") -> CSV
                 mime == "text/markdown" || mime == "text/x-markdown" || extension in setOf("md", "markdown") && mime in setOf("text/plain", "application/octet-stream") -> MARKDOWN
                 mime == "text/plain" || extension == "txt" && mime == "application/octet-stream" -> TXT
                 else -> null
@@ -45,7 +46,7 @@ object WorkspaceTextEncoding {
     }
 }
 
-/** Bounded RFC-style comma-separated text. Values remain literal; no formulas or scripts execute. */
+/** Bounded RFC-style comma-separated storage. The grid interprets its supported formulas separately. */
 data class WorkspaceCsv(val rows: List<List<String>>) {
     fun requireValid() {
         require(rows.size in 1..MAX_ROWS)
@@ -79,6 +80,25 @@ data class WorkspaceCsv(val rows: List<List<String>>) {
         require(index in 0 until rows.maxOf { it.size } && rows.maxOf { it.size } > 1)
         return WorkspaceCsv(rows.map { cells -> cells.filterIndexed { column, _ -> column != index }.ifEmpty { listOf("") } })
             .also(WorkspaceCsv::requireValid)
+    }
+    fun fillDown(firstRow: Int, lastRow: Int, firstColumn: Int, lastColumn: Int): WorkspaceCsv {
+        require(firstRow in rows.indices && lastRow in firstRow until rows.size)
+        require(firstColumn in 0 until MAX_COLUMNS && lastColumn in firstColumn until MAX_COLUMNS)
+        val source = rows[firstRow]
+        return WorkspaceCsv(rows.mapIndexed { index, row ->
+            if (index <= firstRow || index > lastRow) row else List(maxOf(row.size, lastColumn + 1)) { column ->
+                if (column in firstColumn..lastColumn) source.getOrNull(column).orEmpty() else row.getOrNull(column).orEmpty()
+            }
+        }).also(WorkspaceCsv::requireValid)
+    }
+    fun removeDuplicates(column: Int?, header: Boolean): WorkspaceCsv {
+        require(column == null || column in 0 until rows.maxOf { it.size })
+        val headerRows = if (header) 1 else 0
+        val width = rows.maxOf { it.size }
+        val rowsKept = rows.drop(headerRows).distinctBy { row ->
+            if (column == null) List(width) { row.getOrNull(it).orEmpty() } else listOf(row.getOrNull(column).orEmpty())
+        }
+        return WorkspaceCsv(rows.take(headerRows) + rowsKept).also(WorkspaceCsv::requireValid)
     }
     fun encode(): String {
         requireValid()

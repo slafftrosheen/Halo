@@ -8,6 +8,7 @@ import org.json.JSONObject
 internal object EverydayWidgetTargets {
     fun encode(target: EverydayTarget): String = JSONObject().apply {
         when (target) {
+            EverydayTarget.Today -> put("type", "today")
             EverydayTarget.Organizer -> put("type","organizer"); EverydayTarget.Sources -> put("type","sources")
             EverydayTarget.Clocks -> put("type","clocks"); EverydayTarget.Devices -> put("type","devices")
             EverydayTarget.BriefLatest -> put("type","brief-latest")
@@ -25,6 +26,7 @@ internal object EverydayWidgetTargets {
         fun id() = json.getString("id").also { require(it.length in 1..500) }
         fun optional(name: String) = json.optString(name).takeUnless { it.isBlank() || it == "null" }
         return when (json.getString("type")) {
+            "today" -> EverydayTarget.Today
             "organizer" -> EverydayTarget.Organizer; "sources" -> EverydayTarget.Sources; "clocks" -> EverydayTarget.Clocks; "devices" -> EverydayTarget.Devices
             "brief-latest" -> EverydayTarget.BriefLatest
             "record" -> EverydayTarget.Record(id(),json.getLong("version"),optional("original")?.let(java.time.Instant::parse))

@@ -2,6 +2,7 @@ package com.halo.app.data.payload
 
 import androidx.room.withTransaction
 import com.halo.app.data.AppDatabase
+import com.halo.app.data.workspace.privateLibraryClaim
 import com.halo.runtime.cognition.context.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -21,10 +22,14 @@ class FileContentPayloadStore(
     private val mutex = Mutex()
     private val dao get() = db.payloadDao()
     private fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-    private fun body(sha: String): File {
+    internal fun body(sha: String): File {
         require(sha.matches(Regex("[0-9a-f]{64}")))
         return File(File(directory, sha.take(2)), sha)
     }
+    internal suspend fun <T> withPrivateAccess(action: suspend () -> T): T = mutex.withLock { action() }
+
+    private suspend fun isPrivate(owner: PayloadOwner): Boolean =
+        db.privateLibraryDao().claims(listOf(privateLibraryClaim(owner.id))).isNotEmpty()
     private suspend fun domain(row: PayloadReferenceEntity): PayloadRef? {
         val stored = dao.bodies().firstOrNull { it.sha256 == row.sha256 } ?: return null
         val classification = PayloadClassification.entries.firstOrNull { it.name == row.classification } ?: return null
@@ -44,6 +49,7 @@ class FileContentPayloadStore(
         mutex.withLock {
             if (owner.id.isBlank() || provenance.length > 1024 || mediaType.length > 128)
                 return@withLock PayloadOutcome.Failed(LongTaskFailure.SOURCE_NOT_ALLOWED)
+            if (isPrivate(owner)) return@withLock PayloadOutcome.Failed(LongTaskFailure.SOURCE_NOT_ALLOWED)
             if (bytes.size.toLong() > limits.singleBytes) return@withLock PayloadOutcome.Failed(LongTaskFailure.EVIDENCE_TOO_LARGE)
             val sha = digest(bytes)
             val refs = dao.references()
@@ -109,6 +115,7 @@ class FileContentPayloadStore(
     }
     }
     override suspend fun retain(source: PayloadOwner, refId: String, destination: PayloadOwner): Boolean = mutex.withLock {
+        if (isPrivate(source) || isPrivate(destination)) return@withLock false
         val row = dao.reference(refId, source.kind.name, source.id) ?: return@withLock false
         if (source == destination) return@withLock true
         if (dao.reference(refId, destination.kind.name, destination.id) != null) return@withLock true

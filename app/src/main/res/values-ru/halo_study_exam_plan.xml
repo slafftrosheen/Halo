@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="study_exam_plan">Подготовка к экзамену</string>
+    <string name="study_exam_name">Экзамен или предмет</string>
+    <string name="study_exam_choose_course">Выбрать курс</string>
+    <string name="study_exam_without_course">Только занятия по расписанию</string>
+    <string name="study_exam_open_lesson">Открыть урок</string>
+    <string name="study_exam_course_unavailable">Выберите доступный курс, в котором не больше 50 уроков.</string>
+    <string name="study_exam_date">Выбрать дату экзамена</string>
+    <string name="study_exam_on_date">Экзамен %1$s</string>
+    <string name="study_exam_time">Время занятий %1$s</string>
+    <string name="study_exam_days">Дни подготовки</string>
+    <string name="study_exam_preview">По 25 минут в день с %1$s по %2$s. Отдельные занятия можно перенести в планировщике.</string>
+    <string name="study_exam_no_days">До экзамена нет будущих занятий в это время. Выберите более раннее время или более позднюю дату.</string>
+    <string name="study_exam_save">Добавить занятия в планировщик</string>
+    <string name="study_exam_event">Подготовка к экзамену · %1$s</string>
+    <string name="study_exam_details">Подготовка к экзамену %1$s.</string>
+    <string name="study_exam_changed">Доступные даты изменились. Проверьте обновлённый план перед сохранением.</string>
+    <string name="study_exam_save_failed">Не удалось сохранить занятия в планировщике. Попробуйте ещё раз.</string>
+</resources>

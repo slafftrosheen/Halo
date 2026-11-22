@@ -20,6 +20,14 @@ class Zone5OrbMotionTest {
         assertFalse(PresenceArtwork.CAPTURING_VOICE.motionPolicy(72f, false, true).animate)
         assertTrue(PresenceArtwork.CAPTURING_VOICE.motionPolicy(80f, false, true).animate)
     }
+    @Test fun zone6DockSizesUseAuthoredMotionForAdultAndKids() {
+        val listening = capture.copy(state = HaloSignalState.LISTENING)
+        assertEquals("halo/halo_orb_listening_dark.json", zone5OrbMotionAsset(listening, 48f, true, true, dock = true))
+        assertEquals("halo/halo_orb_capturing_voice_light.json", zone5OrbMotionAsset(capture, 56f, false, true, dock = true))
+        assertEquals("halo/halo_kids_orb_capturing_voice_dark.json",
+            zone5OrbMotionAsset(capture, 60f, true, true, kids = true, dock = true))
+        assertNull(zone5OrbMotionAsset(capture, 56f, true, false, dock = true))
+    }
     @Test fun measuredProgressAndResultStatesNeverAutoplayIndeterminateOrSuccessMotion() {
         val thinking = HaloSignalPresentation(state = HaloSignalState.THINKING, label = "Thinking")
         assertEquals("halo/halo_orb_thinking_dark.json", zone5OrbMotionAsset(thinking, 64f, true, true))

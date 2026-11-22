@@ -3,8 +3,11 @@
     <string name="online_title">"Wyszukiwanie ze źródłami"</string>
     <string name="online_query">"Co halo ma sprawdzić?"</string>
     <string name="online_search">"Przejrzyj wyszukiwanie w internecie"</string>
-    <string name="online_query_only">"Tylko to zapytanie jest udostępniane OpenRouter i Exa, wybranej usłudze wyszukiwania. Rozmowy, notatki i załączniki nie są dołączane."</string>
-    <string name="online_search_price">"Model tekstowy jest bezpłatny; wyszukiwanie w internecie jest płatne osobno. Szacowana opłata za wyszukiwanie wynosi 0,007 USD za żądanie; sprawdzono 21 października 2026 r. Ceny mogą się zmienić; to nie jest oferta cenowa ani limit."</string>
+    <string name="online_query_only">Wybrana wyszukiwarka otrzymuje zapytanie i język odpowiedzi. Czaty, notatki i załączniki zostają w Halo.</string>
+    <string name="online_search_engine_openai">Wyszukiwarka: wbudowane wyszukiwanie OpenAI</string>
+    <string name="online_search_price">Koszt modelu i wyszukiwania może się zmieniać. Halo zapisuje zatwierdzoną rezerwę. Ostateczną opłatę ustala dostawca.</string>
+    <string name="online_search_engine_exa">Wyszukiwarka: Exa</string>
+    <string name="online_search_engine_auto">Wyszukiwarka: wbudowane wyszukiwanie modelu, jeśli jest dostępne, w przeciwnym razie Exa</string>
     <string name="online_approve">"Zatwierdź to żądanie"</string>
     <string name="online_paid_title">"Zatwierdź płatną operację"</string>
     <string name="online_image_unknown">"Ten adapter nie udostępnia dokładnej ceny obrazu. Sprawdź cennik wybranego modelu. Każde generowanie, ponowne generowanie i każda edycja wymaga osobnej zgody."</string>

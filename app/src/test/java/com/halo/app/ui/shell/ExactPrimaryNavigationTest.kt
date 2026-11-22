@@ -46,6 +46,7 @@ class ExactPrimaryNavigationTest {
             nav = rememberNavController()
             NavHost(nav, startDestination = startDestination) {
                 composable("home") { Box {} }
+                composable(HaloHomeTab.TODAY.route) { Box {} }
                 composable("notebook") { Box {} }
                 composable("voice_settings") { Box {} }
                 composable("devices") { Box {} }
@@ -120,6 +121,35 @@ class ExactPrimaryNavigationTest {
             assertEquals("devices", nav.currentDestination?.route)
             assertTrue(nav.popBackStack())
             assertSame(guide, nav.currentBackStackEntry)
+        }
+    }
+
+    @Test fun chatBackReturnsToTodayAndSelectingHomeClearsTheChatFromTheStack() {
+        val today = HaloHomeTab.TODAY.route
+        start(today)
+        compose.runOnIdle {
+            assertEquals("home", primaryNavigationRoute(today))
+            nav.navigateToInstrument("home")
+            assertEquals("home", nav.currentDestination?.route)
+            assertTrue(nav.popBackStack())
+            assertEquals(today, nav.currentDestination?.route)
+            nav.navigateToInstrument("home")
+            nav.navigateToPrimary(today, restoreSavedState = false)
+            assertEquals(today, nav.currentDestination?.route)
+            assertEquals(null, nav.previousBackStackEntry)
+        }
+    }
+
+    @Test fun todayAnchorsPrimaryNavigationAfterFirstSetupIsDismissed() {
+        val today = HaloHomeTab.TODAY.route
+        start("guided_setup")
+        compose.runOnIdle {
+            nav.navigate(today) { popUpTo("guided_setup") { inclusive = true } }
+            nav.navigateToPrimary("notebook", restoreSavedState = false)
+            nav.navigateToPrimary("devices", restoreSavedState = false)
+            assertEquals("devices", nav.currentDestination?.route)
+            assertTrue(nav.popBackStack())
+            assertEquals(today, nav.currentDestination?.route)
         }
     }
 }

@@ -116,8 +116,16 @@ internal class WorkspaceFileToolsViewModel(val tools: WorkspaceFileTools, initia
     fun importText(file: WorkspaceFile) = operation(FileToolOperation.IMPORT) {
         observe(tools.text.import(file.objectId.value, requireNotNull(file.version)).id, true)
     }
+    fun importCsv(uri: Uri) = operation(FileToolOperation.IMPORT) {
+        val file = tools.files.importFile(uri)
+        require(WorkspaceTextFormat.fromFile(file.displayName, file.mimeType) == WorkspaceTextFormat.CSV)
+        observe(tools.text.import(file.objectId.value, requireNotNull(file.version)).id, true)
+    }
     fun editCsv(id: String, revision: Long, command: WorkspaceCsvCommand, onSaved: () -> Unit = {}) = operation(FileToolOperation.EDIT) {
         tools.text.editCsv(id, revision, command); refresh(id); onSaved()
+    }
+    fun setSheetEntryRule(document: WorkspaceTextDocument, rule: HaloSheetEntryRule?, onSaved: () -> Unit) = operation(FileToolOperation.EDIT) {
+        tools.text.setSheetEntryRule(document.id, document.revision, rule); onSaved()
     }
     fun undoText(document: WorkspaceTextDocument) = operation(FileToolOperation.EDIT) { tools.text.undo(document.id, document.revision); refresh(document.id) }
     fun redoText(document: WorkspaceTextDocument) = operation(FileToolOperation.EDIT) { tools.text.redo(document.id, document.revision); refresh(document.id) }

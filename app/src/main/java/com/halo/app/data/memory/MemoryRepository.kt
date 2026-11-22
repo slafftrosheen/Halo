@@ -11,6 +11,8 @@ import com.halo.runtime.cognition.memory.MemorySensitivityClassifier
 import com.halo.runtime.cognition.memory.MemoryProposalFingerprint
 import com.halo.runtime.cognition.memory.MemoryConflictKind
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
@@ -37,6 +39,10 @@ interface MemoryRepository {
     suspend fun confirmMemory(id: String): Boolean = false
     suspend fun forgetMemory(id: String): Boolean
     fun observeRevisions(memoryId: String): Flow<List<MemoryRevision>>
+    fun observePageMetadata(): Flow<MemoryPageMetadata> = flowOf(MemoryPageMetadata())
+    suspend fun linkPage(sourceId: String, sourceVersion: Long, targetId: String, targetVersion: Long, linked: Boolean): Boolean = false
+    suspend fun linkNewPage(sourceId: String, sourceVersion: Long, content: String): MemoryRecord? = null
+    suspend fun tagPage(id: String, version: Long, label: String, tagged: Boolean): Boolean = false
     suspend fun conflict(candidate: MemoryCandidate): MemoryConflict = MemoryConflict(MemoryConflictKind.NEW, emptyList())
     suspend fun markUsed(ids: List<String>) = Unit
     suspend fun contextCandidates(scopes: Set<MemoryScope>, scopeIds: Set<String>): List<MemoryRecord> = emptyList()
@@ -45,6 +51,52 @@ class RoomMemoryRepository(private val db: AppDatabase, private val now: () -> L
     private val newId: () -> String = { UUID.randomUUID().toString() }) : MemoryRepository {
     override fun observeMemories() = db.memoryRecordDao().observeActiveRecords().map { rows -> rows.map { it.toDomain() } }
     override suspend fun getMemory(id: String) = db.memoryRecordDao().getRecord(id)?.toDomain()
+    override fun observePageMetadata(): Flow<MemoryPageMetadata> {
+        val pages = db.memoryPagesDao()
+        return combine(pages.observeLinks(), pages.observeTags(), ::MemoryPageMetadata)
+    }
+
+    override suspend fun linkPage(sourceId: String, sourceVersion: Long, targetId: String, targetVersion: Long, linked: Boolean): Boolean =
+        db.withTransaction {
+            require(sourceId != targetId)
+            val source = getMemory(sourceId)
+            val target = getMemory(targetId)
+            if (source == null || !source.isMemoryPage() || source.updatedAt != sourceVersion ||
+                target == null || !target.isMemoryPage() || target.updatedAt != targetVersion) return@withTransaction false
+            val pages = db.memoryPagesDao()
+            if (linked) insertPageLink(pages, sourceId, targetId) else pages.deleteLink(sourceId, targetId)
+            true
+        }
+
+    override suspend fun linkNewPage(sourceId: String, sourceVersion: Long, content: String): MemoryRecord? = db.withTransaction {
+        val source = getMemory(sourceId)
+        if (source == null || !source.isMemoryPage() || source.updatedAt != sourceVersion) return@withTransaction null
+        val candidate = MemoryCandidate(content, scope = source.scope, scopeId = source.scopeId)
+        require(MemorySensitivityClassifier.classify(content) != com.halo.runtime.cognition.memory.MemorySensitivity.SECRET)
+        val target = promoteCandidate(candidate)
+        require(sourceId != target.id)
+        insertPageLink(db.memoryPagesDao(), sourceId, target.id)
+        target
+    }
+
+    override suspend fun tagPage(id: String, version: Long, label: String, tagged: Boolean): Boolean = db.withTransaction {
+        val page = getMemory(id)
+        if (page == null || !page.isMemoryPage() || page.updatedAt != version) return@withTransaction false
+        val (key, display) = memoryPageTag(label)
+        val pages = db.memoryPagesDao()
+        if (tagged) {
+            val tags = pages.tagsFor(id)
+            require(tags.size < 24 || tags.any { it.key == key })
+            pages.putTag(MemoryPageTagEntity(id, key, display))
+        } else pages.deleteTag(id, key)
+        true
+    }
+
+    private suspend fun insertPageLink(pages: MemoryPagesDao, sourceId: String, targetId: String) {
+        val outgoing = pages.linksFor(sourceId).filter { it.sourceId == sourceId }
+        require(outgoing.size < 48 || outgoing.any { it.targetId == targetId })
+        pages.insertLink(MemoryPageLinkEntity(sourceId, targetId))
+    }
     override suspend fun conflict(candidate: MemoryCandidate): MemoryConflict {
         val relevant = db.memoryRecordDao().relevant(candidate.scope.name, candidate.scopeId).filter { it.kind == candidate.kind.name }
         val exact = relevant.filter { MemoryProposalFingerprint.normalize(it.content) == MemoryProposalFingerprint.normalize(candidate.content) }
@@ -128,6 +180,8 @@ class RoomMemoryRepository(private val db: AppDatabase, private val now: () -> L
         val forgotten = db.memoryRecordDao().forget(id,now()) > 0
         if(forgotten) {
             db.notebookDao().setLifecycle(id,"TRASHED",now()); db.workspaceContextDao().remove(id)
+            db.memoryPagesDao().deleteLinksFor(id)
+            db.memoryPagesDao().deleteTagsFor(id)
             db.memoryRecordDao().getRecord(id)?.let { supersedeProposals(it) }
         }; forgotten
     }

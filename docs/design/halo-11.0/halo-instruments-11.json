@@ -1,0 +1,551 @@
+{
+ "version": "11.0",
+ "status": "reference · unverified · not tested on a device",
+ "levels": {
+  "E": "Easy",
+  "S": "Standard",
+  "P": "Pro"
+ },
+ "new": {
+  "maps": {
+   "name": "halo maps",
+   "ru": "halo maps",
+   "model": "desktop-style map app: search bar, layer panel, route panel",
+   "instruments": [
+    {
+     "id": "maps.search",
+     "name": "Search in words",
+     "ru": "Поиск словами",
+     "does": "“Pharmacy open now”, “quiet café”.",
+     "group": "Find",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "maps.leave_by",
+     "name": "Leave-by time",
+     "ru": "Время выхода",
+     "does": "From the next calendar event; one card on Today.",
+     "group": "Plan",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "maps.route",
+     "name": "Route",
+     "ru": "Маршрут",
+     "does": "Walk, transit, bike, car; step-free option.",
+     "group": "Go",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "maps.turn",
+     "name": "Turn by turn",
+     "ru": "Поворот за поворотом",
+     "does": "Big next-turn card; same arrow in glasses lens; buds speak turns.",
+     "group": "Go",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "maps.share_arrival",
+     "name": "Share arrival",
+     "ru": "Время прибытия",
+     "does": "Sends arrival time only; stops on arrival.",
+     "group": "Share",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": true
+    },
+    {
+     "id": "maps.layers",
+     "name": "Layers",
+     "ru": "Слои",
+     "does": "Transit, step-free, your photos, saved places.",
+     "group": "View",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "maps.photos_here",
+     "name": "Your photos here",
+     "ru": "Ваши фото здесь",
+     "does": "Glasses photos pinned where taken (on this phone only).",
+     "group": "View",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "maps.offline",
+     "name": "Offline area",
+     "ru": "Офлайн-область",
+     "does": "Download an area for no-signal use.",
+     "group": "Plan",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "maps.measure",
+     "name": "Measure distance",
+     "ru": "Измерить расстояние",
+     "does": "Tap points on the map.",
+     "group": "Tools",
+     "levels": [
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "maps.save_place",
+     "name": "Keep place",
+     "ru": "Сохранить место",
+     "does": "Adds a Place item to Library.",
+     "group": "Keep",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "coach": {
+   "name": "halo coach",
+   "ru": "halo coach",
+   "model": "workbook: problem on top, steps panel, answer box",
+   "instruments": [
+    {
+     "id": "coach.capture",
+     "name": "Capture problem",
+     "ru": "Снять задачу",
+     "does": "Camera, glasses or scan; splits a sheet into questions.",
+     "group": "Capture",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "coach.knowns",
+     "name": "What do you know?",
+     "ru": "Что известно?",
+     "does": "Tap the givens; halo asks about anything missing or extra.",
+     "group": "Think",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "coach.steps",
+     "name": "Step questions",
+     "ru": "Вопросы по шагам",
+     "does": "One small question at a time.",
+     "group": "Think",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "coach.smaller",
+     "name": "I’m stuck",
+     "ru": "Я застрял(а)",
+     "does": "Makes the current question smaller; adds a picture (blocks, number line, diagram).",
+     "group": "Help",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "coach.check",
+     "name": "Check my thinking",
+     "ru": "Проверь мои мысли",
+     "does": "Checks steps and units, not just the final number.",
+     "group": "Check",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "coach.answer_box",
+     "name": "Answer box",
+     "ru": "Поле ответа",
+     "does": "Number pad, keyboard or handwriting.",
+     "group": "Answer",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "coach.show_answer",
+     "name": "Show the answer",
+     "ru": "Показать ответ",
+     "does": "Adults only, always available.",
+     "group": "Help",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "coach.similar",
+     "name": "Try a similar one",
+     "ru": "Похожая задача",
+     "does": "New numbers, same idea.",
+     "group": "Practise",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "coach.to_card",
+     "name": "Keep a card",
+     "ru": "Сохранить карточку",
+     "does": "From a solved problem; you approve.",
+     "group": "Keep",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "coach.summary",
+     "name": "Grown-up summary",
+     "ru": "Сводка для взрослого",
+     "does": "Kids: what was done and what needed help. No grades or answers.",
+     "group": "Family",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "calc": {
+   "name": "halo calc",
+   "ru": "halo calc",
+   "model": "desktop calculator with history tape and graph pane",
+   "instruments": [
+    {
+     "id": "calc.keys",
+     "name": "Keys",
+     "ru": "Клавиши",
+     "does": "Basic, scientific (S/P).",
+     "group": "Calculate",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "calc.tape",
+     "name": "History tape",
+     "ru": "Лента истории",
+     "does": "Every line kept; tap to reuse.",
+     "group": "Calculate",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "calc.words",
+     "name": "Ask in words",
+     "ru": "Спросить словами",
+     "does": "“15% of 84”, “split €62 by 3”.",
+     "group": "Calculate",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "calc.units",
+     "name": "Units & currency",
+     "ru": "Единицы и валюта",
+     "does": "Live rates when online; marked when offline.",
+     "group": "Convert",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "calc.graph",
+     "name": "Graph",
+     "ru": "График",
+     "does": "Plot y = …; trace points.",
+     "group": "Graph",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "calc.explain",
+     "name": "Explain this",
+     "ru": "Объяснить",
+     "does": "Shows how a result was reached (adults); Kids open coach instead.",
+     "group": "Help",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "measure": {
+   "name": "halo measure",
+   "ru": "halo measure",
+   "model": "ruler + level",
+   "instruments": [
+    {
+     "id": "measure.ruler",
+     "name": "Ruler",
+     "ru": "Линейка",
+     "does": "Camera measures length between two points (estimate shown).",
+     "group": "Measure",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "measure.level",
+     "name": "Level",
+     "ru": "Уровень",
+     "does": "Phone or glasses tilt.",
+     "group": "Measure",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "measure.room",
+     "name": "Room outline",
+     "ru": "План комнаты",
+     "does": "Walk the room; draws a floor outline (P).",
+     "group": "Measure",
+     "levels": [
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "measure.keep",
+     "name": "Keep to Library",
+     "ru": "В библиотеку",
+     "does": "Saves a photo with the numbers.",
+     "group": "Keep",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "translate": {
+   "name": "halo translate",
+   "ru": "halo translate",
+   "model": "two-pane conversation",
+   "instruments": [
+    {
+     "id": "translate.talk",
+     "name": "Conversation",
+     "ru": "Разговор",
+     "does": "Two sides, each in their language; buds play the other side.",
+     "group": "Talk",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "translate.camera",
+     "name": "Camera text",
+     "ru": "Текст с камеры",
+     "does": "Menus and signs translated in place; glasses lens captions.",
+     "group": "See",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "translate.type",
+     "name": "Type",
+     "ru": "Ввод",
+     "does": "Text in, text out.",
+     "group": "Text",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "translate.offline",
+     "name": "Offline languages",
+     "ru": "Офлайн-языки",
+     "does": "English and Russian on the phone by default.",
+     "group": "Settings",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "translate.phrasebook",
+     "name": "Phrasebook",
+     "ru": "Разговорник",
+     "does": "Kept phrases go to Library as Notes.",
+     "group": "Keep",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "focus": {
+   "name": "halo focus",
+   "ru": "halo focus",
+   "model": "timer with a visual ring",
+   "instruments": [
+    {
+     "id": "focus.timer",
+     "name": "Timer",
+     "ru": "Таймер",
+     "does": "Visual ring; Kids version shows a shrinking picture.",
+     "group": "Time",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "focus.blocks",
+     "name": "Study blocks",
+     "ru": "Учебные блоки",
+     "does": "25/5 or your own rhythm; no streaks.",
+     "group": "Time",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "focus.quiet",
+     "name": "Quiet while focusing",
+     "ru": "Тишина во время фокуса",
+     "does": "Only people you choose can reach you.",
+     "group": "Calm",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "focus.done",
+     "name": "What I did",
+     "ru": "Что я сделал(а)",
+     "does": "One line kept to Today; optional.",
+     "group": "Keep",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "hardStop": false
+    }
+   ]
+  }
+ }
+}

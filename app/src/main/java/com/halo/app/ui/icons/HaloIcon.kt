@@ -2,7 +2,6 @@ package com.halo.app.ui.icons
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.size
@@ -45,16 +44,19 @@ internal fun HaloIconTreatment(glyph: HaloGlyph, modifier: Modifier, tint: Color
     val colors = androidx.compose.material3.MaterialTheme.colorScheme
     val semantic = glyph in setOf(HaloGlyph.APPROVAL, HaloGlyph.ERROR, HaloGlyph.WARNING, HaloGlyph.HALO, HaloGlyph.SUCCESS)
     val style = if (visual.higherContrast || semantic) com.halo.app.ui.theme.HaloIconStyle.LINE else visual.iconStyle
+    val contentInk = LocalContentColor.current.copy(alpha = tint.alpha)
     if (style == com.halo.app.ui.theme.HaloIconStyle.LINE) {
-        content(modifier, tint)
+        content(modifier, if (visual.higherContrast && !semantic) contentInk else tint)
         return
     }
     Box(modifier.then(if (style == com.halo.app.ui.theme.HaloIconStyle.TILE)
         Modifier.background(colors.primary.copy(alpha = .15f), RoundedCornerShape(6.dp)) else Modifier),
         contentAlignment = Alignment.Center) {
-        content(Modifier.fillMaxSize(if (style == com.halo.app.ui.theme.HaloIconStyle.TILE) .76f else 1f),
-            if (style == com.halo.app.ui.theme.HaloIconStyle.SPOT) colors.onSurface.copy(alpha = tint.alpha) else tint)
-        if (style == com.halo.app.ui.theme.HaloIconStyle.SPOT) Box(Modifier.align(Alignment.BottomEnd).offset(x = (-1).dp, y = (-1).dp)
-            .size(6.dp).background(colors.primary.copy(alpha = .65f), CircleShape))
+        if (style == com.halo.app.ui.theme.HaloIconStyle.SPOT) {
+            Box(Modifier.align(Alignment.TopEnd).size(8.dp)
+                .background(colors.primary.copy(alpha = .52f), CircleShape))
+        }
+        content(Modifier.fillMaxSize(if (style == com.halo.app.ui.theme.HaloIconStyle.TILE) .72f else .86f),
+            if (style == com.halo.app.ui.theme.HaloIconStyle.SPOT) contentInk else tint)
     }
 }

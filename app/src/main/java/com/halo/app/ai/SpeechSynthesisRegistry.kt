@@ -105,7 +105,7 @@ class SpeechSynthesisRegistry(
                         ensureCurrentSpeech()
                         if(hasProducedPcm || !allowFallback || selected===android) throw error
                         fallbackUsed=true
-                        android.synthesizeToPcm(androidRequest(request))
+                        localFallback(request, error)
                             ?.let { ensureCurrentSpeech(); hasProducedPcm=true; emit(it) } ?: throw error
                     }
                 }
@@ -113,11 +113,15 @@ class SpeechSynthesisRegistry(
             override suspend fun synthesizeToPcm(request: SpeechRequest): PcmSpeech? {
                 ensureCurrentSpeech()
                 val startedAt = SystemClock.elapsedRealtime()
+                var failure: Exception? = null
                 val pcm = try {
-                    if (!fallbackUsed && selected is ElevenLabsTtsProvider && (pinned.voiceId == null || pinned.modelId == null)) error("Speech selection is incomplete")
+                    if (!fallbackUsed && selected is ElevenLabsTtsProvider && (pinned.voiceId == null || pinned.modelId == null)) {
+                        throw SpeechProviderException(SpeechErrorCode.NOT_CONFIGURED)
+                    }
                     if (fallbackUsed) android.synthesizeToPcm(androidRequest(request)) else selected.synthesizeToPcm(primaryRequest(request)) }
                 catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Exception) {
+                    failure = error
                     val code = (error as? SpeechProviderException)?.code?.name
                         ?: error::class.java.simpleName
                     Log.w(
@@ -135,12 +139,24 @@ class SpeechSynthesisRegistry(
                 if (selected !== android && allowFallback && !hasProducedPcm && !fallbackUsed) {
                     Log.i("HALO_TTS_PROVIDER_FALLBACK", "from=${selected.metadata.id}; to=${android.metadata.id}; reason=synthesis_failed")
                     fallbackUsed = true
-                    val fallbackPcm = android.synthesizeToPcm(androidRequest(request))
+                    val fallbackPcm = localFallback(request, failure)
                     ensureCurrentSpeech()
-                    hasProducedPcm = fallbackPcm != null
-                    return fallbackPcm
+                    if (fallbackPcm != null) {
+                        hasProducedPcm = true
+                        return fallbackPcm
+                    }
                 }
+                failure?.let { throw it }
                 return null
+            }
+
+            private suspend fun localFallback(request: SpeechRequest, primaryFailure: Exception?): PcmSpeech? = try {
+                android.synthesizeToPcm(androidRequest(request))
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                ensureCurrentSpeech()
+                throw primaryFailure ?: error
             }
         }
         return wrapper to pinned

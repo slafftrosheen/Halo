@@ -29,11 +29,11 @@ import org.json.JSONObject
 data class WorkspaceObjectSnapshot(val id: String, val type: String, val title: String, val createdAt: Long, val updatedAt: Long, val source: String, val lifecycle: String, val inInbox: Boolean, val indexingState: String, val contentRef: String)
 @JsonClass(generateAdapter = true)
 data class NoteSnapshot(val objectId: String, val body: String, val revision: Int,
-    val blocks: List<NoteBlockSnapshot>? = null)
+    val blocks: List<NoteBlockSnapshot>? = null, val pageSettings: String? = null)
 @JsonClass(generateAdapter = true)
 data class NoteBlockSnapshot(val id: String, val position: Int, val type: String, val text: String,
     val checked: Boolean, val indent: Int, val refObjectId: String?, val language: String?,
-    val createdAt: Long, val updatedAt: Long)
+    val createdAt: Long, val updatedAt: Long, val presentation: String? = null)
 @JsonClass(generateAdapter = true)
 data class ConversationSnapshot(val id: String, val createdAt: Long, val active: Boolean, val title: String, val updatedAt: Long, val archived: Boolean)
 @JsonClass(generateAdapter = true)
@@ -133,8 +133,10 @@ class RoomBrainSnapshotSource(
             val uri = Regex("\\[Open image\\]\\(([^)]+)\\)").find(note.body)?.groupValues?.get(1).orEmpty()
             FileSnapshot(record.objectId, uri, source.name, metadata.optString("mimeType", "image/jpeg"), source.length(), source.lastModified(), source.absolutePath, false, "HALO_OWNED", "OWNED_LOCAL", null)
         }
+        val screenStore = com.halo.app.screen.LocalScreenStore(context)
+        val portableScreen = screenStore.excludePrivateAutomations(screenStore.portableSnapshot(), database)
         BrainSnapshot(
-            everyday = EverydayArchive.snapshot(database,com.halo.app.screen.LocalScreenStore(context).portableSnapshot()),
+            everyday = EverydayArchive.snapshot(database, portableScreen),
             studioProjects = dao.studioProjects().map { StudioProjectSnapshot(it.objectId, it.revision, it.committed, it.session) },
             studioVersions = dao.studioVersions().map { StudioVersionSnapshot(it.objectId, it.revision, it.document, it.savedAt) },
             snapshotId = UUID.randomUUID().toString(),
@@ -142,7 +144,8 @@ class RoomBrainSnapshotSource(
             workspace = dao.workspaceObjects().filterNot { it.id.startsWith("learning:") }.map { WorkspaceObjectSnapshot(it.id, it.type, it.title, it.createdAt, it.updatedAt, it.source, it.lifecycle, it.inInbox, it.indexingState, it.contentRef) },
             notes = notes.map { note -> NoteSnapshot(note.objectId, note.body, note.revision,
                 blocks[note.objectId]?.map { block -> NoteBlockSnapshot(block.id, block.position, block.type, block.text,
-                    block.checked, block.indent, block.refObjectId, block.language, block.createdAtEpochMs, block.updatedAtEpochMs) }) },
+                    block.checked, block.indent, block.refObjectId, block.language, block.createdAtEpochMs, block.updatedAtEpochMs,
+                    block.presentation) }, note.pageSettings) },
             conversations = dao.conversations().map { ConversationSnapshot(it.id, it.createdAt, it.active, it.title, it.updatedAt, it.archived) },
             turns = dao.turns().map { TurnSnapshot(it.id, it.conversationId, it.userText, it.assistantText, it.timestamp, it.metadata) },
             memories = dao.memories().map { MemorySnapshot(it.id, it.content, it.kind, it.scope, it.scopeId, it.createdAt, it.updatedAt, it.sourceObjectId, it.sourceRevision, it.confidence, it.status,it.origin,it.evidenceJson,it.sourceEpisodeId,it.evidenceCount,it.lastConfirmedAt,it.usageCount,it.lastUsedAt,it.validUntil,it.fingerprint,it.userConfirmed) },
@@ -184,7 +187,8 @@ class RoomBrainSnapshotSource(
 
 internal fun BrainSnapshot.toRoomContent() = RoomBrainContent(
     workspace.map { WorkspaceObjectEntity(it.id, it.type, it.title, it.createdAt, it.updatedAt, it.source, it.lifecycle, it.inInbox, it.indexingState, it.contentRef) },
-    notes.map { NoteEntity(it.objectId, it.body, it.revision, schemaVersion = if (it.blocks != null) com.halo.app.data.notebook.NotebookDocument.SCHEMA_VERSION else 1) },
+    notes.map { NoteEntity(it.objectId, it.body, it.revision,
+        schemaVersion = if (it.blocks != null) com.halo.app.data.notebook.NotebookDocument.SCHEMA_VERSION else 1, pageSettings = it.pageSettings) },
     conversations.map { PersistedConversation(it.id, it.createdAt, it.active, it.title, it.updatedAt, it.archived) },
     turns.map { PersistedTurn(it.id, it.conversationId, it.userText, it.assistantText, it.timestamp, it.metadata) },
     memories.map { MemoryRecordEntity(it.id, it.content, it.kind, it.scope, it.scopeId, it.createdAt, it.updatedAt, it.sourceObjectId, it.sourceRevision, it.confidence, it.status,it.origin,it.evidenceJson,it.sourceEpisodeId,it.evidenceCount,it.lastConfirmedAt,it.usageCount,it.lastUsedAt,it.validUntil,it.fingerprint,it.userConfirmed) },
@@ -201,7 +205,8 @@ internal fun BrainSnapshot.toRoomContent() = RoomBrainContent(
     studioProjects.map { com.halo.app.data.studio.StudioProjectEntity(it.objectId, it.revision, it.committed, it.session) },
     studioVersions.map { com.halo.app.data.studio.StudioProjectVersion(it.objectId, it.revision, it.document, it.savedAt) },
     notes.flatMap { note -> note.blocks.orEmpty().map { block -> com.halo.app.data.notebook.NoteBlockEntity(block.id, note.objectId,
-        block.position, block.type, block.text, block.checked, block.indent, block.refObjectId, block.language, block.createdAt, block.updatedAt) } },
+        block.position, block.type, block.text, block.checked, block.indent, block.refObjectId, block.language, block.createdAt,
+        block.updatedAt, block.presentation) } },
 )
 
 internal data class RoomBrainContent(

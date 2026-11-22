@@ -52,6 +52,18 @@ class NotebookLibrarySession(private val allowed: () -> Boolean) {
         return read()
     }
 
+    internal suspend fun applyContent(expectedSnapshot: String, change: LibraryContentChange,
+        admission: () -> Boolean): Int? {
+        val entry = lease ?: return null
+        val owner = model ?: return null
+        val frame = read(expectedSnapshot) ?: return null
+        if (!frame.view.settled || frame.view.mutating || !admission()) return null
+        invalidate()
+        return owner.applyLibraryContent(frame.view.rendered, change) {
+            admission() && lease === entry && model === owner && allowed()
+        }
+    }
+
     suspend fun organization(expectedSnapshot: String, objectId: String?, collectionId: String?): NotebookLibraryOrganization? {
         val frame = read(expectedSnapshot) ?: return null
         if (!frame.view.settled || frame.view.mutating) return null
@@ -135,6 +147,8 @@ data class NotebookLibraryView(
         rendered.selectedCollectionId == collectionId
 }
 data class NotebookLibraryFrame(val snapshot: String, val view: NotebookLibraryView)
+internal enum class LibraryContentOperation { RENAME_ITEM, ADD_SUGGESTED, DISMISS_SUGGESTION, UNDO_SUGGESTION }
+internal data class LibraryContentChange(val operation: LibraryContentOperation, val target: String, val title: String? = null)
 sealed interface NotebookLibraryChange {
     data class Query(val text: String) : NotebookLibraryChange
     data class Filter(val value: NotebookFilter) : NotebookLibraryChange

@@ -1,0 +1,36 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/widget_clock_face_background" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:importantForAccessibility="no" android:scaleType="fitXY" />
+    <LinearLayout android:id="@+id/widget_clock_face_open" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:gravity="center" android:orientation="vertical" android:padding="6dp">
+        <FrameLayout android:layout_width="108dp" android:layout_height="108dp">
+            <ImageView android:id="@+id/widget_clock_face_track" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:importantForAccessibility="no" android:src="@drawable/halo_widget_clock_track" />
+            <ProgressBar android:id="@+id/widget_clock_face_progress" style="?android:attr/progressBarStyleSmall"
+                android:layout_width="match_parent" android:layout_height="match_parent"
+                android:indeterminate="true" android:indeterminateDrawable="@drawable/halo_widget_clock_ring"
+                android:visibility="gone" android:importantForAccessibility="no" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center"
+                android:orientation="vertical" android:paddingHorizontal="7dp">
+                <TextClock android:id="@+id/everyday_widget_clock" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:includeFontPadding="false" android:fontFamily="@font/sora_variable"
+                    android:textSize="25sp" android:letterSpacing="-0.04" android:maxLines="1"
+                    android:format12Hour="h:mm a" android:format24Hour="HH:mm" android:textColor="@color/everyday_widget_text" />
+                <TextClock android:id="@+id/everyday_widget_clock_date" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:includeFontPadding="false" android:fontFamily="@font/atkinson_hyperlegible_next_variable"
+                    android:textSize="11sp" android:maxLines="1" android:format12Hour="EEE d MMM" android:format24Hour="EEE d MMM"
+                    android:textColor="@color/everyday_widget_metadata" />
+            </LinearLayout>
+        </FrameLayout>
+        <TextView android:id="@+id/widget_clock_face_zone" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="2dp" android:gravity="center" android:maxLines="1" android:ellipsize="end"
+            android:textSize="12sp" android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:visibility="gone" />
+    </LinearLayout>
+    <FrameLayout android:id="@+id/widget_clock_face_ask" android:layout_width="48dp" android:layout_height="48dp"
+        android:layout_gravity="top|end" android:contentDescription="@string/everyday_widget_ask" android:visibility="gone">
+        <ImageView android:layout_width="32dp" android:layout_height="32dp" android:layout_gravity="center"
+            android:background="@drawable/halo_widget_ask_disc" android:padding="7dp" android:src="@drawable/ic_halo_widget_ask"
+            android:importantForAccessibility="no" />
+    </FrameLayout>
+</FrameLayout>

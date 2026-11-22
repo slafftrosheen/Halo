@@ -56,6 +56,15 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
                 label = { Text(uiText("Details")) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 6)
             if (draft.base.kind == OrganizerKind.EVENT) OutlinedTextField(draft.location, { change(draft.copy(location = it.take(1000))) },
                 enabled = !state.busy, label = { Text(uiText("Location")) }, modifier = Modifier.fillMaxWidth())
+            if (draft.occurrence == null && draft.base.kind in setOf(OrganizerKind.EVENT, OrganizerKind.TASK)) {
+                Text(uiText("Calendar"), style = MaterialTheme.typography.labelLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OrganizerCalendar.entries.forEach { calendar ->
+                        FilterChip(draft.calendar == calendar, { change(draft.copy(calendar = calendar)) },
+                            enabled = !state.busy, label = { Text(uiText(calendar.label)) })
+                    }
+                }
+            }
             if (draft.base.kind == OrganizerKind.TASK) EverydayToggle(uiText("Due date"), draft.dated, !state.busy) { change(draft.copy(dated = it)) }
             if (draft.base.kind != OrganizerKind.TIMER && (draft.dated || draft.base.kind != OrganizerKind.TASK)) {
                 if (draft.base.kind != OrganizerKind.ALARM) EverydayToggle(uiText("All day"), draft.allDay, !state.busy) { allDay ->

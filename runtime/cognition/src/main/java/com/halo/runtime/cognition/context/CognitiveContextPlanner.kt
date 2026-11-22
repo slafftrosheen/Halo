@@ -3,6 +3,8 @@ package com.halo.runtime.cognition.context
 import com.halo.sdk.provider.AiContextPolicy
 import com.halo.sdk.runtime.SimpleMemory
 
+internal const val MEMORY_REFERENCE_PREFIX = "Reference data from Halo Memory"
+
 data class CognitiveContextPlan(
     val totalTokens: Int,
     val responseReserveTokens: Int,
@@ -19,7 +21,7 @@ class CognitiveContextPlanner {
         val estimator = ConservativeContextTokenEstimator()
         val schemaTokens = context.availableTools.sumOf { estimator.estimate(it.name + it.description + it.parameters.toString()) }
         val extraTokens = estimator.estimate(context.screenContext?.text.orEmpty()) +
-            context.memories.sumOf { estimator.estimate((it as? SimpleMemory)?.content ?: it.toString()) } +
+            context.memories.filterNot { it is SimpleMemory }.sumOf { estimator.estimate(it.toString()) } +
             context.recentEvents.sumOf { estimator.estimate(it.toString()) } +
             estimator.estimate(context.deviceState?.toString().orEmpty())
         val output = (request.maxOutputTokens ?: 768).coerceAtLeast(0)
@@ -63,11 +65,17 @@ class CognitiveContextPlanner {
             val kind = when {
                 first.toolCalls.isNotEmpty() || first.role == com.halo.sdk.provider.Role.TOOL -> ContextSegmentKind.TOOL_RESULT
                 first.content.startsWith("User-selected reference") -> ContextSegmentKind.WORKING_SET
+                first.content.startsWith(MEMORY_REFERENCE_PREFIX) -> ContextSegmentKind.MEMORY
                 first.content.startsWith("Reference data") -> ContextSegmentKind.RETRIEVED_DOCUMENT
                 first.content.contains("CHILD_AGENT_RESULT") -> ContextSegmentKind.CHILD_AGENT_RESULT
                 else -> ContextSegmentKind.RECENT_CONVERSATION
             }
-            ContextSegment(ordinal.toString(), kind, if (kind == ContextSegmentKind.WORKING_SET) 10000 + ordinal else ordinal,
+            val priority = when (kind) {
+                ContextSegmentKind.WORKING_SET -> 10_000 + ordinal
+                ContextSegmentKind.MEMORY -> 5_000 + ordinal
+                else -> ordinal
+            }
+            ContextSegment(ordinal.toString(), kind, priority,
                 cost(group), SegmentContent.InlineText(first.content), ContextProvenance("provider-context", ContextTrust.EXTERNAL_UNTRUSTED, false))
         }
         val admitted = allocate(ContextWindowBudget(window, output, budget.reservedSystemTokens, remaining), 0, segments)
@@ -75,7 +83,6 @@ class CognitiveContextPlanner {
         val selected = groups.withIndex().filter { it.index in selectedIds || it.value in required }.flatMap { it.value }
         remaining -= admitted.sumOf { it.tokenEstimate }
         val segmentTokens = admitted.groupBy { it.kind }.mapValues { (_, values) -> values.sumOf { it.tokenEstimate } }.toMutableMap()
-        segmentTokens[ContextSegmentKind.MEMORY] = context.memories.sumOf { estimator.estimate((it as? SimpleMemory)?.content ?: it.toString()) }
         segmentTokens[ContextSegmentKind.CURRENT_REQUEST] = requestTokens + required.filter { it.first().role != com.halo.sdk.provider.Role.SYSTEM }.sumOf(::cost)
         segmentTokens[ContextSegmentKind.SYSTEM_STABLE] = 256 + schemaTokens + required.filter { it.first().role == com.halo.sdk.provider.Role.SYSTEM }.sumOf(::cost)
         ContextDiagnostics.composition.value = ContextComposition(budget, requestTokens, segmentTokens, remaining,

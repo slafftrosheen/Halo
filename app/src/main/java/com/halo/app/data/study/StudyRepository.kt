@@ -31,6 +31,8 @@ class StudyRepository(
 
     fun observeActiveSessions(): Flow<List<StudySessionRecord>> =
         dao.observeActiveSessions().map { rows -> rows.map(StudySessionEntity::toRecord) }
+    internal fun observeCourseSessions(): Flow<List<StudySessionRecord>> =
+        dao.observeCourseSessions().map { rows -> rows.map(StudySessionEntity::toRecord) }
 
     fun observeSessionsForSource(objectId: String): Flow<List<StudySessionRecord>> =
         dao.observeSessionsForSource(objectId).map { rows -> rows.map(StudySessionEntity::toRecord) }

@@ -3,6 +3,7 @@ package com.halo.providers.elevenlabs.tts
 import com.halo.sdk.provider.Credential
 import com.halo.sdk.provider.SpeechRequest
 import com.halo.sdk.provider.SpeechProviderException
+import com.halo.sdk.provider.SpeechErrorCode
 import com.halo.sdk.runtime.Storage
 import kotlinx.coroutines.*
 import okhttp3.mockwebserver.MockResponse
@@ -29,6 +30,31 @@ class ElevenLabsHttpTest {
         override fun clear() { values.clear() }
     }
     private val models = """[{"model_id":"tts-test","name":"Test TTS","can_do_text_to_speech":true},{"model_id":"asr-test","can_do_text_to_speech":false}]"""
+
+    @Test fun explicitIdsAllowSynthesisWithoutDiscoveryAndReportAccountQuota() = runBlocking {
+        val server = MockWebServer().apply { start() }
+        val provider = ElevenLabsTtsProvider(MemoryStorage(), server.url("/").toString())
+        try {
+            provider.setCredential(Credential(ElevenLabsTtsProvider.ID, "test-placeholder"))
+            provider.configureById("voice-test", "eleven_flash_v2_5")
+            assertNull(provider.cachedCatalogue())
+            server.enqueue(MockResponse().setResponseCode(401)
+                .setBody("""{"detail":{"code":"quota_exceeded","message":"private server text"}}"""))
+            try {
+                provider.synthesizeToPcm(provider.pin(SpeechRequest("Hello")))
+                fail("Expected quota rejection")
+            } catch (error: SpeechProviderException) {
+                assertEquals(SpeechErrorCode.INSUFFICIENT_CREDITS, error.code)
+                assertFalse(error.message.orEmpty().contains("private server text"))
+            }
+            val request = server.takeRequest(2, TimeUnit.SECONDS)!!
+            assertEquals("/v1/text-to-speech/voice-test?output_format=pcm_24000", request.path)
+            assertEquals("eleven_flash_v2_5", org.json.JSONObject(request.body.readUtf8()).getString("model_id"))
+            server.enqueue(MockResponse().setBody(okio.Buffer().write(byteArrayOf(1, 0))))
+            assertEquals(24_000, provider.synthesizeToPcm(SpeechRequest("Hello"))?.sampleRateHz)
+            assertTrue(provider.state.value.ready)
+        } finally { provider.close(); server.shutdown() }
+    }
 
     @Test fun discoveryAndPcmSynthesisFollowActualHttpContract() = runBlocking {
         val server = MockWebServer()

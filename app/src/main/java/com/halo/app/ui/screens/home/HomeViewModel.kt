@@ -1076,6 +1076,92 @@ class HomeViewModel(
         val turnId = response.turnId ?: return@launch
         saveReview.value = ManualDependencyGraph.contextResultSave.review(response.conversationId, turnId)
     } }
+
+    private val answerCardHandoff = Mutex()
+
+    internal fun keepAnswerCard(response: PresentedAssistantResponse, card: com.halo.app.ui.cards.HaloCardData,
+        destination: AnswerCardDestination) {
+        val turnId = response.turnId ?: return
+        viewModelScope.launch {
+            if (!answerCardHandoff.tryLock()) return@launch
+            val graph = ManualDependencyGraph
+            try {
+                val revision = graph.kidsPreferences.adultActionRevision()
+                val verify = {
+                    graph.kidsPreferences.requireAdultAction(revision)
+                    check(!_conversationChanging.value && conversations?.activeConversationId() == response.conversationId)
+                }
+                verify()
+                val review = requireNotNull(graph.contextResultSave.review(response.conversationId, turnId))
+                check(review.text == response.text)
+                check(graph.workspaceRepository.get(com.halo.app.data.notebook.WorkspaceObjectId(response.conversationId))?.lifecycle ==
+                    com.halo.app.data.notebook.WorkspaceObjectLifecycle.ACTIVE)
+                verify()
+                when (destination) {
+                    AnswerCardDestination.STUDY -> {
+                        val id = graph.contextResultSave.confirm(review)
+                        keepCardForStudy(id, response, card, verify)
+                    }
+                    AnswerCardDestination.PLANNER -> {
+                        val record = com.halo.app.everyday.EverydayWriteAuthority.run(verify) {
+                            val detail = card.speak.ifBlank { review.text }.take(16_000)
+                            val link = com.halo.app.everyday.organizer.OrganizerLink(response.conversationId, "REFERENCES")
+                            graph.organizerRepository.records().firstOrNull {
+                                it.kind == com.halo.app.everyday.organizer.OrganizerKind.TASK &&
+                                    it.title == card.title && it.details == detail && link in it.links
+                            } ?: graph.organizerUseCases.create(com.halo.app.everyday.organizer.OrganizerKind.TASK,
+                                card.title, detail, links = listOf(link),
+                                sourceLabel = listOfNotNull(card.source.label, card.source.locator).joinToString(" · "))
+                        }
+                        _navigationEvents.emit("screen/organizer?recordId=${android.net.Uri.encode(record.id)}")
+                    }
+                    AnswerCardDestination.KIDS -> {
+                        val content = kidsAnswerSentence(card) ?: return@launch
+                        graph.kidsPreferences.cards.approveAnswer(card.id, card.title, content,
+                            listOfNotNull(card.source.label, card.source.locator).joinToString(" · "), verify)
+                        captureMessage.value = "Added to My cards"
+                    }
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { captureMessage.value = "Could not keep this card. Try again." }
+            finally { answerCardHandoff.unlock() }
+        }
+    }
+
+    private suspend fun keepCardForStudy(id: String, response: PresentedAssistantResponse,
+        card: com.halo.app.ui.cards.HaloCardData, verify: () -> Unit) {
+        val graph = ManualDependencyGraph
+        val note = requireNotNull(graph.notebookRepository.getNote(id))
+        check(note.body == response.text && note.lifecycle == com.halo.app.data.notebook.WorkspaceLifecycle.ACTIVE)
+        val study = graph.studyUseCases
+        val expectedVersion = note.revision.toString()
+        val candidate = study.observeSessionsForSource(id).first().firstOrNull {
+            it.lifecycle == com.halo.sdk.runtime.study.StudySessionLifecycle.ACTIVE && it.goal == card.title &&
+                it.learnerLevel == com.halo.sdk.runtime.study.StudyLearnerLevel.ADULT &&
+                it.sources.any { source -> source.objectId == id && source.revision == expectedVersion }
+        }
+        verify()
+        val session = candidate ?: when (val started = study.startMaterial(listOf(id),
+            com.halo.sdk.runtime.study.StudyLanguagePreferences(), card.title,
+            conversationId = response.conversationId, interactionId = response.interactionId,
+            expectedVersions = mapOf(id to expectedVersion), validateSources = {
+                verify()
+                graph.notebookRepository.getNote(id) == note
+            })) {
+            is com.halo.app.study.StudyStartResult.Started -> started.session
+            is com.halo.app.study.StudyStartResult.Unavailable -> error(started.reason.explanation)
+        }
+        val question = (card.body as? com.halo.app.ui.cards.HaloCardBody.Flip)?.front?.take(600) ?: card.title
+        val answer = com.halo.app.ui.cards.cardPracticeAnswer(card).ifBlank { response.text }.trim().take(2000)
+        val existing = study.observePracticeItems(session.id).first().any {
+            it.sourceObjectId == id && it.sourceVersion == expectedVersion && it.question == question && it.answer == answer
+        }
+        verify()
+        check(graph.notebookRepository.getNote(id) == note)
+        if (!existing) requireNotNull(study.addPracticeDraft(session.id, question, answer, id, expectedVersion))
+        _navigationEvents.emit("notebook/study/${android.net.Uri.encode(session.id)}")
+    }
+
     private fun cancelVisibleSubmission(stopActiveText: Boolean = false) {
         val conversation = conversations?.activeConversationId()
         textSubmission.value.takeIf { it.busy && (stopActiveText || it.conversationId == conversation) }?.interactionId?.let {
@@ -1111,7 +1197,9 @@ class HomeViewModel(
     }
 
     /** Reuse the canonical conversation transaction and the same cancellation boundary as New chat. */
-    fun openConversation(id: String) {
+    fun openConversation(id: String) = openConversation(id) {}
+
+    fun openConversation(id: String, onOpened: () -> Unit) {
         val store = conversations ?: return
         if (!_conversationChanging.compareAndSet(false, true)) return
         composerNavigationGeneration++; temporaryDraftTarget = null
@@ -1120,8 +1208,8 @@ class HomeViewModel(
             try {
                 conversationNavigationMutex.withLock {
                     store.awaitReady()
-                    if (id == store.activeConversationId()) return@withLock
                     check(store.isConversationAvailable(id)) { "Conversation unavailable" }
+                    if (id == store.activeConversationId()) return@withLock
                     val previous = store.activeConversationId()
                     stopInputForConversationChange()
                     lastVoiceResponseRequest = null
@@ -1136,6 +1224,7 @@ class HomeViewModel(
                     textSubmissions.reset()
                     ManualDependencyGraph.interactionContext.refresh()
                 }
+                onOpened()
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) { captureMessage.value = "Conversation unavailable" }
             finally { _conversationChanging.value = false }
@@ -1157,19 +1246,38 @@ class HomeViewModel(
         }
     }
 
-    fun clearConversation() {
-        val conversation = conversations?.activeConversationId()
-        stopVoiceMode()
-        lastVoiceResponseRequest = null
-        _lastVoiceResponseConversation.value = null
-        _sessionPresentationEnabled.value = false
-        cancelVisibleSubmission()
-        cognitiveSession.clearConversation()
-        _publishedResponse.value = null
-        saveReview.value = null
+    fun clearConversation(expectedConversationId: String) {
+        val store = conversations ?: return
+        if (expectedConversationId.isBlank() || !_conversationChanging.compareAndSet(false, true)) return
+        composerNavigationGeneration++
+        temporaryDraftTarget = null
+        voiceStartGeneration++
         viewModelScope.launch {
-            conversation?.let { ManualDependencyGraph.interactionContext.clearConversation(it) }
-            ManualDependencyGraph.visualAttachments.remove()
+            try {
+                conversationNavigationMutex.withLock {
+                    store.awaitReady()
+                    check(store.activeConversationId() == expectedConversationId) { "Conversation unavailable" }
+                    stopInputForConversationChange()
+                    cancelVisibleSubmission()
+                    store.clear(expectedConversationId)
+                    updateComposerDraft(expectedConversationId, "")
+                    lastVoiceResponseRequest = null
+                    _lastVoiceResponseConversation.value = null
+                    _sessionPresentationEnabled.value = false
+                    _publishedResponse.value = null
+                    saveReview.value = null
+                    textSubmissions.reset()
+                    ManualDependencyGraph.interactionContext.clearConversation(expectedConversationId)
+                    ManualDependencyGraph.visualAttachments.remove()
+                    ManualDependencyGraph.interactionContext.refresh()
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                captureMessage.value = "Conversation unavailable"
+            } finally {
+                _conversationChanging.value = false
+            }
         }
     }
 

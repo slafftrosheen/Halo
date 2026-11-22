@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo_record_trim_title">Przytnij nagranie</string>
+    <string name="halo_record_trim_description">Przesuń oba uchwyty, aby wybrać fragment. W każdej chwili możesz przywrócić całe nagranie.</string>
+    <string name="halo_record_trim_unavailable">Nie udało się odczytać nagrania do edycji.</string>
+    <string name="halo_record_trim_start">Początek · %1$s</string>
+    <string name="halo_record_trim_end">Koniec · %1$s</string>
+    <string name="halo_record_trim_duration">Długość · %1$s</string>
+    <string name="halo_record_trim_listen">Zastosuj i odtwórz</string>
+    <string name="halo_record_trim_apply">Zastosuj przycięcie</string>
+    <string name="halo_record_trim_restore">Przywróć całe nagranie</string>
+    <string name="halo_record_trim_active">Przycięty fragment</string>
+    <string name="halo_record_trim_earlier">Wcześniej o 0,1 s</string>
+    <string name="halo_record_trim_later">Później o 0,1 s</string>
+    <string name="halo_record_export">Eksportuj nagranie</string>
+    <string name="halo_record_export_wave">Dźwięk WAV</string>
+    <string name="halo_record_export_txt">Transkrypcja TXT</string>
+    <string name="halo_record_export_srt">Napisy SRT</string>
+    <string name="halo_record_export_no_words">W tym fragmencie nie ma pełnych wierszy transkrypcji.</string>
+    <string name="halo_record_export_too_long">Transkrypcja przekracza limit eksportu. Przytnij nagranie do krótszego fragmentu.</string>
+    <string name="halo_record_export_audio_copy">Zapisz wybrane audio jako kopię WAV w wybranej lokalizacji.</string>
+    <string name="halo_record_export_review_words">Sprawdź automatyczną transkrypcję przed zapisaniem kopii. Czas jest liczony od początku wybranego fragmentu.</string>
+    <string name="halo_record_export_saved">Plik nagrania został zapisany.</string>
+    <string name="halo_record_export_failed">Nie udało się zapisać pliku. Otwórz eksport i spróbuj ponownie.</string>
+    <string name="halo_record_chapters">Rozdziały</string>
+    <string name="halo_record_chapters_hint">Sugestie wynikają z pauz i czasu nagrania. Wybierz rozdział, aby odtworzyć go od początku.</string>
+    <string name="halo_record_chapter_number">Rozdział %1$d</string>
+    <string name="halo_record_chapter_rename">Zmień nazwę rozdziału</string>
+</resources>

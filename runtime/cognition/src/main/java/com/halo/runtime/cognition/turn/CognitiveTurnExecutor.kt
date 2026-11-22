@@ -190,7 +190,7 @@ class CognitiveTurnExecutor(
             turn.requestId, turn.interactionId.value, com.halo.sdk.runtime.responseTarget(turn.origin?.speechRoute),
             com.halo.sdk.runtime.fallbackFor(turn.origin?.speechRoute, turn.voicePolicy.wearablePhoneFallback), turn.sourceCaptureId,
             remoteDataCategories = prepared.context.remoteDispatchCategories(prepared.providerRequest).map { it.name }.toSet(),
-            remoteDispatchRevision = prepared.remoteDispatchRevision ?: -1L))
+            remoteDispatchRevision = prepared.remoteDispatchRevision ?: -1L, conversationId = turn.conversationId))
 
         var activeRunId = turn.runId
         val createDurableRunIfNeeded = suspend {

@@ -27,6 +27,7 @@ class WorkspaceTextDocuments(private val context: Context, private val database:
     private val notes: NotebookRepository, val documents: NotebookDocumentRepository,
     private val files: WorkspaceFileRepository, private val workspace: WorkspaceRepository) {
     private val versions = WorkspaceFileVersions(files, workspace)
+    private val sheetRules by lazy { context.applicationContext.getSharedPreferences("halo_sheet_entry_rules_v1", Context.MODE_PRIVATE) }
     data class HistoryStatus(val canUndo: Boolean = false, val canRedo: Boolean = false)
     private data class History(val revision: Long, val undo: List<String>, val redo: List<String>)
     private val historyLock = Any()
@@ -112,8 +113,34 @@ class WorkspaceTextDocuments(private val context: Context, private val database:
             is WorkspaceCsvCommand.DeleteRow -> table.deleteRow(command.index)
             is WorkspaceCsvCommand.InsertColumn -> table.insertColumn(command.index)
             is WorkspaceCsvCommand.DeleteColumn -> table.deleteColumn(command.index)
+            is WorkspaceCsvCommand.FillDown -> table.fillDown(command.firstRow, command.lastRow, command.firstColumn, command.lastColumn)
+            is WorkspaceCsvCommand.RemoveDuplicates -> table.removeDuplicates(command.column, command.header)
+            is WorkspaceCsvCommand.AddTotal -> table.insertRow(table.rows.size).set(table.rows.size, command.column, command.formula)
+        }
+        sheetEntryRule(id)?.let { rule ->
+            val changedRows = when (command) {
+                is WorkspaceCsvCommand.SetCell -> if (command.column == rule.column) command.row..command.row else IntRange.EMPTY
+                is WorkspaceCsvCommand.FillDown -> if (rule.column in command.firstColumn..command.lastColumn)
+                    (command.firstRow + 1)..command.lastRow else IntRange.EMPTY
+                is WorkspaceCsvCommand.AddTotal -> if (command.column == rule.column) table.rows.size..table.rows.size else IntRange.EMPTY
+                else -> IntRange.EMPTY
+            }
+            if (!changedRows.isEmpty()) {
+                val formulas = HaloSheetFormulas(changed)
+                require(changedRows.all { row -> rule.header && row == 0 || rule.accepts(formulas.display(row, rule.column)) }) { "The entry does not match this column's rule" }
+            }
         }
         replace(id, expectedRevision, changed.encode())
+    }
+    internal fun sheetEntryRule(id: String): HaloSheetEntryRule? = HaloSheetEntryRule.decode(sheetRules.getString(id, null))
+
+    internal suspend fun setSheetEntryRule(id: String, expectedRevision: Long, rule: HaloSheetEntryRule?) = database.withTransaction {
+        val current = current(id, expectedRevision)
+        require(current.format == WorkspaceTextFormat.CSV)
+        if (rule != null) require(rule.valid() && rule.column < WorkspaceCsv.parse(current.text).rows.maxOf { it.size })
+        val editor = sheetRules.edit()
+        if (rule == null) editor.remove(id) else editor.putString(id, rule.encode())
+        check(editor.commit())
     }
     suspend fun import(sourceId: String, expectedVersion: String): WorkspaceTextDocument {
         val original = requireSource(sourceId, expectedVersion)
@@ -165,6 +192,21 @@ class WorkspaceTextDocuments(private val context: Context, private val database:
             require(current.lifecycle == WorkspaceLifecycle.ACTIVE && current.revision == expectedRevision)
         }
     }
+
+    suspend fun exportPaginatedNote(id: String, expectedRevision: Long, includeComments: Boolean,
+        firstPage: Int?, lastPage: Int?): WorkspaceFile {
+        val document = requireNotNull(documents.load(id))
+        require(document.lifecycle == WorkspaceLifecycle.ACTIVE && document.revision == expectedRevision && adapt(document) == null)
+        val bytes = withContext(Dispatchers.Default) {
+            NotePdfDocument(context).render(document, includeComments, firstPage, lastPage)
+        }
+        return files.createManagedFile(document.title.take(100) + ".pdf", "application/pdf", bytes, id,
+            expectedRevision.toString(), JSONObject().put("operation", "file-note-layout-export")
+                .put("format", "PDF").put("projection", true).put("includeComments", includeComments).toString()) {
+            val current = requireNotNull(documents.load(id))
+            require(current.lifecycle == WorkspaceLifecycle.ACTIVE && current.revision == expectedRevision)
+        }
+    }
     suspend fun requireSource(id: String, version: String): WorkspaceFile = versions.current(WorkspaceFileVersion(id, version))
     private suspend fun readBounded(file: WorkspaceFile): ByteArray = withContext(Dispatchers.IO) {
         context.contentResolver.openInputStream(file.uri).use { input ->
@@ -191,4 +233,7 @@ sealed interface WorkspaceCsvCommand {
     data class DeleteRow(val index: Int) : WorkspaceCsvCommand
     data class InsertColumn(val index: Int) : WorkspaceCsvCommand
     data class DeleteColumn(val index: Int) : WorkspaceCsvCommand
+    data class FillDown(val firstRow: Int, val lastRow: Int, val firstColumn: Int, val lastColumn: Int) : WorkspaceCsvCommand
+    data class RemoveDuplicates(val column: Int?, val header: Boolean) : WorkspaceCsvCommand
+    data class AddTotal(val column: Int, val formula: String) : WorkspaceCsvCommand
 }

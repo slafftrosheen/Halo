@@ -35,6 +35,19 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
         "contrast" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 3000),
         "saturation" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 3000),
         "bounds" to rect, "mask" to mapOf("anyOf" to listOf(rect, mapOf("type" to "null"))))
+    private val coordinate = mapOf("type" to "integer", "minimum" to 0, "maximum" to 1000)
+    private val percent = mapOf("type" to "integer", "minimum" to 0, "maximum" to 100)
+    private val pixelFields = mapOf(
+        "shape" to mapOf("type" to "string", "enum" to listOf("rectangle", "ellipse", "lasso", "wand", "subject")),
+        "points" to mapOf("type" to "array", "minItems" to 1, "maxItems" to 384,
+            "items" to schema(mapOf("x" to coordinate, "y" to coordinate))),
+        "feather" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 200),
+        "combine" to mapOf("type" to "string", "enum" to listOf("REPLACE", "ADD", "SUBTRACT")),
+        "tolerance" to percent, "contiguous" to mapOf("type" to "boolean"), "sampleAll" to mapOf("type" to "boolean"),
+        "edgeRefine" to mapOf("type" to "integer", "minimum" to 0, "maximum" to 10),
+        "strength" to percent, "radius" to mapOf("type" to "integer", "minimum" to 4, "maximum" to 120),
+        "wetMix" to mapOf("type" to "boolean"),
+    )
     private val fields = schema(changes + mapOf(
         "layerId" to mapOf("anyOf" to listOf(id, mapOf("type" to "null"))),
         "changes" to schema(changes, emptyList()),
@@ -48,7 +61,7 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
         "mirror" to mapOf("type" to "boolean"), "squareCrop" to mapOf("type" to "boolean"),
         "maxEdge" to mapOf("type" to "integer", "enum" to listOf(512, 1024, 2048, 4096)),
         "format" to mapOf("type" to "string", "enum" to listOf("PNG", "JPEG")),
-        "crop" to mapOf("anyOf" to listOf(rect, mapOf("type" to "null")))), emptyList())
+        "crop" to mapOf("anyOf" to listOf(rect, mapOf("type" to "null")))) + pixelFields, emptyList())
     override fun definitions() = listOf(
         definition("halo_studio_open", "Request presentation of an exact existing Studio project. Dispatch does not prove the page rendered.", mapOf("projectId" to id)),
         definition("halo_studio_ai_draft", "Request user review of an AI edit to an exact Studio revision. Opens the existing provider/privacy/spend review; does not generate or send pixels by itself. A kept result is a separate copy. Never infer provider billing from proposal status.",
@@ -61,11 +74,12 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
             mapOf("title" to text, "handoffId" to id, "sourceId" to id, "sourceVersion" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 200), "width" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
                 "height" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
                 "preset" to mapOf("type" to "string", "enum" to StudioPreset.entries.map { it.name })), listOf("title")),
-        definition("halo_studio_get", "Read one Studio project's revision, supported layer metadata, saved versions and fresh explicit Ink selection. Does not recognize handwriting or send pixels.", mapOf("projectId" to id)),
-        definition("halo_studio_edit", "Edit a local draft using its exact observed revision. Bounds/mask/crop use thousandths. Add requires name; add_text also text; add_ink/set_ink use bounded portable Ink encoding. update_layer uses layerId and changes; transforms are global. Undo/redo/restore preserve originals. Stale revisions are rejected, never replayed.",
+        definition("halo_studio_get", "Read one Studio project's revision, layer metadata, saved versions and whether it has a fresh explicit Ink or pixel selection.", mapOf("projectId" to id)),
+        definition("halo_studio_edit", "Edit a local draft using its exact observed revision. Bounds/mask/crop use thousandths. Add requires name; add_text also text; add_ink/set_ink use bounded portable Ink encoding. update_layer uses layerId and changes; transforms are global. Local pixel tools require the project open in Studio. select_pixels takes shape and explicit points in thousandths (two corners, lasso vertices, or a wand seed; subject can infer a foreground without points). Smudge takes an explicit points path. Ask for a gesture or explicit coordinates when needed. Copy and erase act on the current pixel selection. Undo/redo/restore preserve originals. Stale revisions are rejected.",
             mapOf("projectId" to id, "revision" to revision, "operation" to mapOf("type" to "string", "enum" to listOf(
                 "add_text", "add_rectangle", "add_ellipse", "add_ink", "set_ink", "update_layer", "delete_layer", "move_layer", "select_layer",
-                "transform", "resize", "background", "undo", "redo", "restore_version", "import_image", "delete_selected_ink")), "fields" to fields)),
+                "transform", "resize", "background", "undo", "redo", "restore_version", "import_image", "delete_selected_ink",
+                "select_pixels", "clear_pixel_selection", "copy_selected_pixels", "erase_selected_pixels", "smudge_pixels")), "fields" to fields)),
         definition("halo_studio_save", "Save a local draft as a version, save a separate copy, rename, or discard draft changes. Copy/rename require title. Exact revision required.",
             mapOf("projectId" to id, "revision" to revision, "action" to mapOf("type" to "string", "enum" to listOf("save", "copy", "rename", "discard")),
                 "title" to text), listOf("projectId", "revision", "action")),
@@ -155,6 +169,7 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                             .put("sourceId", layer.source?.objectId ?: JSONObject.NULL).put("sourceVersion", layer.source?.version ?: JSONObject.NULL))
                     } })
                     result.put("versions", JSONArray(studio.projects.versions(project.id).map { it.revision }))
+                    result.put("pixelSelectionActive", studio.currentPixelSelection(project.id, project.revision) != null)
                     studio.selectedInk(project.id)?.takeIf { it.projectRevision == project.revision }?.let { selected -> result.put("inkSelection", JSONObject()
                         .put("layerId", selected.layerId).put("projectRevision", selected.projectRevision)
                         .put("sourceRevision", selected.selection.sourceRevision).put("strokeCount", selected.selection.selectedStrokeIds.size)
@@ -166,7 +181,8 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                     exact(setOf("projectId", "revision", "operation", "fields"))
                     val fields = args["fields"]; require(fields is Map<*, *> && fields.keys.all { it is String })
                     val values = fields.entries.associate { (key, value) -> key as String to value }
-                    return success(summary(studio.edit(objectId("projectId"), number("revision"), string("operation"), values)))
+                    val project = studio.edit(objectId("projectId"), number("revision"), string("operation"), values)
+                    return success(summary(project).put("pixelSelectionActive", studio.currentPixelSelection(project.id, project.revision) != null))
                 }
                 "halo_studio_save" -> {
                     exact(setOf("projectId", "revision", "action"), setOf("title"))

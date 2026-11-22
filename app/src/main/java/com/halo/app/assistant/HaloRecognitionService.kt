@@ -52,7 +52,7 @@ class HaloRecognitionService : RecognitionService() {
                 }
                 if (!runner.selectedHealth().healthy) { fail(request, SpeechRecognizer.ERROR_SERVER); return@launch }
                 listener.readyForSpeech(Bundle())
-                sample = runner.captureSession(finish = request.finish, maxDurationMs = 15_000)
+                sample = runner.captureSession(finish = request.finish, maxDurationMs = 15_000, stopAfterSpeech = true)
                 if (active !== request) return@launch
                 listener.endOfSpeech()
                 val result = runner.recognizeSelected(sample)

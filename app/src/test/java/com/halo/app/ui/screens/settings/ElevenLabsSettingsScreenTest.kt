@@ -47,7 +47,7 @@ class ElevenLabsSettingsScreenTest {
                 ElevenLabsSettingsScreen(
                     provider,
                     onBack = {},
-                    onTestVoice = {},
+                    onTestVoice = { null },
                     onUseProvider = { selector.selectTts(provider.metadata.id) },
                 )
             }

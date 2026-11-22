@@ -1,5 +1,6 @@
 package com.halo.app.learning
 
+import androidx.room.withTransaction
 import com.halo.app.data.AppDatabase
 import com.halo.app.privacy.HaloPauseOwner
 import com.halo.app.privacy.HaloPausedCancellation
@@ -51,7 +52,12 @@ class ReflectionCoordinator internal constructor(private val db: AppDatabase,pri
         // Normal successful turns must have committed conversation evidence before learning starts.
         val commit=run.steps.filterIsInstance<AgentStep.ResponseCommitted>().lastOrNull()
         if(run.state == AgentRunState.COMPLETED && commit == null && !run.interactionId.value.startsWith("routine:")) return
-        if(learning.dao.claim(ReflectionStateEntity(key,ReflectionPolicy.VERSION,"PENDING","DETERMINISTIC",System.currentTimeMillis())) == -1L) return
+        val admitted = db.withTransaction {
+            if (!db.agentRunDao().exists(run.id.value)) false
+            else learning.dao.claim(ReflectionStateEntity(key, ReflectionPolicy.VERSION, "PENDING", "DETERMINISTIC",
+                System.currentTimeMillis())) != -1L
+        }
+        if (!admitted) return
         val turn=commit?.let { c -> db.conversationDao().turnsForCommit("%${c.commitId}%").firstOrNull {
             runCatching { org.json.JSONObject(it.metadata).optString("commitId") == c.commitId }.getOrDefault(false) } }
         val contextReceipts=run.steps.filterIsInstance<AgentStep.ContextUsed>()

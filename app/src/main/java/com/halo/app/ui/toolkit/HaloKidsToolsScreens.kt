@@ -44,21 +44,6 @@ private val kidMint = Color(0xFF54DDB9)
 private val kidInk = Color(0xFF301B21)
 
 @Composable
-internal fun KidsPictureToolTiles(onOpen: (String) -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(Triple("kids_scan", "What’s this?", HaloGlyph.CAMERA), Triple("kids_day", "My day", HaloGlyph.CALENDAR))
-            .forEach { (route, title, icon) ->
-                OutlinedButton(onClick = { onOpen(route) }, modifier = Modifier.weight(1f).heightIn(min = 88.dp)) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        HaloIcon(icon, null, Modifier.size(27.dp))
-                        Text(uiText(title), style = MaterialTheme.typography.titleMedium)
-                    }
-                }
-            }
-    }
-}
-
-@Composable
 fun HaloKidsScanScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
     val preferences = Graph.kidsPreferences
     val tools = preferences.pictureTools

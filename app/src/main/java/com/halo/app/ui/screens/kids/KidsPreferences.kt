@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-internal enum class KidsSky { STARS, SEA, GARDEN, MOON }
+internal enum class KidsSky { STARS, SEA, GARDEN, MOON, LUMEN_GARDEN, SEASONS }
 
 internal data class KidsPresentationSettings(
     val sky: KidsSky = KidsSky.STARS,
@@ -32,15 +32,20 @@ class KidsPreferences(context: Context) {
     val loadError = error.asStateFlow()
     val enabled = mutable.asStateFlow()
     internal val pictureTools by lazy { com.halo.app.ui.toolkit.HaloKidsPictureTools(context) }
+    internal val cards by lazy { KidsCardShelf(context) }
+    internal val homework by lazy { KidsHomeworkOwner(context) }
     private val presentation = MutableStateFlow(KidsPresentationSettings())
     internal val appearance = presentation.asStateFlow()
     private fun disk() = context.getSharedPreferences("halo_kids_ui", Context.MODE_PRIVATE)
     private val loaded = scope.async {
         try {
             val disk = disk()
-            val allowed = disk.getStringSet("allowed_skies", null)?.let { names ->
+            val oldDefault = setOf(KidsSky.STARS, KidsSky.SEA, KidsSky.GARDEN, KidsSky.MOON)
+            val savedSkies = disk.getStringSet("allowed_skies", null)?.let { names ->
                 KidsSky.entries.filterTo(linkedSetOf()) { it.name in names }
-            }?.takeIf { it.isNotEmpty() } ?: KidsSky.entries.toSet()
+            }?.takeIf { it.isNotEmpty() }
+            val allowed = if (savedSkies == null || disk.getInt("sky_schema", 1) < 2 && savedSkies == oldDefault)
+                KidsSky.entries.toSet() else savedSkies
             val sky = allowed.firstOrNull { it.name == disk.getString("sky", null) } ?: allowed.first()
             presentation.value = KidsPresentationSettings(sky, allowed,
                 preReader = disk.getBoolean("pre_reader", true),
@@ -70,7 +75,7 @@ class KidsPreferences(context: Context) {
             val allowed = draft.allowedSkies.toSet()
             require(allowed.isNotEmpty())
             val selected = presentation.value.sky.takeIf { it in allowed } ?: KidsSky.entries.first { it in allowed }
-            check(disk().edit().putStringSet("allowed_skies", allowed.mapTo(linkedSetOf()) { it.name })
+            check(disk().edit().putInt("sky_schema", 2).putStringSet("allowed_skies", allowed.mapTo(linkedSetOf()) { it.name })
                 .putString("sky", selected.name).putBoolean("pre_reader", draft.preReader)
                 .putBoolean("read_aloud", draft.readAloud).putBoolean("still", draft.still)
                 .putBoolean("hand_demos", draft.handDemos).commit()) {
@@ -86,6 +91,13 @@ class KidsPreferences(context: Context) {
         return actionRevision.get()
     }
     fun requirePresentation(revision: Long) { check(presentationRevision()==revision) { "Family presentation changed" } }
+    internal suspend fun configureHomework(revision: Long, previous: KidsHomeworkWindow, next: KidsHomeworkWindow) =
+        writes.withLock { homework.change(previous, next) { requirePresentation(revision) } }
+    internal fun requireHomeworkGlasses(revision: Long, deviceId: String) {
+        requirePresentation(revision)
+        check(enabled.value && homework.approvedGlasses.value == deviceId &&
+            homework.settings.value?.includes(java.time.LocalTime.now()) == true) { "Homework glasses are unavailable" }
+    }
     fun requireAdultAction(revision: Long) {
         check(ready.value && !mutable.value && !changing.get() && actionRevision.get() == revision) { "Adult action authority changed" }
     }

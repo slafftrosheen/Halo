@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -33,7 +34,7 @@ interface MemoryRecordDao {
     @Query("SELECT COUNT(*) FROM memory_records WHERE status = 'ACTIVE'")
     suspend fun activeCount(): Int
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertRecord(entity: MemoryRecordEntity)
 
     @Query("UPDATE memory_records SET content = :content, updatedAt = :updatedAt WHERE id = :id")

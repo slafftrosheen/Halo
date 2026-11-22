@@ -71,6 +71,11 @@ class WorkspaceUseCases(
     suspend fun forgetMemory(id: String): Boolean = memoryRepository.forgetMemory(id)
     suspend fun search(text: String): WorkspaceSearchResult =
         searchEngine.search(WorkspaceSearchQuery(text, maxHits = 100))
+    suspend fun searchLibrary(text: String): WorkspaceSearchResult =
+        searchEngine.search(WorkspaceSearchQuery(text, maxHits = 60,
+            types = setOf(com.halo.app.data.notebook.WorkspaceObjectType.NOTE, com.halo.app.data.notebook.WorkspaceObjectType.FILE,
+                com.halo.app.data.notebook.WorkspaceObjectType.MEDIA, com.halo.app.data.notebook.WorkspaceObjectType.ARTIFACT,
+                com.halo.app.data.notebook.WorkspaceObjectType.CANVAS)))
     suspend fun select(id: String) = context.select(id)
     suspend fun selectInkSelection(canvasId: String, selectionNodeId: String,
         expected: com.halo.sdk.runtime.ink.InkSelectionContext? = null) = context.selectInkSelection(canvasId, selectionNodeId, expected)

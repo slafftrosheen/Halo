@@ -25,7 +25,8 @@ class PublicHttpCollector(
     private val transport = if (kind == CollectorKind.AIR_QUALITY) baseClient.newBuilder()
         .dns(CollectorUrlPolicy.dns(baseClient.dns)).proxy(java.net.Proxy.NO_PROXY).cookieJar(CookieJar.NO_COOKIES)
         .authenticator(Authenticator.NONE).proxyAuthenticator(Authenticator.NONE).cache(null).build() else baseClient
-    private val client = transport.withRemoteDispatchPolicy(policy, publicGetRedirects = kind != CollectorKind.AIR_QUALITY) { request ->
+    private val client = transport.withRemoteDispatchPolicy(policy, publicGetRedirects = kind != CollectorKind.AIR_QUALITY,
+        allowPublicCollectorHttp = !kind.usesCityCoordinates) { request ->
         RemoteDispatchRequest(PUBLIC_COLLECTOR_OWNER, RemoteOperation.CONNECTED_SERVICE,
             request.tag(CollectorRequestScope::class.java)?.categories ?: setOf(RemoteDataCategory.ACCOUNT_METADATA))
     }
@@ -36,6 +37,7 @@ class PublicHttpCollector(
         val upgradedWeatherEndpoint = source.place?.takeIf { kind == CollectorKind.WEATHER && savedEndpoint == OpenMeteoParser.oldEndpoint(it) }
             ?.let(OpenMeteoParser::endpoint)
         val url = CollectorUrlPolicy.validate(upgradedWeatherEndpoint ?: savedEndpoint)
+        require(!kind.usesCityCoordinates || url.isHttps)
         val revision = RemoteDispatchContext.provenance.get()?.revision ?: RemoteDispatchContext.intent.get()?.revision ?: policy.revision
         val categories = if (kind.usesCityCoordinates) setOf(RemoteDataCategory.LOCATION) else setOf(RemoteDataCategory.ACCOUNT_METADATA)
         val request = Request.Builder().url(url).get().header("User-Agent", "Halo/Everyday")

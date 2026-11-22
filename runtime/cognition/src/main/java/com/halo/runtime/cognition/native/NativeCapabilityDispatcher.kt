@@ -616,6 +616,16 @@ class NativeCapabilityDispatcher(private val skills: SkillExecutionService,
                 return clarification(interpretation,
                     "Phone control could not save the workflow step safely. No action was executed.")
             }
+        } else {
+            // Native intents already resolve to one exact registered operation. Record that plan at the same
+            // durable boundary used by the execution gate, without copying command arguments into Activity.
+            val planId = "native-operation:${runId.value}"
+            val saved = coordinator.recordStep(AgentStep.PlanCreated(AgentStepId(planId), runId, Instant.now(),
+                planId, "Run the requested phone action", listOf(request.operation)))
+            if (!saved) {
+                coordinator.fail(runId, "Native operation plan could not be recorded")
+                return clarification(interpretation, "Halo could not save this action. Nothing was executed.")
+            }
         }
         store.get(runId)?.let { onRunStarted(it) }
 

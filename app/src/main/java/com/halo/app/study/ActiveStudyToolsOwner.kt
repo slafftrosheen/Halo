@@ -1,6 +1,7 @@
 package com.halo.app.study
 
 import com.halo.app.ui.screens.study.StudyViewModel
+import com.halo.app.ui.screens.study.StudyCourseOutline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -17,10 +18,11 @@ data class ActiveStudySnapshot(val sessionId: String, val sourceVersion: String,
     val journeyStage: String = "DISCOVER", val completedHints: Int = 0,
     val hasPriorKnowledge: Boolean = false, val hasSavedReflection: Boolean = false,
     val activeVisualId: String? = null, val pdfPages: Map<String, Int> = emptyMap(),
-    val readerOpen: Boolean = false, val readerPlaying: Boolean = false)
+    val readerOpen: Boolean = false, val readerPlaying: Boolean = false, val course: StudyCourseOutline? = null)
 data class ActiveStudyCommand(val action: String, val text: String? = null, val stage: String? = null,
     val intensity: String? = null, val sourceVersions: Map<String, String> = emptyMap(), val depth: String? = null,
-    val objectId: String? = null, val page: Int? = null, val turnId: String? = null)
+    val objectId: String? = null, val page: Int? = null, val turnId: String? = null,
+    val courseLessonId: String? = null, val courseMovement: Int? = null)
 data class ActiveStudyDispatch(val requestId: String, val sessionId: String, val action: String)
 interface ActiveStudyControl {
     suspend fun current(): ActiveStudySnapshot

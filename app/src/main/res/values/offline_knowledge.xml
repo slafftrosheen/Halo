@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="knowledge_title">Offline knowledge</string>
+    <string name="knowledge_query">Search downloaded knowledge</string>
+    <string name="knowledge_power">Download packs or open publisher websites in Power.</string>
+    <string name="knowledge_count">%1$d entries · retrieved %2$s</string>
+    <string name="knowledge_available">Downloadable pack</string>
+    <string name="knowledge_external">Publisher archive · use a compatible reader</string>
+    <string name="knowledge_download">Download</string>
+    <string name="knowledge_update">Update</string>
+    <string name="knowledge_loading">Downloading…</string>
+    <string name="knowledge_open_download">Open download page</string>
+    <string name="knowledge_browser_download">Download in browser</string>
+    <string name="knowledge_empty">No matches in downloaded packs.</string>
+    <string name="knowledge_attribution">%1$s · retrieved %2$s</string>
+    <string name="knowledge_publisher">Open publisher</string>
+    <string name="knowledge_failed">Download failed. Any previous copy is still available.</string>
+    <string name="knowledge_link_failed">The publisher link could not be opened.</string>
+</resources>

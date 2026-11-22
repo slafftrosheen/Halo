@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="knowledge_title">Знания офлайн</string>
+    <string name="knowledge_query">Поиск в скачанных базах</string>
+    <string name="knowledge_power">Чтобы скачать базу или открыть сайт издателя, включите режим Power.</string>
+    <string name="knowledge_count">Записей: %1$d · получено %2$s</string>
+    <string name="knowledge_available">База для скачивания</string>
+    <string name="knowledge_external">Архив издателя · нужна совместимая программа</string>
+    <string name="knowledge_download">Скачать</string>
+    <string name="knowledge_update">Обновить</string>
+    <string name="knowledge_loading">Скачивание…</string>
+    <string name="knowledge_open_download">Открыть страницу скачивания</string>
+    <string name="knowledge_browser_download">Скачать в браузере</string>
+    <string name="knowledge_empty">В скачанных базах ничего не найдено.</string>
+    <string name="knowledge_attribution">%1$s · получено %2$s</string>
+    <string name="knowledge_publisher">Открыть сайт издателя</string>
+    <string name="knowledge_failed">Скачать не удалось. Предыдущая копия по-прежнему доступна.</string>
+    <string name="knowledge_link_failed">Не удалось открыть ссылку издателя.</string>
+</resources>

@@ -5,12 +5,16 @@ import android.content.ComponentName
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -22,6 +26,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.R
 import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloShapes
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.theme.rememberVisualPreferences
+import com.halo.app.ui.theme.rememberHaloLayoutLocked
 import com.halo.app.ui.workspace.HaloWorkspaceToggleRow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -34,14 +42,23 @@ internal fun WallpaperControls() {
     val context = LocalContext.current
     val preferences = remember(context) { WallpaperPreferences.get(context) }
     val saved by preferences.state.collectAsStateWithLifecycle()
-    var editing by remember { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf(false) }
     var draft by remember(saved) { mutableStateOf(saved.current) }
     var previewTime by remember { mutableStateOf<Float?>(null) }
+    var previewScheduled by remember { mutableStateOf(false) }
+    var previewAmbient by remember { mutableStateOf(HaloAmbient.IDLE) }
     var saving by remember { mutableStateOf(false) }
     var failure by remember { mutableStateOf(false) }
+    var androidFailure by remember { mutableStateOf(false) }
     var photoFailure by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val photoStore = remember(context) { WallpaperPhotoStore(context) }
+    val layoutLocked = rememberHaloLayoutLocked()
+    fun chooseGalleryStyle(style: HaloWallpaper) {
+        previewTime = null
+        previewScheduled = false
+        draft = draft.chooseGalleryScene(style, wallpaperPeriod(haloWallpaperTime()))
+    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null && !saving) {
             saving = true
@@ -50,7 +67,9 @@ internal fun WallpaperControls() {
                 try {
                     val previous = draft.photo
                     val imported = photoStore.importPhoto(uri)
-                    draft = draft.copy(photo = imported, wallpaper = if (draft.usesPhoto()) draft.wallpaper else HaloWallpaper.YOUR_PHOTO)
+                    val hadPhotoStyle = draft.usesPhoto()
+                    draft = draft.copy(photo = imported, inApp = true)
+                    if (!hadPhotoStyle) chooseGalleryStyle(HaloWallpaper.YOUR_PHOTO)
                     val keep = setOfNotNull(saved.current.photo?.id, saved.previous?.previous?.photo?.id)
                     previous?.id?.takeIf { it !in keep }?.let { withContext(Dispatchers.IO) { photoStore.delete(it) } }
                 } catch (cancelled: CancellationException) { throw cancelled }
@@ -59,28 +78,116 @@ internal fun WallpaperControls() {
             }
         }
     }
-    val wallName = stringResource(saved.current.wallpaper.label)
+    val wallName = stringResource(saved.current.wallpaperAt(wallpaperPeriod(haloWallpaperTime())).label)
+    val photoReady = !draft.usesPhoto() || draft.photo != null
+    val dirty = draft != saved.current
+    val launcherComponent = remember(context) { ComponentName(context, HaloLiveWallpaperService::class.java) }
+    val visual = rememberVisualPreferences()
+    val canApply = !saving && !layoutLocked && photoReady && dirty
+    fun persist(change: suspend () -> Unit) {
+        if (saving) return
+        saving = true
+        failure = false
+        scope.launch {
+            try { change() }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { failure = true }
+            finally { saving = false }
+        }
+    }
+    fun openAndroidPicker() {
+        val manager = WallpaperManager.getInstance(context)
+        val allowed = runCatching { manager.isWallpaperSupported && manager.isSetWallpaperAllowed }.getOrDefault(false)
+        androidFailure = !allowed || runCatching {
+            val preview = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
+                .putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, launcherComponent)
+            try { context.startActivity(preview) }
+            catch (_: android.content.ActivityNotFoundException) {
+                context.startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER))
+            }
+        }.isFailure
+    }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = { editing = !editing }, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.alive_wallpaper_title, wallName))
+        OutlinedButton(onClick = { editing = !editing }, enabled = saved.loaded && !saving,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+            HaloIcon(HaloGlyph.APPEARANCE, null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.alive_wallpaper_title, wallName), Modifier.weight(1f))
         }
         if (editing) {
             val displayTime = previewTime
-            val preview = if (displayTime != null) draft.copy(wallpaper = draft.wallpaperAt(wallpaperPeriod(displayTime))) else draft
-            HaloWallpaperCanvas(preview, Modifier.fillMaxWidth().height(220.dp).clip(HaloShapes.hero), previewTime)
-            WallpaperCollection.entries.forEach { collection ->
-                WallpaperCollectionRow(collection, draft, !saving, previewTime) { wallpaper ->
-                    previewTime = null
-                    draft = draft.copy(wallpaper = wallpaper)
+            val period = wallpaperPeriod(displayTime ?: haloWallpaperTime())
+            val preview = draft.wallpaperAt(period)
+            val previewClock = rememberWallpaperPreviewClock()
+            Box(Modifier.fillMaxWidth().height(270.dp), contentAlignment = Alignment.Center) {
+                Crossfade(preview, modifier = Modifier.widthIn(max = 176.dp).fillMaxSize().clip(HaloShapes.hero),
+                    animationSpec = tween(if (!previewClock.moving) 0 else if (previewScheduled) 2_000 else 190),
+                    label = "Wallpaper preview") { style ->
+                    HaloWallpaperCanvas(draft.copy(wallpaper = style), Modifier.fillMaxSize(), previewTime,
+                        previewAmbient = previewAmbient)
                 }
+                if (preview == HaloWallpaper.YOUR_PHOTO && draft.photo == null) {
+                    Surface(shape = HaloShapes.pill, color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+                        Text(stringResource(R.string.wallpaper_photo_example), Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                    }
+                }
+            }
+            Text(stringResource(R.string.wallpaper_preview_name, stringResource(preview.label)), style = MaterialTheme.typography.titleMedium)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button({ persist { preferences.apply(saved, draft) } }, enabled = canApply,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.wallpaper_apply)) }
+                TextButton({ draft = saved.current; previewTime = null; previewScheduled = false; previewAmbient = HaloAmbient.IDLE },
+                    enabled = !saving && dirty, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Undo")) }
+            }
+            Text(stringResource(when {
+                layoutLocked -> R.string.layout_kept
+                visual.higherContrast && draft.inApp -> R.string.wallpaper_contrast_note
+                saved.current.inApp && !dirty -> R.string.wallpaper_applied_home
+                draft.inApp -> R.string.wallpaper_apply_home_hint
+                else -> R.string.wallpaper_apply_style_hint
+            }), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedButton({ persist {
+                if (dirty) preferences.apply(saved, draft)
+                openAndroidPicker()
+            } }, enabled = !saving && photoReady && (!dirty || !layoutLocked), modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.wallpaper_activate_android))
+            }
+            Text(stringResource(R.string.wallpaper_android_hint), style = MaterialTheme.typography.bodySmall)
+            if (failure) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
+            if (androidFailure) Text(stringResource(R.string.wallpaper_android_error), color = MaterialTheme.colorScheme.error)
+            if (preview == HaloWallpaper.YOUR_PHOTO && draft.photo == null) {
+                Button({ picker.launch(arrayOf("image/*")) }, enabled = !saving,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.wallpaper_photo_choose)) }
+            }
+            if (draft.schedule.enabled) Text(stringResource(R.string.wallpaper_gallery_schedule,
+                stringResource(wallpaperPeriod(haloWallpaperTime()).label)), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            WallpaperCollection.entries.forEach { collection ->
+                WallpaperCollectionRow(collection, draft, preview, !saving, previewTime, previewClock, ::chooseGalleryStyle)
+            }
+            if (dirty) Button(onClick = { persist { preferences.apply(saved, draft) } }, enabled = canApply,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.wallpaper_apply))
             }
             Text(stringResource(R.string.alive_wallpaper_see_at), style = MaterialTheme.typography.labelLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(null to R.string.alive_wallpaper_now, .25f to R.string.alive_wallpaper_morning,
                     .5f to R.string.alive_wallpaper_day, .75f to R.string.alive_wallpaper_evening,
                     0f to R.string.alive_wallpaper_night).forEach { (value, label) ->
-                    FilterChip(previewTime == value, { previewTime = value }, label = { Text(stringResource(label)) },
+                    FilterChip(previewTime == value, { previewTime = value; previewScheduled = draft.schedule.enabled },
+                        label = { Text(stringResource(label)) },
                         modifier = Modifier.heightIn(min = 48.dp))
+                }
+            }
+            if (draft.reactsToHalo) {
+                Text(stringResource(R.string.wallpaper_see_reactions), style = MaterialTheme.typography.labelLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(HaloAmbient.IDLE to R.string.wallpaper_reaction_idle, HaloAmbient.LISTENING to R.string.wallpaper_reaction_listening,
+                        HaloAmbient.WORKING to R.string.wallpaper_reaction_working, HaloAmbient.NEEDS_YOU to R.string.wallpaper_reaction_needs_you)
+                        .forEach { (mode, label) ->
+                            FilterChip(previewAmbient == mode, { previewAmbient = mode }, label = { Text(stringResource(label)) },
+                                modifier = Modifier.heightIn(min = 48.dp))
+                        }
                 }
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -91,12 +198,16 @@ internal fun WallpaperControls() {
                 HaloWorkspaceToggleRow(title = stringResource(R.string.alive_wallpaper_calm), checked = draft.calmerAtNight,
                     onCheckedChange = { if (!saving) draft = draft.copy(calmerAtNight = it) })
                 HaloWorkspaceToggleRow(title = stringResource(R.string.wallpaper_schedule), checked = draft.schedule.enabled,
-                    onCheckedChange = { if (!saving) draft = draft.copy(schedule = draft.schedule.copy(enabled = it)) })
+                    onCheckedChange = { if (!saving) {
+                        previewScheduled = it
+                        draft = draft.copy(schedule = draft.schedule.copy(enabled = it), inApp = draft.inApp || it)
+                    } })
                 if (draft.schedule.enabled) {
                     Text(stringResource(R.string.wallpaper_schedule_explanation), style = MaterialTheme.typography.bodySmall)
                     WallpaperPeriod.entries.forEach { period ->
                         WallpaperScheduleChoice(period, draft.schedule[period], !saving) { wallpaper ->
                             previewTime = period.previewTime
+                            previewScheduled = true
                             draft = draft.copy(schedule = draft.schedule.with(period, wallpaper))
                         }
                     }
@@ -119,40 +230,12 @@ internal fun WallpaperControls() {
                     })
             }
             if (photoFailure) Text(stringResource(R.string.wallpaper_photo_error), color = MaterialTheme.colorScheme.error)
-            fun persist(change: suspend () -> Unit) {
-                saving = true
-                scope.launch {
-                    try {
-                        change()
-                        failure = false
-                    } catch (cancelled: CancellationException) { throw cancelled }
-                    catch (_: Exception) { failure = true }
-                    finally { saving = false }
-                }
-            }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton({ draft = saved.current }, enabled = !saving && draft != saved.current,
-                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Undo")) }
-                Button({ persist { preferences.apply(saved, draft) } },
-                    enabled = !saving && draft != saved.current && (!draft.usesPhoto() || draft.photo != null),
-                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Apply")) }
-            }
             if (saved.previous?.canRestore(System.currentTimeMillis()) == true) {
                 TextButton(onClick = { persist { preferences.restore(saved) } },
-                    enabled = !saving && draft == saved.current, modifier = Modifier.heightIn(min = 48.dp)) {
+                    enabled = !saving && !layoutLocked && draft == saved.current, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.alive_wallpaper_restore))
                 }
             }
-            TextButton(onClick = {
-                failure = runCatching {
-                    context.startActivity(Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
-                        .putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
-                            ComponentName(context, HaloLiveWallpaperService::class.java)))
-                }.isFailure
-            }, enabled = !saving && draft == saved.current, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.alive_wallpaper_set_android))
-            }
-            if (failure) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -180,23 +263,24 @@ private val HaloWallpaper.label: Int
     }
 
 @Composable
-private fun WallpaperCollectionRow(collection: WallpaperCollection, draft: WallpaperOptions, enabled: Boolean,
-    previewTime: Float?, onChoice: (HaloWallpaper) -> Unit) {
+private fun WallpaperCollectionRow(collection: WallpaperCollection, draft: WallpaperOptions, selectedStyle: HaloWallpaper, enabled: Boolean,
+    previewTime: Float?, sharedPreviewClock: WallpaperPreviewClock, onChoice: (HaloWallpaper) -> Unit) {
     Text(stringResource(when (collection) {
         WallpaperCollection.LIVELY -> R.string.wallpaper_collection_lively
         WallpaperCollection.CALM -> R.string.wallpaper_collection_calm
         WallpaperCollection.WORLD -> R.string.wallpaper_collection_world
     }), style = MaterialTheme.typography.titleMedium)
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        HaloWallpaper.entries.filter { it.collection == collection }.forEach { wallpaper ->
-            val selected = wallpaper == draft.wallpaper
+    LazyRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(HaloWallpaper.entries.filter { it.collection == collection }, key = { it.name }) { wallpaper ->
+            val selected = wallpaper == selectedStyle
             Surface(onClick = { onChoice(wallpaper) }, enabled = enabled, shape = HaloShapes.control,
                 border = BorderStroke(if (selected) 2.dp else 1.dp,
                     if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
                 modifier = Modifier.width(110.dp).semantics { this.selected = selected }) {
                 Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     HaloWallpaperCanvas(draft.copy(wallpaper = wallpaper, reactsToHalo = false),
-                        Modifier.fillMaxWidth().height(116.dp).clip(HaloShapes.control), previewTime, animate = false)
+                        Modifier.fillMaxWidth().height(120.dp).clip(HaloShapes.control), previewTime, animate = false,
+                        sharedPreview = sharedPreviewClock)
                     Text(stringResource(wallpaper.label), style = MaterialTheme.typography.labelLarge)
                     Text(stringResource(wallpaper.motionLabel), style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -209,11 +293,7 @@ private fun WallpaperCollectionRow(collection: WallpaperCollection, draft: Wallp
 @Composable
 private fun WallpaperScheduleChoice(period: WallpaperPeriod, style: HaloWallpaper?, enabled: Boolean, onChoice: (HaloWallpaper?) -> Unit) {
     var open by remember(period) { mutableStateOf(false) }
-    val periodLabel = stringResource(when (period) {
-        WallpaperPeriod.MORNING -> R.string.alive_wallpaper_morning
-        WallpaperPeriod.DAY -> R.string.alive_wallpaper_day
-        WallpaperPeriod.NIGHT -> R.string.alive_wallpaper_night
-    })
+    val periodLabel = stringResource(period.label)
     val styleLabel = stringResource(style?.label ?: R.string.wallpaper_schedule_default)
     Box {
         OutlinedButton({ open = true }, enabled = enabled, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
@@ -227,6 +307,13 @@ private fun WallpaperScheduleChoice(period: WallpaperPeriod, style: HaloWallpape
         }
     }
 }
+
+private val WallpaperPeriod.label: Int
+    get() = when (this) {
+        WallpaperPeriod.MORNING -> R.string.alive_wallpaper_morning
+        WallpaperPeriod.DAY -> R.string.alive_wallpaper_day
+        WallpaperPeriod.NIGHT -> R.string.alive_wallpaper_night
+    }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

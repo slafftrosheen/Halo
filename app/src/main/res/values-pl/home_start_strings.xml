@@ -25,4 +25,15 @@
     <string name="home_start_save_error">Nie udało się zapisać ekranu głównego. Spróbuj ponownie.</string>
     <string name="home_start_undo">Cofnij</string>
     <string name="home_start_done">Gotowe</string>
+    <string name="home_greeting_morning">Dzień dobry</string>
+    <string name="home_greeting_afternoon">Dzień dobry</string>
+    <string name="home_greeting_evening">Dobry wieczór</string>
+    <string name="home_start_today_detail">Zobacz plany i przypomnienia</string>
+    <string name="home_start_note_detail">Zapisz lub podyktuj</string>
+    <string name="home_start_study_detail">Krok po kroku</string>
+    <string name="home_start_camera_detail">Skieruj aparat i zapytaj</string>
+    <string name="home_start_timer_detail">Ustaw odliczanie</string>
+    <string name="home_start_weather_detail">Zobacz lokalną prognozę</string>
+    <string name="home_start_brief_detail">Posłuchaj podsumowania dnia</string>
+    <string name="home_start_draw_detail">Otwórz HaloStudio</string>
 </resources>

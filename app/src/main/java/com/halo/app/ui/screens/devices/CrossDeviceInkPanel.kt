@@ -115,6 +115,7 @@ internal fun CrossDeviceInkPanel(owner: CrossDeviceInkController) {
                 TextButton(onClick = { exported.launch("halo-drawing-device.halopair") }) { Text(stringResource(R.string.remote_ink_export)) }
                 TextButton(onClick = { imported.launch(arrayOf("application/octet-stream", "*/*")) }) { Text(stringResource(R.string.remote_ink_import)) }
                 TextButton(onClick = { invitationImport.launch(arrayOf("application/octet-stream", "*/*")) }) { Text(stringResource(R.string.remote_ink_connect_file)) }
+                CoachInkCompanion(owner)
             }
                 devices.forEach { device ->
                     Text(device.identity.displayName, style = MaterialTheme.typography.titleSmall)

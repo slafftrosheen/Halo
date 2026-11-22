@@ -165,6 +165,7 @@ internal fun PairingGuidance(state: PairingUiState, onAccess: () -> Unit, onEnab
             PairingNextAction.CONNECT -> {
                 HaloFocusAction(uiText("Connect selected glasses"), HaloGlyph.GLASSES, true, onConnect,
                     modifier = Modifier.haloTrace(true, MaterialTheme.colorScheme.primary, lapOnAppear = true))
+                Text(stringResource(R.string.halo_pairing_android_prompt), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = onScan, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.brand_pairing_search_again)) }
             }
             PairingNextAction.WAIT -> HaloProgressPresentation(uiText("Connecting glasses…"))

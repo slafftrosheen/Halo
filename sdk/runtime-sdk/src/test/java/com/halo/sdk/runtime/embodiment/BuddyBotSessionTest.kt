@@ -2,6 +2,8 @@ package com.halo.sdk.runtime.embodiment
 
 import com.halo.sdk.runtime.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -46,6 +48,25 @@ class BuddyBotSessionTest {
         advanceUntilIdle()
         
         assertEquals(SessionState.READY, session.state.value)
+    }
+
+    @Test
+    fun pairingRequiresAnAcknowledgmentForTheCurrentConnection() = runTest {
+        val session = BuddyBotSession(identity, transport, eventBus, coroutineContext = UnconfinedTestDispatcher(testScheduler))
+        transport.emitState(TransportConnectionState.CONNECTED)
+        transport.receiveMessage("{\"type\":\"handshake_ack\"}")
+        transport.receiveMessage("{\"type\":\"paired\",\"token\":\"without-request\"}")
+        assertTrue(!session.hasToken)
+
+        val pairing = async(start = CoroutineStart.UNDISPATCHED) { session.pair("1234") }
+        assertTrue(transport.sentMessages.any { it.contains("\"type\":\"pair\"") })
+        assertTrue(!pairing.isCompleted)
+        transport.receiveMessage("{\"type\":\"paired\",\"token\":\"stub-for-this-connection\"}")
+        assertTrue(pairing.await())
+        assertTrue(session.hasToken)
+
+        session.disconnect()
+        assertTrue(!session.hasToken)
     }
 
     @Test

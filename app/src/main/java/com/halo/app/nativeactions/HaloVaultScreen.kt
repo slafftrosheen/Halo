@@ -24,6 +24,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -41,6 +43,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.ui.design.HaloShapes
+import com.halo.app.ui.instruments.HaloInstrumentAction
+import com.halo.app.ui.instruments.HaloInstrumentBar
+import com.halo.app.language.uiText
 import com.halo.app.ui.theme.HaloSunriseApricot
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -56,6 +61,8 @@ internal fun HaloVaultScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val resources = LocalResources.current
     val store = remember(context.applicationContext) { HaloVaultStore(context.applicationContext) }
+    val privateStore = remember { Graph.privateLibraryStore }
+    val privateRequest = remember { PrivateLibraryHandoff.pending() }
     val scope = rememberCoroutineScope()
     val family by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
     val ready by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
@@ -66,18 +73,35 @@ internal fun HaloVaultScreen(onBack: () -> Unit) {
     var delete by remember { mutableStateOf<VaultPaper?>(null) }
     var pendingImage by remember { mutableStateOf<Uri?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var searchOpen by remember { mutableStateOf(false) }
+    var choosePaper by remember { mutableStateOf<String?>(null) }
+    var chooseFolder by remember { mutableStateOf(false) }
+    var folderFilter by remember { mutableStateOf<String?>(null) }
+    var sharingPicker by remember { mutableStateOf(false) }
+    var sharePaper by remember { mutableStateOf<VaultPaper?>(null) }
+    var grid by rememberSaveable { mutableStateOf(false) }
     var alert by remember { mutableStateOf<Int?>(null) }
     var resumed by remember { mutableStateOf(false) }
     var ticket by remember { mutableIntStateOf(0) }
     var legacyTicket by remember { mutableStateOf<Int?>(null) }
     var approval by remember { mutableStateOf<VaultApproval?>(null) }
     var signal by remember { mutableStateOf<CancellationSignal?>(null) }
+    val privateAccess = session?.takeIf { resumed && ready && !family }
+    val privateState = rememberPrivateLibraryVaultState(privateStore, privateAccess, privateRequest)
 
     fun clearDraft() { draft?.bytes?.fill(0); draft = null }
     fun lock() {
         session?.close()
         session = null
         papers = emptyList()
+        searchQuery = ""
+        searchOpen = false
+        choosePaper = null
+        chooseFolder = false
+        folderFilter = null
+        sharingPicker = false
+        sharePaper = null
         clearDraft()
         photo = null
         delete = null
@@ -96,6 +120,7 @@ internal fun HaloVaultScreen(onBack: () -> Unit) {
         onDispose {
             ticket++
             signal?.cancel()
+            PrivateLibraryHandoff.discard(privateRequest)
             lock()
             if (!secure) window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
@@ -120,6 +145,9 @@ internal fun HaloVaultScreen(onBack: () -> Unit) {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         pendingImage = uri
     }
+    val documentPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        pendingImage = uri
+    }
 
     LaunchedEffect(approval, resumed, family) {
         val verified = approval ?: return@LaunchedEffect
@@ -133,6 +161,7 @@ internal fun HaloVaultScreen(onBack: () -> Unit) {
                 val familyRevision = Graph.kidsPreferences.adultActionRevision()
                 opened = store.finishUnlock(verified.crypto ?: store.prepareUnlock()) {
                     Graph.kidsPreferences.requireAdultAction(familyRevision)
+                    check(context.getSystemService(KeyguardManager::class.java)?.isDeviceLocked == false)
                 }
                 store.list(requireNotNull(opened))
             }
@@ -251,6 +280,7 @@ internal fun HaloVaultScreen(onBack: () -> Unit) {
         }
     }
 
+    val shareable = papers.filter { it.kind != VaultPaperKind.PRIVATE_NOTE }
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -260,7 +290,20 @@ internal fun HaloVaultScreen(onBack: () -> Unit) {
                 Text(stringResource(R.string.halo_vault_lock))
             }
         }
-        Text(stringResource(R.string.halo_vault_title), style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.halo11_private_title), style = MaterialTheme.typography.headlineMedium)
+        if (!family && ready) HaloInstrumentBar("vault", mapOf(
+            "vault.unlock" to HaloInstrumentAction(::unlock, !busy && session == null, selected = session != null),
+            "vault.scan_a_paper" to HaloInstrumentAction({
+                picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }, !busy && session != null),
+            "vault.import_file" to HaloInstrumentAction({ documentPicker.launch(arrayOf("image/*")) }, !busy && session != null),
+            "vault.folders" to HaloInstrumentAction({ chooseFolder = true }, !busy && session != null, selected = folderFilter != null),
+            "vault.list_grid" to HaloInstrumentAction({ grid = !grid }, !busy && session != null, selected = grid),
+            "vault.preview_details" to HaloInstrumentAction({ choosePaper = "Preview paper" }, !busy && session != null && papers.isNotEmpty()),
+            "vault.reminder" to HaloInstrumentAction({ choosePaper = "Edit paper reminder" }, !busy && session != null && papers.isNotEmpty()),
+            "vault.search" to HaloInstrumentAction({ searchOpen = !searchOpen }, !busy && session != null, selected = searchOpen),
+            "vault.share_a_copy" to HaloInstrumentAction({ sharingPicker = true }, !busy && session != null && shareable.isNotEmpty()),
+        ), primary = "vault.unlock")
         Text(stringResource(R.string.halo_vault_intro), color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         alert?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error) }
@@ -268,16 +311,41 @@ internal fun HaloVaultScreen(onBack: () -> Unit) {
             Surface(shape = HaloShapes.hero, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                 Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.halo_vault_locked), style = MaterialTheme.typography.titleLarge)
-                    Text(stringResource(R.string.halo_vault_unlock_detail))
+                    Text(stringResource(if (privateRequest != null && PrivateLibraryHandoff.pending() === privateRequest)
+                        R.string.halo11_private_request_unlock else R.string.halo_vault_unlock_detail))
                     Button(onClick = ::unlock, enabled = ready && !family && !busy, modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(stringResource(R.string.halo_vault_unlock))
                     }
                 }
             }
         } else {
+            if (searchOpen) OutlinedTextField(searchQuery, { searchQuery = it.take(150) },
+                label = { Text(uiText("Search papers")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            folderFilter?.let { folder -> TextButton(onClick = { folderFilter = null }) {
+                Text(if (folder.isBlank()) uiText("Without a folder") else folder)
+            } }
+            val visiblePapers = papers.filter { (folderFilter == null || it.folder == folderFilter) &&
+                (it.name.contains(searchQuery.trim(), ignoreCase = true) || it.kind.name.contains(searchQuery.trim(), ignoreCase = true) ||
+                    it.text.contains(searchQuery.trim(), ignoreCase = true)) }
+                .sortedWith(compareBy<VaultPaper> { it.ends ?: LocalDate.MAX }.thenBy { it.name })
             LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                privateAccess?.let { access -> privateLibraryVaultItems(privateStore, access, privateState) }
                 if (papers.isEmpty()) item { Text(stringResource(R.string.halo_vault_empty)) }
-                items(papers.sortedWith(compareBy<VaultPaper> { it.ends ?: LocalDate.MAX }.thenBy { it.name }), key = VaultPaper::id) {
+                if (papers.isNotEmpty() && visiblePapers.isEmpty()) item { Text(uiText("No matching papers")) }
+                if (grid) items(visiblePapers.chunked(2)) { row ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        row.forEach { paper ->
+                            Surface(Modifier.weight(1f).heightIn(min = 92.dp).clickable(enabled = !busy) { draft = VaultEdit(paper) },
+                                shape = HaloShapes.hero, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(paper.name, style = MaterialTheme.typography.titleMedium)
+                                    paper.ends?.let { Text(it.toString(), style = MaterialTheme.typography.bodySmall) }
+                                }
+                            }
+                        }
+                        if (row.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                } else items(visiblePapers, key = VaultPaper::id) {
                     VaultPaperRow(it, enabled = !busy) { draft = VaultEdit(it) }
                 }
             }
@@ -297,6 +365,44 @@ internal fun HaloVaultScreen(onBack: () -> Unit) {
         }
     }
 
+    privateAccess?.let { PrivateLibraryVaultDialogs(privateStore, it, privateState) }
+
+    if (sharingPicker && session != null && !family) VaultSharePaperPicker(shareable, onChoose = {
+        sharingPicker = false
+        sharePaper = it
+    }, onClose = { sharingPicker = false })
+    val reviewedShare = sharePaper
+    val shareTitle = uiText("Share a copy")
+    if (reviewedShare != null && session != null && !family) {
+        VaultShareReview(reviewedShare, busy, alert == R.string.halo_vault_operation_failed, onShare = { format, days ->
+            work { access ->
+                shareVaultCopy(context, store, access, reviewedShare, format, days, shareTitle) {
+                    resumed && session == access && sharePaper == reviewedShare
+                }
+                sharePaper = null
+            }
+        }, onClose = { sharePaper = null })
+    }
+
+    if (chooseFolder && session != null && !family) AlertDialog(onDismissRequest = { chooseFolder = false },
+        properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn), title = { Text(uiText("Folders")) },
+        text = { Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+            TextButton(onClick = { folderFilter = null; chooseFolder = false }) { Text(uiText("All papers")) }
+            papers.map(VaultPaper::folder).distinct().sorted().forEach { name ->
+                TextButton(onClick = { folderFilter = name; chooseFolder = false }) { Text(name.ifBlank { uiText("Without a folder") }) }
+            }
+            Text(uiText("Assign a folder when editing a paper."), style = MaterialTheme.typography.bodySmall)
+        } }, confirmButton = { TextButton(onClick = { chooseFolder = false }) { Text(uiText("Done")) } })
+    choosePaper?.takeIf { session != null && !family }?.let { title ->
+        AlertDialog(onDismissRequest = { choosePaper = null }, title = { Text(uiText(title)) },
+            properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn), text = {
+                Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                    papers.sortedBy { it.name }.forEach { paper ->
+                        TextButton(onClick = { choosePaper = null; draft = VaultEdit(paper) }) { Text(paper.name) }
+                    }
+                }
+            }, confirmButton = { TextButton(onClick = { choosePaper = null }) { Text(uiText("Cancel")) } })
+    }
     val currentDraft = draft
     if (session != null && !family && currentDraft != null) {
         ModalBottomSheet(onDismissRequest = { if (!busy) clearDraft() },
@@ -386,9 +492,15 @@ private fun VaultPaperEditor(edit: VaultEdit, busy: Boolean, onCancel: () -> Uni
     var bought by remember(paper.id) { mutableStateOf(paper.bought?.toString().orEmpty()) }
     var ends by remember(paper.id) { mutableStateOf(paper.ends?.toString().orEmpty()) }
     var remind by remember(paper.id) { mutableStateOf(paper.remind?.toString().orEmpty()) }
+    var folder by remember(paper.id) { mutableStateOf(paper.folder) }
+    var text by remember(paper.id) { mutableStateOf(paper.text) }
     fun date(raw: String): LocalDate? = raw.takeIf(String::isNotBlank)?.let(LocalDate::parse)
-    val reviewed = runCatching { paper.copy(name = name.trim(), kind = kind, bought = date(bought), ends = date(ends), remind = date(remind))
-        .also(VaultPaper::validate) }.getOrNull()
+    val privateNote = kind == VaultPaperKind.PRIVATE_NOTE
+    val reviewed = runCatching {
+        paper.copy(name = name.trim(), kind = kind, bought = if (privateNote) null else date(bought),
+            ends = if (privateNote) null else date(ends), remind = if (privateNote) null else date(remind),
+            folder = folder.trim(), text = if (privateNote) text.trim() else "").also(VaultPaper::validate)
+    }.getOrNull()
     Column(Modifier.fillMaxWidth().heightIn(max = 640.dp).verticalScroll(rememberScrollState()).imePadding().padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(stringResource(when { edit.bytes != null -> R.string.halo_vault_review_photo
@@ -396,7 +508,13 @@ private fun VaultPaperEditor(edit: VaultEdit, busy: Boolean, onCancel: () -> Uni
             else -> R.string.halo_vault_add }), style = MaterialTheme.typography.headlineSmall)
         if (edit.bytes != null) Text(stringResource(R.string.halo_vault_review))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            VaultPaperKind.entries.forEach { option ->
+            VaultPaperKind.entries.filter { option ->
+                when {
+                    paper.kind == VaultPaperKind.PRIVATE_NOTE -> option == VaultPaperKind.PRIVATE_NOTE
+                    option != VaultPaperKind.PRIVATE_NOTE -> true
+                    else -> edit.bytes == null && !paper.photo && paper.revision == 0L
+                }
+            }.forEach { option ->
                 FilterChip(kind == option, { kind = option }, enabled = !busy,
                     label = { Text(stringResource(option.label)) }, modifier = Modifier.heightIn(min = 48.dp))
             }
@@ -404,12 +522,20 @@ private fun VaultPaperEditor(edit: VaultEdit, busy: Boolean, onCancel: () -> Uni
         OutlinedTextField(name, { name = it.take(180) }, enabled = !busy, singleLine = true,
             label = { Text(stringResource(R.string.halo_vault_what)) }, modifier = Modifier.fillMaxWidth())
         edit.evidence["what"]?.let { Text(stringResource(R.string.halo_vault_evidence, it), style = MaterialTheme.typography.bodySmall) }
-        VaultDateField(R.string.halo_vault_bought, bought, { bought = it }, !busy, edit.evidence["bought"])
-        VaultDateField(R.string.halo_vault_ends, ends, { ends = it }, !busy, edit.evidence["ends"])
-        VaultDateField(R.string.halo_vault_remind, remind, { remind = it }, !busy, null)
+        OutlinedTextField(folder, { folder = it.take(80) }, enabled = !busy, singleLine = true,
+            label = { Text(uiText("Folder")) }, modifier = Modifier.fillMaxWidth())
+        if (privateNote) OutlinedTextField(text, { value ->
+            text = value.filterNot { it.isISOControl() && it != '\n' && it != '\t' }.take(2400)
+        }, enabled = !busy, minLines = 4, maxLines = 9,
+            label = { Text(stringResource(R.string.halo11_private_note_text)) }, modifier = Modifier.fillMaxWidth())
+        else {
+            VaultDateField(R.string.halo_vault_bought, bought, { bought = it }, !busy, edit.evidence["bought"])
+            VaultDateField(R.string.halo_vault_ends, ends, { ends = it }, !busy, edit.evidence["ends"])
+            VaultDateField(R.string.halo_vault_remind, remind, { remind = it }, !busy, null)
+        }
         if (edit.bytes != null && paper.remind != null) Text(stringResource(R.string.halo_vault_remind_evidence),
             style = MaterialTheme.typography.bodySmall)
-        if (reviewed == null && name.isNotBlank()) Text(stringResource(R.string.halo_vault_check_dates),
+        if (reviewed == null && name.isNotBlank() && !privateNote) Text(stringResource(R.string.halo_vault_check_dates),
             color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         if (paper.photo) TextButton(onClick = onPhoto, enabled = !busy) { Text(stringResource(R.string.halo_vault_photo)) }
         Button(onClick = { reviewed?.let(onKeep) }, enabled = reviewed != null && !busy,
@@ -427,11 +553,12 @@ private fun VaultDateField(label: Int, value: String, onValue: (String) -> Unit,
     evidence?.let { Text(stringResource(R.string.halo_vault_evidence, it), style = MaterialTheme.typography.bodySmall) }
 }
 
-private val VaultPaperKind.label: Int get() = when (this) {
+internal val VaultPaperKind.label: Int get() = when (this) {
     VaultPaperKind.WARRANTY -> R.string.halo_vault_kind_warranty
     VaultPaperKind.RECEIPT -> R.string.halo_vault_kind_receipt
     VaultPaperKind.POLICY -> R.string.halo_vault_kind_policy
     VaultPaperKind.DOCUMENT -> R.string.halo_vault_kind_document
+    VaultPaperKind.PRIVATE_NOTE -> R.string.halo11_private_note
 }
 
 private tailrec fun Context.vaultActivity(): Activity? = when (this) {

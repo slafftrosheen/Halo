@@ -229,6 +229,24 @@ class ElevenLabsTtsProvider(
         }
     }
 
+    /** Lets a key with synthesis access use known IDs even when discovery is restricted. */
+    fun configureById(voice: String, model: String) {
+        val voiceId = voice.trim()
+        val modelId = model.trim()
+        require(voiceId.matches(IDENTIFIER) && modelId.matches(IDENTIFIER)) { "Enter a voice ID and a model ID" }
+        val version = advanceConfigurationVersion()
+        storage.putBatch(strings = mapOf(VOICE to voiceId, MODEL to modelId))
+        check(storage.getString(VOICE) == voiceId && storage.getString(MODEL) == modelId) { "Speech selection verification failed" }
+        synchronized(configurationSnapshotLock) {
+            if (configurationVersion.get() != version) return
+            voiceIdSnapshot = voiceId
+            modelIdSnapshot = modelId
+            healthy = false
+            lastErrorCode = null
+            publishSnapshot()
+        }
+    }
+
     fun voiceStyle(): Map<String, Double> {
         val storedStability = storage.getString("elevenlabs_stability")?.toDoubleOrNull()
         val storedSimilarity = storage.getString("elevenlabs_similarity_boost")?.toDoubleOrNull()
@@ -278,8 +296,9 @@ class ElevenLabsTtsProvider(
         require(request.text.isNotBlank() && request.text.length <= 24_000) { "Speech text exceeds the supported limit" }
         val voice = request.voiceId ?: voiceId() ?: throw SpeechProviderException(SpeechErrorCode.VOICE_NOT_FOUND)
         val model = request.modelId ?: modelId() ?: throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE)
-        val known = cachedCatalogue()?.models?.any { it.id == model } == true
-        if (!known) throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE)
+        if (model != modelId() && cachedCatalogue()?.models?.any { it.id == model } != true) {
+            throw SpeechProviderException(SpeechErrorCode.MODEL_NOT_AVAILABLE)
+        }
         val url = baseUrl.toHttpUrl().newBuilder().addPathSegments("v1/text-to-speech")
             .addPathSegment(voice).addQueryParameter("output_format", "pcm_24000").build()
         val output = ByteArrayOutputStream()
@@ -426,6 +445,10 @@ class ElevenLabsTtsProvider(
                         if (continuation.isActive) continuation.resumeWithException(CancellationException("Speech request cancelled"))
                         return
                     }
+                    if (e is RemoteDispatchBlocked) {
+                        if (continuation.isActive) continuation.resumeWithException(e)
+                        return
+                    }
                     val failure = SpeechProviderException(SpeechErrorCode.NETWORK_ERROR,
                         "${endpointLabel(builder.build())}: network connection failed. Check internet access and retry.")
                     if (continuation.isActive && configurationVersion.get() == version) { healthy = false; lastErrorCode = failure.code; publishState(failure.message) }
@@ -473,23 +496,22 @@ class ElevenLabsTtsProvider(
     private fun httpFailure(response: Response): SpeechProviderException {
         // Only classify known server status values; never expose response bodies or credentials.
         val status = runCatching {
-            JSONObject(response.peekBody(16_384).string()).optJSONObject("detail")?.optString("status")
+            val detail = JSONObject(response.peekBody(16_384).string()).optJSONObject("detail")
+            detail?.optString("code")?.takeIf(String::isNotBlank) ?: detail?.optString("status")
         }.getOrNull()
-        val explanation = when {
-            status == "missing_permissions" || response.code == 403 -> "API key lacks access. Enable Models Read, Voices Read and Text to Speech permissions in ElevenLabs."
-            status == "quota_exceeded" -> "ElevenLabs credit quota is exhausted."
-            response.code == 401 -> "API key was rejected. Check the key in ElevenLabs."
-            response.code == 429 -> "ElevenLabs rate limit reached. Retry later."
-            response.code == 404 -> "Requested voice or endpoint was not found. Refresh your choices."
-            response.code in setOf(400, 422) -> "Selected model or speech settings were rejected. Refresh your choices."
-            else -> "ElevenLabs service request failed. Retry later."
-        }
-        val code = when (response.code) {
-            401, 403 -> SpeechErrorCode.AUTHENTICATION_FAILED
-            429 -> SpeechErrorCode.RATE_LIMITED
-            404 -> SpeechErrorCode.VOICE_NOT_FOUND
-            400, 422 -> SpeechErrorCode.MODEL_NOT_AVAILABLE
-            else -> SpeechErrorCode.SYNTHESIS_FAILED
+        val (code, explanation) = when {
+            status == "quota_exceeded" || status == "insufficient_credits" || response.code == 402 ->
+                SpeechErrorCode.INSUFFICIENT_CREDITS to "ElevenLabs credit quota is exhausted."
+            status == "model_access_denied" || status == "model_not_found" ->
+                SpeechErrorCode.MODEL_NOT_AVAILABLE to "This model is unavailable for your ElevenLabs account."
+            status == "voice_not_found" -> SpeechErrorCode.VOICE_NOT_FOUND to "The selected ElevenLabs voice was not found."
+            status == "missing_permissions" || response.code == 403 -> SpeechErrorCode.AUTHENTICATION_FAILED to
+                "API key lacks access. Check Models Read, Voices Read and Text to Speech permissions in ElevenLabs."
+            response.code == 401 -> SpeechErrorCode.AUTHENTICATION_FAILED to "API key was rejected. Check the key in ElevenLabs."
+            response.code == 429 -> SpeechErrorCode.RATE_LIMITED to "ElevenLabs rate limit reached. Retry later."
+            response.code == 404 -> SpeechErrorCode.VOICE_NOT_FOUND to "Requested voice or endpoint was not found. Refresh your choices."
+            response.code in setOf(400, 422) -> SpeechErrorCode.MODEL_NOT_AVAILABLE to "Selected model or speech settings were rejected. Refresh your choices."
+            else -> SpeechErrorCode.SYNTHESIS_FAILED to "ElevenLabs service request failed. Retry later."
         }
         return SpeechProviderException(code, "${endpointLabel(response.request)} (HTTP ${response.code}): $explanation")
     }
@@ -503,6 +525,7 @@ class ElevenLabsTtsProvider(
         private const val BASE = "https://api.elevenlabs.io/"
         private const val MAX_PCM = 16 * 1024 * 1024
         private const val MAX_METADATA = 2 * 1024 * 1024
+        private val IDENTIFIER = Regex("[a-zA-Z0-9_-]{1,200}")
         private val DEFAULT_STYLE = mapOf("stability" to 0.5, "similarity_boost" to 0.75, "speed" to 1.0)
         private val JSON = "application/json; charset=utf-8".toMediaType()
     }

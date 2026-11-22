@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="knowledge_title">Bezsaistes zināšanas</string>
+    <string name="knowledge_query">Meklēt lejupielādētajās zināšanu bāzēs</string>
+    <string name="knowledge_power">Lai lejupielādētu pakotnes vai atvērtu izdevēja vietni, ieslēdziet Power režīmu.</string>
+    <string name="knowledge_count">%1$d ieraksti · iegūts %2$s</string>
+    <string name="knowledge_available">Lejupielādējama pakotne</string>
+    <string name="knowledge_external">Izdevēja arhīvs · izmantojiet saderīgu lasītāju</string>
+    <string name="knowledge_download">Lejupielādēt</string>
+    <string name="knowledge_update">Atjaunināt</string>
+    <string name="knowledge_loading">Notiek lejupielāde…</string>
+    <string name="knowledge_open_download">Atvērt lejupielādes lapu</string>
+    <string name="knowledge_browser_download">Lejupielādēt pārlūkā</string>
+    <string name="knowledge_empty">Lejupielādētajās pakotnēs nekas netika atrasts.</string>
+    <string name="knowledge_attribution">%1$s · iegūts %2$s</string>
+    <string name="knowledge_publisher">Atvērt izdevēja vietni</string>
+    <string name="knowledge_failed">Lejupielāde neizdevās. Iepriekšējā kopija joprojām ir pieejama.</string>
+    <string name="knowledge_link_failed">Neizdevās atvērt izdevēja saiti.</string>
+</resources>

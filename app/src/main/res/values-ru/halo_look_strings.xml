@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="look_title">Настройте под себя</string>
+    <string name="look_subtitle">Выберите стиль и настройте детали. Изменения вступят в силу после нажатия «Применить».</string>
+    <string name="look_presets_label">Стили</string>
+    <string name="look_motion_play">Показать анимацию</string>
+    <string name="look_motion_android_off">В Android включено отключение анимации.</string>
+    <string name="look_motion_device_limited">Сейчас телефон ограничивает анимацию.</string>
+    <string name="look_motion_contrast">В режиме высокой контрастности кольцо остаётся неподвижным.</string>
 </resources>

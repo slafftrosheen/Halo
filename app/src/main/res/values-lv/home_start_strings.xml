@@ -25,4 +25,15 @@
     <string name="home_start_save_error">Neizdevās saglabāt sākumlapu. Mēģini vēlreiz.</string>
     <string name="home_start_undo">Atsaukt</string>
     <string name="home_start_done">Gatavs</string>
+    <string name="home_greeting_morning">Labrīt</string>
+    <string name="home_greeting_afternoon">Labdien</string>
+    <string name="home_greeting_evening">Labvakar</string>
+    <string name="home_start_today_detail">Skatiet plānus un atgādinājumus</string>
+    <string name="home_start_note_detail">Uzrakstiet vai nodiktējiet</string>
+    <string name="home_start_study_detail">Soli pa solim</string>
+    <string name="home_start_camera_detail">Pavērsiet kameru un jautājiet</string>
+    <string name="home_start_timer_detail">Iestatiet atpakaļskaitīšanu</string>
+    <string name="home_start_weather_detail">Skatiet vietējo laika prognozi</string>
+    <string name="home_start_brief_detail">Noklausieties dienas pārskatu</string>
+    <string name="home_start_draw_detail">Atveriet HaloStudio</string>
 </resources>

@@ -150,6 +150,22 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
         val project = visible(expectedRevision) ?: return
         operation(StudioOperation.EDIT, retryable = true) { service.projects.apply(project.id, project.revision, command) }
     }
+    internal fun fill(expectedRevision: Long, request: StudioFillRequest, name: String) {
+        val project = visible(expectedRevision) ?: return
+        operation(StudioOperation.EDIT, retryable = true) { service.fillArtboard(project.id, project.revision, request, name) }
+    }
+    internal fun selectPixels(expectedRevision: Long, request: StudioPixelEdit.Select, selection: StudioPixelSelection?) {
+        val project = visible(expectedRevision) ?: return
+        operation(StudioOperation.EDIT) {
+            service.selectPixels(project.id, project.revision, request) { check(it === selection) { "Selection changed" } }
+        }
+    }
+    internal fun applyPixels(expectedRevision: Long, request: StudioPixelEdit.Apply, selection: StudioPixelSelection?) {
+        val project = visible(expectedRevision) ?: return
+        operation(StudioOperation.EDIT) {
+            service.applyPixels(project.id, project.revision, request) { check(it === selection) { "Selection changed" } }
+        }
+    }
     fun edit(expectedRevision: Long, action: String, fields: Map<String, Any?> = emptyMap()) {
         val project = visible(expectedRevision) ?: return
         operation(StudioOperation.EDIT, retryable = true) { service.edit(project.id, project.revision, action, fields) }
@@ -205,6 +221,14 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
         operation(StudioOperation.IMPORT) {
             val file = files.importFile(uri)
             service.importImage(project.id, project.revision, file.objectId.value, expectedSourceVersion = requireNotNull(file.version))
+        }
+    }
+    internal fun importReference(uri: Uri, expectedProjectId: String, onKept: (WorkspaceFile) -> Unit) {
+        if (mutable.value.project?.id != expectedProjectId) return
+        operation(StudioOperation.IMPORT) {
+            val file = files.importFile(uri)
+            require(file.mimeType.startsWith("image/") && file.version != null)
+            if (mutable.value.project?.id == expectedProjectId) onKept(file)
         }
     }
     fun export(format: CanvasImageFormat) {

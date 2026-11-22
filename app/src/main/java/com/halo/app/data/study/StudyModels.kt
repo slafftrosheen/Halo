@@ -297,6 +297,16 @@ data class StudyReviewEvent(
     val recallRating: String = "",
 )
 
+/** Accepted Study content for the local Library. The answer stays with the Study owner. */
+data class LibraryPracticeCard(
+    val id: String,
+    val sessionId: String,
+    val question: String,
+    val createdAtEpochMs: Long,
+    val lastReviewedAtEpochMs: Long?,
+    val sourceObjectId: String? = null,
+)
+
 // ---------------------------------------------------------------------------------------------
 // DAO
 // ---------------------------------------------------------------------------------------------
@@ -374,6 +384,9 @@ interface StudyDao {
     @Query("SELECT * FROM study_sessions WHERE lifecycle = 'ACTIVE' ORDER BY updatedAtEpochMs DESC")
     fun observeActiveSessions(): kotlinx.coroutines.flow.Flow<List<StudySessionEntity>>
 
+    @Query("SELECT * FROM study_sessions WHERE lifecycle IN ('ACTIVE', 'COMPLETED') ORDER BY createdAtEpochMs, id")
+    fun observeCourseSessions(): kotlinx.coroutines.flow.Flow<List<StudySessionEntity>>
+
     /**
      * Source lookup without a JSON1 dependency: ids are stored as a compact JSON array, so a quoted
      * exact match on the element text is sufficient and portable to older devices.
@@ -386,6 +399,21 @@ interface StudyDao {
         """
     )
     fun observeSessionsForSource(objectId: String): kotlinx.coroutines.flow.Flow<List<StudySessionEntity>>
+
+    @Query("""SELECT s.id FROM study_sessions s
+        WHERE instr(s.sourceObjectIdsJson, :objectId) > 0 OR instr(s.sourcesJson, :objectId) > 0
+            OR s.conversationId = :objectId OR s.runId = :objectId OR s.interactionId = :objectId
+            OR EXISTS(SELECT 1 FROM agent_runs r WHERE r.id = :objectId AND r.interactionId = s.interactionId)
+            OR EXISTS(SELECT 1 FROM conversation_turns t WHERE t.conversationId = :objectId AND s.interactionId IS NOT NULL
+                AND s.interactionId != '' AND instr(t.metadata, s.interactionId) > 0)
+            OR EXISTS(SELECT 1 FROM study_practice_items p WHERE p.sessionId = s.id AND p.sourceObjectId = :objectId)
+            OR EXISTS(SELECT 1 FROM study_feedback f WHERE f.sessionId = s.id AND instr(f.citationsJson, :objectId) > 0)
+            OR EXISTS(SELECT 1 FROM object_provenance o WHERE o.objectId = :objectId AND o.sourceId = 'study-summary:' || s.id AND o.revision = 'v1')
+        ORDER BY s.id""")
+    suspend fun privateSourceCandidates(objectId: String): List<String>
+
+    @Query("SELECT id FROM study_sessions ORDER BY id")
+    suspend fun privateSidecarSessionIds(): List<String>
 
     @Query("DELETE FROM study_sessions WHERE id = :sessionId")
     suspend fun deleteSession(sessionId: String): Int
@@ -453,6 +481,12 @@ interface StudyDao {
 
     @Query("SELECT * FROM study_practice_items WHERE sessionId = :sessionId ORDER BY createdAtEpochMs ASC")
     fun observePracticeItems(sessionId: String): kotlinx.coroutines.flow.Flow<List<StudyPracticeItemEntity>>
+
+    @Query("""SELECT p.id, p.sessionId, p.question, p.createdAtEpochMs, p.lastReviewedAtEpochMs, p.sourceObjectId
+        FROM study_practice_items p JOIN study_sessions s ON s.id = p.sessionId
+        WHERE p.accepted = 1 AND s.learnerLevel = 'ADULT' AND s.lifecycle IN ('ACTIVE', 'COMPLETED')
+        ORDER BY p.createdAtEpochMs DESC, p.id""")
+    fun observeLibraryPracticeCards(): kotlinx.coroutines.flow.Flow<List<LibraryPracticeCard>>
 
     @Query("SELECT * FROM study_practice_items WHERE sessionId = :sessionId ORDER BY createdAtEpochMs ASC")
     suspend fun getPracticeItems(sessionId: String): List<StudyPracticeItemEntity>

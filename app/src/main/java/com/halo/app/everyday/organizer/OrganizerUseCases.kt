@@ -17,18 +17,36 @@ class OrganizerUseCases(
         repeat: RepeatRule? = null, priority: TaskPriority = TaskPriority.NORMAL, parentId: String? = null,
         notifyBeforeMinutes: Int? = null, timerDurationMs: Long? = null,
         links: List<OrganizerLink> = emptyList(), sourceUrl: String? = null, sourceLabel: String? = null, location: String = "",
-        leaveBeforeMinutes: Int? = null): OrganizerRecord {
+        leaveBeforeMinutes: Int? = null, calendar: OrganizerCalendar = OrganizerCalendar.PERSONAL,
+        studyExam: StudyExamSchedule? = null): OrganizerRecord {
         val now = Instant.ofEpochMilli(clock.millis())
         val timer = timerDurationMs?.let { TimerState(it, it).start(now, elapsedMs(), bootId()) }
         return repository.save(OrganizerRecord(newId(), kind, title.trim(), details, time, repeat, priority,
             parentId = parentId, notifyBeforeMinutes = notifyBeforeMinutes, timer = timer, links = links,
             sourceUrl = sourceUrl, sourceLabel = sourceLabel, createdAt = now, location = location,
-            leaveBeforeMinutes = leaveBeforeMinutes), null)
+            leaveBeforeMinutes = leaveBeforeMinutes, calendar = calendar, studyExam = studyExam), null)
     }
     suspend fun requireCurrent(id: String, version: Long): OrganizerRecord {
         val record = repository.get(id) ?: throw OrganizerConflict("Record no longer exists")
         if (record.version != version || record.deletedAt != null) throw OrganizerConflict("Record changed; reopen it")
         return record
+    }
+    suspend fun rescheduleEvent(id: String, version: Long, originalStart: Instant,
+        operation: OrganizerScheduleEdit, steps: Int): OrganizerRecord {
+        val record = requireCurrent(id, version)
+        require(record.kind == OrganizerKind.EVENT && record.status == OrganizerStatus.ACTIVE)
+        val deviceZone = zone()
+        val overrides = repository.overrides(id)
+        val occurrence = OrganizerRecurrence.exact(record, overrides, originalStart, deviceZone)
+            ?: throw OrganizerConflict("Event occurrence changed; reopen it")
+        val previous = overrides.find { it.originalStart == originalStart }
+        val time = rescheduledEventTime(previous?.replacementTime ?: requireNotNull(record.time), occurrence,
+            operation, steps, deviceZone)
+        if (time.instant(deviceZone) == occurrence.start && time.endInstant(deviceZone) == occurrence.end) return record
+        if (record.repeat == null && previous == null) return repository.save(record.copy(time = time), version)
+        val edit = previous?.copy(replacementTime = time, disposition = OccurrenceDisposition.REPLACED)
+            ?: OccurrenceOverride(id, originalStart, OccurrenceDisposition.REPLACED, time)
+        return repository.saveOverride(edit, version)
     }
     suspend fun completeTask(id: String, version: Long, occurrenceStart: Instant? = null): OrganizerRecord {
         val record = requireCurrent(id, version)

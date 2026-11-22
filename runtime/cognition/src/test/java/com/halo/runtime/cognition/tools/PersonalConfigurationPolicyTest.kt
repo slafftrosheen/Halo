@@ -54,7 +54,7 @@ class PersonalConfigurationPolicyTest {
                 "halo_source_image" -> setOf(RemoteDataCategory.IMAGES, RemoteDataCategory.LOCATION)
                 "halo_source_get", "halo_brief_query", "halo_brief_action" -> setOf(
                     RemoteDataCategory.LOCATION, RemoteDataCategory.RECENT_EVENTS, RemoteDataCategory.DEVICE_STATE)
-                "halo_screen_card_configuration",
+                "halo_screen_card_configuration", "halo_today_overview", "halo_today_weather_city",
                 "halo_clock_query", "halo_clock_save", "halo_clock_action",
                 "halo_source_query", "halo_source_preview", "halo_source_save", "halo_source_action",
                 "halo_brief_settings", "halo_everyday_open",

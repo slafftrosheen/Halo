@@ -37,4 +37,5 @@ replay_pid*.log
 # Local device captures and transient diagnostics; never keep personal logs in Git.
 /logcat*.txt
 /temp_log.txt
+/*.log
 /.artifacts/*.log

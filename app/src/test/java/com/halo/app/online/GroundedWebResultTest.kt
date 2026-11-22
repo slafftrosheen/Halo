@@ -36,4 +36,22 @@ class GroundedWebResultTest {
         assertNull(OpenRouterOnlineClient.reportedCost(JSONObject("""{"usage":{"cost":-1}}""")))
         assertEquals("0.007", OpenRouterOnlineClient.reportedCost(JSONObject("""{"usage":{"cost":0.007}}"""))?.toPlainString())
     }
+
+    @Test fun responsesApiReturnsOnlyCitationsWithACompletedSearchAndValidTextRange() {
+        val root = JSONObject("""{"status":"completed","model":"gpt-5.4-mini","output":[
+            {"type":"web_search_call","status":"completed"},
+            {"type":"message","role":"assistant","content":[{"type":"output_text","text":"Rīga report.","annotations":[
+                {"type":"url_citation","start_index":5,"end_index":11,"url":"https://example.com/report","title":"Report"},
+                {"type":"url_citation","start_index":0,"end_index":4,"url":"https://127.0.0.1/private"},
+                {"type":"url_citation","start_index":0,"end_index":90,"url":"https://example.com/invalid"}
+            ]}]}
+        ]}""")
+        val answer = OpenAiWebSearchClient.parseAnswer(root, 123L)
+        assertEquals("openai", answer.providerId)
+        assertEquals(WebCitation(5, 11, "https://example.com/report"), answer.citations.single())
+        assertEquals("Report", answer.sources.single().title)
+        assertNull(answer.reportedCostUsd)
+        root.getJSONArray("output").getJSONObject(0).put("status", "failed")
+        assertThrows(OnlineOperationRejected::class.java) { OpenAiWebSearchClient.parseAnswer(root, 123L) }
+    }
 }

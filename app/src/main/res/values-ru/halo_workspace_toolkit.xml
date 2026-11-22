@@ -1,0 +1,12 @@
+<resources>
+    <string name="toolkit_find_tool">Найти инструмент</string>
+    <string name="toolkit_empty_search">Подходящих инструментов нет</string>
+    <string name="toolkit_in_dock">На панели</string>
+    <string name="toolkit_on_shelf">В списке инструментов</string>
+    <string name="toolkit_translated_scan_title">Скан с переводом</string>
+    <string name="toolkit_keep_translation">Сохранить перевод</string>
+    <string name="toolkit_keeping_translation">Сохраняем перевод</string>
+    <string name="toolkit_open_translation">Открыть перевод</string>
+    <string name="toolkit_translation_kept">Фото и перевод сохранены вместе в рабочей области.</string>
+    <string name="toolkit_translation_error">Не удалось сохранить перевод. Повторите попытку.</string>
+</resources>

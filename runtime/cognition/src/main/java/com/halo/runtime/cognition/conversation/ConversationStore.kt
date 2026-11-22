@@ -12,12 +12,25 @@ data class ConversationTurn(
     val metadata: Map<String, String> = emptyMap()
 )
 
+fun interface ConversationExecutionLease { fun release() }
+
 interface ConversationStore {
 
     val turns: StateFlow<List<ConversationTurn>>
 
     suspend fun awaitReady() {}
     fun activeConversationId(): String? = turns.value.lastOrNull()?.conversationId?.ifBlank { null }
+
+    /** Reserves a conversation through provider work and publication. Persistent owners can fence exact IDs. */
+    suspend fun reserveConversationExecution(id: String?): ConversationExecutionLease {
+        if (id != null) require(isConversationAvailable(id)) { "Conversation unavailable" }
+        return ConversationExecutionLease { }
+    }
+
+    suspend fun <T> withConversationExecution(id: String?, action: suspend () -> T): T {
+        val lease = reserveConversationExecution(id)
+        return try { action() } finally { lease.release() }
+    }
 
     suspend fun append(
         userText: String,

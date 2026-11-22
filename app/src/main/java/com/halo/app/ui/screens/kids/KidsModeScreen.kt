@@ -44,6 +44,7 @@ import com.halo.app.ui.theme.HaloLookMotion
 import com.halo.app.ui.theme.LocalHaloVisualOverride
 import com.halo.app.ui.theme.rememberVisualPreferences
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineStart
 import com.halo.sdk.runtime.study.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -51,7 +52,9 @@ import kotlinx.coroutines.launch
 /** One learning workspace, backed by the real Study and canonical Home/tool pipelines. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable fun KidsModeScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpenCanvas: ((String) -> Unit)? = null,
-    onOpenTool: ((String) -> Unit)? = null) {
+    onOpenTool: ((String) -> Unit)? = null, requestedEntry: String? = null,
+    homeworkPhotoTicket: String? = null,
+    onRequestedEntryConsumed: () -> Unit = {}) {
     val appearance by ManualDependencyGraph.kidsPreferences.appearance.collectAsStateWithLifecycle()
     val visual = rememberVisualPreferences()
     val still = appearance.still || visual.lessMotion
@@ -60,17 +63,43 @@ import kotlinx.coroutines.launch
         guideLight = false, guidanceAmount = HaloGuidanceAmount.OFF)
     CompositionLocalProvider(com.halo.app.ui.components.LocalPrivateSpeech provides false,
         LocalHaloVisualOverride provides kidsVisual) {
-        KidsBrandTheme { KidsModeContent(home, onMicrophone, onOpenCanvas, appearance, onOpenTool) }
+        KidsBrandTheme { KidsModeContent(home, onMicrophone, onOpenCanvas, appearance, onOpenTool,
+            requestedEntry, homeworkPhotoTicket, onRequestedEntryConsumed) }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable private fun KidsModeContent(home: HomeViewModel, onMicrophone: () -> Unit, onOpenCanvas: ((String) -> Unit)?,
-    appearance: KidsPresentationSettings, onOpenTool: ((String) -> Unit)?) {
+    appearance: KidsPresentationSettings, onOpenTool: ((String) -> Unit)?, requestedEntry: String?,
+    homeworkPhotoTicket: String?, onRequestedEntryConsumed: () -> Unit) {
     val scope = rememberCoroutineScope()
     val hosted = com.halo.app.ui.presence.LocalShellHaloOrb.current
     val project: KidsProjectViewModel = viewModel()
     val projectState by project.state.collectAsStateWithLifecycle()
+    val family = ManualDependencyGraph.kidsPreferences
+    val homework = family.homework
+    val schedule by homework.settings.collectAsStateWithLifecycle()
+    val homeworkTime = rememberKidsHomeworkTime(homework)
+    val pause by ManualDependencyGraph.haloPause.state.collectAsStateWithLifecycle()
+    var homeworkRevision by remember { mutableStateOf<Long?>(null) }
+    var homeworkOpening by remember { mutableIntStateOf(0) }
+    val retainedWorksheet = remember(schedule) { com.halo.app.ui.screens.study.CoachWorksheetProgress() }
+    var pendingHomeworkPhoto by remember { mutableStateOf<String?>(null) }
+    var adventureRequested by remember { mutableStateOf(false) }
+    var bookOpen by rememberSaveable { mutableStateOf(false) }
+    var playOpen by rememberSaveable { mutableStateOf(false) }
+    fun homeworkAllowed(): Boolean {
+        val revision = homeworkRevision ?: return false
+        return family.enabled.value && !ManualDependencyGraph.isHaloPaused() &&
+            homework.settings.value?.includes(java.time.LocalTime.now()) == true &&
+            runCatching { family.requirePresentation(revision) }.isSuccess
+    }
+    LaunchedEffect(homeworkTime, pause.paused) {
+        if (!homeworkTime || pause.paused) { homeworkRevision = null; pendingHomeworkPhoto = null }
+        if (!homeworkTime || pause.paused) retainedWorksheet.replace(emptyList())
+        if (homeworkTime || pause.paused) { adventureRequested = false; playOpen = false }
+    }
+    if (playOpen && !homeworkTime && !pause.paused) KidsBuddyPlay(family.cards) { playOpen = false }
     val appMode by ManualDependencyGraph.privacyModes.mode.collectAsStateWithLifecycle()
     var showHandDemo by remember { mutableStateOf(false) }
     if (showHandDemo && appearance.handDemos) {
@@ -87,7 +116,6 @@ import kotlinx.coroutines.launch
     val discoveryHint = uiText("You can choose an answer or skip this question.")
     val nextStepNotice = uiText("Choose Next step when you want to continue.")
     var commandHeard by remember { mutableStateOf("") }
-    var intakeBusy by remember { mutableStateOf(false) }
     var sourcesExpanded by rememberSaveable { mutableStateOf(false) }
     val fieldActivity by com.halo.app.ui.components.VoiceFieldCancellation.activeFields.collectAsStateWithLifecycle()
     var topic by rememberSaveable { mutableStateOf("") }
@@ -148,6 +176,9 @@ import kotlinx.coroutines.launch
         // callbacks and camera intake before cancelling model/reader work.
         com.halo.app.ui.components.VoiceFieldCancellation.stop()
         voiceRequest = 0
+        homeworkRevision = null
+        pendingHomeworkPhoto = null
+        playOpen = false
         allowStartedLesson = false
         startTutor = false
         starter.cancelStart()
@@ -155,6 +186,66 @@ import kotlinx.coroutines.launch
         project.stop()
         lesson?.cancelTurn("Stopped by learner")
         lesson?.stopReading()
+    }
+    val openHomework: () -> Unit = {
+        if (homeworkTime && family.enabled.value && !ManualDependencyGraph.isHaloPaused()) {
+            stopActions()
+            homeworkRevision = runCatching { family.presentationRevision() }.getOrNull()
+            if (homeworkRevision != null) homeworkOpening++
+        }
+    }
+    val consumeEntry by rememberUpdatedState(onRequestedEntryConsumed)
+    LaunchedEffect(requestedEntry, homeworkPhotoTicket, schedule, homeworkTime, pause.paused) {
+        if (requestedEntry != null && schedule != null) {
+            destination = KidsDestination.HOME
+            if (family.enabled.value && !pause.paused) {
+                if (requestedEntry == "homework" && homeworkTime) {
+                    openHomework()
+                    if (homeworkRevision != null) {
+                        if (homeworkPhotoTicket != null) retainedWorksheet.replace(emptyList())
+                        pendingHomeworkPhoto = homeworkPhotoTicket
+                    }
+                }
+                if (requestedEntry == "adventure" && !homeworkTime) {
+                    stopActions()
+                    adventureRequested = true
+                }
+            }
+            consumeEntry()
+        }
+    }
+    if (homeworkTime && !pause.paused && homeworkRevision != null) key(homeworkOpening) {
+        com.halo.app.ui.screens.study.LocalPhotoCoachSheet(child = true, allowed = ::homeworkAllowed,
+            acceptsQuestion = { it.operation in homework.settings.value?.subjects.orEmpty() },
+            retainedWorksheet = retainedWorksheet,
+            reviewedPhotoTicket = pendingHomeworkPhoto, onReviewedPhotoConsumed = { pendingHomeworkPhoto = null },
+            onDismiss = { homeworkRevision = null; pendingHomeworkPhoto = null }, keepHomeworkPhoto = { bitmap ->
+                val revision = requireNotNull(homeworkRevision)
+                homework.keepPhoto(bitmap) {
+                    family.requirePresentation(revision)
+                    check(family.enabled.value && !ManualDependencyGraph.isHaloPaused())
+                }
+            }, onProgress = { result ->
+                val revision = homeworkRevision
+                if (revision != null) scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    try {
+                        homework.updateSummary(result) {
+                            family.requirePresentation(revision)
+                            check(family.enabled.value && !ManualDependencyGraph.isHaloPaused())
+                        }
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (_: Exception) { saveError = true }
+                }
+            })
+    }
+    if (bookOpen) ModalBottomSheet(onDismissRequest = { bookOpen = false },
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 650.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())
+            .navigationBarsPadding().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.halo11_coach_my_book), style = MaterialTheme.typography.headlineSmall)
+            KidsDynamicCards(family.cards, onlyBook = true)
+            TextButton({ bookOpen = false }) { Text(uiText("Close")) }
+        }
     }
     fun openVoice(speak: Boolean) {
         stopActions()
@@ -283,7 +374,7 @@ import kotlinx.coroutines.launch
     }
     KidsShellOrbBinding(signal,
         busy = fieldActivity.isNotEmpty() || learningState?.reader?.speaking == true ||
-            learningState?.isGenerating == true || projectState.busy || busy || intakeBusy,
+            learningState?.isGenerating == true || projectState.busy || busy || homeworkRevision != null,
         onTalk = { openVoice(true) }, onStop = stopActions)
     val openOptions = rememberKidsOptionsAction({ colours = true }, onDisclosureChanged = { optionsOpen = it }) {
         stopActions()
@@ -305,7 +396,8 @@ import kotlinx.coroutines.launch
     KidsZoneBinding(destination, learningState?.session?.goal, status,
         saving = projectState.operation == "SAVING",
         busy = fieldActivity.isNotEmpty() || learningState?.reader?.speaking == true ||
-            learningState?.isGenerating == true || projectState.busy || busy || intakeBusy || voiceSheet || helpSheet || colours || optionsOpen || skyPicker,
+            learningState?.isGenerating == true || projectState.busy || busy || homeworkRevision != null ||
+            bookOpen || playOpen || voiceSheet || helpSheet || colours || optionsOpen || skyPicker,
         onType = { openVoice(false) }, onHelp = { voiceNotice = null; helpSheet = true },
         onStop = stopActions, onGrownUp = openOptions)
     val lightState = when {
@@ -317,7 +409,11 @@ import kotlinx.coroutines.launch
         .haloStateAura(lightState.light(), MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error)) {
         if (!rememberVisualPreferences().higherContrast) KidsSkyArtwork(appearance.sky, Modifier.matchParentSize(),
-            backdrop = true)
+            backdrop = true, still = appearance.still, ambient = when (lightState) {
+                HaloSignalState.LISTENING -> com.halo.app.wallpaper.HaloAmbient.LISTENING
+                HaloSignalState.THINKING -> com.halo.app.wallpaper.HaloAmbient.WORKING
+                else -> com.halo.app.wallpaper.HaloAmbient.IDLE
+            })
         Column(Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally) {
 
@@ -336,6 +432,21 @@ import kotlinx.coroutines.launch
             if (saveError) item(key = "save-error") {
                 Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
             }
+            if (destination == KidsDestination.HOME) item(key = "kids-daily-activity") {
+                if (hosted) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(uiText("Hi there!"), Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+                    TextButton(onClick = { bookOpen = true }, modifier = Modifier.heightIn(min = 56.dp)) {
+                        Text(stringResource(R.string.halo11_coach_adventure_book))
+                    }
+                }
+                KidsFocusTimer(pause.paused)
+                if (homeworkTime) KidsPrimaryButton(openHomework, Modifier.fillMaxWidth(), enabled = !pause.paused) {
+                    Text(stringResource(R.string.halo11_coach_homework))
+                } else if (schedule != null && !pause.paused) KidsAdventureHome(family.cards, appearance.readAloud, appearance.still,
+                    welcomeAvailable = fieldActivity.isEmpty() && !voiceSheet && !helpSheet && !colours &&
+                        !optionsOpen && !skyPicker && !bookOpen && !playOpen, requested = adventureRequested,
+                    onRequestHandled = { adventureRequested = false }, onBook = { bookOpen = true })
+            }
             if (destination == KidsDestination.HOME) item(key = "choices") {
                 val recent = sessions.filter {
                     it.learnerLevel in setOf(StudyLearnerLevel.PRIMARY, StudyLearnerLevel.EARLY_PRIMARY)
@@ -344,6 +455,9 @@ import kotlinx.coroutines.launch
                 KidsHomeChoices(
                     recentLessonTitle = recent?.let { it.goal?.takeIf(String::isNotBlank) ?: uiText("My lesson") },
                     projectTitle = if (hasProject) projectState.idea.ifBlank { uiText("My project") } else null,
+                    onIdentify = onOpenTool?.let { open -> { stopActions(); open("kids_scan") } },
+                    onPlay = { stopActions(); playOpen = true },
+                    playEnabled = !homeworkTime && !pause.paused,
                 ) { selected ->
                     if (selected == KidsDestination.ASK) {
                         activeLesson = null
@@ -362,11 +476,9 @@ import kotlinx.coroutines.launch
                 }
             }
             if (destination == KidsDestination.HOME) item(key = "kids-home-options") {
-                if (onOpenTool != null) {
-                    com.halo.app.ui.toolkit.KidsPictureToolTiles { route -> stopActions(); onOpenTool(route) }
-                    Spacer(Modifier.height(10.dp))
-                }
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (onOpenTool != null) TextButton(onClick = { stopActions(); onOpenTool("kids_day") },
+                        modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("My day")) }
                     OutlinedButton(onClick = { skyPicker = true }, modifier = Modifier.heightIn(min = 56.dp)) {
                         Text(stringResource(R.string.kids_sky_picker))
                     }
@@ -381,15 +493,18 @@ import kotlinx.coroutines.launch
                     }
                 }
             }
+            if (destination == KidsDestination.HOME) item(key = "kids-dynamic-cards") {
+                KidsDynamicCards(family.cards)
+            }
             if (destination == KidsDestination.LEARN) item(key = "learn") {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (lesson == null) {
-                        KidsLearningStart(topic, { topic = it }, busy || intakeBusy, {
+                        KidsLearningStart(topic, { topic = it }, busy, {
                             allowStartedLesson = true
                             starter.startChildLesson(topic)
                         })
-                        TextButton(onClick = { sourcesExpanded = !sourcesExpanded }, modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Homework or my notes")) }
-                        if (sourcesExpanded) KidsLearningSources(starter, onBusyChanged = { intakeBusy = it })
+                        TextButton(onClick = { sourcesExpanded = !sourcesExpanded }, modifier = Modifier.heightIn(min = 56.dp)) { Text(uiText("Material")) }
+                        if (sourcesExpanded) KidsLearningSources(starter, openHomework.takeIf { homeworkTime })
                         sessions.filter { it.learnerLevel in setOf(StudyLearnerLevel.PRIMARY, StudyLearnerLevel.EARLY_PRIMARY) }.take(2).forEach { session ->
                             OutlinedButton(onClick = { activeLesson = session.id }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(session.goal ?: uiText("Continue learning")) }
                         }
@@ -460,6 +575,12 @@ import kotlinx.coroutines.launch
             val appearance by preferences.appearance.collectAsStateWithLifecycle()
             KidsAppearanceControls(appearance, preferences::applyGrownUpAppearance)
             com.halo.app.ui.toolkit.KidsPictureToolSettings(preferences.pictureTools)
+            KidsCardSettings(preferences.cards)
+            val familyRevision = remember { runCatching { preferences.presentationRevision() }.getOrNull() }
+            if (familyRevision != null) KidsHomeworkSettings(preferences.homework,
+                    requireAuthority = { preferences.requirePresentation(familyRevision) }) { previous, next ->
+                preferences.configureHomework(familyRevision, previous, next)
+            }
             com.halo.app.ui.components.PrivacyModeControl(detail = true)
             Text(uiText("An adult should help with these settings."),
                 style = MaterialTheme.typography.bodyMedium,

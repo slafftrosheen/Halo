@@ -10,16 +10,18 @@ object WorkspaceOperabilityContracts {
         fun group(owner: String, operation: ToolOperation, vararg names: String, encoding: ToolResultEncoding = ToolResultEncoding.JSON) {
             names.forEach { put(it, Operation(owner, operation, encoding)) }
         }
-        group("NotebookCanvasRepository", ToolOperation.QUERY, "halo_canvas_get")
+        group("NotebookCanvasRepository", ToolOperation.QUERY, "halo_canvas_get", "halo_canvas_review_comment")
         group("CurrentCanvasContextOwner", ToolOperation.QUERY, "halo_canvas_current")
         group("CrossDeviceInkController", ToolOperation.QUERY, "halo_ink_status", "halo_ink_document", "halo_ink_selection")
         group("CrossDeviceInkController", ToolOperation.CREATE, "halo_ink_start")
         group("CrossDeviceInkController", ToolOperation.EDIT, "halo_ink_stop")
         group("NotebookCanvasRepository", ToolOperation.CREATE, "halo_canvas_create", "halo_canvas_add_text")
-        group("NotebookCanvasRepository", ToolOperation.CREATE, "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate")
+        group("NotebookCanvasRepository", ToolOperation.CREATE, "halo_canvas_add_group", "halo_canvas_tag",
+            "halo_canvas_duplicate", "halo_canvas_add_comment")
         group("NotebookCanvasRepository", ToolOperation.EDIT, "halo_canvas_edit_text", "halo_canvas_move", "halo_canvas_connect")
         group("NotebookCanvasRepository", ToolOperation.EDIT, "halo_canvas_clear_sketch")
-        group("NotebookCanvasRepository", ToolOperation.EDIT, "halo_canvas_rename", "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_disconnect")
+        group("NotebookCanvasRepository", ToolOperation.EDIT, "halo_canvas_rename", "halo_canvas_arrange", "halo_canvas_delete",
+            "halo_canvas_ungroup", "halo_canvas_disconnect", "halo_canvas_group_lock", "halo_canvas_update_comment")
         group("WorkspaceContinuity", ToolOperation.QUERY, "halo_workspace_describe", "halo_workspace_canvases", "halo_workspace_handoff_status")
         group("WorkspaceContinuity", ToolOperation.PRESENT, "halo_workspace_open_with")
         group("WorkspaceContinuity", ToolOperation.EDIT, "halo_workspace_insert")
@@ -35,15 +37,19 @@ object WorkspaceOperabilityContracts {
         group("WorkspaceFileTools", ToolOperation.EXPORT, "halo_text_export", "halo_pdf_extract_page_image", "halo_pdf_annotation_export_page_image")
         group("WorkspaceFileTools", ToolOperation.PRESENT, "halo_file_tools_open")
         group("NotebookRepository", ToolOperation.CREATE, "halo_create_note", "halo_create_empty_note", "halo_save_screen_to_notebook", encoding = ToolResultEncoding.TEXT)
-        group("NotebookDocumentRepository", ToolOperation.QUERY, "halo_note_get", "halo_note_read_block")
+        group("NotebookDocumentRepository", ToolOperation.QUERY, "halo_note_get", "halo_note_read_block", "halo_note_review_block")
         group("NotebookDocumentRepository", ToolOperation.EDIT, "halo_note_rename", "halo_note_insert_block", "halo_note_edit_block", "halo_note_move_block", "halo_note_indent_block",
-            "halo_note_split_block", "halo_note_merge_block", "halo_note_duplicate_block", "halo_note_delete_block", "halo_note_insert_reference", "halo_note_set_reference", "halo_note_replace_content")
+            "halo_note_split_block", "halo_note_merge_block", "halo_note_duplicate_block", "halo_note_delete_block", "halo_note_insert_reference",
+            "halo_note_set_reference", "halo_note_replace_content", "halo_note_set_format", "halo_note_set_page_settings", "halo_note_comment",
+            "halo_note_resolve_changes")
         group("NotebookUseCases", ToolOperation.EDIT, "halo_note_archive", "halo_note_trash", "halo_note_restore", "halo_note_remove_from_inbox")
         group("NotebookPurgeOwner", ToolOperation.QUERY, "halo_note_purge_status")
         group("NotebookPurgeOwner", ToolOperation.EDIT, "halo_note_purge", "halo_note_purge_retry")
         group("NotebookAssetRepository", ToolOperation.QUERY, "halo_note_attachments")
         group("NotebookAssetRepository", ToolOperation.EDIT, "halo_note_reuse_image", "halo_note_unlink_attachment")
         group("WorkspaceRepository", ToolOperation.QUERY, "halo_search_notebook", "halo_get_workspace_object", encoding = ToolResultEncoding.TEXT)
+        group("RoomMemoryRepository", ToolOperation.QUERY, "halo_memory_page_connections")
+        group("RoomMemoryRepository", ToolOperation.EDIT, "halo_memory_page_link", "halo_memory_page_tag")
         group("StudyUseCases", ToolOperation.CREATE, "halo_study_with_halo", encoding = ToolResultEncoding.TEXT)
         group("StudyUseCases", ToolOperation.QUERY, "halo_get_study_session", encoding = ToolResultEncoding.TEXT)
         group("StudyUseCases", ToolOperation.QUERY, "halo_study_sessions", "halo_study_state", "halo_study_card_get")
@@ -63,8 +69,11 @@ object WorkspaceOperabilityContracts {
                 "strokeIds" to "array", "bounds" to "object")
             "NotebookAssetRepository" -> mapOf("noteId" to "string", "version" to "string", "attachmentId" to "string", "attachmentCount" to "integer", "lifecycle" to "string", "hasRecoveryDraft" to "boolean", "attachments" to "array", "nextOffset" to "integer", "saved" to "boolean", "changed" to "boolean", "fileCleanupPerformed" to "boolean")
             "NotebookPurgeOwner" -> mapOf("noteId" to "string", "receiptVersion" to "string", "sourceVersion" to "string", "status" to "string", "originalDeletionRecorded" to "boolean", "deleted" to "boolean", "sourcePresent" to "boolean", "cleanupComplete" to "boolean", "pendingAssets" to "integer", "exclusiveAssetsCleared" to "integer", "sharedAssetsRetained" to "integer", "externalAssetsRetained" to "integer", "reason" to "string")
-            "NotebookDocumentRepository", "NotebookUseCases" -> mapOf("noteId" to "string", "version" to "string", "revision" to "integer", "title" to "string", "lifecycle" to "string", "hasRecoveryDraft" to "boolean", "blocks" to "array", "block" to "object", "blockIds" to "array", "saved" to "boolean", "changed" to "boolean")
-            "NotebookCanvasRepository" -> mapOf("canvasId" to "string", "version" to "string", "nodeId" to "string", "nodeIds" to "array", "edgeId" to "string", "title" to "string", "changed" to "boolean", "nodes" to "array", "edges" to "array", "nodesTruncated" to "boolean", "edgesTruncated" to "boolean")
+            "NotebookDocumentRepository", "NotebookUseCases" -> mapOf("noteId" to "string", "version" to "string", "revision" to "integer", "title" to "string", "lifecycle" to "string", "hasRecoveryDraft" to "boolean", "blocks" to "array", "block" to "object", "blockIds" to "array", "saved" to "boolean", "changed" to "boolean", "pageSettings" to "object", "review" to "object", "commentId" to "string")
+            "NotebookCanvasRepository" -> mapOf("canvasId" to "string", "version" to "string", "nodeId" to "string", "nodeIds" to "array", "edgeId" to "string", "title" to "string", "changed" to "boolean", "nodes" to "array", "edges" to "array", "nodesTruncated" to "boolean", "edgesTruncated" to "boolean", "comment" to "object", "saved" to "boolean", "operation" to "string")
+            "RoomMemoryRepository" -> mapOf("id" to "string", "version" to "integer", "pages" to "array", "tags" to "array",
+                "links" to "array", "truncated" to "boolean", "targetId" to "string", "targetVersion" to "integer", "linked" to "boolean",
+                "tag" to "string", "tagged" to "boolean")
             "CurrentCanvasContextOwner" -> mapOf("canvasId" to "string", "version" to "string", "selectedNodeIds" to "array", "selectionToken" to "string")
             "StudioService" -> mapOf("projectId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "outputId" to "string", "fileVersion" to "string", "requestId" to "string", "nodeId" to "string")
             "WorkspaceFileTools" -> mapOf("noteId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string")
@@ -79,15 +88,17 @@ object WorkspaceOperabilityContracts {
             "halo_note_purge", "halo_note_purge_status", "halo_note_purge_retry" -> setOf("noteId")
             "halo_note_get", "halo_note_read_block", "halo_note_rename", "halo_note_insert_block", "halo_note_edit_block", "halo_note_move_block", "halo_note_indent_block",
             "halo_note_split_block", "halo_note_merge_block", "halo_note_duplicate_block", "halo_note_delete_block", "halo_note_insert_reference", "halo_note_set_reference", "halo_note_replace_content",
-            "halo_note_archive", "halo_note_trash", "halo_note_restore", "halo_note_remove_from_inbox" -> setOf("noteId")
+            "halo_note_archive", "halo_note_trash", "halo_note_restore", "halo_note_remove_from_inbox", "halo_note_review_block",
+            "halo_note_set_format", "halo_note_set_page_settings", "halo_note_comment", "halo_note_resolve_changes" -> setOf("noteId")
             "halo_study_sessions" -> emptySet()
             "halo_study_state", "halo_study_select_exercise", "halo_study_set_preferences", "halo_study_complete", "halo_study_delete" -> setOf("sessionId")
             "halo_study_submit_attempt" -> setOf("sessionId", "attemptId")
             "halo_study_card_get", "halo_study_card_create", "halo_study_card_edit", "halo_study_card_accept", "halo_study_card_review", "halo_study_card_delete" -> setOf("sessionId", "itemId")
             "halo_canvas_create", "halo_canvas_get", "halo_canvas_current" -> setOf("canvasId")
             "halo_canvas_rename" -> setOf("canvasId")
-            "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate" -> setOf("canvasId", "nodeId")
-            "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup" -> setOf("canvasId", "nodeIds")
+            "halo_canvas_add_group", "halo_canvas_tag", "halo_canvas_duplicate", "halo_canvas_add_comment", "halo_canvas_review_comment",
+            "halo_canvas_update_comment" -> setOf("canvasId", "nodeId")
+            "halo_canvas_arrange", "halo_canvas_delete", "halo_canvas_ungroup", "halo_canvas_group_lock" -> setOf("canvasId", "nodeIds")
             "halo_canvas_add_text", "halo_canvas_edit_text", "halo_canvas_move", "halo_canvas_clear_sketch" -> setOf("canvasId", "nodeId")
             "halo_canvas_connect", "halo_canvas_disconnect" -> setOf("canvasId", "edgeId")
             "halo_studio_create", "halo_studio_get", "halo_studio_edit", "halo_studio_save" -> setOf("projectId")
@@ -96,6 +107,7 @@ object WorkspaceOperabilityContracts {
             "halo_workspace_insert", "halo_studio_insert", "halo_file_attach_canvas" -> setOf("nodeId")
             "halo_text_create", "halo_text_import", "halo_text_get", "halo_text_edit", "halo_sheets_analyze", "halo_sheets_delete", "halo_image_batch", "halo_file_batch_status", "halo_pdf_annotation_create", "halo_pdf_annotation_get", "halo_pdf_annotation_edit" -> setOf("noteId")
             "halo_text_export", "halo_image_transform", "halo_image_collage", "halo_pdf_extract_page_image", "halo_pdf_annotation_export_page_image", "halo_workspace_describe", "halo_workspace_select" -> setOf("objectId")
+            "halo_memory_page_connections", "halo_memory_page_link", "halo_memory_page_tag" -> setOf("id")
             else -> emptySet()
         }
         return ToolOperability(capabilityId = CapabilityId(if (operation.operation in setOf(ToolOperation.QUERY, ToolOperation.PRESENT)) "workspace.read" else "workspace.write"), owner = operation.owner,
@@ -115,6 +127,7 @@ object WorkspaceOperabilityContracts {
                         (if (definition.name == "halo_canvas_clear_sketch") setOf("changed") else emptySet()) +
                         (if (operation.owner == "StudyUseCases" && operation.encoding == ToolResultEncoding.JSON && definition.name != "halo_study_sessions") setOf("version") else emptySet()) +
                         (if (definition.name in setOf("halo_study_state", "halo_study_delete")) setOf("localDataVersion") else emptySet()) +
+                        (if (operation.owner == "RoomMemoryRepository") setOf("id", "version") else emptySet()) +
                         (if (operation.owner in setOf("NotebookDocumentRepository", "NotebookUseCases")) setOf("version", "revision") else emptySet()) +
                         (if (operation.owner == "NotebookAssetRepository") setOf("version", "attachmentCount", "hasRecoveryDraft") else emptySet()) +
                         (if ("itemId" in resultIds) setOf("itemVersion") else emptySet())).toList(), "additionalProperties" to true),

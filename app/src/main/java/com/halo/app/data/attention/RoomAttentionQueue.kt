@@ -25,6 +25,7 @@ class RoomAttentionQueue(private val db: AppDatabase, scope: CoroutineScope) : A
         dao.put(AttentionPendingEntity(request.request.id.value, request.request.deduplicationKey, encode(request), request.queuedAt.toEpochMilli()))
     } }
     override suspend fun remove(requestId: AttentionRequestId) = dao.remove(requestId.value)
+    override suspend fun isPending(requestId: AttentionRequestId) = dao.isPending(requestId.value)
     override suspend fun releaseEligible(context: AttentionContext) = Unit
     override suspend fun terminal(id: AttentionRequestId): DeliveryReceipt? = dao.receipt(id.value)?.takeIf { it.outcome != DeliveryOutcome.QUEUED.name }?.toReceipt()
     override suspend fun claim(request: AttentionRequest, channel: DeliveryChannel?) = db.withTransaction {
@@ -88,6 +89,7 @@ class RoomAttentionQueue(private val db: AppDatabase, scope: CoroutineScope) : A
             "AgentCompletion" -> AttentionSource.AgentCompletion
             "PersonalSuggestion" -> AttentionSource.PersonalSuggestion
             "Routine" -> AttentionSource.Routine
+            "FollowUp" -> AttentionSource.FollowUp
             "NotificationDigest" -> AttentionSource.NotificationDigest
             "Reminder" -> AttentionSource.Reminder
             "DeviceEvent" -> AttentionSource.DeviceEvent

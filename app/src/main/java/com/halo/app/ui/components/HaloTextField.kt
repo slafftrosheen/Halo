@@ -52,6 +52,7 @@ fun HaloTextField(
     maxChars: Int = 12000,
     readText: String? = value,
     inputContentDescription: String? = null,
+    onFinalSpeech: ((String) -> Unit)? = null,
 ) {
     val secret = kind == VoiceFieldKind.SECRET || visualTransformation is PasswordVisualTransformation ||
         keyboardOptions.keyboardType in setOf(androidx.compose.ui.text.input.KeyboardType.Password,
@@ -85,6 +86,7 @@ fun HaloTextField(
                 allowDictation = !readOnly && kind != VoiceFieldKind.URL_ID,
                 allowLongDictation = kind == VoiceFieldKind.TEXT,
                 guideDictation = guideDictation,
+                onCommand = onFinalSpeech,
                 dictationRequest = dictationRequest, onRequestConsumed = onRequestConsumed,
                 appendDictation = kind == VoiceFieldKind.TEXT,
                 applySearchImmediately = kind == VoiceFieldKind.SEARCH,

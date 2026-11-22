@@ -87,7 +87,8 @@ internal fun homeTaskProgress(steps: List<AgentStep>): StructuredPresentation {
     return StructuredPresentation(root = PresentationNode.Checklist("home-progress", items, "Task progress"))
 }
 
-private val completedReadTools = setOf("halo_day_context", "halo_source_get", "halo_source_query", "halo_source_image",
+private val completedReadTools = setOf("halo_knowledge_catalogue", "halo_knowledge_search",
+    "halo_day_context", "halo_source_get", "halo_source_query", "halo_source_image",
     "halo_organizer_query", "halo_organizer_get", "halo_get_workspace_object", "halo_search_notebook",
     "halo_web_search", "halo_discover_tools", "halo_use_skill", "halo_saved_chat_get", "halo_library_view")
 

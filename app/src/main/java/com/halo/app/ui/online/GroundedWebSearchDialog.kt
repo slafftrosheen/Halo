@@ -10,6 +10,11 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.R
@@ -31,7 +36,7 @@ import java.util.Date
     var savedToScreen by remember { mutableStateOf(false) }
     var savingToScreen by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf(false) }
-    var prepared by remember { mutableStateOf<OnlineConsentChallenge?>(null) }
+    var prepared by remember { mutableStateOf<WebSearchReview?>(null) }
     var preparedQuery by remember { mutableStateOf("") }
     var preparedLanguage by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
@@ -40,7 +45,7 @@ import java.util.Date
     var generation by remember { mutableLongStateOf(0L) }
     var costs by remember { mutableStateOf(false) }
     fun cancel() {
-        generation++; job?.cancel(); service.discard(prepared); prepared = null; busy = false
+        generation++; job?.cancel(); service.discard(prepared?.challenge); prepared = null; busy = false
     }
     val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(owner, service) {
@@ -51,7 +56,7 @@ import java.util.Date
     AlertDialog(onDismissRequest = { cancel(); onDismiss() }, title = { Text(stringResource(R.string.online_title)) },
         text = {
             Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                HaloTextField(query, { service.discard(prepared); prepared = null; query = it.take(2000); result = null; savedToScreen = false; saveError = false },
+                HaloTextField(query, { service.discard(prepared?.challenge); prepared = null; query = it.take(2000); result = null; savedToScreen = false; saveError = false },
                     enabled = !busy, label = { Text(stringResource(R.string.online_query)) }, kind = VoiceFieldKind.SEARCH,
                     modifier = Modifier.fillMaxWidth(), minLines = 2)
                 Text(stringResource(R.string.online_query_only), style = MaterialTheme.typography.bodySmall)
@@ -61,7 +66,17 @@ import java.util.Date
                 error?.let { Text(onlineProblemText(it), color = MaterialTheme.colorScheme.error)
                     if (it == OnlineProblem.LOCAL_ONLY) com.halo.app.ui.components.CloudModeResolution() }
                 result?.let { answer ->
-                    Text(answer.answer) // Plain text: model-authored URLs never become trusted clickable sources.
+                    val linkStyle = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)
+                    Text(buildAnnotatedString {
+                        append(answer.answer)
+                        var lastEnd = 0
+                        for (citation in answer.citations.sortedBy { it.start }) {
+                            if (citation.start >= lastEnd && citation.end <= length) {
+                                addLink(LinkAnnotation.Url(citation.url, TextLinkStyles(style = linkStyle)), citation.start, citation.end)
+                                lastEnd = citation.end
+                            }
+                        }
+                    })
                     Text(stringResource(R.string.online_retrieved, DateFormat.getDateTimeInstance().format(Date(answer.retrievedAtMs))), style = MaterialTheme.typography.labelSmall)
                     Text(stringResource(R.string.online_sources), style = MaterialTheme.typography.titleSmall)
                     Text(stringResource(R.string.online_source_warning), style = MaterialTheme.typography.bodySmall)
@@ -144,9 +159,9 @@ import java.util.Date
             busy = true; error = null
             job = scope.launch {
                 try {
-                    val challenge = service.prepare(text, lang)
-                    if (version == generation) { preparedQuery = text; preparedLanguage = lang; prepared = challenge }
-                    else service.discard(challenge)
+                    val review = service.prepareReview(text, lang)
+                    if (version == generation) { preparedQuery = text; preparedLanguage = lang; prepared = review }
+                    else service.discard(review.challenge)
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (failure: OnlineOperationRejected) { if (version == generation) error = failure.problem }
                 catch (_: Exception) { if (version == generation) error = OnlineProblem.UNAVAILABLE }
@@ -154,10 +169,15 @@ import java.util.Date
             }
         }) { Text(stringResource(R.string.online_search)) } },
         dismissButton = { TextButton(onClick = { cancel(); onDismiss() }) { Text(stringResource(if (busy) R.string.online_cancel else R.string.online_close)) } })
-    prepared?.let { challenge ->
-        OnlineSpendApprovalDialog(challenge.id, "OpenRouter", OpenRouterOnlineClient.FREE_MODEL,
-            preparedQuery + "\n\n" + stringResource(R.string.online_search_price), initialReservation = "0.01",
-            pricingUrl = "https://openrouter.ai/docs/guides/features/plugins/web-search",
+    prepared?.let { review ->
+        val challenge = review.challenge
+        OnlineSpendApprovalDialog(challenge.id, review.providerName, review.model,
+            preparedQuery + "\n\n" + stringResource(when (review.searchMode) {
+                "native_openai" -> R.string.online_search_engine_openai
+                "exa" -> R.string.online_search_engine_exa
+                else -> R.string.online_search_engine_auto
+            }) + "\n" + stringResource(R.string.online_search_price), initialReservation = "0.01",
+            pricingUrl = review.pricingUrl,
             onDismiss = { service.discard(challenge); prepared = null }, onApprove = { amount ->
                 prepared = null
                 val text = preparedQuery; val lang = preparedLanguage

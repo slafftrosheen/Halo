@@ -83,7 +83,8 @@ class PrivacyModeStore(private val backing: Storage) : RemoteDispatchPolicy {
             allowCloudWorkspace = remote && values[KEY_CLOUD_WORKSPACE] == true,
             allowCloudScreenContext = remote && values[KEY_CLOUD_SCREEN] == true,
             allowCloudImages = remote && values[KEY_CLOUD_IMAGES] == true,
-            allowCloudMemories = remote && values["policy_cloud_memories"] == true)
+            allowCloudMemories = remote && values["policy_cloud_memories"] == true,
+            referenceChatHistory = values[KEY_REFERENCE_CHAT_HISTORY] == true)
     }
     internal fun editActive(change: (ModeProfile) -> ModeProfile) = synchronized(lock) {
         update(snapshot.replacing(snapshot.active, change(snapshot.profile(snapshot.active))))

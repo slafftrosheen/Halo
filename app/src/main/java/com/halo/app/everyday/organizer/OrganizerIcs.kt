@@ -125,10 +125,14 @@ object OrganizerIcs {
             val duration = event.one("DURATION")?.value?.let(Duration::parse)
             require(explicitEnd == null || duration == null) { "Both end and duration were supplied" }
             require(explicitEnd == null || explicitEnd.allDay == start.allDay)
-            val end = explicitEnd?.instant()?.atZone(start.zone)?.toLocalDateTime()
-                ?: duration?.let { start.local.atZone(start.zone).plus(it).toLocalDateTime() }
-                ?: if (start.allDay) start.local.plusDays(1) else error("Timed event has no end or duration; choose one before importing")
-            return OrganizerTime(start.local, end, start.zone.id, start.allDay, start.floating).also { it.validate() } to start
+            val end = explicitEnd?.instant()?.atZone(start.zone)
+                ?: duration?.let { start.local.atZone(start.zone).plus(it) }
+                ?: if (start.allDay) start.local.plusDays(1).atZone(start.zone)
+                else error("Timed event has no end or duration; choose one before importing")
+            val localEnd = end.toLocalDateTime()
+            val endOffset = end.offset.takeIf { !start.allDay && localEnd.atZone(start.zone).toInstant() != end.toInstant() }
+            return OrganizerTime(start.local, localEnd, start.zone.id, start.allDay, start.floating,
+                endOffset = endOffset).also { it.validate() } to start
         }
         masters.forEach { event ->
             val uid = event.firstOrNull { it.name == "UID" }?.value?.let { runCatching { unescape(it) }.getOrNull() }
@@ -201,9 +205,12 @@ object OrganizerIcs {
     private fun isUtcZone(zone: ZoneId) = zone.rules.isFixedOffset && zone.rules.getOffset(Instant.EPOCH).totalSeconds == 0
     private fun timeLine(name: String, time: OrganizerTime, end: Boolean = false): String {
         val value = if (end) requireNotNull(time.end) else time.start
+        val zone = ZoneId.of(time.zoneId)
+        val offset = if (end) time.endOffset else time.startOffset
         return if (time.allDay) "$name;VALUE=DATE:${value.toLocalDate().format(date)}"
+            else if (offset != null) "$name:${utc.format(value.toInstant(offset))}"
             else if (time.followDeviceZone) "$name:${value.format(local)}"
-            else if (isUtcZone(ZoneId.of(time.zoneId))) "$name:${utc.format(value.atZone(ZoneId.of(time.zoneId)).toInstant())}"
+            else if (isUtcZone(zone)) "$name:${utc.format(value.atZone(zone).toInstant())}"
             else "$name;TZID=\"${time.zoneId}\":${value.format(local)}"
     }
     fun export(records: List<OrganizerRecord>, exceptions: List<OccurrenceOverride>, exportedAt: Instant): ByteArray {
@@ -234,7 +241,10 @@ object OrganizerIcs {
             }
             lines += "END:VEVENT"
             exceptions.filter { it.recordId == record.id && it.disposition != OccurrenceDisposition.COMPLETED }.forEach { exception ->
-                val identityTime = time.copy(start = exception.originalStart.atZone(ZoneId.of(time.zoneId)).toLocalDate().atTime(time.start.toLocalTime()), end = null)
+                val occurrence = exception.originalStart.atZone(ZoneId.of(time.zoneId))
+                val localIdentity = occurrence.toLocalDate().atTime(time.start.toLocalTime())
+                val identityOffset = occurrence.offset.takeIf { exception.originalStart == time.instant(occurrence.zone) && time.startOffset != null }
+                val identityTime = time.copy(start = localIdentity, end = null, startOffset = identityOffset, endOffset = null)
                 lines += listOf("BEGIN:VEVENT", "UID:$uid", "DTSTAMP:${utc.format(exportedAt)}", timeLine("RECURRENCE-ID", identityTime))
                 if (exception.disposition == OccurrenceDisposition.CANCELLED) lines += "STATUS:CANCELLED"
                 else {

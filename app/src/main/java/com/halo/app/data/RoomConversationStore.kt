@@ -26,6 +26,8 @@ data class PersistedConversation(
     val archived: Boolean = false
 )
 
+internal class ConversationPrivateBusy : IllegalStateException("The conversation is still finishing. Review it and try again after the reply.")
+
 @Dao
 interface ConversationDao {
     @Query("SELECT * FROM conversation_turns WHERE id = :id LIMIT 1")
@@ -35,6 +37,23 @@ interface ConversationDao {
 
     @Query("SELECT conversation_turns.* FROM conversation_turns INNER JOIN conversations ON conversations.id = conversation_turns.conversationId INNER JOIN workspace_objects ON workspace_objects.id = conversations.id WHERE conversationId = :id AND conversations.archived = 0 AND workspace_objects.lifecycle = 'ACTIVE' AND (userText LIKE :query ESCAPE '\\' OR assistantText LIKE :query ESCAPE '\\') ORDER BY timestamp DESC LIMIT :limit")
     suspend fun searchCurrent(id: String, query: String, limit: Int): List<PersistedTurn>
+    @Query("""SELECT conversation_turns.* FROM conversation_turns
+        INNER JOIN conversations ON conversations.id = conversation_turns.conversationId
+        INNER JOIN workspace_objects ON workspace_objects.id = conversations.id
+        WHERE conversations.id != :currentId AND conversations.archived = 0
+          AND workspace_objects.lifecycle = 'ACTIVE' AND workspace_objects.type = 'CONVERSATION'
+          AND conversation_turns.userText LIKE :query ESCAPE '\'
+        ORDER BY conversation_turns.timestamp DESC, conversation_turns.id LIMIT 16""")
+    suspend fun searchOtherChats(currentId: String, query: String): List<PersistedTurn>
+    @Query("""SELECT conversation_turns.* FROM conversation_turns
+        INNER JOIN conversations ON conversations.id = conversation_turns.conversationId
+        INNER JOIN workspace_objects ON workspace_objects.id = conversations.id
+        WHERE conversations.id != :currentId AND conversations.archived = 0
+          AND workspace_objects.lifecycle = 'ACTIVE' AND workspace_objects.type = 'CONVERSATION'
+          AND conversation_turns.timestamp >= :since
+          AND (conversation_turns.userText LIKE '%prefer%' OR conversation_turns.userText LIKE '%предпочитаю%')
+        ORDER BY conversation_turns.timestamp DESC, conversation_turns.id LIMIT 32""")
+    suspend fun recentPreferenceTurns(currentId: String, since: Long): List<PersistedTurn>
     @Query("""SELECT conversations.* FROM conversations
         INNER JOIN workspace_objects ON workspace_objects.id = conversations.id
         WHERE conversations.archived = 0 AND workspace_objects.type = 'CONVERSATION'
@@ -64,14 +83,28 @@ interface ConversationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun conversation(value: PersistedConversation)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(value: PersistedTurn)
     @Query("DELETE FROM conversation_turns WHERE conversationId = :id") suspend fun clear(id: String)
+
+    @Query("""SELECT DISTINCT conversationId FROM conversation_turns
+        WHERE id = :id OR instr(metadata, :id) > 0 OR instr(userText, :id) > 0 OR instr(assistantText, :id) > 0
+        ORDER BY conversationId""")
+    suspend fun privateHistoryCandidates(id: String): List<String>
+
+    @Query("DELETE FROM conversations WHERE id = :id AND active = 0") suspend fun withdrawPrivateConversation(id: String): Int
+    @Query("DELETE FROM workspace_objects WHERE id = :id AND type = 'CONVERSATION'") suspend fun withdrawPrivateHeader(id: String): Int
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun restorePrivateConversation(value: PersistedConversation)
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun restorePrivateTurn(value: PersistedTurn)
 }
 
 class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) : ConversationStore {
     private val dao = db.conversationDao()
     private val mutex = Mutex()
+    private val executionLock = Any()
+    private val executingConversations = mutableMapOf<String, Int>()
+    private val privateConversations = mutableSetOf<String>()
+    private val conversationExecutionChanges = MutableStateFlow(0L)
     private val mutableActiveConversation = MutableStateFlow<String?>(null)
     val activeConversation = mutableActiveConversation.asStateFlow()
-    private var conversationId = ""
+    @Volatile private var conversationId = ""
         set(value) { field = value; mutableActiveConversation.value = value.ifBlank { null } }
     private val _turns = MutableStateFlow<List<ConversationTurn>>(emptyList())
     private val _historyLoaded = MutableStateFlow(false)
@@ -118,6 +151,68 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
 
     override suspend fun awaitReady() { ready.await() }
     private suspend fun reload() { _turns.value = dao.turns(conversationId).map { it.domain() } }
+
+    override suspend fun reserveConversationExecution(id: String?): ConversationExecutionLease {
+        if (id == null) return ConversationExecutionLease { }
+        awaitReady()
+        synchronized(executionLock) {
+            check(id !in privateConversations) { "Conversation unavailable" }
+            executingConversations[id] = (executingConversations[id] ?: 0) + 1
+        }
+        val finished = java.util.concurrent.atomic.AtomicBoolean(false)
+        val lease = ConversationExecutionLease {
+            if (finished.compareAndSet(false, true)) {
+                synchronized(executionLock) {
+                    val remaining = executingConversations.getValue(id) - 1
+                    if (remaining == 0) executingConversations.remove(id) else executingConversations[id] = remaining
+                }
+                conversationExecutionChanges.update { it + 1 }
+            }
+        }
+        try { require(isConversationAvailable(id)) { "Conversation unavailable" }; return lease }
+        catch (failure: Throwable) { lease.release(); throw failure }
+    }
+
+    /** Freeze the reviewed IDs before Room begins. Selection and transcript publish only after commit. */
+    internal suspend fun <T> withPrivateConversationWithdrawal(ids: Set<String>, action: suspend () -> T): T {
+        if (ids.isEmpty()) return action()
+        awaitReady()
+        synchronized(executionLock) {
+            if (ids.any { it in privateConversations }) throw ConversationPrivateBusy()
+            privateConversations.addAll(ids)
+        }
+        try {
+            val drained = withTimeoutOrNull(30_000L) {
+                conversationExecutionChanges.first { synchronized(executionLock) { ids.none(executingConversations::containsKey) } }
+                true
+            }
+            if (drained != true) throw ConversationPrivateBusy()
+            return mutex.withLock {
+                try { action() }
+                finally {
+                    withContext(NonCancellable) {
+                        if (conversationId in ids && dao.getConversation(conversationId) == null) {
+                            val active = requireNotNull(dao.active()) { "Replacement conversation unavailable" }
+                            _turns.value = emptyList()
+                            conversationId = active.id
+                            reload()
+                        }
+                    }
+                }
+            }
+        } finally {
+            synchronized(executionLock) { privateConversations.removeAll(ids) }
+        }
+    }
+
+    internal suspend fun stagePrivateConversationWithdrawal(id: String, wasActive: Boolean) {
+        synchronized(executionLock) { check(id in privateConversations && id !in executingConversations) }
+        if (!wasActive) return
+        check(conversationId == id && dao.active()?.id == id) { "The selected conversation changed" }
+        dao.deactivate()
+        ensureConversationObject(UUID.randomUUID().toString(), "New conversation", System.currentTimeMillis())
+    }
+
     override suspend fun isConversationAvailable(id: String): Boolean {
         awaitReady()
         return dao.getConversation(id)?.archived == false && db.notebookDao().getWorkspaceObject(id)?.lifecycle == "ACTIVE"
@@ -140,6 +235,9 @@ class RoomConversationStore(private val db: AppDatabase, scope: CoroutineScope) 
         awaitReady()
         return mutex.withLock {
             db.withTransaction {
+                check(db.privateLibraryDao().claims(listOf(com.halo.app.data.workspace.privateLibraryClaim("conversation-commit:$commitId"))).isEmpty()) {
+                    "This response belongs to a Private conversation"
+                }
                 // LIKE only selects candidates. Decoded JSON is the exact global identity authority.
                 val escaped = JSONObject.quote(commitId).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
                 dao.turnsForCommit("%$escaped%").firstOrNull {

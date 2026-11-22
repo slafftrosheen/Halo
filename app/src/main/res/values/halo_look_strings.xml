@@ -3,6 +3,7 @@
 <resources>
 <string name="look_title">Make it yours</string>
 <string name="look_subtitle">Pick a look, then fine-tune. Nothing changes until you Apply.</string>
+<string name="look_presets_label">Looks</string>
 <string name="look_preset_night_mint">Night Mint</string>
 <string name="look_preset_paper_sage">Paper Sage</string>
 <string name="look_preset_slate_blue">Slate Blue</string>
@@ -35,4 +36,8 @@
 <string name="look_dark_only">Dark only — your light look stays as it is.</string>
 <string name="look_light_only">Light only — your dark look stays as it is.</string>
 <string name="look_apply">Apply</string>
+    <string name="look_motion_play">Play motion preview</string>
+    <string name="look_motion_android_off">Android’s Remove animations setting is on.</string>
+    <string name="look_motion_device_limited">The phone is limiting animations right now.</string>
+    <string name="look_motion_contrast">Higher contrast uses a still ring.</string>
 </resources>

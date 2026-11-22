@@ -21,8 +21,37 @@ data class WorkingSetEntry(
 @Entity(tableName = "object_provenance")
 data class ObjectProvenance(@PrimaryKey val objectId: String, val sourceId: String, val revision: String, val metadata: String)
 
+data class DayCaptureRow(val objectId: String, val title: String, val captured: Long, val uri: String, val metadata: String)
+data class LibraryCaptureOrigin(val objectId: String, val sourceId: String, val metadata: String)
+
 @Dao
 interface WorkspaceContextDao {
+    @Query("""SELECT w.id AS objectId, w.title, a.createdAtEpochMs AS captured, a.pathOrUri AS uri, p.metadata
+        FROM object_provenance p JOIN workspace_objects w ON w.id = p.objectId
+        JOIN workspace_assets a ON a.objectId = w.id
+        WHERE p.sourceId = 'phone' AND w.lifecycle = 'ACTIVE' AND w.source = 'DEVICE_CAPTURE'
+        AND a.type = 'IMAGE' AND a.storageType = 'APP_OWNED' AND a.createdAtEpochMs >= :from AND a.createdAtEpochMs < :until
+        ORDER BY a.createdAtEpochMs DESC, w.id LIMIT 250""")
+    suspend fun dayCaptures(from: Long, until: Long): List<DayCaptureRow>
+
+    @Query("SELECT objectId FROM object_provenance WHERE sourceId = :source")
+    fun observeLibraryOriginIds(source: String): Flow<List<String>>
+
+    @Query("""SELECT p.objectId FROM object_provenance p JOIN workspace_files f ON f.objectId = p.objectId
+        WHERE f.mimeType = 'application/pdf' AND f.ownership = 'HALO_OWNED'
+        AND (instr(p.sourceId, :paper) = 1 OR instr(p.sourceId, :translation) = 1)""")
+    fun observeLibraryScanIds(paper: String, translation: String): Flow<List<String>>
+
+    @Query("""SELECT p.objectId, p.sourceId, p.metadata
+        FROM object_provenance p JOIN workspace_objects w ON w.id = p.objectId
+        WHERE w.source = 'DEVICE_CAPTURE' AND (EXISTS (
+          SELECT 1 FROM note_attachments n JOIN workspace_assets a ON a.id = n.assetId
+          WHERE n.noteId = p.objectId AND a.objectId = p.objectId AND a.type = 'IMAGE' AND a.storageType = 'APP_OWNED'
+        ) OR (p.sourceId LIKE 'device-media:%' AND EXISTS (
+          SELECT 1 FROM workspace_files f WHERE f.objectId = p.objectId AND f.mimeType LIKE 'image/%'
+          AND f.ownership = 'HALO_OWNED'
+        )))""")
+    fun observeLibraryCaptureOrigins(): Flow<List<LibraryCaptureOrigin>>
     @Query("SELECT objectId FROM working_set") fun observeWorkingSet(): Flow<List<String>>
     @Query("SELECT objectId FROM working_set ORDER BY addedAt DESC") suspend fun selectedIds(): List<String>
     @Query("SELECT * FROM working_set ORDER BY addedAt DESC") suspend fun selectedEntries(): List<WorkingSetEntry>
@@ -61,12 +90,21 @@ class WorkspaceContextStore(private val database: AppDatabase, private val notes
         com.halo.runtime.cognition.context.WorkspaceReferenceMetadata(objectId, version, item.title.take(200))
     }
     val useMemories = kotlinx.coroutines.flow.MutableStateFlow(storage.readRuntimeAiContextPolicy().includeMemories)
+    val referenceChatHistory = kotlinx.coroutines.flow.MutableStateFlow(storage.readRuntimeAiContextPolicy().referenceChatHistory)
     val cloudSharing = kotlinx.coroutines.flow.MutableStateFlow(storage.readRuntimeAiContextPolicy().allowCloudWorkspace)
-    fun setUseMemories(enabled: Boolean) { if (storage.savedPrivacyMode() == null) storage.putBoolean("policy_memories", enabled); refreshPolicy() }
+    fun setUseMemories(enabled: Boolean) {
+        storage.putBoolean(com.halo.app.ai.KEY_MEMORIES, enabled)
+        refreshPolicy()
+    }
+    fun setReferenceChatHistory(enabled: Boolean) {
+        storage.putBoolean(com.halo.app.ai.KEY_REFERENCE_CHAT_HISTORY, enabled)
+        refreshPolicy()
+    }
     fun setCloudSharing(enabled: Boolean) { if (storage.savedPrivacyMode() == null) storage.putBoolean("policy_cloud_workspace", enabled); refreshPolicy() }
     fun refreshPolicy() {
         cloudSharing.value = storage.readRuntimeAiContextPolicy().allowCloudWorkspace
         useMemories.value = storage.readRuntimeAiContextPolicy().includeMemories
+        referenceChatHistory.value = storage.readRuntimeAiContextPolicy().referenceChatHistory
     }
     fun remoteAllowed(type: String): Boolean = storage.readRuntimeAiContextPolicy().let {
         it.allowCloudWorkspace && (type != "MEMORY" || it.allowCloudMemories) }

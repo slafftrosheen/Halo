@@ -1,0 +1,116 @@
+{
+ "version": "11.0",
+ "status": "reference · unverified · not tested on a device",
+ "what": "Pages halo builds from blocks: Today, Reads, tool start pages, Library suggestions, Kids adventure, Study today.",
+ "extends": "halo-card-schema.json",
+ "blockTypes": [
+  {
+   "type": "day",
+   "source": "calendar",
+   "pages": [
+    "today"
+   ]
+  },
+  {
+   "type": "route",
+   "source": "calendar + maps",
+   "pages": [
+    "today"
+   ],
+   "opens": "halo://home/tools/maps"
+  },
+  {
+   "type": "weather_advice",
+   "source": "weather service",
+   "pages": [
+    "today"
+   ]
+  },
+  {
+   "type": "study_due",
+   "source": "Library cards",
+   "pages": [
+    "today",
+    "study"
+   ]
+  },
+  {
+   "type": "in_short",
+   "source": "a Reads source",
+   "pages": [
+    "today",
+    "reads"
+   ],
+   "rules": [
+    "source named",
+    "links to the full article"
+   ]
+  },
+  {
+   "type": "library_suggest",
+   "source": "Library",
+   "pages": [
+    "today",
+    "library"
+   ]
+  },
+  {
+   "type": "continue",
+   "source": "recent items",
+   "pages": [
+    "tool start pages"
+   ]
+  },
+  {
+   "type": "adventure",
+   "source": "approved kids sources",
+   "pages": [
+    "kids home"
+   ],
+   "kidsSafe": true
+  },
+  {
+   "type": "homework_time",
+   "source": "family settings",
+   "pages": [
+    "kids home"
+   ],
+   "kidsSafe": true
+  },
+  {
+   "type": "coach_offer",
+   "source": "Study + glasses photos",
+   "pages": [
+    "study"
+   ]
+  }
+ ],
+ "rules": [
+  "Every block shows its source and a ••• menu: Pin · Less like this · Why am I seeing this?",
+  "Layout uses fixed slots; a block never changes size or position while visible",
+  "New blocks arrive below the fold with a “New” chip; nothing pushes what you are reading",
+  "Pinned blocks stay through time-of-day changes",
+  "Generated text is marked “Made by halo”; confidence “check” blocks offer to look it up",
+  "Kids pages use only kidsSafe blocks from approved sources",
+  "Private items are never used to build a page",
+  "Offline: the page is built on the phone from what is there and says so once"
+ ],
+ "timeOfDay": {
+  "morning": [
+   "route",
+   "weather_advice",
+   "study_due",
+   "in_short"
+  ],
+  "afternoon": [
+   "day (follow-up)",
+   "weather_advice",
+   "study_due",
+   "in_short"
+  ],
+  "evening": [
+   "tomorrow’s first thing",
+   "wind down"
+  ]
+ }
+}

@@ -9,6 +9,7 @@ import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
 import com.halo.app.R
+import com.halo.app.di.ManualDependencyGraph as Graph
 import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -53,6 +54,11 @@ fun StudyHomeScreen(
     onStartVoiceMode: () -> Unit = {},
     initialSourceId: String? = null,
     initialGoal: String? = null,
+    allowCourseOutline: Boolean = true,
+    openPhotoCoach: Boolean = false,
+    initialPhotoCoachTicket: String? = null,
+    onCoachToStudy: ((String) -> Unit)? = null,
+    onExamPlanSaved: ((String, java.time.Instant) -> Unit)? = null,
 ) {
     val sessions by model.sessions.collectAsStateWithLifecycle()
     val summaries by model.summaries.collectAsStateWithLifecycle()
@@ -64,6 +70,66 @@ fun StudyHomeScreen(
     val candidates by model.candidates.collectAsStateWithLifecycle()
     val previews by model.previews.collectAsStateWithLifecycle()
     val reads by model.reads.collectAsStateWithLifecycle()
+
+    val family = Graph.kidsPreferences
+    val familyReady by family.loadedState.collectAsStateWithLifecycle()
+    val kidsMode by family.enabled.collectAsStateWithLifecycle()
+    val pause by Graph.haloPause.state.collectAsStateWithLifecycle()
+    val courseCollectionSource = remember(allowCourseOutline) {
+        if (allowCourseOutline) observeStudyCollections()
+        else kotlinx.coroutines.flow.flowOf(emptyList<HaloStudyCollection>())
+    }
+    val courseCollections by courseCollectionSource.collectAsStateWithLifecycle(emptyList())
+    val canOpenCoach = familyReady && !kidsMode && !pause.paused
+    var photoCoachRevision by remember { mutableStateOf<Long?>(null) }
+    var examPlanRevision by remember { mutableStateOf<Long?>(null) }
+    var routeUsed by rememberSaveable(openPhotoCoach, initialPhotoCoachTicket) { mutableStateOf(false) }
+    var reviewedPhotoTicket by remember { mutableStateOf<String?>(null) }
+    fun openCoach() {
+        if (!Graph.isHaloPaused()) photoCoachRevision = runCatching { family.adultActionRevision() }.getOrNull()
+    }
+    LaunchedEffect(canOpenCoach, openPhotoCoach, initialPhotoCoachTicket) {
+        if (!canOpenCoach) { photoCoachRevision = null; reviewedPhotoTicket = null; examPlanRevision = null }
+        else if ((openPhotoCoach || initialPhotoCoachTicket != null) && !routeUsed) {
+            openCoach()
+            routeUsed = photoCoachRevision != null
+            if (routeUsed) reviewedPhotoTicket = initialPhotoCoachTicket
+        }
+    }
+    val planAuthority = examPlanRevision
+    val canPlanExam = canOpenCoach && onExamPlanSaved != null
+    val openExamPlan = { examPlanRevision = runCatching { family.adultActionRevision() }.getOrNull() }
+    if (canPlanExam && planAuthority != null) StudyExamPlanSheet(
+        courses = courseCollections,
+        authority = { family.requireAdultAction(planAuthority); Graph.haloPause.requireActive() },
+        onDismiss = { examPlanRevision = null }, onSaved = { id, start -> examPlanRevision = null; onExamPlanSaved?.invoke(id, start) },
+    )
+    val coachAuthority = photoCoachRevision
+    if (coachAuthority != null && canOpenCoach) {
+        val requireAuthority = { family.requireAdultAction(coachAuthority); Graph.haloPause.requireActive() }
+        val fallbackTitle = uiText("Study from a note")
+        val reviewedSourceTitle = stringResource(R.string.halo11_coach_reviewed_source)
+        val targets = sessions.asSequence()
+            .filter { it.learnerLevel == StudyLearnerLevel.ADULT && it.lifecycle == StudySessionLifecycle.ACTIVE }
+            .take(12).map { CoachLessonTarget(it.id, it.goal?.takeIf(String::isNotBlank) ?: fallbackTitle, it.updatedAtEpochMs) }
+            .toList()
+        val prepareStudyText: (suspend (String) -> Unit)? = if (onCoachToStudy == null) null else { text ->
+            requireAuthority()
+            val note = Graph.notebookRepository.createNote(title = reviewedSourceTitle,
+                body = text.trim().also { require(it.isNotEmpty() && it.length <= 12000) })
+            requireAuthority()
+            photoCoachRevision = null
+            reviewedPhotoTicket = null
+            onCoachToStudy(note.id)
+        }
+        LocalPhotoCoachSheet(child = false, allowed = { runCatching(requireAuthority).isSuccess },
+            onDismiss = { photoCoachRevision = null; reviewedPhotoTicket = null }, targets = targets,
+            reviewedPhotoTicket = reviewedPhotoTicket, onReviewedPhotoConsumed = { reviewedPhotoTicket = null },
+            onStudyText = prepareStudyText,
+            keepCard = { lesson, question, answer ->
+                model.keepPhotoCoachCard(lesson, question, answer, requireAuthority)
+            })
+    }
 
     var picker by remember { mutableStateOf(false) }
     var setupStep by rememberSaveable { mutableIntStateOf(0) }
@@ -90,6 +156,14 @@ fun StudyHomeScreen(
     var optionsExpanded by rememberSaveable { mutableStateOf(false) }
     var materialOptionsExpanded by rememberSaveable { mutableStateOf(false) }
     var showAllSessions by rememberSaveable { mutableStateOf(false) }
+    var showCourseOutline by rememberSaveable { mutableStateOf(false) }
+    if (allowCourseOutline && showCourseOutline) {
+        val course by model.courseOutline.collectAsStateWithLifecycle(initialValue = StudyCourseRead.Loading)
+        val saving by model.savingCourse.collectAsStateWithLifecycle()
+        StudyCourseOutlineSheet(course, activeId = null, busy = saving,
+            onOpen = { id -> showCourseOutline = false; onResume(id) },
+            onMove = model::moveCourseLesson, onDismiss = { showCourseOutline = false })
+    }
     var showAllDue by rememberSaveable { mutableStateOf(false) }
     // These choices are part of the learner's unfinished setup. Rotation and
     // background recreation must not silently reset age/style/source policy.
@@ -158,9 +232,10 @@ fun StudyHomeScreen(
         (setupStep < 3 || materialReady)
     val continueSetup: () -> Unit = { if (setupStep < 3) setupStep++ else startLesson() }
     val pageOwner = ShellPageOwner("study", sourceIdentity = "home:$setupActive:$setupStep:${selected.hashCode()}:${previews.hashCode()}:$busy",
-        canonicalToolIds = listOf("halo_study_sessions"),
+        canonicalToolIds = if (canPlanExam) listOf("halo_study_sessions", "halo_organizer_create", "halo_organizer_occurrence", "halo_planner_reschedule")
+            else listOf("halo_study_sessions"),
         helpDescription = stringResource(R.string.zone5_help_study),
-        guidanceBlocked = busy || picker || optionsExpanded,
+        guidanceBlocked = busy || picker || optionsExpanded || planAuthority != null,
         completedGuideIds = if (sessions.isNotEmpty()) setOf("study-new.v1", "study-material.v1") else emptySet(),
         defaultDisabledActionReason = stringResource(R.string.action_wait),
         disabledActionReasons = mapOf("page.study.next" to when {
@@ -179,6 +254,8 @@ fun StudyHomeScreen(
         if (!setupActive) {
             add(ShellPageAction("page.study.new", "Learn a topic", HaloGlyph.QUESTION, !busy) { startNewLesson() })
             add(ShellPageAction("page.study.homework", "My homework or notes", HaloGlyph.FILE, !busy) { startWithMaterial() })
+            if (canPlanExam) add(ShellPageAction("page.study.exam_plan", stringResource(R.string.study_exam_plan),
+                HaloGlyph.CALENDAR, !busy, openExamPlan))
         }
         if (setupActive) add(ShellPageAction("page.study.next", if (setupStep < 3) "Continue" else "Start lesson", HaloGlyph.NEXT, canContinueSetup, continueSetup))
         if (setupActive && setupStep == 1) add(ShellPageAction("page.study.material", "Material", HaloGlyph.FILE, !busy) { picker = true })
@@ -241,6 +318,17 @@ fun StudyHomeScreen(
                 if (reads.selectionRestoreFailed) TextButton(onClick = startNewLesson, enabled = !busy) { Text(uiText("New lesson")) }
                 else TextButton(onClick = model::retryReads, enabled = !busy) { Text(uiText("Retry")) }
             }
+            if (allowCourseOutline && !newLesson && courseCollections.isNotEmpty()) {
+                item("study-collections-title") {
+                    Text(stringResource(R.string.halo11_study_collections), style = MaterialTheme.typography.titleMedium)
+                }
+                items(courseCollections.take(8), key = { "study-course:${it.id}" }) { course ->
+                    val next = course.lessons.firstOrNull { it.lifecycle == StudySessionLifecycle.ACTIVE } ?: course.lessons.last()
+                    StudyResumeCard(course.title, next.goal?.takeIf(String::isNotBlank) ?: uiText("Study from a note")) {
+                        if (!busy && !family.enabled.value) onResume(next.id)
+                    }
+                }
+            }
             if (due.isNotEmpty() && !newLesson) item(key = "review_due") {
                 if (dueBySession.size == 1) {
                     StudyReviewEntry(due.size, enabled = !busy,
@@ -266,6 +354,16 @@ fun StudyHomeScreen(
             }
 
             if (!setupActive && reads.libraryReady) item(key = "choose-lesson") {
+                if (canOpenCoach) FilledTonalButton(onClick = ::openCoach, enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                    Text(stringResource(R.string.halo11_coach_entry))
+                }
+                if (allowCourseOutline) TextButton(onClick = { showCourseOutline = true }, enabled = !busy,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Course outline")) }
+                if (canPlanExam) OutlinedButton(onClick = openExamPlan, enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.study_exam_plan))
+                }
                 StudyChooseLesson(!busy, onTopic = startNewLesson, onMaterial = startWithMaterial)
             }
 

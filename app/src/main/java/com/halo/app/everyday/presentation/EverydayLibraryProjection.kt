@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.*
 
 /** Read-only Library references. Editing and lifecycle remain with each instrument; no duplicate Notes store. */
 data class EverydayLibraryEntry(val kind: String,val id: String,val version: Long,val title: String,val detail: String,val updatedAt: Long,
-    val target: EverydayTarget,val code: String="") {
+    val target: EverydayTarget,val code: String="",val linkedObjects: Set<String> = emptySet(),val privateEligible: Boolean = false) {
     val key get()="everyday:$kind:$id"
     val manageTool get()=when(kind) {"ORGANIZER" -> "halo_organizer_get";"SOURCE" -> "halo_source_get";"CLOCK" -> "halo_clock_query";else -> "halo_brief_query"}
 }
@@ -23,7 +23,10 @@ class EverydayLibraryProjection(private val organizer: OrganizerRepository,priva
     companion object {
         fun project(records: List<OrganizerRecord>,briefs: List<EverydayBrief>,clocks: List<WorldClockRecord>,sources: List<CollectorState>,settings: BriefSettings,kids: Boolean): List<EverydayLibraryEntry> = buildList {
             records.filter {it.deletedAt==null && (!kids || it.id in settings.childRecordIds)}.forEach {r ->
-                add(EverydayLibraryEntry("ORGANIZER",r.id,r.version,r.title,r.time?.let {"${it.start} · ${it.zoneId}"}.orEmpty(),r.updatedAt.toEpochMilli(),EverydayTarget.Record(r.id,r.version),r.kind.name))
+                add(EverydayLibraryEntry("ORGANIZER",r.id,r.version,r.title,r.time?.let {"${it.start} · ${it.zoneId}"}.orEmpty(),r.updatedAt.toEpochMilli(),
+                    EverydayTarget.Record(r.id,r.version),r.kind.name,r.links.mapTo(hashSetOf()) { it.objectId },
+                    privateEligible = !kids && r.calendar == OrganizerCalendar.PERSONAL && r.calendarUid == null &&
+                        (r.kind == OrganizerKind.EVENT || r.kind == OrganizerKind.TASK)))
             }
             briefs.filter {!kids || it.audience==BriefAudience.KIDS}.forEach {b ->
                 // Metadata never contains a fact/title excerpt that can outlive a sharing grant.

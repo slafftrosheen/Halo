@@ -90,6 +90,7 @@ data class NoteBlock(
     val indent: Int = 0,
     val refObjectId: String? = null,
     val language: String? = null,
+    val presentation: NoteBlockPresentation = NoteBlockPresentation(),
 ) {
     fun withPosition(position: Int): NoteBlock = copy(position = position)
 
@@ -117,6 +118,7 @@ data class NotebookDocument(
     val schemaVersion: Int = SCHEMA_VERSION,
     /** True when [title] is still the automatic projection of the body, not a user decision. */
     val titleIsDerived: Boolean = true,
+    val pageSettings: NotePageSettings = NotePageSettings(),
 ) {
     val isWritable: Boolean get() = lifecycle != WorkspaceLifecycle.TRASHED
 
@@ -187,6 +189,7 @@ data class RecoveryDraft(
     val updatedAt: Long,
     /** Unapplied source-editor text; never silently converted to document blocks. */
     val sourceDraft: String? = null,
+    val pageSettings: NotePageSettings? = null,
 ) {
     /** Only true when the draft is a *newer* unsaved state than the committed document. */
     fun supersedes(committedRevision: Long, committedUpdatedAt: Long): Boolean =
@@ -256,7 +259,7 @@ enum class DocumentOperation {
 enum class ProposalPlacement { REPLACE_SELECTION, INSERT_BELOW, APPEND_AT_END }
 
 /** Outline derived purely from the current block list. */
-fun List<NoteBlock>.outline(): List<DocumentOutlineEntry> = filter { it.type.isHeading }
+fun List<NoteBlock>.outline(): List<DocumentOutlineEntry> = filter { it.type.isHeading && !it.isPendingDeletion() }
     .map { block ->
         DocumentOutlineEntry(
             blockId = block.id,

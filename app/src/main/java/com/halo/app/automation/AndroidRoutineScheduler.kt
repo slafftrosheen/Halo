@@ -7,6 +7,7 @@ import com.halo.app.data.routine.RoomRoutineRepository
 import com.halo.app.di.ManualDependencyGraph
 import com.halo.runtime.cognition.routine.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.Duration
@@ -15,22 +16,22 @@ import java.util.concurrent.TimeUnit
 class AndroidRoutineScheduler(private val context: Context, private val repository: RoomRoutineRepository,
     private val validate: (Routine) -> Unit) : RoutineScheduler {
     private val work get() = WorkManager.getInstance(context)
-    override suspend fun schedule(routine: Routine): RoutineScheduleResult = withContext(Dispatchers.IO) {
-        val r = routine
-        if (!r.enabled) { cancel(r.id); return@withContext RoutineScheduleResult.Blocked("Disabled") }
+    override suspend fun schedule(routine: Routine): RoutineScheduleResult =
+        AutomationPrivacyFence.withOwner(AutomationPrivacyFence.routine(routine.id.value)) { scheduleCurrent(routine) }
+
+    private suspend fun scheduleCurrent(routine: Routine): RoutineScheduleResult = withContext(Dispatchers.IO) {
+        val r = repository.get(routine.id)?.takeIf { it.updatedAt == routine.updatedAt }
+            ?: return@withContext RoutineScheduleResult.Blocked("Routine changed")
+        if (!r.enabled) { cancelCurrent(r.id); return@withContext RoutineScheduleResult.Blocked("Disabled") }
         try { validate(r) } catch (e: Exception) {
-            repository.setEnabled(r.id, false); cancel(r.id)
+            repository.setEnabled(r.id, false); cancelCurrent(r.id)
             repository.migrationErrors.value = repository.migrationErrors.value + (r.id.value to (e.message ?: "Invalid routine"))
             return@withContext RoutineScheduleResult.Blocked(e.message ?: "Invalid routine")
-        }
-        val latest = repository.get(r.id)
-        if (latest == null || !latest.enabled || latest.updatedAt != r.updatedAt) {
-            return@withContext RoutineScheduleResult.Blocked("Routine changed")
         }
         val now = Instant.now()
         val at = r.trigger.nextOccurrence(now)
         if (at == null) {
-            cancel(r.id)
+            cancelCurrent(r.id)
             if (r.trigger is RoutineTrigger.Once) {
                 repository.setEnabled(r.id, false)
                 return@withContext RoutineScheduleResult.Blocked("Expired")
@@ -45,9 +46,20 @@ class AndroidRoutineScheduler(private val context: Context, private val reposito
         repository.dao.nextRun(r.id.value, at.toEpochMilli())
         RoutineScheduleResult.Scheduled(at)
     }
-    override suspend fun cancel(routineId: RoutineId) = withContext(Dispatchers.IO) {
+    override suspend fun cancel(routineId: RoutineId) =
+        AutomationPrivacyFence.withOwner(AutomationPrivacyFence.routine(routineId.value)) { cancelCurrent(routineId) }
+
+    private suspend fun cancelCurrent(routineId: RoutineId) = withContext(Dispatchers.IO) {
         work.cancelUniqueWork("halo.routine.${routineId.value}").result.get()
         repository.dao.nextRun(routineId.value, null)
+    }
+
+    /** The canonical routine is already withdrawn; never change its stored next occurrence. */
+    internal suspend fun cancelWithdrawnWork(id: String) {
+        withContext(Dispatchers.IO) {
+            repository.migrationErrors.update { it - id }
+            work.cancelUniqueWork("halo.routine.$id").result.get(10, TimeUnit.SECONDS)
+        }
     }
     override suspend fun reconcile() { reconcile(false) }
     suspend fun reconcile(clockChanged: Boolean) = withContext(Dispatchers.IO) {
@@ -85,6 +97,12 @@ class RoutineWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         val epoch = inputData.getLong("occurrence", -1)
         if (epoch < 0) return Result.failure()
         graph.routineExecutor.execute(RoutineOccurrence.scheduled(routine, Instant.ofEpochMilli(epoch)))
+        AutomationPrivacyFence.withOwner(AutomationPrivacyFence.routine(id.value)) { scheduleSuccessor(id, routine) }
+        return Result.success()
+    }
+
+    private suspend fun scheduleSuccessor(id: RoutineId, routine: Routine) {
+        val graph = ManualDependencyGraph
         val latest = graph.routineRepository.get(id)
         if (latest != null && latest.updatedAt == routine.updatedAt) {
             // Enqueue a successor, without cancelling this running worker via REPLACE.
@@ -103,6 +121,5 @@ class RoutineWorker(context: Context, params: WorkerParameters) : CoroutineWorke
                 graph.routineRepository.dao.nextRun(id.value, next.toEpochMilli())
             }
         }
-        return Result.success()
     }
 }

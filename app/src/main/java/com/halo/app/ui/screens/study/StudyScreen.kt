@@ -1,5 +1,7 @@
 package com.halo.app.ui.screens.study
 
+import com.halo.app.ui.instruments.asInstrumentCsvCell
+
 import kotlinx.coroutines.launch
 
 import kotlin.math.roundToInt
@@ -45,6 +47,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -134,6 +138,8 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     activeTools: com.halo.app.study.ActiveStudyToolsOwner? = null,
     presentationStorage: com.halo.sdk.runtime.Storage? = null,
     onConfigureReadingVoice: (() -> Unit)? = null,
+    onOpenCourseLesson: ((String) -> Unit)? = null,
+    startingCardId: String? = null,
     onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var presentation by remember(presentationStorage) { mutableStateOf(StudyPresentation.load(presentationStorage)) }
@@ -149,6 +155,10 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     var showSaveCard by remember { mutableStateOf(false) }
     var showComposer by rememberSaveable { mutableStateOf(false) }
     var showPresentation by rememberSaveable { mutableStateOf(false) }
+    var showCourseOutline by rememberSaveable { mutableStateOf(false) }
+    var showLinkedCard by rememberSaveable(startingCardId) { mutableStateOf(startingCardId != null) }
+    var exportStudyCards by remember { mutableStateOf(false) }
+    val acceptedCards = state.practiceItems.filter { it.accepted }
     var showHelp by rememberSaveable(state.session?.id) { mutableStateOf(false) }
     var cardQuestion by rememberSaveable { mutableStateOf("") }
     var focusedReview by rememberSaveable { mutableStateOf(startInReview) }
@@ -157,6 +167,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     val pageActionsReady = state.session != null && !state.loading && state.unavailable == null &&
         !state.isGenerating && !state.isSubmitting && state.comparingCards.isEmpty()
     val exitScope = rememberCoroutineScope()
+    val dynamicCardTarget = remember { BringIntoViewRequester() }
     var leaving by remember(viewModel) { mutableStateOf(false) }
     val leaveSafely: () -> Unit = {
         if (!leaving) {
@@ -170,12 +181,48 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     val backFromLesson: () -> Unit = {
         when {
             showComposer -> showComposer = false
+            showCourseOutline -> showCourseOutline = false
             showPresentation -> showPresentation = false
             showDetails -> showDetails = false
             showMenu -> showMenu = false
             practiceOpen -> { practiceOpen = false; viewModel.stopReading("Left practice") }
             focusedReview -> { focusedReview = false; skippedReviewIds = emptyList(); viewModel.stopReading("Left review") }
             else -> leaveSafely()
+        }
+    }
+    if (showCourseOutline && onOpenCourseLesson != null) {
+        val course by viewModel.courseOutline.collectAsStateWithLifecycle(initialValue = StudyCourseRead.Loading)
+        val saving by viewModel.savingCourse.collectAsStateWithLifecycle()
+        StudyCourseOutlineSheet(course, state.session?.id, busy = saving || leaving || !pageActionsReady,
+            onOpen = { id ->
+                if (!leaving) {
+                    leaving = true
+                    exitScope.launch {
+                        try {
+                            if (viewModel.keepBeforeLeaving()) {
+                                viewModel.stopReading("Left the Study screen")
+                                showCourseOutline = false
+                                onOpenCourseLesson(id)
+                            }
+                        } finally {
+                            leaving = false
+                        }
+                    }
+                }
+            }, onMove = viewModel::moveCourseLesson, onDismiss = { showCourseOutline = false })
+    }
+    if (showLinkedCard && !state.loading) {
+        val card = state.practiceItems.firstOrNull { it.id == startingCardId && it.accepted }
+        com.halo.app.ui.presence.LocalizedMaterialBottomSheet(
+            onDismissRequest = { showLinkedCard = false },
+            sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(com.halo.app.R.string.halo11_library_card), style = MaterialTheme.typography.titleLarge)
+                if (card != null && state.unavailable == null) PracticeItemRow(card, state, viewModel)
+                else Text(stringResource(com.halo.app.R.string.halo11_library_card_unavailable), style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
     val currentTurn = state.turns.lastOrNull { it.exerciseId == state.session?.currentExerciseId && it.failure == null && it.text.isNotBlank() }
@@ -204,6 +251,11 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     if (presentationStorage != null) LaunchedEffect(presentation.practiceReminder) {
         StudyPracticeReminder.maintain(reminderContext, presentation.practiceReminder)
     }
+    com.halo.app.ui.instruments.HaloInstrumentTextExport("text/csv", "Halo Study cards.csv", "Export Study cards",
+        acceptedCards.map { "${it.id}:${it.question.hashCode()}:${it.answer.hashCode()}" },
+        content = { "Question,Answer\r\n" + acceptedCards.joinToString("\r\n") {
+            "${it.question.asInstrumentCsvCell()},${it.answer.asInstrumentCsvCell()}"
+        } }, request = exportStudyCards, onClose = { exportStudyCards = false })
     if (showPresentation) StudyPresentationSheet(
         saved = presentation,
         onApply = { next ->
@@ -225,7 +277,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         helpSteps = listOf(com.halo.app.ui.presence.ShellGuideStep("study-new.v1", "page.study.practice",
             stringResource(com.halo.app.R.string.zone5_guide_study), state.session != null && !state.loading)),
         completedGuideIds = if (state.session != null && !state.loading) setOf("study-new.v1", "study-material.v1") else emptySet(),
-        guidanceBlocked = !pageActionsReady || showComposer || showDetails || showMenu || showPresentation ||
+        guidanceBlocked = !pageActionsReady || showComposer || showDetails || showMenu || showPresentation || showCourseOutline ||
             confirmDelete || state.reader?.speaking == true,
         canonicalToolIds = listOf("halo_study_current", "halo_study_state", "halo_study_session_action"),
         defaultDisabledActionReason = stringResource(when {
@@ -474,6 +526,28 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             },
         )
 
+        com.halo.app.ui.instruments.HaloInstrumentBar("study", mapOf(
+            "study.course_outline" to com.halo.app.ui.instruments.HaloInstrumentAction({ showCourseOutline = true },
+                pageActionsReady && onOpenCourseLesson != null),
+            "study.lesson_view" to com.halo.app.ui.instruments.HaloInstrumentAction({ showPresentation = true }, pageActionsReady),
+            "study.flashcards" to com.halo.app.ui.instruments.HaloInstrumentAction({
+                viewModel.stopReading("Changed Study view"); practiceOpen = false; focusedReview = true
+            }, pageActionsReady && state.dueReviewItems.isNotEmpty(), focusedReview),
+            "study.quiz" to com.halo.app.ui.instruments.HaloInstrumentAction({
+                viewModel.stopReading("Changed Study view"); focusedReview = false; practiceOpen = true
+            }, pageActionsReady, practiceOpen),
+            "study.hint" to com.halo.app.ui.instruments.HaloInstrumentAction({ showHelp = true }, pageActionsReady),
+            "study.hear_it" to com.halo.app.ui.instruments.HaloInstrumentAction({
+                if (currentTurn != null) viewModel.readTurnAloud(currentTurn) else viewModel.readSourceAloud()
+            }, canRead, working = state.reader?.speaking == true),
+            "study.say_it" to com.halo.app.ui.instruments.HaloInstrumentAction(onStartVoiceMode, pageActionsReady),
+            "study.make_cards" to com.halo.app.ui.instruments.HaloInstrumentAction(viewModel::createPracticeCards,
+                pageActionsReady && state.sources.isNotEmpty(), working = state.isGenerating),
+            "study.dynamic_cards" to com.halo.app.ui.instruments.HaloInstrumentAction({
+                exitScope.launch { dynamicCardTarget.bringIntoView() }
+            }, pageActionsReady && inLesson && (currentTurn != null || state.sources.isNotEmpty())),
+            "study.import_export" to com.halo.app.ui.instruments.HaloInstrumentAction({ exportStudyCards = true }, acceptedCards.isNotEmpty()),
+        ), primary = "study.lesson_view")
         if (state.sources.isNotEmpty()) {
             AssistChip(
                 onClick = { detailsTab = "Material"; showDetails = true },
@@ -706,7 +780,23 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 OutlinedButton(onClick = { viewModel.stopReading("Listen mode opened"); listenMode = true },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Listen to this lesson")) }
             val currentTurn = state.turns.lastOrNull { it.exerciseId == state.session?.currentExerciseId }
-            currentTurn?.let { TutorTurnCard(it, state, viewModel, onOpenSource, presentation) }
+            val reflectionTarget = remember { BringIntoViewRequester() }
+            val cardScope = androidx.compose.runtime.rememberCoroutineScope()
+            currentTurn?.let { TutorTurnCard(it, state, viewModel, onOpenSource, presentation, cardPreview = true) }
+            Box(Modifier.bringIntoViewRequester(dynamicCardTarget)) { StudyDynamicCards(currentTurn, state, presentation, viewModel, helpOpen = showHelp,
+                onExplainBack = {
+                    if (state.journey.stage == LearningStage.REFLECT) cardScope.launch { reflectionTarget.bringIntoView() }
+                    else viewModel.reflectOnLearning(state.journey.reflection)
+                }, onCheck = { card ->
+                    val citation = currentTurn?.citations?.firstOrNull { cited ->
+                        state.sources.any { it.objectId == cited.sourceObjectId && it.version == cited.sourceVersion && !it.stale }
+                    }
+                    if (citation != null) onOpenSource(citation.sourceObjectId)
+                    else {
+                        if (state.draft.isBlank()) viewModel.setDraft(card.title)
+                        showComposer = true
+                    }
+                }) }
             if (state.journey.stage == LearningStage.DISCOVER) {
                 LearningJourneyPanel(state, viewModel, nextAction = nextAction)
             } else {
@@ -726,7 +816,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                     Text(uiText("Learning options"))
                 }
                 if (showLessonOptions || state.journey.stage == LearningStage.REFLECT) {
-                    LearningJourneyPanel(state, viewModel, nextAction = nextAction)
+                    Box(Modifier.bringIntoViewRequester(reflectionTarget)) {
+                        LearningJourneyPanel(state, viewModel, nextAction = nextAction)
+                    }
                     if (presentation.size != StudyPresentationSize.FULL && currentTurn != null) StageControls(state, viewModel)
                     TextButton(onClick = { showComposer = true }) {
                         Text(uiText("Write an answer or question"))
@@ -1095,15 +1187,16 @@ private fun SourceCard(
 
 @Composable
 private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: StudyViewModel,
-    onOpenSource: (String) -> Unit, presentation: StudyPresentation) {
+    onOpenSource: (String) -> Unit, presentation: StudyPresentation, cardPreview: Boolean = false) {
     val reading = state.reader?.passageId == "${state.session?.id}:turn:${turn.id}"
     val latest = state.turns.lastOrNull()?.id == turn.id
     var sourcesExpanded by remember(turn.id) { mutableStateOf(false) }
     var showFullReply by rememberSaveable(turn.id) { mutableStateOf(false) }
     val pictures = presentation.size == StudyPresentationSize.PICTURES
     val simpler = presentation.size != StudyPresentationSize.FULL
-    val firstParagraph = remember(turn.text) {
-        val text = turn.text.trim()
+    val replyText = if (cardPreview) remember(turn.text) { com.halo.app.ui.cards.cardPlainReply(turn.text) } else turn.text
+    val firstParagraph = remember(replyText) {
+        val text = replyText.trim()
         studyParagraphBreak.find(text)?.range?.first?.let(text::take) ?: text
     }
     Surface(
@@ -1154,9 +1247,10 @@ private fun TutorTurnCard(turn: StudyTurn, state: StudyUiState, viewModel: Study
                     }
                 }
                 com.halo.app.ui.glass.components.HaloMarkdownText(
-                    if (simpler && !showFullReply) firstParagraph else turn.text,
+                    if ((simpler || cardPreview && state.journey.stage == LearningStage.PRACTICE) && !showFullReply)
+                        firstParagraph else replyText,
                 )
-                if (simpler && firstParagraph.length < turn.text.trim().length) {
+                if ((simpler || cardPreview && state.journey.stage == LearningStage.PRACTICE) && firstParagraph.length < replyText.trim().length) {
                     TextButton(onClick = { showFullReply = !showFullReply }, modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(uiText(if (showFullReply) "Show less" else "Read the full explanation"))
                     }

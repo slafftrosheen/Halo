@@ -35,6 +35,7 @@ internal class HaloWallpaperPainter {
         amt: Float, ripples: Boolean, dim: Float, width: Float = c.width.toFloat(), height: Float = c.height.toFloat(),
         environment: WallpaperEnvironment = WallpaperEnvironment(), photo: Bitmap? = null,
         ring: WallpaperRing = WallpaperRing.CENTER,
+        ambientTime: Float = t,
     ) {
         if (width <= 0f || height <= 0f) return
         val scale = width / 390f
@@ -47,14 +48,21 @@ internal class HaloWallpaperPainter {
             HaloWallpaper.AURORA -> aurora(c, h, t, accent)
             HaloWallpaper.TIDE -> tide(c, h, t, tod, accent)
             HaloWallpaper.DAY_ARC -> dayArc(c, h, t, tod, accent)
-            HaloWallpaper.CONSTELLATION -> constellation(c, h, t, accent, st == HaloAmbient.WORKING)
+            HaloWallpaper.CONSTELLATION -> constellation(c, h, t, SIGNAL_MINT, st == HaloAmbient.WORKING)
             HaloWallpaper.PAPER -> paper(c, h, t)
             else -> toolkit.paint(c, w, h, t, tod, accent, st, environment, photo, ring)
         }
         when (st) {
-            HaloAmbient.LISTENING -> { glow(c, 195f, h, 340f, accent, .28f * amt); if (ripples) for (k in 0..3) { val r = (t * 90 + k * 95) % 380; ring(c, 195f, h - 150, r, accent, (1 - r / 380) * .55f * amt, 2.5f) } }
-            HaloAmbient.NEEDS_YOU -> glow(c, 195f, h + 40, 460f, 0xFFFF9F6B.toInt(), .42f * amt * (.75f + .25f * sin(t * 2)))
-            HaloAmbient.WORKING -> if (w != HaloWallpaper.CONSTELLATION) glow(c, 195f, h - 140, 260f, accent, .16f * amt)
+            HaloAmbient.LISTENING -> {
+                val y = h * .83f
+                glow(c, 195f, h, 340f, SIGNAL_MINT, .28f * amt)
+                if (ripples) for (wave in 0..2) {
+                    val radius = (ambientTime * 88f - wave * 94f).takeIf { it > 0f }?.rem(390f) ?: continue
+                    ring(c, 195f, y, radius, SIGNAL_MINT, (1f - radius / 390f) * .53f * amt, 2.5f)
+                }
+            }
+            HaloAmbient.NEEDS_YOU -> glow(c, 195f, h + 40, 460f, 0xFFFF9F6B.toInt(), .42f * amt * (.85f + .15f * sin(ambientTime * .75f)))
+            HaloAmbient.WORKING -> if (w != HaloWallpaper.CONSTELLATION) glow(c, 195f, h * .75f, 260f, SIGNAL_MINT, .19f * amt)
             HaloAmbient.IDLE -> Unit
         }
         if (dim > 0) c.drawColor(Color.argb((dim * 255).toInt(), 0, 0, 10))
@@ -62,6 +70,7 @@ internal class HaloWallpaperPainter {
     }
 
     private fun glow(c: Canvas, x: Float, y: Float, r: Float, col: Int, a: Float) {
+        p.color = Color.WHITE
         p.shader = RadialGradient(x, y, r, withA(col, a), withA(col, 0f), Shader.TileMode.CLAMP); c.drawCircle(x, y, r, p); p.shader = null
     }
     private fun ring(c: Canvas, x: Float, y: Float, r: Float, col: Int, a: Float, wdt: Float) { stroke.color = withA(col, a); stroke.strokeWidth = wdt; c.drawCircle(x, y, r, stroke) }
@@ -86,7 +95,8 @@ internal class HaloWallpaperPainter {
 
     private fun aurora(c: Canvas, h: Float, t: Float, acc: Int) {
         p.shader = LinearGradient(0f, 0f, 0f, h, 0xFF04021F.toInt(), 0xFF0D0840.toInt(), Shader.TileMode.CLAMP); c.drawRect(0f, 0f, 390f, h, p); p.shader = null
-        val bands = listOf(acc to 150f, 0xFFC9B8FF.toInt() to 260f, 0xFFB6DFE2.toInt() to 370f, 0xFFF3C0D9.toInt() to 470f)
+        val bands = listOf(acc to h * .23f, 0xFFC9B8FF.toInt() to h * .35f,
+            0xFFB6DFE2.toInt() to h * .46f, 0xFFF3C0D9.toInt() to h * .57f)
         p.maskFilter = BlurMaskFilter(22f, BlurMaskFilter.Blur.NORMAL); p.xfermode = PorterDuffXfermode(PorterDuff.Mode.ADD)
         bands.forEachIndexed { b, (col, base) ->
             val path = Path(); val top = ArrayList<PointF>()
@@ -112,7 +122,7 @@ internal class HaloWallpaperPainter {
         val (a, b) = sky(tod); p.shader = LinearGradient(0f, 0f, 0f, h, intArrayOf(a, b, b), floatArrayOf(0f, .62f, 1f), Shader.TileMode.CLAMP); c.drawRect(0f, 0f, 390f, h, p); p.shader = null
         val sy = h * (.62f - .38f * sin(PI.toFloat() * ((tod - .2f) / .6f).coerceIn(0f, 1f))); glow(c, 270f, sy, 140f, 0xFFFFE7C9.toInt(), .75f)
         val dark = tod < .18f || tod > .86f
-        for (L in 0..4) { val base = h * .6f + L * 62; val amp = 10f + L * 4; val sp = .5f + L * .18f; val path = Path(); path.moveTo(0f, h)
+        for (L in 0..4) { val base = h * (.60f + L * .075f); val amp = 10f + L * 4; val sp = .5f + L * .18f; val path = Path(); path.moveTo(0f, h)
             var x = 0f; while (x <= 390f) { path.lineTo(x, base + amp * sin(x * (.018f - L * .002f) + t * sp + L * 1.7f) + amp * .4f * sin(x * .05f - t * sp * 1.3f)); x += 6f }
             path.lineTo(390f, h); path.close(); p.color = withA(mix(if (dark) 0xFF16125A.toInt() else 0xFF2A2580.toInt(), 0xFF060330.toInt(), L / 4.5f), .86f); c.drawPath(path, p)
             stroke.color = withA(if (L == 0) acc else Color.WHITE, if (L == 0) .5f else .08f); stroke.strokeWidth = 1.5f; c.drawPath(path, stroke) }
@@ -127,7 +137,7 @@ internal class HaloWallpaperPainter {
         val pr = if (night) ((if (tod > .5f) tod - .82f else tod + .18f) / .38f) else (tod - .2f) / .62f
         val ang = PI + PI * pr.coerceIn(0f, 1f); val sx = 195 + R * cos(ang).toFloat(); val sy = cy + R * sin(ang).toFloat()
         glow(c, sx, sy, 120f, if (night) 0xFFC9B8FF.toInt() else 0xFFFFE7C9.toInt(), .55f)
-        c.save(); c.translate(sx, sy); c.rotate(t * 17f); haloRing(c, 26f, if (night) 0xFFC9B8FF.toInt() else acc, 9f); c.restore()
+        c.save(); c.translate(sx, sy); c.rotate(t * 5f); haloRing(c, 26f, if (night) 0xFFC9B8FF.toInt() else acc, 9f); c.restore()
     }
 
     private fun constellation(c: Canvas, h: Float, t: Float, acc: Int, working: Boolean) {
@@ -146,4 +156,6 @@ internal class HaloWallpaperPainter {
             glow(c, 195 + 120 * cos(t * .06f + i * 2), h * .45f + 200 * sin(t * .05f + i * 2.2f), 220f, col, a) }
         c.save(); c.translate(195f, h * .4f); c.rotate(t * 1.7f); haloRing(c, 150f, withA(0xFF0A7F66.toInt(), .16f), 28f); c.restore()
     }
+
+    private companion object { val SIGNAL_MINT = 0xFF0CF2BA.toInt() }
 }

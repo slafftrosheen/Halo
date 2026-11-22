@@ -58,15 +58,19 @@ internal fun wallpaperPeriod(time: Float): WallpaperPeriod = when (time) {
 internal fun WallpaperOptions.wallpaperAt(period: WallpaperPeriod): HaloWallpaper =
     if (schedule.enabled) schedule[period] ?: wallpaper else wallpaper
 
+internal fun WallpaperOptions.chooseGalleryScene(style: HaloWallpaper, currentPeriod: WallpaperPeriod): WallpaperOptions =
+    if (schedule.enabled) copy(schedule = schedule.with(currentPeriod, style), inApp = true)
+    else copy(wallpaper = style, inApp = true)
+
 /** Keep the current period while the surface is visible, even across a clock boundary. */
 internal class WallpaperPeriodLatch(initial: WallpaperPeriod) {
     var period = initial
         private set
     private var hiddenSince: Long? = null
 
-    fun update(actual: WallpaperPeriod, visible: Boolean, nowMillis: Long): WallpaperPeriod {
+    fun update(actual: WallpaperPeriod, visible: Boolean, nowMillis: Long, scheduleChanged: Boolean = false): WallpaperPeriod {
         val hiddenAt = hiddenSince
-        if (hiddenAt != null && nowMillis - hiddenAt >= 2_000) period = actual
+        if (scheduleChanged || hiddenAt != null && nowMillis - hiddenAt >= 2_000) period = actual
         hiddenSince = if (visible) null else hiddenAt ?: nowMillis
         return period
     }
@@ -79,6 +83,7 @@ internal data class WallpaperChange(val previous: WallpaperOptions, val appliedA
 internal data class WallpaperSnapshot(
     val current: WallpaperOptions = WallpaperOptions(),
     val previous: WallpaperChange? = null,
+    val loaded: Boolean = true,
 )
 
 /** A wallpaper edit and its one-step restore record are committed in the same transaction. */
@@ -86,7 +91,7 @@ internal class WallpaperPreferences private constructor(private val context: Con
     private val disk = context.getSharedPreferences("halo_wallpaper_options", Context.MODE_PRIVATE)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val writeLock = Mutex()
-    private val mutable = MutableStateFlow(WallpaperSnapshot())
+    private val mutable = MutableStateFlow(WallpaperSnapshot(loaded = false))
     val state = mutable.asStateFlow()
     private val loaded = scope.async {
         val saved = decode(disk.getString("current", null)) ?: WallpaperOptions()

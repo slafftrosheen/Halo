@@ -23,7 +23,9 @@ internal object EverydayLocalDataCleanup {
         var changed=false
         db.briefDao().recent(60).forEach {row ->
             val document=runCatching {BriefCodec.document(row.body)}.getOrNull()
-            if(document==null || (document.facts+document.changes.mapNotNull {it.fact}).any {it.kind==BriefFactKind.NOTE && it.values["localId"]==noteId}) {
+            if(document==null || (document.facts+document.changes.mapNotNull {it.fact}).any {
+                    it.kind==BriefFactKind.NOTE && it.values["localId"]==noteId || it.values["recordId"]==noteId
+                }) {
                 db.briefDao().remove(row.id);changed=true
             }
         }

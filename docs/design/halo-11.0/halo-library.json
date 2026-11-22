@@ -1,0 +1,205 @@
+{
+ "version": "11.0",
+ "status": "reference · unverified · not tested on a device",
+ "name": {
+  "en": "Library",
+  "ru": "Библиотека"
+ },
+ "where": "Home › Library tab (halo://home/library)",
+ "rule": "Every saved thing is one Item in one Library. Tools open and edit items; the Library keeps them. One item has one name everywhere.",
+ "kinds": [
+  {
+   "kind": "note",
+   "en": "Notes",
+   "ru": "Заметки",
+   "opensIn": "halo notes",
+   "from": [
+    "notes",
+    "memory pages",
+    "Kids “What I learned”"
+   ]
+  },
+  {
+   "kind": "photo",
+   "en": "Photos",
+   "ru": "Фото",
+   "opensIn": "halo album",
+   "from": [
+    "album",
+    "glasses moments",
+    "Inbox (glasses)",
+    "Kids drawings"
+   ]
+  },
+  {
+   "kind": "file",
+   "en": "Files",
+   "ru": "Файлы",
+   "opensIn": "halo sheets / canvas / studio",
+   "from": [
+    "sheets",
+    "canvas",
+    "studio",
+    "imports"
+   ]
+  },
+  {
+   "kind": "scan",
+   "en": "Scans",
+   "ru": "Сканы",
+   "opensIn": "halo scan",
+   "from": [
+    "scan",
+    "vault papers"
+   ]
+  },
+  {
+   "kind": "card",
+   "en": "Cards",
+   "ru": "Карточки",
+   "opensIn": "halo study",
+   "from": [
+    "study decks",
+    "dynamic cards kept",
+    "Kids “My book” cards"
+   ]
+  },
+  {
+   "kind": "place",
+   "en": "Places",
+   "ru": "Места",
+   "opensIn": "halo maps",
+   "from": [
+    "saved places",
+    "album places",
+    "glasses photo places"
+   ]
+  },
+  {
+   "kind": "recording",
+   "en": "Recordings",
+   "ru": "Записи",
+   "opensIn": "halo record",
+   "from": [
+    "record"
+   ]
+  },
+  {
+   "kind": "plan",
+   "en": "Plans",
+   "ru": "Планы",
+   "opensIn": "halo planner",
+   "from": [
+    "events",
+    "tasks",
+    "exam plans"
+   ]
+  },
+  {
+   "kind": "person",
+   "en": "People",
+   "ru": "Люди",
+   "opensIn": "Contacts sheet",
+   "from": [
+    "album people",
+    "share suggestions"
+   ]
+  }
+ ],
+ "naming": {
+  "pattern": "what · where · when",
+  "examples": [
+   [
+    "IMG_2041.jpg",
+    "Riga · Old Town · 12 Nov",
+    "Рига · Старый город · 12 нояб."
+   ],
+   [
+    "Scan 0007.pdf",
+    "Receipt · Rimi · 12 Nov",
+    "Чек · Rimi · 12 нояб."
+   ],
+   [
+    "Recording 14",
+    "Tour guide · 14 min",
+    "Экскурсовод · 14 мин"
+   ],
+   [
+    "Untitled",
+    "Packing list",
+    "Список вещей"
+   ]
+  ],
+  "rules": [
+   "halo proposes a name when an item is saved; the person can change it any time",
+   "A name the person typed is never changed by halo",
+   "Names are the same in search, tools, share sheets, Kids and on halo ink",
+   "The old file name is kept as “Was called” for 30 days"
+  ]
+ },
+ "collections": {
+  "what": "A collection holds items of any kind (a trip, a course, the house).",
+  "rules": [
+   "An item can be in many collections; adding never moves or copies",
+   "halo may suggest a collection; the person accepts (Undo 10 s)",
+   "Study courses are collections, so their cards, photos and notes sit together"
+  ]
+ },
+ "private": {
+  "what": "A lock on any item or collection. It replaces halo vault as a separate place.",
+  "unlock": "fingerprint or PIN",
+  "effects": [
+   "hidden from search, suggestions and Today",
+   "never used by halo answers unless opened",
+   "keys in Connections stay in the key vault, which is separate and never shown in Library"
+  ]
+ },
+ "renamed": [
+  {
+   "before": "Places (news/article sources tab)",
+   "after": "Reads",
+   "why": "“Places” now means real places on a map"
+  },
+  {
+   "before": "halo vault (separate app)",
+   "after": "Private (lock on any item)",
+   "why": "one place for everything"
+  },
+  {
+   "before": "Album › Library sidebar",
+   "after": "Library (kind: Photos)",
+   "why": "one Library"
+  },
+  {
+   "before": "From your glasses / glasses Inbox",
+   "after": "Library › Photos › From glasses (filter)",
+   "why": "one name"
+  },
+  {
+   "before": "Kids “What I learned” + “My book”",
+   "after": "Kids “My book” (one book; learned cards are its pages)",
+   "why": "two names for one thing"
+  },
+  {
+   "before": "Memory pages",
+   "after": "Notes (linked); Memory = what halo knows about you",
+   "why": "Memory no longer stores files"
+  },
+  {
+   "before": "Study “Make cards” / “Dynamic cards” keep",
+   "after": "Keep → Cards",
+   "why": "one verb"
+  },
+  {
+   "before": "Save / Keep / Add / Store",
+   "after": "Keep (saving to Library) · Add to (collection)",
+   "why": "one verb each"
+  }
+ ],
+ "routes": [
+  "halo://home/library",
+  "halo://home/library?kind={kind}",
+  "halo://home/library/c/{collection}",
+  "halo://home/library/item/{id}"
+ ]
+}

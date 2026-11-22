@@ -27,6 +27,7 @@ data class OrganizerDraft(
     val links: List<String> = base.links.map { it.objectId }, val resetOccurrences: Boolean = false,
     val spokenReview: Boolean = false, val spokenTimeGuess: String? = null, val spokenDateGuess: Boolean = false,
     val leaveLead: String = base.leaveBeforeMinutes?.toString().orEmpty(),
+    val calendar: OrganizerCalendar = base.calendar,
 ) {
     val hasEnd: Boolean get() = base.kind == OrganizerKind.EVENT || (originalOverride?.replacementTime ?: base.time)?.end != null
     fun record(now: Instant, elapsedMs: Long, bootId: String): OrganizerRecord {
@@ -34,7 +35,11 @@ data class OrganizerDraft(
         val scheduled = if (base.kind != OrganizerKind.TIMER && (dated || base.kind != OrganizerKind.TASK)) {
             val start = LocalDate.parse(date).atTime(if (allDay) LocalTime.MIDNIGHT else LocalTime.parse(time))
             val end = if (hasEnd) LocalDate.parse(endDate).atTime(if (allDay) LocalTime.MIDNIGHT else LocalTime.parse(endTime)) else null
-            OrganizerTime(start, end, selectedZone.id, allDay, followZone)
+            val original = originalOverride?.replacementTime ?: base.time
+            val sameZone = original?.takeIf { !allDay && it.zoneId == selectedZone.id }
+            OrganizerTime(start, end, selectedZone.id, allDay, followZone,
+                startOffset = sameZone?.takeIf { start == it.start }?.startOffset,
+                endOffset = sameZone?.takeIf { end == it.end }?.endOffset)
         } else null
         val repeat = if (frequency.isNotBlank() && scheduled != null && occurrence == null) RepeatRule(
             RepeatFrequency.valueOf(frequency), interval.toInt(), if (frequency == "WEEKLY") weekdays else emptySet(),
@@ -46,7 +51,7 @@ data class OrganizerDraft(
             TimerState(it, it).start(now, elapsedMs, bootId)
         } else base.timer
         return base.copy(title = title.trim(), details = details, location = location, time = scheduled, repeat = repeat,
-            priority = priority, parentId = parentId, timer = timer,
+            priority = priority, parentId = parentId, timer = timer, calendar = calendar,
             notifyBeforeMinutes = if (notify && scheduled != null && base.kind != OrganizerKind.ALARM) lead.toInt() else null,
             leaveBeforeMinutes = if (scheduled?.allDay == false && base.kind == OrganizerKind.EVENT) leaveLead.takeIf(String::isNotBlank)?.toInt() else null,
             links = links.distinct().map { id -> base.links.find { it.objectId == id } ?: OrganizerLink(id) }).also { it.validate() }
@@ -58,7 +63,7 @@ data class OrganizerDraft(
             "endDate" to endDate, "endTime" to endTime, "zone" to zone, "frequency" to frequency, "interval" to interval,
             "count" to count, "until" to until, "priority" to priority.name, "parentId" to parentId,
             "lead" to lead, "duration" to duration, "spokenTimeGuess" to spokenTimeGuess,
-            "leaveLead" to leaveLead).forEach { (key, value) -> putString(key, value) }
+            "leaveLead" to leaveLead, "calendar" to calendar.name).forEach { (key, value) -> putString(key, value) }
         mapOf("dated" to dated, "allDay" to allDay, "followZone" to followZone, "notify" to notify,
             "resetOccurrences" to resetOccurrences, "spokenReview" to spokenReview,
             "spokenDateGuess" to spokenDateGuess).forEach { (key, value) -> putBoolean(key, value) }
@@ -71,9 +76,9 @@ data class OrganizerDraft(
                 val start = occurrence.originalStart.atZone(zone).toLocalDate().atTime(original.start.toLocalTime())
                 val end = original.end?.let {
                     if (original.allDay) start.plusDays(java.time.temporal.ChronoUnit.DAYS.between(original.start.toLocalDate(), it.toLocalDate()))
-                    else start.atZone(zone).plus(Duration.between(original.start.atZone(zone), it.atZone(zone))).toLocalDateTime()
+                    else start.atZone(zone).plus(requireNotNull(original.duration())).toLocalDateTime()
                 }
-                original.copy(start = start, end = end)
+                original.copy(start = start, end = end, startOffset = null, endOffset = null)
             }
             return OrganizerDraft(base, false, occurrence.originalStart, originalOverride = override,
                 title = override?.replacementTitle ?: base.title, details = override?.replacementDetails ?: base.details,
@@ -83,7 +88,8 @@ data class OrganizerDraft(
                 zone = time.zoneId, allDay = time.allDay, followZone = time.followDeviceZone)
         }
         fun restore(bundle: Bundle): OrganizerDraft = bundle.run {
-            OrganizerDraft(OrganizerCodec.decode(requireNotNull(getString("base"))), getBoolean("creating"), getString("occurrence")?.let(Instant::parse),
+            val base = OrganizerCodec.decode(requireNotNull(getString("base")))
+            OrganizerDraft(base, getBoolean("creating"), getString("occurrence")?.let(Instant::parse),
                 originalOverride = getString("override")?.let(OrganizerCodec::override),
                 title = getString("title").orEmpty(), details = getString("details").orEmpty(), location = getString("location").orEmpty(),
                 dated = getBoolean("dated"), date = getString("date").orEmpty(), time = getString("time").orEmpty(),
@@ -94,7 +100,8 @@ data class OrganizerDraft(
                 parentId = getString("parentId"), notify = getBoolean("notify"), lead = getString("lead").orEmpty(), duration = getString("duration").orEmpty(),
                 links = getStringArrayList("links").orEmpty(), resetOccurrences = getBoolean("resetOccurrences"),
                 spokenReview = getBoolean("spokenReview"), spokenTimeGuess = getString("spokenTimeGuess"),
-                spokenDateGuess = getBoolean("spokenDateGuess"), leaveLead = getString("leaveLead").orEmpty())
+                spokenDateGuess = getBoolean("spokenDateGuess"), leaveLead = getString("leaveLead").orEmpty(),
+                calendar = getString("calendar")?.let(OrganizerCalendar::valueOf) ?: base.calendar)
         }
     }
 }

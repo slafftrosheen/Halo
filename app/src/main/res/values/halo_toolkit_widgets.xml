@@ -60,4 +60,12 @@
         <item quantity="one">Updated %d min ago</item>
         <item quantity="other">Updated %d min ago</item>
     </plurals>
+    <string name="widget_toolkit_preview_scan_title">Point &amp; read</string>
+    <string name="widget_toolkit_preview_scan_detail">Read · Translate</string>
+    <string name="widget_toolkit_preview_record_title">Tap to record</string>
+    <string name="widget_toolkit_preview_record_detail">Words as you talk</string>
+    <string name="widget_toolkit_preview_translate_title">Translate text</string>
+    <string name="widget_toolkit_preview_source_detail">Choose a source for saved readings</string>
+    <string name="widget_toolkit_preview_focus_idle">Ready when you are</string>
+    <string name="widget_toolkit_preview_learn_idle">No active lesson</string>
 </resources>

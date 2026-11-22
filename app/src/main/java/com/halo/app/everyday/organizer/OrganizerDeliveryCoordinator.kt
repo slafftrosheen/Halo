@@ -59,6 +59,23 @@ class OrganizerDeliveryCoordinator(
     }
     suspend fun reconcile(id: String) = mutex.withLock { reconcileLocked(id) }
 
+    /** Revoke public delivery before sealing the reviewed record and restore scheduling on rollback. */
+    internal suspend fun <T> withPrivateWithdrawal(versions: Map<String, Long>, action: suspend () -> T): T = mutex.withLock {
+        for ((id, version) in versions) check(repository.get(id)?.version == version)
+        try {
+            for ((id, version) in versions) {
+                port.revokeVersion(id, version)
+                port.cancelSchedule(id)
+                repository.receipts(id).forEach { port.dismiss(it.occurrenceKey, it.recordVersion) }
+            }
+            action()
+        } finally {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                for (id in versions.keys) if (repository.get(id) != null) reconcileLocked(id)
+            }
+        }
+    }
+
     private suspend fun reconcileLocked(id: String) {
         val record = repository.get(id) ?: return
         port.cancelSchedule(id)

@@ -1,6 +1,7 @@
 package com.halo.app.data.agent
 
 import androidx.room.*
+import com.halo.app.data.routine.RoutineRunEntity
 import kotlinx.coroutines.flow.Flow
 
 data class AgentRunWithSteps(
@@ -59,4 +60,18 @@ interface AgentRunDao {
             "AND payloadJson LIKE :requestIdPattern ORDER BY ordinal DESC LIMIT 1"
     )
     suspend fun latestInputRequestedRunId(requestIdPattern: String): String?
+
+    @Query("""SELECT r.id FROM agent_runs r WHERE r.id = :id OR r.interactionId = :id OR r.parentRunId = :id OR r.rootRunId = :id
+        OR instr(r.delegatedInputRefs, :id) > 0 OR EXISTS(SELECT 1 FROM personal_episodes e WHERE e.runId = r.id AND e.id = :id)
+        OR EXISTS(SELECT 1 FROM agent_steps s WHERE s.runId = r.id
+        AND (s.id = :id OR s.interactionId = :id OR instr(s.payloadJson, :id) > 0)) ORDER BY r.id""")
+    suspend fun privateHistoryCandidates(id: String): List<String>
+    @Query("SELECT EXISTS(SELECT 1 FROM agent_runs WHERE id = :id)")
+    suspend fun exists(id: String): Boolean
+    @Query("SELECT * FROM routine_runs WHERE agentRunId = :id ORDER BY id")
+    suspend fun privateRoutineRunsForAgent(id: String): List<RoutineRunEntity>
+
+    @Query("DELETE FROM agent_steps WHERE runId = :id") suspend fun withdrawPrivateSteps(id: String): Int
+    @Query("DELETE FROM agent_runs WHERE id = :id AND state = :reviewedState")
+    suspend fun withdrawPrivateRun(id: String, reviewedState: String): Int
 }

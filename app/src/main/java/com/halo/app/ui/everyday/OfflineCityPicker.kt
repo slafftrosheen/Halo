@@ -11,10 +11,13 @@ import androidx.compose.ui.unit.dp
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.collectors.*
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import kotlinx.coroutines.*
 
 @Composable
-internal fun OfflineCityPicker(busy: Boolean, error: String? = null, onDismiss: () -> Unit, onChoose: (OfflineCity) -> Unit) {
+internal fun OfflineCityPicker(busy: Boolean, error: String? = null, onDismiss: () -> Unit,
+    weather: Boolean = false, onChoose: (OfflineCity) -> Unit) {
     var query by rememberSaveable { mutableStateOf("") }
     var retry by remember { mutableIntStateOf(0) }
     var rows by remember { mutableStateOf<List<OfflineCity>>(emptyList()) }
@@ -29,8 +32,10 @@ internal fun OfflineCityPicker(busy: Boolean, error: String? = null, onDismiss: 
     EverydaySheet({ if (!busy) onDismiss() }) {
         Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Find a city"), style = MaterialTheme.typography.headlineSmall)
-            Text(uiText("Search a city to see its time. No internet or location permission is needed."), style = MaterialTheme.typography.bodySmall)
-            OutlinedTextField(query, { query = it.take(120) }, label = { Text(uiText("City or country code")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            Text(uiText(if (weather) "Choose the city shown in your forecast. City search works offline."
+                else "Search a city to see its time. No internet or location permission is needed."), style = MaterialTheme.typography.bodySmall)
+            HaloTextField(query, { query = it.take(120) }, VoiceFieldKind.SEARCH, label = { Text(uiText("City or country code")) },
+                singleLine = true, modifier = Modifier.fillMaxWidth(), maxChars = 120, enabled = !busy)
             if (looking || busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             error?.let { EverydayMessage(it, true) }
             if (failed) {

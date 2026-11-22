@@ -18,6 +18,7 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import com.halo.runtime.cognition.device.DefaultInteractionRoutePolicy
 import com.halo.runtime.cognition.device.InteractionRoutePolicy
+import com.halo.runtime.cognition.conversation.ConversationExecutionLease
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.NonCancellable
@@ -55,6 +56,7 @@ class HaloSpeechOutputCoordinator(
     },
     private val defaultLanguage: () -> String? = { null },
     private val allowOutput: () -> Boolean = { true },
+    private val reserveConversationOutput: suspend (String) -> ConversationExecutionLease = { ConversationExecutionLease { } },
 ) {
     val session = HaloAudioSessionCoordinator(
         requireNotNull(resourceLeaseManager) {
@@ -187,7 +189,8 @@ class HaloSpeechOutputCoordinator(
                 fallback = response.prepared.fallback, sourceCaptureId = response.prepared.sourceCaptureId,
                 interactionId = response.prepared.interactionId,
                 remoteDataCategories = response.prepared.remoteDataCategories,
-                remoteDispatchRevision = response.prepared.remoteDispatchRevision), streamResponse = response)
+                remoteDispatchRevision = response.prepared.remoteDispatchRevision,
+                conversationId = response.prepared.conversationId), streamResponse = response)
         }
         if (response.chunkCount != previousChunks) streamLog("CHUNK", response)
     }
@@ -325,6 +328,7 @@ class HaloSpeechOutputCoordinator(
             var locked = false
             var focusGranted = false
             var outputLease: OutputLease? = null
+            var conversationLease: ConversationExecutionLease? = null
             var releaseForeground: (suspend () -> Unit)? = null
             val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
                 .setAudioAttributes(speechAttributes)
@@ -336,6 +340,16 @@ class HaloSpeechOutputCoordinator(
                     }
                 }.build()
             try {
+                val conversation = event.conversationId
+                if (conversation != null) {
+                    try { conversationLease = reserveConversationOutput(conversation) }
+                    catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) {
+                        publishTerminal(TtsCancelled(transactionId = event.transactionId, target = playbackTarget,
+                            interactionId = event.interactionId))
+                        return@launch
+                    }
+                }
                 playbackMutex.lock()
                 locked = true
                 outputLease = session.acquireOutput(
@@ -580,7 +594,10 @@ class HaloSpeechOutputCoordinator(
                     e is com.halo.sdk.provider.RemoteDispatchBlocked -> "Online speech is blocked by your current mode settings."
                     providerError?.code == com.halo.sdk.provider.SpeechErrorCode.NOT_CONFIGURED -> "Choose an online speech model and voice and check the provider key."
                     providerError?.code == com.halo.sdk.provider.SpeechErrorCode.AUTHENTICATION_FAILED -> "The speech provider rejected this account or key. Check it in AI services."
+                    providerError?.code == com.halo.sdk.provider.SpeechErrorCode.INSUFFICIENT_CREDITS -> "The speech provider reports insufficient credits. Check the account quota."
                     providerError?.code == com.halo.sdk.provider.SpeechErrorCode.RATE_LIMITED -> "The speech provider is rate limiting requests. Try again later."
+                    providerError?.code == com.halo.sdk.provider.SpeechErrorCode.VOICE_NOT_FOUND -> "The speech provider could not use the selected voice. Check its ID or choose another voice."
+                    providerError?.code == com.halo.sdk.provider.SpeechErrorCode.MODEL_NOT_AVAILABLE -> "The speech provider rejected the selected model or voice settings. Check your selection and account access."
                     providerError?.code == com.halo.sdk.provider.SpeechErrorCode.NETWORK_ERROR -> "Could not reach the speech provider."
                     providerError?.code == com.halo.sdk.provider.SpeechErrorCode.INVALID_AUDIO_RESPONSE -> "The speech provider returned unsupported audio."
                     providerError?.code == com.halo.sdk.provider.SpeechErrorCode.SYNTHESIS_FAILED -> "The speech provider could not generate audio. Check the selected voice and account credits."
@@ -605,7 +622,10 @@ class HaloSpeechOutputCoordinator(
                         releaseForeground?.invoke()
                     } finally {
                         try { outputLease?.release() }
-                        finally { if (locked) playbackMutex.unlock() }
+                        finally {
+                            if (locked) playbackMutex.unlock()
+                            conversationLease?.release()
+                        }
                     }
                 }
                 if (activeJob == kotlinx.coroutines.currentCoroutineContext()[Job]) {

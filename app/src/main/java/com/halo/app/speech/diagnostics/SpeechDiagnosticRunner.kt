@@ -47,17 +47,19 @@ class SpeechDiagnosticRunner(
     val availableTargets: () -> List<SpeechDiagnosticTarget>,
     val language: () -> String,
     val detectorReady: () -> Boolean,
-    private val engine: AudioPerceptionEngine? = null
+    private val engine: AudioPerceptionEngine? = null,
+    private val captureUtterance: suspend (Long, Deferred<Unit>?) -> DiagnosticAudioCapture = capture,
 ) {
     private val transaction = Mutex()
     suspend fun selectedHealth() = selected.healthDetails()
-    suspend fun captureSession(finish: Deferred<Unit>? = null, reference: String = "", maxDurationMs: Long = 15_000): SpeechDiagnosticSession {
+    suspend fun captureSession(finish: Deferred<Unit>? = null, reference: String = "", maxDurationMs: Long = 15_000,
+        stopAfterSpeech: Boolean = false): SpeechDiagnosticSession {
         if (!transaction.tryLock()) throw SpeechDiagnosticException(SpeechDiagnosticStage.CAPTURE, IllegalStateException("Diagnostic transaction busy"))
         var sample: DiagnosticAudioCapture? = null
         var stage = SpeechDiagnosticStage.CAPTURE
         try {
             val recognitionCapture = selected.captureContext()
-            sample = capture(maxDurationMs, finish)
+            sample = if (stopAfterSpeech) captureUtterance(maxDurationMs, finish) else capture(maxDurationMs, finish)
             stage = SpeechDiagnosticStage.PREPROCESS
             check(sample.audio.frames.all { it.sampleRate == 16000 && it.channels == 1 }) { "Expected 16 kHz mono PCM" }
             stage = SpeechDiagnosticStage.VAD

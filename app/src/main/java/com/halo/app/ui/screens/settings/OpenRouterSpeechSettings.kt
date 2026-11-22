@@ -12,6 +12,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.language.uiText
+import com.halo.app.ui.components.HaloTextField
+import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.providers.openrouter.OpenRouterSpeechProvider
 import kotlinx.coroutines.*
 
@@ -59,7 +61,8 @@ import kotlinx.coroutines.*
                     }) }
                 }
             }
-            val supportedVoices = state.models.firstOrNull { it.id == model }?.voices.orEmpty()
+            val selectedModel = state.models.firstOrNull { it.id == model }
+            val supportedVoices = selectedModel?.voices.orEmpty()
             if (supportedVoices.isNotEmpty()) Box {
                 OutlinedButton(enabled = !busy, onClick = { voicesExpanded = true }) {
                     Text(voice.takeIf { it in supportedVoices } ?: uiText("Choose a voice"))
@@ -69,13 +72,24 @@ import kotlinx.coroutines.*
                         voice = supported; voicesExpanded = false
                     }) }
                 }
-            } else if (model != null) Text(uiText("No voices are listed for this model."), style = MaterialTheme.typography.bodySmall)
+            } else if (selectedModel != null) {
+                HaloTextField(value = voice, onValueChange = { voice = it.take(200) }, kind = VoiceFieldKind.URL_ID, enabled = !busy,
+                    label = { Text(uiText("Voice ID")) }, singleLine = true)
+                Text(uiText("OpenRouter did not list voices for this model. Enter a voice ID from the provider."),
+                    style = MaterialTheme.typography.bodySmall)
+                if (selectedModel.id == "fish-audio/s2.1-pro-free:free") {
+                    TextButton(enabled = !busy, onClick = { voice = "9a9cf47702da476aa4629e2506d4a857" }) {
+                        Text(uiText("Use Fish Audio’s Hannah voice ID"))
+                    }
+                }
+            }
             Text(uiText("Choose a voice supported by this model. Voice names differ between models."), style = MaterialTheme.typography.bodySmall)
             model?.takeIf { it.matches(Regex("[a-zA-Z0-9_.:-]+/[a-zA-Z0-9_.:-]+")) }?.let { id ->
                 TextButton(onClick = { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
                     android.net.Uri.parse("https://openrouter.ai/$id"))) }) { Text(uiText("Model voices and pricing")) }
             }
-            Button(enabled = !busy && voice.isNotBlank() && voice in supportedVoices && state.models.any { it.id == model } && mode == com.halo.app.ai.PrivacyMode.CLOUD,
+            Button(enabled = !busy && voice.isNotBlank() && voice.none(Char::isISOControl) &&
+                (supportedVoices.isEmpty() || voice in supportedVoices) && selectedModel != null && mode == com.halo.app.ai.PrivacyMode.CLOUD,
                 onClick = {
                     val selectedModel = model ?: return@Button
                     val selectedVoice = voice

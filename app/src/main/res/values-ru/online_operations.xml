@@ -3,8 +3,11 @@
     <string name="online_title">Поиск с источниками</string>
     <string name="online_query">Что найти в интернете?</string>
     <string name="online_search">Проверить запрос поиска</string>
-    <string name="online_query_only">В OpenRouter и выбранный поисковый сервис Exa уйдёт только этот запрос — без чатов, заметок и вложений.</string>
-    <string name="online_search_price">Текстовая модель бесплатная; веб-поиск оплачивается отдельно. Ориентир поискового сбора — 0,007 USD за запрос, проверен 21 октября 2026. Цена может измениться; это не предложение цены и не лимит.</string>
+    <string name="online_query_only">Выбранный поисковый сервис получает запрос и язык ответа. Чаты, заметки и вложения остаются в Halo.</string>
+    <string name="online_search_engine_openai">Поисковая служба: встроенный веб-поиск OpenAI</string>
+    <string name="online_search_price">Стоимость модели и поиска может меняться. Резерв показывает согласованную сумму в Halo. Итоговую стоимость определяет поставщик.</string>
+    <string name="online_search_engine_exa">Поисковая служба: Exa</string>
+    <string name="online_search_engine_auto">Поисковая служба: встроенный поиск модели при наличии, иначе Exa</string>
     <string name="online_approve">Подтвердить этот запрос</string>
     <string name="online_paid_title">Подтвердите платную операцию</string>
     <string name="online_image_unknown">Этот адаптер не сообщает точную цену изображения. Проверьте тариф выбранной модели. Создание, повторная генерация и редактирование подтверждаются отдельно.</string>

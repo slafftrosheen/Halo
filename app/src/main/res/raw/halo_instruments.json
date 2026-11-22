@@ -1,0 +1,2634 @@
+{
+ "version": "9.5",
+ "levels": {
+  "E": "Easy",
+  "S": "Standard",
+  "P": "Pro"
+ },
+ "tools": {
+  "studio": {
+   "name": "halo studio",
+   "instruments": [
+    {
+     "id": "studio.move",
+     "name": "Move",
+     "icon": "select",
+     "shortcut": "V",
+     "group": "Select",
+     "does": "Moves the selected layer or selection.",
+     "params": "Snap to edges on/off; nudge 1 px (arrows), 10 px (⇧ arrows)",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "idle",
+      "dragging",
+      "snapping"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.rectangle_ellipse_select",
+     "name": "Rectangle / ellipse select",
+     "icon": "fit_all",
+     "shortcut": "M",
+     "group": "Select",
+     "does": "Draws a selection box or oval.",
+     "params": "Add ⇧ · Subtract ⌥ · Feather 0–200 px",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "drawing",
+      "active (marching dashes)"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.lasso",
+     "name": "Lasso",
+     "icon": "multi_select",
+     "shortcut": "L",
+     "group": "Select",
+     "does": "Freehand or polygon selection.",
+     "params": "Mode freehand / polygon · Feather 0–200 px",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "drawing",
+      "closed"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.magic_wand",
+     "name": "Magic wand",
+     "icon": "ai_organize",
+     "shortcut": "W",
+     "group": "Select",
+     "does": "Selects similar colour by click.",
+     "params": "Tolerance 0–100 · Contiguous on/off · Sample all layers",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.select_subject",
+     "name": "Select subject",
+     "icon": "create_image",
+     "shortcut": null,
+     "group": "Select",
+     "does": "halo finds the main subject and selects it.",
+     "params": "Edge refine 0–10",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "working (mint)",
+      "done"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.brush",
+     "name": "Brush",
+     "icon": "draw",
+     "shortcut": "B",
+     "group": "Paint",
+     "does": "Paints with the current preset.",
+     "params": "Size 1–1000 px · Opacity 0–100 % · Flow 0–100 % · Smooth 0–100 % · Pressure → size / opacity",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "idle",
+      "painting",
+      "stabilising"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.pencil",
+     "name": "Pencil",
+     "icon": "sketch",
+     "shortcut": "N",
+     "group": "Paint",
+     "does": "Hard-edged line, no smoothing of edges.",
+     "params": "Size 1–200 px · Opacity",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.eraser",
+     "name": "Eraser",
+     "icon": "eraser",
+     "shortcut": "E",
+     "group": "Paint",
+     "does": "Removes paint on the current layer.",
+     "params": "Size · Hardness 0–100 % · Opacity · Uses brush preset",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.smudge_blend",
+     "name": "Smudge / blend",
+     "icon": "accent",
+     "shortcut": "R",
+     "group": "Paint",
+     "does": "Pushes and blends existing paint.",
+     "params": "Strength 0–100 % · Wet mix on/off",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.fill",
+     "name": "Fill",
+     "icon": "add_block",
+     "shortcut": "G",
+     "group": "Paint",
+     "does": "Fills an area with colour or gradient.",
+     "params": "Tolerance 0–100 · Gradient linear / radial · Gap close 0–20 px",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.eyedropper",
+     "name": "Eyedropper",
+     "icon": "accent",
+     "shortcut": "I",
+     "group": "Colour",
+     "does": "Picks a colour from the picture.",
+     "params": "Sample 1 px / 3×3 / 5×5 · Current layer / all",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "picking (loupe)"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.colour_wheel_triangle",
+     "name": "Colour wheel & triangle",
+     "icon": "appearance",
+     "shortcut": null,
+     "group": "Colour",
+     "does": "Choose hue on the ring, tone in the triangle.",
+     "params": "HSV + HEX + RGB fields; recent swatches (8)",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.shapes",
+     "name": "Shapes",
+     "icon": "shapes",
+     "shortcut": "U",
+     "group": "Draw",
+     "does": "Lines, rectangles, ellipses, polygons as editable vector shapes.",
+     "params": "Stroke 0–100 px · Fill on/off · Corner 0–200 px · Sides 3–12",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "editing handles"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.text",
+     "name": "Text",
+     "icon": "heading",
+     "shortcut": "T",
+     "group": "Draw",
+     "does": "Adds editable text on its own layer.",
+     "params": "Font · Size 6–400 pt · Weight · Align · Line height",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "editing caret"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.transform",
+     "name": "Transform",
+     "icon": "fit_all",
+     "shortcut": "Ctrl T",
+     "group": "Edit",
+     "does": "Scale, rotate, skew, warp the layer or selection.",
+     "params": "Keep proportions (⇧ to free) · Pivot · Warp grid 3×3",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "handles shown",
+      "applying"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.crop",
+     "name": "Crop",
+     "icon": "fit_all",
+     "shortcut": "C",
+     "group": "Image",
+     "does": "Crops the whole picture.",
+     "params": "Ratio free / 1:1 / 4:5 / 16:9 / A4 · Straighten ±45°",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.layers_panel",
+     "name": "Layers panel",
+     "icon": "collections",
+     "shortcut": "F7",
+     "group": "Layers",
+     "does": "New, duplicate, group, merge, mask, lock, hide.",
+     "params": "Opacity 0–100 % · Blend: normal, multiply, screen, overlay, soft light, colour",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "selected",
+      "hidden",
+      "locked"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.symmetry",
+     "name": "Symmetry",
+     "icon": "fit_all",
+     "shortcut": null,
+     "group": "Paint",
+     "does": "Mirrors strokes across one or more axes.",
+     "params": "Vertical / horizontal / radial 2–12",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "guides shown"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.reference_image",
+     "name": "Reference image",
+     "icon": "image",
+     "shortcut": null,
+     "group": "View",
+     "does": "Pins a picture in a floating window to look at.",
+     "params": "Opacity · always on top",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.history",
+     "name": "History",
+     "icon": "history",
+     "shortcut": "Ctrl Alt Z",
+     "group": "Edit",
+     "does": "List of the last 100 steps; tap one to go back.",
+     "params": "100 steps · snapshots",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.quick_palette",
+     "name": "Quick palette",
+     "icon": "appearance",
+     "shortcut": "long-press",
+     "group": "Colour",
+     "does": "Round palette at the brush: 8 colours, 6 brushes.",
+     "params": "Customise slots",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "open",
+      "closing"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "studio.fix_the_light_halo",
+     "name": "Fix the light (halo)",
+     "icon": "intelligence",
+     "shortcut": null,
+     "group": "Image",
+     "does": "halo suggests light and colour; result goes on a new layer.",
+     "params": "Strength 0–100 %",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "working",
+      "done",
+      "undo"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "notes": {
+   "name": "halo notes",
+   "instruments": [
+    {
+     "id": "notes.paragraph_styles",
+     "name": "Paragraph styles",
+     "icon": "heading",
+     "shortcut": "Ctrl Alt 1–4",
+     "group": "Home",
+     "does": "Body, Title, Heading 1–3, Quote, List.",
+     "params": "Edit a style updates every use",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "current style highlighted"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.font_size",
+     "name": "Font & size",
+     "icon": "accent",
+     "shortcut": null,
+     "group": "Home",
+     "does": "Font family and size for selected text.",
+     "params": "Size 8–72 pt; user fonts + Google Fonts",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "mixed (—)"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.bold_italic_underline",
+     "name": "Bold / italic / underline",
+     "icon": "bold",
+     "shortcut": "Ctrl B / I / U",
+     "group": "Home",
+     "does": "Text emphasis.",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "on",
+      "off",
+      "mixed"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.highlight",
+     "name": "Highlight",
+     "icon": "highlighter",
+     "shortcut": "Ctrl ⇧ H",
+     "group": "Home",
+     "does": "Marks text with a colour.",
+     "params": "6 highlight colours (none are state colours)",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.lists",
+     "name": "Lists",
+     "icon": "bullet_list",
+     "shortcut": "Ctrl ⇧ 7 / 8",
+     "group": "Home",
+     "does": "Bulleted and numbered lists, indent with Tab.",
+     "params": "Bullet style · numbering 1. / a. / i.",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.align_spacing",
+     "name": "Align & spacing",
+     "icon": "list_view",
+     "shortcut": "Ctrl L / E / R / J",
+     "group": "Home",
+     "does": "Left, centre, right, justify; line spacing.",
+     "params": "Spacing 1.0–3.0",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.insert_picture",
+     "name": "Insert picture",
+     "icon": "image",
+     "shortcut": null,
+     "group": "Insert",
+     "does": "Adds a photo from album, scan or files.",
+     "params": "Wrap inline / square / behind; size handles",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "placing"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.table",
+     "name": "Table",
+     "icon": "grid_view",
+     "shortcut": null,
+     "group": "Insert",
+     "does": "Inserts a table; Tab moves cell to cell.",
+     "params": "1–20 × 1–50; header row on/off",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.link",
+     "name": "Link",
+     "icon": "link",
+     "shortcut": "Ctrl K",
+     "group": "Insert",
+     "does": "Links text to a web page or a memory page.",
+     "params": "URL or [[page]]",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.header_footer_page_numbers",
+     "name": "Header, footer, page numbers",
+     "icon": "file_doc",
+     "shortcut": null,
+     "group": "Insert",
+     "does": "Repeating top/bottom text and numbers.",
+     "params": "Position · start at",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.page_setup",
+     "name": "Page setup",
+     "icon": "file_doc",
+     "shortcut": null,
+     "group": "Layout",
+     "does": "Page size, margins, orientation, columns.",
+     "params": "A4 / Letter / A5 · margins 0.5–5 cm · 1–3 columns",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.comments",
+     "name": "Comments",
+     "icon": "annotate",
+     "shortcut": "Ctrl Alt M",
+     "group": "Review",
+     "does": "Notes in the margin with initials; reply, resolve.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "open",
+      "resolved"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.track_changes",
+     "name": "Track changes",
+     "icon": "review",
+     "shortcut": "Ctrl ⇧ E",
+     "group": "Review",
+     "does": "Shows insertions (green) and deletions (struck).",
+     "params": "Accept / Reject one or all",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "on",
+      "off"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.spelling_easier_words",
+     "name": "Spelling & easier words",
+     "icon": "explain",
+     "shortcut": "F7",
+     "group": "Review",
+     "does": "Spelling, grammar and plainer alternatives.",
+     "params": "Language per document",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "checking",
+      "n found"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.find_replace",
+     "name": "Find & replace",
+     "icon": "find_replace",
+     "shortcut": "Ctrl F / H",
+     "group": "Edit",
+     "does": "Find text; replace one or all.",
+     "params": "Match case · whole word",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.outline",
+     "name": "Outline",
+     "icon": "list_view",
+     "shortcut": null,
+     "group": "View",
+     "does": "Headings list; drag to reorder sections.",
+     "params": "—",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.read_aloud",
+     "name": "Read aloud",
+     "icon": "speaker",
+     "shortcut": "Ctrl ⇧ Space",
+     "group": "Tools",
+     "does": "Reads from the caret with a lilac highlight.",
+     "params": "Speed 0.5–2× · voice",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "reading",
+      "paused"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.dictate",
+     "name": "Dictate",
+     "icon": "mic",
+     "shortcut": "Ctrl ⇧ D",
+     "group": "Tools",
+     "does": "Type by speaking; says “full stop”, “new line”.",
+     "params": "Language",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "listening (mint)"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.templates",
+     "name": "Templates",
+     "icon": "new_note",
+     "shortcut": null,
+     "group": "File",
+     "does": "Letter, CV, recipe card, meeting notes, invitation.",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "notes.export",
+     "name": "Export",
+     "icon": "export",
+     "shortcut": "Ctrl ⇧ S",
+     "group": "File",
+     "does": "DOCX, ODT, PDF, plain text; print.",
+     "params": "Page range · include comments",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "exporting",
+      "done"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "sheets": {
+   "name": "halo sheets",
+   "instruments": [
+    {
+     "id": "sheets.cell_select_range",
+     "name": "Cell select & range",
+     "icon": "select",
+     "shortcut": "arrows / ⇧",
+     "group": "Grid",
+     "does": "Select a cell, range, row or column.",
+     "params": "Ctrl A all · Ctrl Space column · ⇧ Space row",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "active cell outline (sand)"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.formula_bar",
+     "name": "Formula bar",
+     "icon": "code",
+     "shortcut": "F2",
+     "group": "Grid",
+     "does": "Shows and edits the formula of the active cell.",
+     "params": "Function hints; colour-matched ranges",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "editing",
+      "error"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.ask_in_words",
+     "name": "Ask in words",
+     "icon": "mic",
+     "shortcut": "Ctrl Space",
+     "group": "Grid",
+     "does": "Writes a formula from a sentence, explains it.",
+     "params": "Preview before insert",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "listening",
+      "suggestion"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.fill_down_series",
+     "name": "Fill down / series",
+     "icon": "add_block",
+     "shortcut": "Ctrl D",
+     "group": "Edit",
+     "does": "Copies or continues a pattern down or across.",
+     "params": "Copy / series / dates",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.number_format",
+     "name": "Number format",
+     "icon": "numbered_list",
+     "shortcut": "Ctrl ⇧ 1–5",
+     "group": "Format",
+     "does": "Number, currency, date, time, percent.",
+     "params": "Decimals 0–6 · currency symbol",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.sort",
+     "name": "Sort",
+     "icon": "sort",
+     "shortcut": null,
+     "group": "Data",
+     "does": "Sort rows by one or more columns.",
+     "params": "A→Z / Z→A · keep header",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.filter",
+     "name": "Filter",
+     "icon": "filter",
+     "shortcut": "Ctrl ⇧ L",
+     "group": "Data",
+     "does": "Show only rows that match.",
+     "params": "By value, text, number range, colour",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "active (icon tinted)"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.colour_rules",
+     "name": "Colour rules",
+     "icon": "appearance",
+     "shortcut": null,
+     "group": "Format",
+     "does": "Colours cells by a rule.",
+     "params": "Above / below / between / top n / duplicates",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.charts",
+     "name": "Charts",
+     "icon": "activity",
+     "shortcut": null,
+     "group": "Insert",
+     "does": "Bar, line, pie, area from the selection.",
+     "params": "Title · axes · legend · colours",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "floating",
+      "selected"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.freeze_rows_columns",
+     "name": "Freeze rows & columns",
+     "icon": "fit_all",
+     "shortcut": null,
+     "group": "View",
+     "does": "Keeps headers visible while scrolling.",
+     "params": "Rows 0–5 · columns 0–3",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.add_up_button",
+     "name": "Add up (button)",
+     "icon": "add",
+     "shortcut": "Alt =",
+     "group": "Easy",
+     "does": "Adds a total row or column.",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.explain_this_sheet",
+     "name": "Explain this sheet",
+     "icon": "explain",
+     "shortcut": null,
+     "group": "Tools",
+     "does": "Plain-language summary of what the sheet does.",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "working",
+      "done"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.check_entries",
+     "name": "Check entries",
+     "icon": "check",
+     "shortcut": null,
+     "group": "Data",
+     "does": "Drop-down lists and allowed values.",
+     "params": "List / number range / date",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "invalid (Apricot outline)"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.remove_duplicates",
+     "name": "Remove duplicates",
+     "icon": "trash",
+     "shortcut": null,
+     "group": "Data",
+     "does": "Removes repeated rows (asks first).",
+     "params": "Columns to compare",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": true
+    },
+    {
+     "id": "sheets.sheet_tabs",
+     "name": "Sheet tabs",
+     "icon": "collections",
+     "shortcut": "Ctrl PgUp/PgDn",
+     "group": "Grid",
+     "does": "Add, rename, colour, reorder sheets.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "sheets.import_export",
+     "name": "Import / export",
+     "icon": "import",
+     "shortcut": null,
+     "group": "File",
+     "does": "XLSX, CSV, ODS in; XLSX, CSV, PDF out.",
+     "params": "Separator · encoding",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "canvas": {
+   "name": "halo canvas",
+   "instruments": [
+    {
+     "id": "canvas.select",
+     "name": "Select",
+     "icon": "select",
+     "shortcut": "V",
+     "group": "Edit",
+     "does": "Select, move, multi-select by box.",
+     "params": "Snap to grid 8 · guides",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "selected (canvas blue outline)"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.hand_pan",
+     "name": "Hand / pan",
+     "icon": "fit_all",
+     "shortcut": "Space + drag",
+     "group": "View",
+     "does": "Moves around the board.",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.sticky_note",
+     "name": "Sticky note",
+     "icon": "new_note",
+     "shortcut": "N",
+     "group": "Insert",
+     "does": "Coloured note; type straight away.",
+     "params": "6 colours · auto-size text",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "editing"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.shape",
+     "name": "Shape",
+     "icon": "shapes",
+     "shortcut": "R / O",
+     "group": "Insert",
+     "does": "Rectangle, ellipse, diamond, arrow block.",
+     "params": "Fill · outline 0–12 · corner 0–60",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.text",
+     "name": "Text",
+     "icon": "heading",
+     "shortcut": "T",
+     "group": "Insert",
+     "does": "Free text block.",
+     "params": "Sora / Atkinson · 12–96",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.connector",
+     "name": "Connector",
+     "icon": "link",
+     "shortcut": "L",
+     "group": "Insert",
+     "does": "Line that sticks to shapes.",
+     "params": "Straight / elbow / curved · arrow ends",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "attached (dot)",
+      "loose"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.pen_highlighter",
+     "name": "Pen & highlighter",
+     "icon": "draw",
+     "shortcut": "P",
+     "group": "Insert",
+     "does": "Freehand drawing.",
+     "params": "Width 1–24 · smoothing",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.picture_file",
+     "name": "Picture & file",
+     "icon": "image",
+     "shortcut": null,
+     "group": "Insert",
+     "does": "Adds photos, PDFs (first page), links as cards.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.frame",
+     "name": "Frame",
+     "icon": "fit_all",
+     "shortcut": "F",
+     "group": "Insert",
+     "does": "A page of the board; group and present.",
+     "params": "Presets: free, A4, 16:9, phone",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.align_distribute",
+     "name": "Align & distribute",
+     "icon": "list_view",
+     "shortcut": "Alt A",
+     "group": "Arrange",
+     "does": "Lines up selected objects.",
+     "params": "Left / centre / right / top / middle / bottom",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.group_lock",
+     "name": "Group & lock",
+     "icon": "collections",
+     "shortcut": "Ctrl G / Ctrl ⇧ L",
+     "group": "Arrange",
+     "does": "Groups objects; locks them in place.",
+     "params": "—",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "locked (padlock)"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.properties_panel",
+     "name": "Properties panel",
+     "icon": "settings",
+     "shortcut": null,
+     "group": "Arrange",
+     "does": "Edits fill, outline, text, size, position.",
+     "params": "Shows only shared properties for multi-select",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.minimap",
+     "name": "Minimap",
+     "icon": "fit_all",
+     "shortcut": "M",
+     "group": "View",
+     "does": "Overview and jump.",
+     "params": "—",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.present",
+     "name": "Present",
+     "icon": "play",
+     "shortcut": "F5",
+     "group": "View",
+     "does": "Shows frames one by one, full screen.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "presenting"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.comments",
+     "name": "Comments",
+     "icon": "annotate",
+     "shortcut": "C",
+     "group": "Review",
+     "does": "Pin a comment to a spot.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "open",
+      "resolved"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "scan": {
+   "name": "halo scan",
+   "instruments": [
+    {
+     "id": "scan.capture",
+     "name": "Capture",
+     "icon": "camera",
+     "shortcut": "Space",
+     "group": "Capture",
+     "does": "Takes a page; auto-capture when steady.",
+     "params": "Auto on/off · flash",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "finding edges",
+      "hold still",
+      "captured"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.import_photo",
+     "name": "Import photo",
+     "icon": "import",
+     "shortcut": null,
+     "group": "Capture",
+     "does": "Uses an existing photo.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.edges",
+     "name": "Edges",
+     "icon": "fit_all",
+     "shortcut": null,
+     "group": "Page",
+     "does": "Four corner handles, found automatically.",
+     "params": "Magnifier loupe while dragging",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "auto",
+      "adjusted"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.rotate_reorder",
+     "name": "Rotate & reorder",
+     "icon": "redo",
+     "shortcut": "R",
+     "group": "Page",
+     "does": "Turns pages; drag strip to reorder.",
+     "params": "90° steps",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.filter",
+     "name": "Filter",
+     "icon": "appearance",
+     "shortcut": null,
+     "group": "Page",
+     "does": "Original, Clean paper, Grey, Black & white.",
+     "params": "Brightness · contrast",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.read_it_to_me",
+     "name": "Read it to me",
+     "icon": "speaker",
+     "shortcut": null,
+     "group": "Text",
+     "does": "Reads the found text aloud.",
+     "params": "Speed · voice",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "reading"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.found_text",
+     "name": "Found text",
+     "icon": "ocr",
+     "shortcut": null,
+     "group": "Text",
+     "does": "Text recognised on the phone when possible.",
+     "params": "Languages · copy",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "reading",
+      "ready"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.translate",
+     "name": "Translate",
+     "icon": "language",
+     "shortcut": null,
+     "group": "Text",
+     "does": "Translation over the real words.",
+     "params": "Target language",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.fill_a_form",
+     "name": "Fill a form",
+     "icon": "numbered_list",
+     "shortcut": null,
+     "group": "Text",
+     "does": "Finds fields; halo suggests answers you confirm.",
+     "params": "—",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "suggested",
+      "confirmed"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.sign",
+     "name": "Sign",
+     "icon": "draw",
+     "shortcut": null,
+     "group": "Text",
+     "does": "Adds your saved signature.",
+     "params": "Size · place",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.magnifier",
+     "name": "Magnifier",
+     "icon": "zoom_in",
+     "shortcut": null,
+     "group": "View",
+     "does": "Live lens up to 6×.",
+     "params": "Zoom 1–6× · high contrast · freeze",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "scan.save_pdf",
+     "name": "Save PDF",
+     "icon": "export",
+     "shortcut": "Ctrl S",
+     "group": "File",
+     "does": "One PDF with selectable text.",
+     "params": "Size small / normal / best",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "saving",
+      "done"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "record": {
+   "name": "halo record",
+   "instruments": [
+    {
+     "id": "record.record_pause",
+     "name": "Record / pause",
+     "icon": "mic",
+     "shortcut": "Space",
+     "group": "Transport",
+     "does": "Starts and pauses recording.",
+     "params": "Quality voice / music · on this phone",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "recording (mint dot + timer)",
+      "paused"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.play_scrub",
+     "name": "Play / scrub",
+     "icon": "play",
+     "shortcut": "Space · J K L",
+     "group": "Transport",
+     "does": "Plays; drag the waveform to move.",
+     "params": "Back / forward 10 s",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "playing"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.speed",
+     "name": "Speed",
+     "icon": "timer",
+     "shortcut": "< >",
+     "group": "Transport",
+     "does": "Playback speed.",
+     "params": "0.5–2× in 0.25 steps",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.marker",
+     "name": "Marker",
+     "icon": "tag",
+     "shortcut": "M",
+     "group": "Markers",
+     "does": "Named marker at the current time.",
+     "params": "Name · colour (tool tint)",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.chapters",
+     "name": "Chapters",
+     "icon": "list_view",
+     "shortcut": null,
+     "group": "Markers",
+     "does": "halo splits the recording into topics.",
+     "params": "Rename · merge",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "working",
+      "ready"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.transcript",
+     "name": "Transcript",
+     "icon": "transcribe",
+     "shortcut": null,
+     "group": "Text",
+     "does": "Words with times; tap to play from there.",
+     "params": "Languages · show times",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "live",
+      "final"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.speakers",
+     "name": "Speakers",
+     "icon": "group",
+     "shortcut": null,
+     "group": "Text",
+     "does": "Who said what, by initials.",
+     "params": "Rename speakers",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.find_in_transcript",
+     "name": "Find in transcript",
+     "icon": "find_replace",
+     "shortcut": "Ctrl F",
+     "group": "Text",
+     "does": "Finds words, jumps the audio.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.in_short",
+     "name": "In short",
+     "icon": "explain",
+     "shortcut": null,
+     "group": "Text",
+     "does": "Summary with To do and Decided.",
+     "params": "Length short / normal",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "working",
+      "ready"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.trim",
+     "name": "Trim",
+     "icon": "fit_all",
+     "shortcut": null,
+     "group": "Edit",
+     "does": "Cuts the start or end.",
+     "params": "Handles on waveform",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.send_to_planner",
+     "name": "Send to planner",
+     "icon": "calendar",
+     "shortcut": null,
+     "group": "Share",
+     "does": "To-dos become reminders.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "record.export",
+     "name": "Export",
+     "icon": "export",
+     "shortcut": null,
+     "group": "File",
+     "does": "Audio, text, subtitles.",
+     "params": "M4A / WAV · TXT / DOCX · SRT",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "planner": {
+   "name": "halo planner",
+   "instruments": [
+    {
+     "id": "planner.views",
+     "name": "Views",
+     "icon": "calendar",
+     "shortcut": "1 / 2 / 3 / 4",
+     "group": "View",
+     "does": "Day, Week, Month, Agenda.",
+     "params": "Weekends on/off",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.today_back_next",
+     "name": "Today / back / next",
+     "icon": "back",
+     "shortcut": "T · ← →",
+     "group": "Go",
+     "does": "Moves through time.",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.new_event",
+     "name": "New event",
+     "icon": "add",
+     "shortcut": "Ctrl N",
+     "group": "Edit",
+     "does": "Title, time, place, repeat, reminder.",
+     "params": "Repeat daily / weekly / monthly / custom",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "draft",
+      "saved"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.add_by_talking",
+     "name": "Add by talking",
+     "icon": "mic",
+     "shortcut": "Ctrl Space",
+     "group": "Edit",
+     "does": "Sentence → check card → event.",
+     "params": "Shows how it understood each part",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "listening",
+      "check"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.drag_to_move_resize",
+     "name": "Drag to move / resize",
+     "icon": "select",
+     "shortcut": null,
+     "group": "Edit",
+     "does": "Drag an event; pull its edge to change length.",
+     "params": "Snap 15 min",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "dragging"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.leave_by_time",
+     "name": "Leave-by time",
+     "icon": "reminder",
+     "shortcut": null,
+     "group": "Event",
+     "does": "Use travel minutes you enter to find when to leave for the selected timed event and review a reminder.",
+     "params": "Travel minutes",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.calendars",
+     "name": "Calendars",
+     "icon": "collections",
+     "shortcut": null,
+     "group": "View",
+     "does": "Me, Family space, others; colour and show/hide.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.tasks",
+     "name": "Tasks",
+     "icon": "check",
+     "shortcut": null,
+     "group": "Tasks",
+     "does": "Checklist with dates; ticks turn mint.",
+     "params": "Due date · repeat",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "open",
+      "done"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.mini_month",
+     "name": "Mini month",
+     "icon": "calendar",
+     "shortcut": null,
+     "group": "View",
+     "does": "Jump to any date.",
+     "params": "—",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.search",
+     "name": "Search",
+     "icon": "search",
+     "shortcut": "Ctrl F",
+     "group": "Go",
+     "does": "Finds events by words.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.import_export",
+     "name": "Import / export",
+     "icon": "import",
+     "shortcut": null,
+     "group": "File",
+     "does": "Standard calendar files (.ics).",
+     "params": "—",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "study": {
+   "name": "halo study",
+   "instruments": [
+    {
+     "id": "study.course_outline",
+     "name": "Course outline",
+     "icon": "list_view",
+     "shortcut": null,
+     "group": "Course",
+     "does": "Lessons with done / now.",
+     "params": "Reorder",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "done",
+      "now",
+      "later"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "study.lesson_view",
+     "name": "Lesson view",
+     "icon": "study",
+     "shortcut": null,
+     "group": "Learn",
+     "does": "Look step: text, pictures, audio.",
+     "params": "Size Pictures / Simple / Full",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "study.flashcards",
+     "name": "Flashcards",
+     "icon": "flashcard",
+     "shortcut": "Space flip",
+     "group": "Learn",
+     "does": "Front, back, hear it.",
+     "params": "Again / Hard / Good / Easy",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "front",
+      "back"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "study.quiz",
+     "name": "Quiz",
+     "icon": "quiz",
+     "shortcut": null,
+     "group": "Learn",
+     "does": "Choose, type, match, order.",
+     "params": "Number of questions 5–30",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "answering",
+      "checked"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "study.hint",
+     "name": "Hint",
+     "icon": "explain",
+     "shortcut": "H",
+     "group": "Help",
+     "does": "Lilac hint, slower audio, an example.",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "study.hear_it",
+     "name": "Hear it",
+     "icon": "speaker",
+     "shortcut": null,
+     "group": "Help",
+     "does": "Plays the word or sentence.",
+     "params": "Speed 0.5–1×",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "study.say_it",
+     "name": "Say it",
+     "icon": "mic",
+     "shortcut": null,
+     "group": "Try",
+     "does": "Speak and get gentle feedback.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "listening"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "study.make_cards",
+     "name": "Make cards",
+     "icon": "add",
+     "shortcut": null,
+     "group": "Course",
+     "does": "From notes, a scan or a recording.",
+     "params": "Keep / skip each suggestion",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "study.dynamic_cards",
+     "name": "Dynamic cards",
+     "icon": "card",
+     "shortcut": null,
+     "group": "Learn",
+     "does": "Answer and lesson cards (see board 85).",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "study.import_export",
+     "name": "Import / export",
+     "icon": "import",
+     "shortcut": null,
+     "group": "File",
+     "does": "Cards as CSV.",
+     "params": "—",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "memory": {
+   "name": "halo memory",
+   "instruments": [
+    {
+     "id": "memory.page",
+     "name": "Page",
+     "icon": "notebook",
+     "shortcut": "Ctrl N",
+     "group": "Write",
+     "does": "A page with text, photos, voice notes.",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "memory.link",
+     "name": "Link",
+     "icon": "link",
+     "shortcut": "[[",
+     "group": "Write",
+     "does": "Links to another page; creates it if new.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "memory.tag",
+     "name": "Tag",
+     "icon": "tag",
+     "shortcut": "#",
+     "group": "Write",
+     "does": "Groups pages without folders.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "memory.backlinks",
+     "name": "Backlinks",
+     "icon": "link",
+     "shortcut": null,
+     "group": "View",
+     "does": "“Linked here from” at the bottom.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "memory.link_map",
+     "name": "Link map",
+     "icon": "lab",
+     "shortcut": null,
+     "group": "View",
+     "does": "Pages as dots, links as lines.",
+     "params": "Depth 1–3",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "memory.timeline",
+     "name": "Timeline",
+     "icon": "history",
+     "shortcut": null,
+     "group": "View",
+     "does": "Pages by the date they are about.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "memory.search",
+     "name": "Search",
+     "icon": "search",
+     "shortcut": "Ctrl F",
+     "group": "Find",
+     "does": "Words, tags, dates.",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "memory.ask_before_using",
+     "name": "Ask before using",
+     "icon": "permission",
+     "shortcut": null,
+     "group": "Privacy",
+     "does": "halo asks before using a page in an answer.",
+     "params": "Always / ask / never per page",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "memory.export",
+     "name": "Export",
+     "icon": "export",
+     "shortcut": null,
+     "group": "File",
+     "does": "Page or all pages as text / PDF.",
+     "params": "—",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    }
+   ]
+  },
+  "album": {
+   "name": "halo album",
+   "instruments": [
+    {
+     "id": "album.library_sidebar",
+     "name": "Library sidebar",
+     "icon": "collections",
+     "shortcut": null,
+     "group": "Browse",
+     "does": "All, Favourites, People, Places, Albums, Stories, Deleted.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.search_by_memory",
+     "name": "Search by memory",
+     "icon": "search",
+     "shortcut": "Ctrl F",
+     "group": "Browse",
+     "does": "“Gran’s birthday last summer”.",
+     "params": "On this phone",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "searching",
+      "n found"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.grid_zoom",
+     "name": "Grid zoom",
+     "icon": "grid_view",
+     "shortcut": "+ / −",
+     "group": "View",
+     "does": "Days / months / years; 2–8 per row.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.select",
+     "name": "Select",
+     "icon": "check",
+     "shortcut": "tap / ⇧",
+     "group": "Browse",
+     "does": "Ticks; drag to select many.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "n selected"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.adjust",
+     "name": "Adjust",
+     "icon": "appearance",
+     "shortcut": null,
+     "group": "Edit",
+     "does": "Light, colour, warmth, straighten.",
+     "params": "−100 to +100 · straighten ±45°",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "editing"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.crop",
+     "name": "Crop",
+     "icon": "fit_all",
+     "shortcut": "C",
+     "group": "Edit",
+     "does": "Crop and ratio.",
+     "params": "Free / 1:1 / 4:5 / 16:9",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.compare",
+     "name": "Compare",
+     "icon": "read_mode",
+     "shortcut": "hold",
+     "group": "Edit",
+     "does": "Shows the original while held.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.revert",
+     "name": "Revert",
+     "icon": "undo",
+     "shortcut": null,
+     "group": "Edit",
+     "does": "Back to the original at any time.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.make_a_story",
+     "name": "Make a story",
+     "icon": "play",
+     "shortcut": null,
+     "group": "Share",
+     "does": "Best photos, title, soft music.",
+     "params": "Length 15–60 s",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "working",
+      "ready"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.info",
+     "name": "Info",
+     "icon": "explain",
+     "shortcut": "I",
+     "group": "View",
+     "does": "Date, place, people, camera.",
+     "params": "—",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "album.share",
+     "name": "Share",
+     "icon": "send",
+     "shortcut": null,
+     "group": "Share",
+     "does": "Always asks first (hard stop).",
+     "params": "—",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "asking",
+      "sent"
+     ],
+     "hardStop": true
+    }
+   ]
+  },
+  "vault": {
+   "name": "halo vault",
+   "instruments": [
+    {
+     "id": "vault.unlock",
+     "name": "Unlock",
+     "icon": "privacy",
+     "shortcut": null,
+     "group": "Lock",
+     "does": "Fingerprint or PIN; locks after 1 min away.",
+     "params": "Timeout 30 s–5 min",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "locked",
+      "open"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "vault.scan_a_paper",
+     "name": "Scan a paper",
+     "icon": "ocr",
+     "shortcut": null,
+     "group": "Add",
+     "does": "Photo → halo fills What / Bought / Ends / Remind.",
+     "params": "Shows where each value was read",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "reading",
+      "check"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "vault.import_file",
+     "name": "Import file",
+     "icon": "import",
+     "shortcut": null,
+     "group": "Add",
+     "does": "PDFs and photos from files.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "vault.folders",
+     "name": "Folders",
+     "icon": "collections",
+     "shortcut": null,
+     "group": "Browse",
+     "does": "Home papers, Insurance, Warranties, IDs, Taxes.",
+     "params": "Rename · colour",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "vault.list_grid",
+     "name": "List / grid",
+     "icon": "list_view",
+     "shortcut": null,
+     "group": "View",
+     "does": "Columns Name, Type, Ends, Remind.",
+     "params": "Sort any column",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "vault.preview_details",
+     "name": "Preview & details",
+     "icon": "read_mode",
+     "shortcut": "Space",
+     "group": "View",
+     "does": "See the paper and its facts.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "vault.reminder",
+     "name": "Reminder",
+     "icon": "reminder",
+     "shortcut": null,
+     "group": "Edit",
+     "does": "Remind before a paper ends.",
+     "params": "1 week / 1 month / custom",
+     "levels": [
+      "E",
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "vault.search",
+     "name": "Search",
+     "icon": "search",
+     "shortcut": "Ctrl F",
+     "group": "Browse",
+     "does": "Names and text inside papers.",
+     "params": "—",
+     "levels": [
+      "S",
+      "P"
+     ],
+     "states": [
+      "—"
+     ],
+     "hardStop": false
+    },
+    {
+     "id": "vault.share_a_copy",
+     "name": "Share a copy",
+     "icon": "send",
+     "shortcut": null,
+     "group": "Share",
+     "does": "Hard stop: asks first; shares a copy only.",
+     "params": "Expires after 1–7 days",
+     "levels": [
+      "P"
+     ],
+     "states": [
+      "asking",
+      "sent"
+     ],
+     "hardStop": true
+    }
+   ]
+  }
+ }
+}

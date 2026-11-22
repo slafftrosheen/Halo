@@ -32,15 +32,20 @@ object StudySessionOperability {
                 "pdfPages" to mapOf("type" to "object", "additionalProperties" to mapOf("type" to "integer", "minimum" to 1)),
                 "readerOpen" to mapOf("type" to "boolean"), "readerPlaying" to mapOf("type" to "boolean"),
                 "attemptIds" to ids, "turnIds" to ids, "practiceIds" to ids,
+                "courseVersion" to nullableText,
+                "courseLessons" to mapOf("type" to "array", "items" to mapOf("type" to "object", "properties" to mapOf(
+                    "id" to mapOf("type" to "string", "maxLength" to 200), "title" to nullableText,
+                    "progress" to mapOf("type" to "string", "enum" to com.halo.app.ui.screens.study.StudyCourseProgress.entries.map { it.name })),
+                    "required" to listOf("id", "title", "progress"), "additionalProperties" to false)),
                 "latestTutorText" to nullableText, "notice" to nullableText,
                 "exportedNoteId" to nullableText, "restartedSessionId" to nullableText,
-                "collection" to mapOf("type" to "string", "enum" to listOf("sourceCandidates", "attemptIds", "turnIds", "practiceIds")),
+                "collection" to mapOf("type" to "string", "enum" to StudySessionTools.collections),
                 "offset" to mapOf("type" to "integer", "minimum" to 0),
                 "totalCount" to mapOf("type" to "integer", "minimum" to 0),
                 "nextOffset" to mapOf("type" to listOf("integer", "null"), "minimum" to 0),
                 "truncated" to mapOf("type" to "boolean"),
                 "collectionCounts" to mapOf("type" to "object", "properties" to
-                    listOf("sourceCandidates", "attemptIds", "turnIds", "practiceIds").associateWith {
+                    StudySessionTools.collections.associateWith {
                         mapOf("type" to "integer", "minimum" to 0)
                     }, "additionalProperties" to false),
                 "knowledgeProbeSkipped" to mapOf("type" to "boolean"),
@@ -59,6 +64,7 @@ object StudySessionOperability {
                 "Read actual active/stored lesson IDs and content after dispatch; no human answer, card acceptance or solution consent may be inferred.",
                 "knowledge_probe accepts the learner's literal starting description only during DISCOVER; explore_topic accepts their chosen topic (300 characters maximum); reflect saves their literal reflection; reflect_feedback requests tentative explain-back feedback; suggest_topics requests suggestions without selecting them. No action infers learner answers or mastery. Kids full solutions require two actual accepted hints for the current exercise and material.",
                 "select_visual and select_pdf_page use observed source IDs and valid pages. read_source/read_reply and reader controls reuse the native reading owner and existing speech/privacy gates. Playback dispatch is not evidence of heard speech.",
+                "reorder_course_lesson uses an observed lesson ID and moves it exactly one place in the saved course order. Completion and learner drafts are preserved.",
                 "Current metadata pages one collection within 3,800 characters. Empty unselected collections are not empty history; consult collectionCounts and nextOffset. Current sources remain complete; tutor text is an excerpt. Re-read after source/UI changes before acting.",
                 "Returned lesson/source metadata and tutor text are personal Workspace data; no remote exposure/result transfer without existing category consent."))
     }

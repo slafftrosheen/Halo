@@ -59,9 +59,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.halo.app.embodiment.BuddyBotHost
+import com.halo.app.R
 import com.halo.app.embodiment.BuddyBotTelemetry
 import com.halo.app.ui.theme.HaloWarning
 import com.halo.app.ui.workspace.HaloWorkspaceButton
@@ -97,18 +99,20 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel,
     val telemetry by (buddyBotHost?.telemetry ?: fallback).collectAsStateWithLifecycle()
     val endpointError by (buddyBotHost?.connectionError ?: remember {MutableStateFlow<String?>(null)}).collectAsStateWithLifecycle()
     val connected = device?.isConnected == true
-    val fault = telemetry.safetyState?.uppercase() in setOf("FAULT", "ESTOP") ||
-        !telemetry.safetyFault.isNullOrBlank() && !telemetry.safetyFault.equals("none", true)
+    val fault = telemetry.hasFault
     val driving = connected && telemetry.motorsArmed && !fault
     var offset by remember { mutableStateOf(Offset.Zero) }
     var lastSend by remember { mutableLongStateOf(0L) }
-    var connection by remember { mutableStateOf(false) }
+    var connection by remember(deviceId) { mutableStateOf(!connected) }
     var forget by remember { mutableStateOf(false) }
     var address by remember { mutableStateOf(buddyBotHost?.getTargetUrl().orEmpty()) }
     var code by remember { mutableStateOf("") }
     var connectionError by remember { mutableStateOf(false) }
     var addressError by remember {mutableStateOf(false)}
+    var connecting by remember { mutableStateOf(false) }
     var pairing by remember { mutableStateOf(false) }
+    var pairFailed by remember { mutableStateOf(false) }
+    var paired by remember { mutableStateOf(false) }
     var armPending by remember { mutableStateOf(false) }
     var armUnconfirmed by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -134,6 +138,8 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel,
     }
     androidx.compose.runtime.LaunchedEffect(fault, connected) {
         if (fault || !connected) stopAndDisarm.value()
+        if (!connected) { paired = false; code = ""; pairFailed = false }
+        else paired = buddyBotHost?.session?.hasToken == true
     }
     val shellHosted = BindShellChildPage(device?.name ?: "BuddyBot", onBack, objectId = deviceId.takeIf { it == buddyBotHost?.deviceId && it.length <= 240 && it.matches(Regex("[A-Za-z0-9_.:/+-]+")) }, titleIsSource = true,
         sourceIdentity = "$deviceId:$connected:$driving:$fault", actions = listOf(
@@ -201,24 +207,54 @@ fun BuddyBotControlScreen(deviceId: String, viewModel: DevicesViewModel,
                 { connection = true }, Modifier.fillMaxWidth(), primary = !connected)
             if (connection) HaloWorkspaceCard {
                 HaloTextField(address, { address = it; addressError = false }, label = { Text(uiText("Wi-Fi address")) },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.TEXT)
-                HaloWorkspaceButton(uiText("Save address"), {
+                    modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.TEXT, enabled = !connecting && !pairing)
+                HaloWorkspaceButton(stringResource(R.string.halo_buddy_connect), {
                     if (!com.halo.app.embodiment.BuddyBotLocalEndpoint.acceptsWebSocket(address.trim())) addressError = true
-                    else { buddyBotHost?.setTargetUrl(address.trim()); addressError=false;connectionError = false }
-                }, Modifier.fillMaxWidth(), enabled = buddyBotHost != null && address.isNotBlank())
-                if (addressError || endpointError!=null) Text(uiText(endpointError ?: com.halo.app.embodiment.BuddyBotLocalEndpoint.MESSAGE), color = MaterialTheme.colorScheme.error)
-                if(connectionError) Text(uiText("Check the address or pairing code and try again."),color=MaterialTheme.colorScheme.error)
-                HaloTextField(code, { code = it.take(9) }, label = { Text(uiText("Pairing code")) },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.CODE)
-                HaloWorkspaceButton(uiText("Pair"), {
-                    pairing = true; connectionError = false
-                    scope.launch {
-                        try { buddyBotHost?.pair(code.replace(" ", "")) }
-                        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                        catch (_: Exception) { connectionError = true }
-                        finally { pairing = false }
+                    else if (!connecting && !pairing) {
+                        val target = address.trim()
+                        connecting = true; addressError = false; connectionError = false
+                        scope.launch {
+                            try {
+                                val family = com.halo.app.di.ManualDependencyGraph.kidsPreferences
+                                val revision = family.adultActionRevision()
+                                family.requireAdultAction(revision)
+                                checkNotNull(buddyBotHost).connectTo(target)
+                            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                            catch (_: Exception) { connectionError = true }
+                            finally { connecting = false }
+                        }
                     }
-                }, Modifier.fillMaxWidth(), enabled = connected && buddyBotHost != null && code.isNotBlank() && !pairing)
+                }, Modifier.fillMaxWidth(), enabled = buddyBotHost != null && address.isNotBlank() && !connecting && !pairing)
+                if (addressError || endpointError!=null) Text(uiText(endpointError ?: com.halo.app.embodiment.BuddyBotLocalEndpoint.MESSAGE), color = MaterialTheme.colorScheme.error)
+                if(connectionError) Text(stringResource(R.string.halo_buddy_connect_failed), color = MaterialTheme.colorScheme.error)
+                if (connected && paired) Text(stringResource(R.string.halo_buddy_paired), color = MaterialTheme.colorScheme.primary)
+                else if (connected) {
+                    Text(stringResource(R.string.halo_buddy_code_help))
+                    HaloTextField(code, { code = it.filter { ch -> ch in '0'..'9' }.take(4) }, label = { Text(uiText("Pairing code")) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true, kind = VoiceFieldKind.CODE, maxChars = 4, enabled = !pairing)
+                    HaloWorkspaceButton(uiText("Pair"), {
+                        val entered = code
+                        pairing = true; pairFailed = false; code = ""
+                        scope.launch {
+                            try {
+                                com.halo.app.di.ManualDependencyGraph.kidsPreferences.adultActionRevision()
+                                paired = buddyBotHost?.pair(entered) == true
+                                pairFailed = !paired
+                            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                            catch (_: Exception) { pairFailed = true }
+                            finally { pairing = false }
+                        }
+                    }, Modifier.fillMaxWidth(), enabled = buddyBotHost != null && code.length == 4 && !pairing && !pairFailed)
+                    if (pairFailed) {
+                        Text(stringResource(R.string.halo_buddy_pair_failed), color = MaterialTheme.colorScheme.error)
+                        TextButton(onClick = {
+                            scope.launch {
+                                buddyBotHost?.disconnect()
+                                pairFailed = false
+                            }
+                        }) { Text(stringResource(R.string.halo_buddy_disconnect)) }
+                    }
+                }
                 HaloWorkspaceToggleRow(title = "Connect automatically", checked = device?.autoConnect == true,
                     onCheckedChange = { viewModel.toggleAutoConnect(deviceId, it) })
                 TextButton(onClick = { forget = true }) { Text(uiText("Forget device")) }

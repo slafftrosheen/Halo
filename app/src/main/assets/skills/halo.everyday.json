@@ -30,9 +30,21 @@
     "halo_widget_pin",
     "halo_widget_query",
     "halo_day_context",
+    "halo_today_overview",
+    "halo_today_weather_city",
     "halo_source_image"
   ],
   "toolDefinitions": [
+    {
+      "toolId": "halo_today_overview",
+      "risk": "READ_ONLY",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_today_weather_city",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
     {
       "toolId": "halo_brief_action",
       "risk": "REVERSIBLE",

@@ -1,5 +1,8 @@
 package com.halo.app.ui.screens.notebook
 
+import com.halo.app.data.notebook.CanvasReviewPin
+import com.halo.app.data.notebook.canvasLockedIds
+
 import android.net.Uri
 import com.halo.app.context.*
 import com.halo.app.data.notebook.CanvasFileMarkupCodec
@@ -35,6 +38,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.CancellationException
 import com.halo.app.data.notebook.CanvasNode
+import com.halo.app.data.notebook.CanvasFramePreset
+import com.halo.app.data.notebook.CanvasVisualShape
+import com.halo.app.data.notebook.CanvasNodeType
+import com.halo.app.data.notebook.isCanvasContainer
 import com.halo.app.data.notebook.NotebookCanvasRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,6 +60,8 @@ data class CanvasRecognizedDraft(val sourceNodeId: String, val sourceKind: Strin
 internal fun CanvasNode.readableText(): String = when {
     type == com.halo.app.data.notebook.CanvasNodeType.SKETCH -> "[hand-drawn sketch]"
     type == com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION -> "[saved ink selection]"
+    type == CanvasNodeType.SHAPE -> CanvasVisualShape.decode(text)?.kind?.label.orEmpty()
+    type == CanvasNodeType.COMMENT -> "[comment pin]"
     refObjectId != null -> CanvasFileMarkupCodec.displayTitle(text)
     else -> text
 }
@@ -434,6 +443,13 @@ class CanvasEditorViewModel(
         mutableState.value = state.copy(selectionMode = !state.selectionMode, selectedNodeIds = emptySet(), selectedNodeId = null)
     }
     fun selectAll() { mutableState.value = mutableState.value.copy(selectionMode = true, selectedNodeIds = mutableState.value.nodes.map { it.id }.take(100).toSet()) }
+    internal fun selectInBounds(left: Float, top: Float, right: Float, bottom: Float) {
+        val state = mutableState.value
+        if (!state.canEditBoard() || !state.selectionMode) return
+        val ids = state.nodes.filter { it.x < right && it.x + it.width > left && it.y < bottom && it.y + it.height > top }
+            .map { it.id }.take(100).toSet()
+        mutableState.value = state.copy(selectedNodeIds = ids, selectedNodeId = ids.firstOrNull())
+    }
     fun organize(wholeBoard: Boolean = false, ai: Boolean = false) {
         if (!mutableState.value.canEditBoard()) return
         val generation = ++organizationGeneration
@@ -441,7 +457,8 @@ class CanvasEditorViewModel(
         flushPendingEdits()
         val state = mutableState.value
         val currentNodes = repository.observe(canvasId).first()?.nodes ?: error("Canvas unavailable")
-        val scope = currentNodes.filter { it.type != com.halo.app.data.notebook.CanvasNodeType.GROUP &&
+        val scope = currentNodes.filter { !it.type.isCanvasContainer() &&
+            it.type != CanvasNodeType.COMMENT &&
             it.type != com.halo.app.data.notebook.CanvasNodeType.INK_SELECTION &&
             (wholeBoard || it.id in state.selectedNodeIds || it.id == state.selectedNodeId) }.take(100)
         check(scope.isNotEmpty())
@@ -545,9 +562,13 @@ class CanvasEditorViewModel(
             }
         }
     }
-    fun manualSelectionAction(action: String) = command {
+    fun manualSelectionAction(action: String) = manualSelectionActionOn(action, null)
+
+    internal fun manualSelectionActionOn(action: String, expectedIds: Set<String>?) = command {
         flushPendingEdits()
-        val ids = mutableState.value.selectedNodeIds.ifEmpty { setOfNotNull(mutableState.value.selectedNodeId) }
+        val current = mutableState.value
+        val ids = current.selectedNodeIds.ifEmpty { setOfNotNull(current.selectedNodeId) }
+        check(current.canEditBoard() && (expectedIds == null || ids == expectedIds)) { "Canvas changed" }
         undoSnapshot = repository.manualEdit(canvasId, ids, action)
         mutableState.value = mutableState.value.copy(undoAvailable = true, selectedNodeId = null, selectedNodeIds = emptySet())
     }
@@ -559,13 +580,16 @@ class CanvasEditorViewModel(
         mutableState.value = mutableState.value.copy(undoAvailable = false)
     }
 
-    fun addTextNode() = viewModelScope.launch {
+    fun addTextNode(sticky: Boolean = false, onAdded: (String) -> Unit = {}) = viewModelScope.launch {
         if (!mutableState.value.canEditBoard()) return@launch
         mutableState.value = mutableState.value.copy(addingNode = true, notice = null)
         val (centerX, centerY) = insertionPoint()
-        runCatching { repository.addTextNode(canvasId, centerX, centerY) }
+        runCatching {
+            if (sticky) repository.addStickyNode(canvasId, centerX, centerY) else repository.addTextNode(canvasId, centerX, centerY)
+        }
             .onSuccess { id ->
-                mutableState.value = mutableState.value.copy(selectedNodeId = id, addingNode = false)
+                mutableState.value = mutableState.value.copy(selectedNodeId = id, selectedNodeIds = setOf(id), addingNode = false)
+                onAdded(id)
             }
             .onFailure {
                 mutableState.value = mutableState.value.copy(
@@ -573,6 +597,32 @@ class CanvasEditorViewModel(
                     notice = "Could not add a card. Try again.",
                 )
             }
+    }
+
+    internal fun addShape(shape: CanvasVisualShape) = command {
+        val state = mutableState.value
+        if (!state.canEditBoard()) return@command
+        flushPendingEdits()
+        val (x, y) = insertionPoint()
+        val id = repository.addVisualShape(canvasId, x, y, shape)
+        mutableState.value = mutableState.value.copy(selectedNodeId = id, selectedNodeIds = setOf(id))
+    }
+
+    internal fun addFrame(title: String, preset: CanvasFramePreset) = command {
+        val state = mutableState.value
+        if (!state.canEditBoard()) return@command
+        flushPendingEdits()
+        val (x, y) = insertionPoint()
+        val id = repository.addFrame(canvasId, x + 120f - preset.width / 2, y + 75f - preset.height / 2, title, preset)
+        mutableState.value = mutableState.value.copy(selectedNodeId = id, selectedNodeIds = setOf(id))
+    }
+
+    internal fun updateShape(expected: CanvasNode, shape: CanvasVisualShape) = command {
+        if (!mutableState.value.canEditBoard()) return@command
+        flushPendingEdits()
+        val current = mutableState.value.nodes.firstOrNull { it.id == expected.id }
+        check(current != null && current.type == CanvasNodeType.SHAPE && current.revision == expected.revision) { "Canvas changed" }
+        check(repository.updateText(canvasId, expected.id, shape.encode(), expectedText = expected.text)) { "Canvas changed" }
     }
 
     fun updateNodeText(nodeId: String, text: String) {
@@ -618,6 +668,8 @@ class CanvasEditorViewModel(
         val root = state.nodes.firstOrNull { it.id == nodeId } ?: return
         val selectedIds = if (nodeId in state.selectedNodeIds) state.selectedNodeIds else setOf(nodeId)
         val targets = com.halo.app.data.notebook.canvasDragTargets(state.nodes, state.edges, selectedIds)
+        val locked = canvasLockedIds(state.nodes, state.edges)
+        if (targets.any { it in locked }) return
         val scale = state.viewportScale
         val updated = state.nodes.map { if (it.id in targets) it.copy(x = it.x + dx / scale, y = it.y + dy / scale) else it }
         mutableState.value = state.copy(nodes = updated, selectedNodeId = root.id)
@@ -944,6 +996,18 @@ class CanvasEditorViewModel(
         flushPendingEdits()
         val (x, y) = insertionPoint()
         selectNode(repository.addGroupNode(canvasId, x - 70f, y - 85f, title))
+    }
+
+    internal fun addReviewPin(x: Float, y: Float, pin: CanvasReviewPin, onSaved: (String) -> Unit) = command {
+        check(mutableState.value.canEditBoard())
+        flushPendingEdits()
+        onSaved(repository.addReviewPin(canvasId, x - 24f, y - 24f, pin))
+    }
+
+    internal fun updateReviewPin(expected: CanvasNode, pin: CanvasReviewPin, onSaved: () -> Unit) = command {
+        check(mutableState.value.canEditBoard())
+        check(repository.updateReviewPin(canvasId, expected.id, expected.text, pin)) { "Canvas changed" }
+        onSaved()
     }
 
     fun tagSelected(tag: String) = command {
@@ -1576,6 +1640,7 @@ class CanvasEditorViewModel(
             val body = buildString {
                 append("# ").append(state.title).append("\n\n")
                 for (node in state.nodes.sortedWith(compareBy<CanvasNode> { it.y }.thenBy { it.x })) {
+                    if (node.type == CanvasNodeType.COMMENT) continue
                     if (node.type == com.halo.app.data.notebook.CanvasNodeType.SKETCH) append("[Sketch — open the original canvas to see the drawing]")
                     else if (node.refObjectId == null) append(node.readableText())
                     else {

@@ -11,8 +11,10 @@ internal object OrganizerCodec {
     private fun JSONObject.number(name: String): Long? = if (isNull(name)) null else getLong(name)
     private fun time(value: OrganizerTime) = JSONObject().put("start", value.start.toString())
         .put("end", value.end?.toString()).put("zone", value.zoneId).put("allDay", value.allDay).put("floating", value.followDeviceZone)
+        .put("startOffset", value.startOffset?.id).put("endOffset", value.endOffset?.id)
     private fun time(value: JSONObject) = OrganizerTime(LocalDateTime.parse(value.getString("start")), value.nullable("end")?.let(LocalDateTime::parse),
-        value.getString("zone"), value.getBoolean("allDay"), value.getBoolean("floating"))
+        value.getString("zone"), value.getBoolean("allDay"), value.getBoolean("floating"),
+        value.nullable("startOffset")?.let(ZoneOffset::of), value.nullable("endOffset")?.let(ZoneOffset::of))
     fun encode(record: OrganizerRecord): String = JSONObject().apply {
         put("schema", 1); put("id", record.id); put("kind", record.kind.name); put("title", record.title); put("details", record.details)
         put("priority", record.priority.name); put("status", record.status.name); put("parentId", record.parentId)
@@ -22,6 +24,10 @@ internal object OrganizerCodec {
         put("location", record.location)
         put("leaveBeforeMinutes", record.leaveBeforeMinutes)
         put("calendarUid", record.calendarUid)
+        put("calendar", record.calendar.name)
+        record.studyExam?.let { plan -> put("studyExam", JSONObject().put("date", plan.examDate.toString())
+            .put("lessons", JSONArray(plan.lessons.map { JSONObject().put("id", it.sessionId).put("title", it.title)
+                .put("version", it.version) }))) }
         record.time?.let { put("time", time(it)) }
         record.repeat?.let { rule -> put("repeat", JSONObject().put("frequency", rule.frequency.name).put("interval", rule.interval)
             .put("weekdays", JSONArray(rule.weekdays.sortedBy { it.value }.map { it.name })).put("count", rule.count).put("until", rule.until?.toEpochMilli())) }
@@ -38,13 +44,23 @@ internal object OrganizerCodec {
         val timer = json.optJSONObject("timer")?.let { t -> TimerState(t.getLong("duration"), t.getLong("remaining"),
             t.number("started")?.let(Instant::ofEpochMilli), t.number("elapsed"), t.nullable("boot"),
             t.optString("runId").takeIf { it.isNotBlank() } ?: "legacy:${json.getString("id")}:${t.number("started") ?: 0}") }
+        val calendarUid = json.nullable("calendarUid")
+        val calendar = json.nullable("calendar")?.let(OrganizerCalendar::valueOf)
+            ?: if (calendarUid == null) OrganizerCalendar.PERSONAL else OrganizerCalendar.OTHERS
+        val exam = json.optJSONObject("studyExam")?.let { plan ->
+            val lessons = plan.getJSONArray("lessons")
+            require(lessons.length() <= 50)
+            StudyExamSchedule(LocalDate.parse(plan.getString("date")), (0 until lessons.length()).map { index ->
+                lessons.getJSONObject(index).let { StudyExamLesson(it.getString("id"), it.getString("title"), it.getLong("version")) }
+            })
+        }
         return OrganizerRecord(json.getString("id"), OrganizerKind.valueOf(json.getString("kind")), json.getString("title"), json.getString("details"),
             json.optJSONObject("time")?.let(::time), rule, TaskPriority.valueOf(json.getString("priority")), OrganizerStatus.valueOf(json.getString("status")),
             json.nullable("parentId"), json.number("notifyBeforeMinutes")?.toInt(), timer,
             json.getJSONArray("links").let { links -> (0 until links.length()).map { index -> links.getJSONObject(index).let { OrganizerLink(it.getString("id"), it.getString("relation")) } } },
             json.nullable("sourceUrl"), json.nullable("sourceLabel"), json.getLong("version"), Instant.ofEpochMilli(json.getLong("createdAt")),
             Instant.ofEpochMilli(json.getLong("updatedAt")), json.number("deletedAt")?.let(Instant::ofEpochMilli),
-            json.optString("location", ""), json.nullable("calendarUid"), json.number("leaveBeforeMinutes")?.toInt()).also { it.validate() }
+            json.optString("location", ""), calendarUid, json.number("leaveBeforeMinutes")?.toInt(), calendar, exam).also { it.validate() }
     }
     fun encode(value: OccurrenceOverride) = JSONObject().apply {
         put("schema", 1); put("recordId", value.recordId); put("originalStart", value.originalStart.toEpochMilli())

@@ -164,7 +164,7 @@ object EverydayToolkitWidgets {
                     else -> DateTimeFormatter.ofPattern("EEE", locale).withZone(input.zone).format(next.start) + " · " + time
                 }
                 face(value, tool(EverydayWidgetTool.PLANNER), if (next == null) "Open Planner" else "Next event",
-                    next?.record?.updatedAt)
+                    next?.record?.updatedAt?.takeUnless { kind == EverydayCardKind.LOCK_NEXT_EVENT })
             }
             EverydayCardKind.FOCUS -> {
                 val focus = input.widgetFocus

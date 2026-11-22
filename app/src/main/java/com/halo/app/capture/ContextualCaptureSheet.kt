@@ -3,17 +3,76 @@ package com.halo.app.capture
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.language.uiText
+import com.halo.app.R
 
 import androidx.compose.runtime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.SecureFlagPolicy
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.di.ManualDependencyGraph as Graph
+import com.halo.app.ui.screens.kids.rememberKidsHomeworkTime
 import com.halo.sdk.runtime.multimodal.*
 import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun KidsHomeworkCaptureReview(
+    controller: ContextualCaptureController,
+    capture: ContextualCaptureState,
+    kids: Boolean,
+    paused: Boolean,
+    visible: Boolean,
+) {
+    val family = Graph.kidsPreferences
+    val homework = family.homework
+    val scheduled = rememberKidsHomeworkTime(homework)
+    val schedule by homework.settings.collectAsStateWithLifecycle()
+    val approved by homework.approvedGlasses.collectAsStateWithLifecycle()
+    val sourceDevice = capture.mediaRef.sourceDeviceId
+    val revision = capture.kidsHomeworkRevision
+    val allowed = kids && !paused && scheduled && capture.isPrivateHomeworkGlasses() &&
+        sourceDevice != null && approved == sourceDevice && revision != null &&
+        runCatching { family.requireHomeworkGlasses(revision, sourceDevice) }.isSuccess
+    LaunchedEffect(capture.captureId, capture.mediaRef.id, kids, paused, schedule, allowed) {
+        if (!kids || paused || schedule != null && !allowed)
+            controller.discardHomeworkPhoto(capture.captureId, capture.mediaRef.id)
+    }
+    if (!allowed || !visible) return
+    val scope = rememberCoroutineScope()
+    var busy by remember(capture.captureId, capture.mediaRef.id) { mutableStateOf(false) }
+    var failed by remember(capture.captureId, capture.mediaRef.id) { mutableStateOf(false) }
+    fun discard() {
+        if (!busy) scope.launch { controller.discardHomeworkPhoto(capture.captureId, capture.mediaRef.id) }
+    }
+    ModalBottomSheet(onDismissRequest = ::discard,
+        properties = ModalBottomSheetProperties(securePolicy = SecureFlagPolicy.SecureOn)) {
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.halo11_coach_glasses_received), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.halo11_coach_private_photo))
+            Button(onClick = {
+                if (!busy) {
+                    busy = true
+                    failed = false
+                    scope.launch {
+                        try { controller.openKidsHomeworkPhoto(capture.captureId, capture.mediaRef.id) }
+                        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (_: Exception) { failed = true }
+                        finally { busy = false }
+                    }
+                }
+            }, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                Text(stringResource(R.string.halo11_coach_glasses_use))
+            }
+            TextButton(onClick = ::discard, enabled = !busy) { Text(stringResource(android.R.string.cancel)) }
+            if (failed) Text(stringResource(R.string.halo11_coach_glasses_unavailable))
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,10 +80,21 @@ fun ContextualCaptureSheet(controller: ContextualCaptureController, onVisionSetu
     val capture by controller.state.collectAsStateWithLifecycle()
     val visible by controller.visible.collectAsStateWithLifecycle()
     val current = capture ?: return
-    if(!visible) return
+    val family = Graph.kidsPreferences
+    val familyReady by family.loadedState.collectAsStateWithLifecycle()
+    val kidsMode by family.enabled.collectAsStateWithLifecycle()
+    val pause by Graph.haloPause.state.collectAsStateWithLifecycle()
+    if (!familyReady) return
+    if (current.kidsHomeworkRevision != null) {
+        KidsHomeworkCaptureReview(controller, current, kidsMode, pause.paused, visible)
+        return
+    }
+    if (!visible || kidsMode) return
     var more by remember(current.captureId) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var extractionError by remember(current.captureId) { mutableStateOf<String?>(null) }
+    var coachError by remember(current.captureId) { mutableStateOf(false) }
+    var sendingToCoach by remember(current.captureId) { mutableStateOf(false) }
     var previewLoaded by remember(current.mediaRef.id) { mutableStateOf(false) }
     var modelFact by remember(current.captureId) { mutableStateOf(false) }
     var attachPicker by remember(current.captureId) { mutableStateOf(false) }
@@ -75,6 +145,21 @@ fun ContextualCaptureSheet(controller: ContextualCaptureController, onVisionSetu
             com.halo.app.ui.components.CloudModeResolution(required = false)
             TextButton(onClick={controller.visible.value=false;onVisionSetup()}) { Text(uiText("Choose vision model")) }
             OutlinedButton(onClick={ controller.action(CaptureAction.STUDY) },enabled=bitmap != null && !saving) { Text(uiText("Study this")) }
+            if (!pause.paused) {
+                OutlinedButton(enabled = bitmap != null && !saving && !sendingToCoach, onClick = {
+                    if (!sendingToCoach) {
+                        sendingToCoach = true
+                        coachError = false
+                        scope.launch {
+                            try { controller.openPhotoCoach(current.captureId, current.mediaRef.id, Graph.kidsPreferences.adultActionRevision()) }
+                            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                            catch (_: Exception) { coachError = true }
+                            finally { sendingToCoach = false }
+                        }
+                    }
+                }) { Text(stringResource(R.string.halo11_coach_entry)) }
+            }
+            if (coachError) Text(stringResource(R.string.halo11_coach_unavailable), color = MaterialTheme.colorScheme.error)
             Row(Modifier.horizontalScroll(rememberScrollState())) { CaptureExtractionMode.entries.forEach { value ->
                 FilterChip(mode==value,{mode=value},label={Text(uiText(when(value){CaptureExtractionMode.READ_TEXT->"Text";CaptureExtractionMode.IDENTIFY_OBJECTS->"Objects";else->"Key information"}))})
             } }

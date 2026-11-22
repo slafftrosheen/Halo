@@ -18,6 +18,12 @@ import androidx.compose.ui.platform.LocalContext
  */
 @Composable
 fun rememberReducedMotion(): State<Boolean> {
+    val platform = rememberAndroidReducedMotion()
+    return androidx.compose.runtime.rememberUpdatedState(platform.value || rememberVisualPreferences().lessMotion)
+}
+
+@Composable
+internal fun rememberAndroidReducedMotion(): State<Boolean> {
     val context = LocalContext.current
     val resolver = context.contentResolver
 
@@ -30,7 +36,6 @@ fun rememberReducedMotion(): State<Boolean> {
             ) == 0f
         }.getOrDefault(false)
 
-    val appReduced = rememberVisualPreferences().lessMotion
     val reduced = remember(context) { mutableStateOf(read()) }
 
     DisposableEffect(resolver) {
@@ -51,5 +56,5 @@ fun rememberReducedMotion(): State<Boolean> {
         }
     }
 
-    return androidx.compose.runtime.rememberUpdatedState(reduced.value || appReduced)
+    return reduced
 }

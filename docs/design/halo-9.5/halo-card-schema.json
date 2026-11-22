@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "halo dynamic card",
+  "type": "object",
+  "required": ["type", "title", "source", "speak"],
+  "properties": {
+    "type": { "enum": ["fact","steps","compare","timeline","place","pictures","quick_check","flip","word","chart","checklist","plan","label_it","explain_back"] },
+    "title": { "type": "string", "maxLength": 80 },
+    "body": { "description": "type-specific content: value/note, items[], options[], pictures[], events[], points[], labels[]" },
+    "source": { "type": "object", "required": ["name"], "properties": { "name": {"type":"string"}, "url": {"type":"string"} } },
+    "speak": { "type": "string", "description": "what Read aloud says" },
+    "sizes": { "type": "array", "items": { "enum": ["pictures","simple","full"] } },
+    "keepTo": { "type": "array", "items": { "enum": ["memory","study","planner","kids"] } },
+    "hardStop": { "type": "boolean", "description": "true if the card's action sends, pays, deletes or posts" },
+    "kidsSafe": { "type": "boolean" },
+    "confidence": { "enum": ["sure","check"], "description": "check = card says halo is not sure and offers to look it up" }
+  }
+}

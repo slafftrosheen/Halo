@@ -14,6 +14,7 @@ import com.halo.app.data.notebook.WorkspaceObjectId
 import com.halo.app.data.notebook.WorkspaceObjectType
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -58,7 +59,9 @@ class AppSearchWorkspaceSearchEngine(
             setSchemaFuture.await()
             session = s
             s
-        } catch (e: Throwable) {
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
             Log.w("AppSearch", "Failed to initialize AppSearch session", e)
             null
         }
@@ -68,7 +71,9 @@ class AppSearchWorkspaceSearchEngine(
         val s = ensureSession() ?: return
         try {
             s.removeAsync("", SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build()).await()
-        } catch (e: Throwable) {
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
             Log.w("AppSearch", "Failed to clear derived index", e)
         }
     }
@@ -80,7 +85,12 @@ class AppSearchWorkspaceSearchEngine(
         content: String,
         updatedAt: Long
     ) {
-        if (!WorkspaceLocalContentSearch.safe(title + "\n" + content)) { removeObject(objectId); return }
+        val current = dao.getWorkspaceObject(objectId.value)
+        if (current == null || current.lifecycle != "ACTIVE" || current.title != title ||
+            !WorkspaceLocalContentSearch.safe(title + "\n" + content)) {
+            removeObject(objectId)
+            return
+        }
         val s = ensureSession() ?: return
         try {
             val doc = WorkspaceSearchDocument(
@@ -94,7 +104,10 @@ class AppSearchWorkspaceSearchEngine(
                 .addDocuments(doc)
                 .build()
             s.putAsync(putRequest).await()
-        } catch (e: Throwable) {
+            if (dao.getWorkspaceObject(objectId.value)?.lifecycle != "ACTIVE") removeObject(objectId)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
             Log.w("AppSearch", "Failed to index object ${objectId.value}", e)
         }
     }
@@ -106,7 +119,9 @@ class AppSearchWorkspaceSearchEngine(
                 .addIds(objectId.value)
                 .build()
             s.removeAsync(removeRequest).await()
-        } catch (e: Throwable) {
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
             Log.w("AppSearch", "Failed to remove object ${objectId.value}", e)
         }
     }
@@ -144,57 +159,40 @@ class AppSearchWorkspaceSearchEngine(
             } while (page.size == 64 && roomHits.distinctBy { it.objectId }.size < limit)
         }
         val s = ensureSession()
-        if (s != null) {
-            val appSearchResults = try {
+        val ranking = if (s != null) {
+            try {
                 val spec = SearchSpec.Builder()
                     .setResultCountPerPage(limit)
                     .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
                     .setRankingStrategy(SearchSpec.RANKING_STRATEGY_RELEVANCE_SCORE)
-                    .setSnippetCount(limit)
-                    .setSnippetCountPerProperty(1)
-                    .setMaxSnippetSize(180)
                     .build()
-
                 val searchResults = s.search(rawQuery, spec)
-                val page = searchResults.nextPageAsync.await()
-
-                page.mapNotNull { searchResult ->
-                    val doc = searchResult.getDocument(WorkspaceSearchDocument::class.java)
-                    val type = runCatching { WorkspaceObjectType.valueOf(doc.type) }.getOrDefault(WorkspaceObjectType.NOTE)
-                    if (query.types.isNotEmpty() && type !in query.types) {
-                        null
-                    } else {
-                        val matchSnippet = searchResult.matchInfos.firstOrNull()?.exactMatchRange?.let { range ->
-                            val start = (range.start - 20).coerceAtLeast(0)
-                            val end = (range.end + 100).coerceAtMost(doc.content.length)
-                            if (start < end) "..." + doc.content.substring(start, end) + "..." else null
-                        } ?: doc.content.take(120)
-
-                        WorkspaceSearchHit(
-                            objectId = WorkspaceObjectId(doc.id),
-                            type = type,
-                            title = doc.title,
-                            snippet = matchSnippet,
-                            score = searchResult.rankingSignal.toFloat()
-                        )
+                try {
+                    searchResults.nextPageAsync.await().associate { result ->
+                        result.genericDocument.id to result.rankingSignal.toFloat()
                     }
+                } finally {
+                    searchResults.close()
                 }
-            } catch (e: Throwable) {
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (e: Exception) {
                 Log.w("AppSearch", "AppSearch search failed", e)
-                null
+                emptyMap()
             }
+        } else emptyMap()
 
-            if (appSearchResults != null) {
-                // Derived AppSearch hits are checked against current Room content and lifecycle.
-                val ranking = appSearchResults.groupBy { it.objectId.value }.mapValues { (_, hits) -> hits.maxOf { it.score } }
-                // Use derived relevance only, never stale derived text or an invented board hit.
-                val merged = (cardHits + roomHits).distinctBy { it.objectId.value to it.nodeId }
-                    .map { it.copy(score = maxOf(it.score, ranking[it.objectId.value] ?: 0f)) }
-                    .sortedByDescending { it.score }.take(limit)
-                return@withContext WorkspaceSearchResult(rawQuery, merged)
-            }
+        // A lock can commit while AppSearch is ranking an earlier Room page.
+        val merged = (cardHits + roomHits).distinctBy { it.objectId.value to it.nodeId }
+            .map { it.copy(score = maxOf(it.score, ranking[it.objectId.value] ?: 0f)) }
+            .sortedByDescending { it.score }
+        val visible = ArrayList<WorkspaceSearchHit>(limit)
+        for (hit in merged) {
+            if (dao.getWorkspaceObject(hit.objectId.value)?.lifecycle != "ACTIVE") continue
+            if (hit.sourceObjectId != null && dao.getWorkspaceObject(hit.sourceObjectId)?.lifecycle != "ACTIVE") continue
+            visible += hit
+            if (visible.size == limit) break
         }
-
-        WorkspaceSearchResult(rawQuery, (cardHits + roomHits).distinctBy { it.objectId.value to it.nodeId }.take(limit))
+        WorkspaceSearchResult(rawQuery, visible)
     }
 }

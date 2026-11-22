@@ -1,13 +1,9 @@
 package com.halo.app.ui.screens.kids
 
 import androidx.annotation.StringRes
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -29,17 +25,19 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.currentStateAsState
 import com.halo.app.R
 import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloShapes
-import com.halo.app.ui.fx.rememberHaloReducedMotion
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.wallpaper.HaloAmbient
+import com.halo.app.wallpaper.HaloWallpaper
+import com.halo.app.wallpaper.HaloWallpaperCanvas
+import com.halo.app.wallpaper.WallpaperOptions
+import com.halo.app.wallpaper.rememberWallpaperPreviewClock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlin.math.sin
 
 @StringRes
 internal fun KidsSky.labelRes(): Int = when (this) {
@@ -47,6 +45,8 @@ internal fun KidsSky.labelRes(): Int = when (this) {
     KidsSky.SEA -> R.string.kids_sky_sea
     KidsSky.GARDEN -> R.string.kids_sky_garden
     KidsSky.MOON -> R.string.kids_sky_moon
+    KidsSky.LUMEN_GARDEN -> R.string.wallpaper_garden
+    KidsSky.SEASONS -> R.string.wallpaper_seasons
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -106,7 +106,7 @@ internal fun KidsSkyPicker(settings: KidsPresentationSettings, onChoose: suspend
                         ) {
                             Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                KidsSkyArtwork(sky, Modifier.fillMaxWidth().height(80.dp).clip(HaloShapes.control))
+                                KidsSkyArtwork(sky, Modifier.fillMaxWidth().height(96.dp).clip(HaloShapes.control), still = settings.still)
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     if (spoken.heard || active) HaloIcon(if (spoken.heard) HaloGlyph.SPEAK else HaloGlyph.SUCCESS,
                                         null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
@@ -204,24 +204,39 @@ private fun skyColors(sky: KidsSky): SkyColors = when (sky) {
     KidsSky.SEA -> SkyColors(Color(0xFF2E5676), Color(0xFFF0BE9A), Color(0xFFFFDFB4), Color(0xFF527897), Color(0xFF324D6C))
     KidsSky.GARDEN -> SkyColors(Color(0xFFE5DDC3), Color(0xFFF5E8CE), Color(0xFFFAEFBB), Color(0xFFA5BDA0), Color(0xFF7C9C86))
     KidsSky.MOON -> SkyColors(Color(0xFF171C3E), Color(0xFF54849F), Color(0xFFCADDE6), Color(0xFF464B78), Color(0xFF2D365C))
+    KidsSky.LUMEN_GARDEN, KidsSky.SEASONS -> error("Toolkit sky uses the shared wallpaper painter")
 }
 
-/** Decorative only. The full-screen art is subdued so existing text/surface pairs own contrast. */
 @Composable
-internal fun KidsSkyArtwork(sky: KidsSky, modifier: Modifier, backdrop: Boolean = false) {
-    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
-    val animated = backdrop && lifecycle.isAtLeast(Lifecycle.State.RESUMED) && !rememberHaloReducedMotion()
-    val drift = if (animated) {
-        val transition = rememberInfiniteTransition(label = "Kids sky")
-        transition.animateFloat(-.009f, .009f, infiniteRepeatable(tween(14_000), RepeatMode.Reverse), label = "Sky drift")
-    } else remember { mutableFloatStateOf(0f) }
+internal fun KidsSkyArtwork(
+    sky: KidsSky, modifier: Modifier, backdrop: Boolean = false, still: Boolean = false,
+    ambient: HaloAmbient = HaloAmbient.IDLE,
+) {
+    val scene = when (sky) {
+        KidsSky.LUMEN_GARDEN -> HaloWallpaper.LUMEN_GARDEN
+        KidsSky.SEASONS -> HaloWallpaper.SEASONS
+        else -> null
+    }
+    if (scene != null) {
+        val base = MaterialTheme.colorScheme.background
+        Box(modifier) {
+            HaloWallpaperCanvas(WallpaperOptions(wallpaper = scene, calmerAtNight = false),
+                Modifier.matchParentSize(), animate = backdrop && !still, previewAmbient = ambient, kidsSky = true, motionScale = .5f)
+            if (backdrop) Box(Modifier.matchParentSize().background(Brush.verticalGradient(
+                0f to base.copy(alpha = .79f), .46f to base.copy(alpha = .64f), 1f to base.copy(alpha = .74f),
+            )))
+        }
+        return
+    }
+    val clock = rememberWallpaperPreviewClock(enabled = backdrop && !still, motionScale = .5f)
     val colors = remember(sky) { skyColors(sky) }
-    val opacity = if (backdrop) .16f else 1f
+    val opacity = if (backdrop) .31f else 1f
     Canvas(modifier.clipToBounds()) {
         val width = size.width
         val height = size.height
         drawRect(Brush.verticalGradient(listOf(colors.top.copy(alpha = opacity), colors.horizon.copy(alpha = opacity))))
-        val disc = Offset(width * if (sky == KidsSky.SEA) .67f else .34f, height * (.29f + drift.value))
+        val drift = sin(clock.elapsed.value * .44f) * .012f
+        val disc = Offset(width * if (sky == KidsSky.SEA) .67f else .34f, height * (.29f + drift))
         val radius = size.minDimension * if (sky == KidsSky.GARDEN) .17f else .12f
         drawCircle(Brush.radialGradient(listOf(colors.disc.copy(alpha = opacity * .55f), Color.Transparent),
             center = disc, radius = radius * 1.9f), radius = radius * 1.9f, center = disc)

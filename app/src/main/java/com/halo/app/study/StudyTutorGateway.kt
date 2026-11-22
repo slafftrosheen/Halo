@@ -1,5 +1,6 @@
 package com.halo.app.study
 
+import android.util.Log
 import com.halo.app.data.study.StudyCitation
 import com.halo.app.data.study.StudySessionRecord
 import com.halo.app.data.study.StudyVerdict
@@ -142,9 +143,13 @@ class AiRouterTutorGateway(
             val supplied = request.sourceExcerpts.filter { (it.coverage != SourceCoverage.MISSING && it.text.isNotBlank()) || it.objectId == visual?.objectId }
             val historyOrigins = allowedHistory.flatMap { it.second }.distinct()
             val childSession = request.session.learnerLevel != StudyLearnerLevel.ADULT
-            val allowRemote = sessionAllowsRemote(request.session) && (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
-                supplied.all { permitsText(it.objectId, false) } &&
+            val includesWorkspaceMaterial = request.sourceExcerpts.isNotEmpty() || historyOrigins.isNotEmpty() || visual != null
+            suspend fun remotePermitted() = sessionAllowsRemote(request.session) &&
+                (!childSession || allowChildCloudSharing()) &&
+                (!(childSession || hasSources || includesWorkspaceMaterial) || allowCloudSharing()) &&
+                historyOrigins.all { permitsText(it, false) } && supplied.all { permitsText(it.objectId, false) } &&
                 (visual == null || permitsVisual(visual.objectId, false))
+            val allowRemote = remotePermitted()
             if (supplied.any { !permitsText(it.objectId, true) } || (visual != null && !permitsVisual(visual.objectId, true)))
                 return TutorTurnResponse.Unavailable("This material is excluded from AI. Change its Workspace access policy to continue.")
             val workload = AiWorkloadSpec(
@@ -174,12 +179,10 @@ class AiRouterTutorGateway(
                 interactionId = request.requestId)
             if (supplied.any { !permitsText(it.objectId, true) } || historyOrigins.any { !permitsText(it, true) } || (visual != null && !permitsVisual(visual.objectId, true)))
                 return TutorTurnResponse.Unavailable("Material access changed. Review its Workspace permissions.")
-            val remoteStillPermitted = sessionAllowsRemote(request.session) && (!childSession || allowChildCloudSharing()) && allowCloudSharing() && historyOrigins.all { permitsText(it, false) } &&
-                supplied.all { permitsText(it.objectId, false) } && (visual == null || permitsVisual(visual.objectId, false))
-            val effectiveAllowRemote = allowRemote && remoteStillPermitted
+            val effectiveAllowRemote = allowRemote && remotePermitted()
             val result = router.execute(aiRequest, workload.copy(allowRemote = effectiveAllowRemote,
                 allowFallback = false, pinnedTarget = AiModelRef(selectedTarget.providerId, selectedTarget.modelId)),
-                AiContext(remoteDataCategories = if (supplied.isNotEmpty() || historyOrigins.isNotEmpty() || visual != null)
+                AiContext(remoteDataCategories = if (includesWorkspaceMaterial)
                     setOf(RemoteDataCategory.WORKSPACE) else emptySet()))
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
             if (supplied.any { !permitsText(it.objectId, true) } || historyOrigins.any { !permitsText(it, true) } ||
@@ -191,9 +194,7 @@ class AiRouterTutorGateway(
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (_: Exception) { null }
             // A provider fallback must not quietly move protected study content off-device.
             // Unknown execution provenance is also unsafe when remote sharing was denied.
-            val remoteAllowedAtCompletion = effectiveAllowRemote && sessionAllowsRemote(request.session) && allowCloudSharing() &&
-                (!childSession || allowChildCloudSharing()) && historyOrigins.all { permitsText(it, false) } &&
-                supplied.all { permitsText(it.objectId, false) } && (visual == null || permitsVisual(visual.objectId, false))
+            val remoteAllowedAtCompletion = effectiveAllowRemote && remotePermitted()
             if (!remoteAllowedAtCompletion && actualLocation != com.halo.sdk.provider.AiExecutionLocation.ON_DEVICE) {
                 return TutorTurnResponse.Unavailable("Study execution location could not be verified as on-device; no lesson was accepted.")
             }
@@ -222,6 +223,7 @@ class AiRouterTutorGateway(
         } catch (error: kotlinx.coroutines.CancellationException) {
             throw error
         } catch (error: AiProviderException) {
+            Log.w("HaloStudy", "Tutor request failed: type=${error.type}; httpStatus=${error.details.httpStatus}")
             if (error.type in setOf(AiErrorType.MODEL_NOT_FOUND, AiErrorType.MODEL_NOT_SELECTED,
                     AiErrorType.MODEL_LOAD_FAILED, AiErrorType.MODEL_NOT_READY, AiErrorType.LOCAL_MODEL_UNAVAILABLE)) {
                 TutorTurnResponse.Unavailable(com.halo.engines.ai.DefaultAiErrorPresenter().message(error) +
@@ -234,7 +236,10 @@ class AiRouterTutorGateway(
             } else {
                 TutorTurnResponse.Failed(com.halo.engines.ai.DefaultAiErrorPresenter().message(error) + " Your work is kept; you can retry.")
             }
+        } catch (error: RemoteDispatchBlocked) {
+            TutorTurnResponse.Unavailable("Online Study is blocked by the current processing settings. Your work is kept.")
         } catch (error: Exception) {
+            Log.w("HaloStudy", "Tutor request failed: type=${error.javaClass.simpleName}")
             TutorTurnResponse.Failed("The tutor could not finish this turn. Your work is kept; you can retry.")
         }
     }
@@ -290,6 +295,18 @@ class AiRouterTutorGateway(
                 StudyExplanationDepth.SIMPLER -> appendLine("The learner explicitly chose a simpler explanation: use familiar words and one small concrete example. Preserve the existing word limit, source boundaries and allowed help stage; do not infer lower ability or mastery.")
                 StudyExplanationDepth.DEEPER -> appendLine("The learner explicitly chose greater conceptual depth: add one useful causal connection or contrast within the existing word limit. Preserve source boundaries and the allowed help stage; do not reveal more of the assignment solution or infer mastery.")
                 StudyExplanationDepth.BALANCED -> Unit
+            }
+            if (request.learningTask == LearningTutorTask.NARRATIVE && request.session.learnerLevel == StudyLearnerLevel.ADULT &&
+                !request.createCards && !request.extractExercises && !request.compactExplanation) {
+                when (request.stage) {
+                    TutorStage.SOLUTION -> appendLine("Use an opening explanation followed by a numbered list with one action per step. Keep citation markers beside the source-grounded content.")
+                    TutorStage.EXPLAIN, TutorStage.ANALOGY -> {
+                        appendLine("If the source gives a chronology, format its known dates as 'YYYY — event' on separate lines after the opening explanation. Do not infer missing dates.")
+                        if (request.visualSource is ResolvedStudySource.Visual) appendLine("If several clearly visible parts have names supported by the source, add a final '## Label it' section with one named part per bullet. Do not guess hidden parts or coordinates.")
+                        appendLine("If a short self-check on an already taught concept is useful, add a final '## Quick check: question' section. Use '- [ ] option' for alternatives and '- [x] correct option — short reason' for one source-supported answer. Do not use unresolved homework as the check.")
+                    }
+                    else -> Unit
+                }
             }
             if (!request.createCards) appendLine(when (request.session.supportStyle) {
                 StudySupportStyle.GUIDED -> "Hint first, then invite an attempt."

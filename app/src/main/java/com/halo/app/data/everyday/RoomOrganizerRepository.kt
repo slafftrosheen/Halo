@@ -2,6 +2,7 @@ package com.halo.app.data.everyday
 
 import androidx.room.withTransaction
 import com.halo.app.data.AppDatabase
+import com.halo.app.data.workspace.privateLibraryClaim
 import com.halo.app.everyday.organizer.*
 import java.time.Clock
 import java.time.Instant
@@ -24,13 +25,23 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             val previous = get(record.id)
             if (previous == null) {
                 if (expectedVersion != null) throw OrganizerConflict("Record no longer exists")
+                if (database.privateLibraryDao().claims(listOf(privateLibraryClaim(record.id))).isNotEmpty()) {
+                    throw OrganizerConflict("Record is locked in Private")
+                }
                 check(dao.count() < 10000) { "Organizer storage limit reached; permanently remove unneeded items from trash" }
                 require(record.deletedAt == null)
+                record.studyExam?.lessons?.forEach { lesson ->
+                    val live = database.studyDao().getSession(lesson.sessionId)
+                    if (live == null || live.updatedAtEpochMs != lesson.version || live.learnerLevel != "ADULT" ||
+                        live.lifecycle !in setOf("ACTIVE", "COMPLETED")) throw OrganizerConflict("An exam lesson changed; reopen the plan")
+                }
             } else {
                 if (expectedVersion != previous.version || previous.deletedAt != null) throw OrganizerConflict("Record changed; reopen it before saving")
                 require(previous.kind == record.kind) { "A record's instrument cannot change" }
                 require(record.deletedAt == null) { "Use the delete operation" }
                 require(record.createdAt == previous.createdAt)
+                if (previous.studyExam != null && previous.time != record.time)
+                    require(requireNotNull(record.time).instant(deviceZone()) > clock.instant()) { "Choose a future study session" }
                 // A series edit cannot silently discard individually moved/completed occurrences.
                 if ((previous.time != record.time || previous.repeat != record.repeat) && dao.overrides(record.id).isNotEmpty() && !resetOccurrences)
                     throw OrganizerConflict("This series has occurrence changes. Review them and explicitly choose whether to reset them")
@@ -113,10 +124,15 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             if (exception.disposition == OccurrenceDisposition.COMPLETED && hasOpenSubtasks(old, exception.originalStart))
                 throw OrganizerConflict("Complete the remaining subtasks for this occurrence first")
             require(old.kind != OrganizerKind.EVENT || exception.replacementTime == null || exception.replacementTime.end != null)
-            val previous = overrides(old.id).find { it.originalStart == exception.originalStart }
-            val value = exception.copy(version = (previous?.version ?: 0) + 1)
+            val previous = overrides(old.id)
+            val updates = if (old.studyExam != null && exception.disposition == OccurrenceDisposition.REPLACED)
+                reflowStudyExam(old, previous, exception, clock.instant(), deviceZone()) else listOf(exception)
             com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(old.id); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
-            dao.putOverride(OrganizerOccurrenceEntity(value.recordId, value.originalStart.toEpochMilli(), OrganizerCodec.encode(value)))
+            for (edit in updates) {
+                val version = previous.firstOrNull { it.originalStart == edit.originalStart }?.version ?: 0
+                val value = edit.copy(version = version + 1)
+                dao.putOverride(OrganizerOccurrenceEntity(value.recordId, value.originalStart.toEpochMilli(), OrganizerCodec.encode(value)))
+            }
             old.copy(version = old.version + 1, updatedAt = Instant.ofEpochMilli(clock.millis())).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "occurrence_${exception.disposition.name.lowercase(java.util.Locale.ROOT)}")
             }
@@ -142,9 +158,22 @@ class RoomOrganizerRepository(private val database: AppDatabase, private val clo
             val old = get(recordId) ?: throw OrganizerConflict("Record no longer exists")
             if (old.version != expectedRecordVersion || old.deletedAt != null || old.status != OrganizerStatus.ACTIVE)
                 throw OrganizerConflict("Record changed; reopen this occurrence")
-            check(overrides(recordId).any { it.originalStart == originalStart }) { "Occurrence has no change to remove" }
+            val preceding = overrides(recordId)
+            check(preceding.any { it.originalStart == originalStart }) { "Occurrence has no change to remove" }
+            val reflowed = if (old.studyExam != null) {
+                val base = requireNotNull(old.time)
+                val zone = ZoneId.of(base.zoneId)
+                val originalTime = base.onDate(originalStart.atZone(zone).toLocalDate(), zone)
+                reflowStudyExam(old, preceding, OccurrenceOverride(recordId, originalStart, OccurrenceDisposition.REPLACED, originalTime),
+                    clock.instant(), deviceZone()).filter { it.originalStart != originalStart }
+            } else emptyList()
             com.halo.app.everyday.EverydayWriteAuthority.requireCurrent(); beforeRecordChange(recordId); com.halo.app.everyday.EverydayWriteAuthority.requireCurrent()
             check(dao.removeOverride(recordId, originalStart.toEpochMilli()) == 1) { "Occurrence has no change to remove" }
+            for (edit in reflowed) {
+                val version = preceding.firstOrNull { it.originalStart == edit.originalStart }?.version ?: 0
+                val value = edit.copy(version = version + 1)
+                dao.putOverride(OrganizerOccurrenceEntity(recordId, edit.originalStart.toEpochMilli(), OrganizerCodec.encode(value)))
+            }
             old.copy(version = old.version + 1, updatedAt = Instant.ofEpochMilli(clock.millis())).also {
                 check(dao.update(OrganizerCodec.entity(it)) == 1); changed(it, "occurrence_restored")
             }

@@ -57,6 +57,11 @@ internal suspend fun readEverydayWidgetSnapshot(context: Context): EverydaySnaps
     val routineIds = if (snapshot.kids || routineHistory.isEmpty()) emptySet() else Graph.routineRepository.observeRoutinesReadOnly()
         .first().filter { it.enabled }.mapTo(hashSetOf()) { it.id }
     val today = snapshot.now.atZone(snapshot.zone).toLocalDate()
+    val phoneEventsToday = if (snapshot.kids) 0 else
+        com.halo.app.everyday.organizer.android.PhoneCalendarAgenda.upcoming(context, snapshot.now, snapshot.zone).count { event ->
+            val zone = if (event.allDay) java.time.ZoneOffset.UTC else snapshot.zone
+            event.start.atZone(zone).toLocalDate() == today
+        }
     val attempts = if (!snapshot.kids) 0 else Graph.studyRepository.observeChildAttemptCount(
         today.atStartOfDay(snapshot.zone).toInstant().toEpochMilli(),
         today.plusDays(1).atStartOfDay(snapshot.zone).toInstant().toEpochMilli()).first().coerceAtMost(5)
@@ -74,5 +79,5 @@ internal suspend fun readEverydayWidgetSnapshot(context: Context): EverydaySnaps
     Graph.kidsPreferences.requirePresentation(snapshot.familyRevision)
     snapshot.copy(widgetLearning = learning, widgetFocus = focus, widgetHabits = dots, widgetChildAttempts = attempts,
         widgetHabitNow = habitualHour, widgetHomeCount = familyList.size, widgetHomeDone = familyList.count { it.done },
-        widgetRecording = !snapshot.kids && EverydayWidgetRecording.active.value)
+        widgetRecording = !snapshot.kids && EverydayWidgetRecording.active.value, phoneEventsToday = phoneEventsToday)
 }

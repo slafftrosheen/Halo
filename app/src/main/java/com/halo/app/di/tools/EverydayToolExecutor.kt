@@ -43,6 +43,12 @@ class EverydayToolExecutor(
     private val inspectImage: suspend (ArticleImage, String) -> JSONObject = { _, _ -> error("Vision is not available") },
     private val dayContext: suspend (Map<String, Any?>) -> JSONObject = { error("Day context is not available") },
     private val localFactContent: suspend (LocalFact) -> String? = { null },
+    private val plannerStorage: com.halo.sdk.runtime.Storage? = null,
+    private val todayOverview: suspend () -> JSONObject = { error("Today is not available") },
+    private val receiptTotals: suspend (String, String) -> JSONObject = { _, _ -> error("Library totals are unavailable") },
+    private val examSchedule: suspend (LocalDate, List<Pair<String, Long>>) -> Pair<StudyExamSchedule, List<OrganizerLink>> =
+        { date, lessons -> require(lessons.isEmpty()); StudyExamSchedule(date, emptyList()) to emptyList() },
+    private val knowledge: () -> OfflineKnowledge = { error("Offline knowledge is unavailable") },
 ) : ToolExecutor {
     override fun definitions()=EverydayToolContracts.definitions
     override suspend fun execute(toolCall: ToolCall)=execute(toolCall,ToolExecutionContext())
@@ -59,7 +65,9 @@ class EverydayToolExecutor(
             val child=kids()
             val a=toolCall.arguments
             val childAction=toolCall.functionName=="halo_everyday_open" || toolCall.functionName=="halo_brief_action" && a["action"] in setOf("BUILD","READ","STOP")
-            if(child && (toolCall.functionName in setOf("halo_widget_query", "halo_day_context") || toolCall.functionName !in EverydayToolContracts.queries && !childAction)) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
+            if(child && (toolCall.functionName.startsWith("halo_knowledge_") ||
+                    toolCall.functionName in setOf("halo_library_receipt_totals", "halo_widget_query", "halo_day_context", "halo_today_overview", "halo_planner_calendars") ||
+                    toolCall.functionName !in EverydayToolContracts.queries && !childAction)) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
             if(toolCall.functionName !in EverydayToolContracts.queries && context.interactionId.isNullOrBlank()) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
             val disclosure=if(toolCall.functionName in EverydayToolContracts.queries || toolCall.functionName=="halo_brief_action" && a["action"] in setOf("BUILD","READ"))
                 com.halo.app.everyday.EverydayReadAuthority.capture() else null
@@ -107,19 +115,30 @@ class EverydayToolExecutor(
         fun id()=a.string("id")
         fun version()=a.long("version")
         return when(name) {
+            "halo_library_receipt_totals" -> receiptTotals(a.string("merchant"), a.string("month"))
+            "halo_today_overview" -> todayOverview()
+            "halo_today_weather_city" -> {
+                val city = requireNotNull(cities.get(a.string("cityId"))) { "Offline city unavailable" }
+                val saved = setTodayWeatherCity(sources, city, version())
+                JSONObject().put("id", saved.id).put("city", city.name).put("version", saved.version)
+            }
             "halo_day_context" -> dayContext(a)
             "halo_organizer_query" -> {
                 val offset=a.optionalLong("offset")?.toInt() ?: 0
                 val kinds=a.optionalString("kind")?.let {setOf(OrganizerKind.valueOf(it))} ?: OrganizerKind.entries.toSet()
                 val grants=if(child) briefs.settings().childRecordIds else null
+                val calendar=a.optionalString("calendar")?.let(OrganizerCalendar::valueOf)
+                fun visible(row: OrganizerRecord) = (grants == null || row.id in grants) && (calendar == null || row.calendar == calendar)
                 if(a.containsKey("from") || a.containsKey("until")) {
                     val from=Instant.parse(a.string("from"));val until=Instant.parse(a.string("until"))
                     require(until>from && Duration.between(from,until).toDays()<=366)
-                    val rows=organizer.agenda(from,until,kinds).filter {grants==null || it.record.id in grants}
-                    JSONObject().put("occurrences",JSONArray(rows.drop(offset).take(50).map { occurrence(it) }))
+                    val rows=organizer.agenda(from,until,kinds).filter {visible(it.record)}
+                    JSONObject().put("occurrences",JSONArray(rows.drop(offset).take(50).map { row ->
+                        occurrence(if (child) row.copy(examLessons = emptyList()) else row)
+                    }))
                         .put("nextOffset",if(offset+50<rows.size) offset+50 else JSONObject.NULL)
                 } else {
-                    val rows=organizer.search(a.optionalString("query").orEmpty()).filter {it.kind in kinds && (grants==null || it.id in grants)}
+                    val rows=organizer.search(a.optionalString("query").orEmpty()).filter {it.kind in kinds && visible(it)}
                         .map {if(child) it.copy(parentId=it.parentId?.takeIf {id -> id in grants.orEmpty()}) else it}
                     JSONObject().put("records",JSONArray(rows.drop(offset).take(50).map { summary(it) }))
                         .put("nextOffset",if(offset+50<rows.size) offset+50 else JSONObject.NULL)
@@ -128,20 +147,29 @@ class EverydayToolExecutor(
             "halo_organizer_get" -> {
                 val value=record(id(),child)
                 val overrides=organizer.repository.overrides(value.id)
-                val disclosed=if(child) value.copy(links=emptyList(),parentId=value.parentId?.takeIf {it in briefs.settings().childRecordIds}) else value
+                val disclosed=if(child) value.copy(links=emptyList(),parentId=value.parentId?.takeIf {it in briefs.settings().childRecordIds}, studyExam = null) else value
                 JSONObject().put("record",JSONObject(OrganizerCodec.encode(disclosed)))
                     .put("overrides",JSONArray(overrides.take(100).map { JSONObject().put("originalStart",it.originalStart.toString()).put("disposition",it.disposition.name)
                         .put("version",it.version).put("title",it.replacementTitle).put("replacementStart",it.replacementTime?.start?.toString()) }))
                     .put("omittedOverrides",(overrides.size-100).coerceAtLeast(0))
                     .put("deliveries",JSONArray(organizer.repository.receipts(value.id).sortedByDescending {it.updatedAt}.take(20).map { receipt(it) }))
-                    .apply {a.optionalString("originalStart")?.let {at -> put("occurrence",occurrence(requireNotNull(OrganizerRecurrence.exact(value,overrides,Instant.parse(at),ZoneId.systemDefault()))))}}
+                    .apply {a.optionalString("originalStart")?.let {at -> put("occurrence",occurrence(requireNotNull(OrganizerRecurrence.exact(disclosed,overrides,Instant.parse(at),ZoneId.systemDefault()))))}}
             }
             "halo_organizer_create" -> {
                 val p=a.map("record");val kind=OrganizerKind.valueOf(p.string("kind"))
-                val value=organizer.create(kind,p.string("title"),p.optionalString("details").orEmpty(),p.optionalMap("time")?.let(::time),p.optionalMap("repeat")?.let(::repeat),
+                val start = p.optionalMap("time")?.let(::time)
+                val examDate = p.optionalString("examDate")?.let(LocalDate::parse)
+                val lessonRefs = p.optionalMaps("examLessons").map { it.string("sessionId") to it.long("version") }
+                require(examDate != null || lessonRefs.isEmpty())
+                val plan = examDate?.let {
+                    require(!child && kind == OrganizerKind.EVENT && requireNotNull(start).instant(ZoneId.systemDefault()) > clock.instant())
+                    examSchedule(it, lessonRefs)
+                }
+                val value=organizer.create(kind,p.string("title"),p.optionalString("details").orEmpty(),start,p.optionalMap("repeat")?.let(::repeat),
                     p.optionalString("priority")?.let(TaskPriority::valueOf) ?: TaskPriority.NORMAL,p.optionalString("parentId"),p.optionalLong("notifyBeforeMinutes")?.toInt(),
-                    p.optionalLong("timerDurationMs"),links(p),p.optionalString("sourceUrl"),p.optionalString("sourceLabel"),
-                    p.optionalString("location").orEmpty(),p.optionalLong("leaveBeforeMinutes")?.toInt())
+                    p.optionalLong("timerDurationMs"),(links(p) + plan?.second.orEmpty()).distinct(),p.optionalString("sourceUrl"),p.optionalString("sourceLabel"),
+                    p.optionalString("location").orEmpty(),p.optionalLong("leaveBeforeMinutes")?.toInt(),
+                    p.optionalString("calendar")?.let(OrganizerCalendar::valueOf) ?: OrganizerCalendar.PERSONAL, studyExam = plan?.first)
                 saved(value)
             }
             "halo_organizer_edit" -> {
@@ -154,6 +182,7 @@ class EverydayToolExecutor(
                     sourceUrl=field("sourceUrl",value.sourceUrl){p.string("sourceUrl")},sourceLabel=field("sourceLabel",value.sourceLabel){p.string("sourceLabel")},
                     priority=p.optionalString("priority")?.let(TaskPriority::valueOf) ?: value.priority,location=p.optionalString("location") ?: value.location,
                     leaveBeforeMinutes=field("leaveBeforeMinutes",value.leaveBeforeMinutes){p.long("leaveBeforeMinutes").toInt()},
+                    calendar=p.optionalString("calendar")?.let(OrganizerCalendar::valueOf) ?: value.calendar,
                     links=if("links" in p) links(p) else value.links)
                 saved(organizer.repository.save(next,value.version,a["resetOccurrences"]==true))
             }
@@ -192,6 +221,16 @@ class EverydayToolExecutor(
                 if(a.string("action")=="SNOOZE") saved(organizer.repository.snoozeDelivery(receipt.occurrenceKey,version(),Duration.ofMinutes(a.long("minutes")),elapsedMs(),bootId()))
                 else JSONObject().put("dismissed",organizer.repository.dismissDelivery(receipt.occurrenceKey,version())).put("occurrenceKey",receipt.occurrenceKey)
             }
+            "halo_planner_reschedule" -> saved(organizer.rescheduleEvent(id(), version(), Instant.parse(a.string("originalStart")),
+                OrganizerScheduleEdit.valueOf(a.string("operation")), a.long("steps").toInt()))
+            "halo_planner_calendars" -> calendarSettings(PlannerCalendarPreferences.read(requireNotNull(plannerStorage)))
+            "halo_planner_calendar_appearance" -> {
+                val visible = a["visible"] as? Boolean
+                val color = a.optionalString("color")?.let(PlannerCalendarColor::valueOf)
+                require(visible != null || color != null)
+                calendarSettings(PlannerCalendarPreferences.update(requireNotNull(plannerStorage), version(),
+                    OrganizerCalendar.valueOf(a.string("calendar")), visible, color))
+            }
             "halo_clock_query" -> {
                 val rows=if(child) emptyList() else clocks.all()
                 JSONObject().put("phoneZoneId",ZoneId.systemDefault().id).put("clocks",JSONArray(rows.map {worldClock(it)}))
@@ -211,8 +250,43 @@ class EverydayToolExecutor(
                         clocks.reorder(rows.map {it.string("id")},rows.associate {it.string("id") to it.long("version")});JSONObject().put("saved",true)}
                 }
             }
-            "halo_source_query" -> JSONObject().put("sources",JSONArray(sources.states().filter {(!child || it.source.childApproved && it.source.external && it.source.selected && it.source.enabled && !it.source.muted) &&
-                (a["selectedOnly"]!=true || it.source.selected) && (a["category"]==null || it.source.category.name==a["category"]) && (a["language"]==null || it.source.language==a["language"])}.take(100).map {sourceSummary(it)}))
+            "halo_source_query" -> {
+                val query = a.optionalString("query").orEmpty().trim()
+                val offset = a.optionalLong("offset")?.toInt() ?: 0
+                val matches = sources.states().filter { row ->
+                    val source = row.source
+                    (!child || source.childApproved && source.external && source.selected && source.enabled && !source.muted) &&
+                        (a["selectedOnly"] != true || source.selected) &&
+                        (a["category"] == null || source.category.name == a["category"]) &&
+                        (a["language"] == null || source.language == a["language"]) &&
+                        (source.title.contains(query, ignoreCase = true) || source.publisher.contains(query, ignoreCase = true))
+                }.sortedWith(compareBy<CollectorState> { !it.source.selected }.thenBy { it.source.title }.thenBy { it.source.id })
+                val page = matches.drop(offset).take(50)
+                JSONObject().put("sources", JSONArray(page.map(::sourceSummary)))
+                    .put("nextOffset", (offset + page.size).takeIf { it < matches.size } ?: JSONObject.NULL)
+            }
+            "halo_knowledge_catalogue" -> JSONObject().put("packs", JSONArray(knowledge().catalogue().map {
+                val pack = it.pack
+                JSONObject().put("id", pack.id).put("title", pack.title).put("publisher", pack.publisher)
+                    .put("url", pack.sourceUrl).put("searchable", pack.searchable)
+                    .put("revision", it.snapshot?.revision ?: JSONObject.NULL)
+                    .put("retrievedAt", it.snapshot?.retrievedAt ?: JSONObject.NULL)
+                    .put("entryCount", it.snapshot?.entries?.size ?: 0)
+            }))
+            "halo_knowledge_search" -> {
+                val hits = knowledge().search(a.string("query"), a.optionalString("packId"), a.optionalString("revision"))
+                JSONObject().put("untrustedContent", true).put("matches", JSONArray(hits.map {
+                    JSONObject().put("packId", it.pack.id).put("publisher", it.pack.publisher)
+                        .put("revision", it.revision).put("retrievedAt", it.retrievedAt)
+                        .put("title", it.entry.title).put("text", it.entry.text).put("url", it.entry.url)
+                }))
+            }
+            "halo_knowledge_download" -> {
+                val packId = a.string("packId")
+                val result = knowledge().download(packId)
+                JSONObject().put("id", packId).put("revision", result.revision).put("retrievedAt", result.retrievedAt)
+                    .put("entryCount", result.entries.size)
+            }
             "halo_source_get" -> {
                 val value=source(id(),version(),child,true);val cached=value.snapshot?.takeIf {it.sourceVersion==value.source.version}
                 if ((a.optionalLong("offset") ?: 0) > 0 || (a.optionalLong("textOffset") ?: 0) > 0) require(a["contentRevision"] != null)
@@ -310,8 +384,15 @@ class EverydayToolExecutor(
     }
     private fun summary(r: OrganizerRecord)=JSONObject().put("id",r.id).put("version",r.version).put("kind",r.kind.name).put("title",r.title).put("status",r.status.name)
         .put("priority",r.priority.name).put("start",r.time?.start?.toString()).put("zoneId",r.time?.zoneId).put("repeating",r.repeat!=null)
+        .put("calendar",r.calendar.name)
+    private fun calendarSettings(settings: PlannerCalendarSettings)=JSONObject().put("version",settings.version).put("calendars",
+        JSONArray(OrganizerCalendar.entries.map { calendar ->
+            val appearance = settings.appearance(calendar)
+            JSONObject().put("calendar",calendar.name).put("visible",appearance.visible).put("color",appearance.color.name)
+        }))
     private fun saved(r: OrganizerRecord)=JSONObject().put("record",summary(r)).put("saved",true).put("deliveryConfirmed",false)
     private fun occurrence(o: OrganizerOccurrence)=summary(o.record).put("originalStart",o.originalStart.toString()).put("startInstant",o.start.toString()).put("endInstant",o.end?.toString()).put("completed",o.completed)
+        .put("examLessonIds", JSONArray(o.examLessons.map { it.sessionId }))
     private fun receipt(r: DeliveryReceipt)=JSONObject().put("occurrenceKey",r.occurrenceKey).put("recordVersion",r.recordVersion).put("triggerAt",r.triggerAt.toString()).put("state",r.state.name).put("updatedAt",r.updatedAt.toString()).put("snoozedUntil",r.snoozedUntil?.toString())
     private fun worldClock(r: WorldClockRecord)=JSONObject().put("id",r.id).put("version",r.version).put("label",r.label).put("zoneId",r.zoneId).put("position",r.position).put("deleted",r.deletedAt!=null)
     private fun sourceSummary(s: CollectorState)=JSONObject().put("id",s.source.id).put("version",s.source.version).put("title",s.source.title).put("publisher",s.source.publisher)
@@ -320,11 +401,14 @@ class EverydayToolExecutor(
         .put("retrievedAt",s.snapshot?.retrievedAt?.toString()).put("expiresAt",s.snapshot?.expiresAt?.toString()).put("attempt",s.attempt.state.name)
         .put("attemptedAt",s.attempt.at?.toString()).put("nextAllowedAt",s.attempt.nextAllowedAt?.toString()).put("stale",s.snapshot?.stale(clock.instant(),s.source.external,power()) ?: true)
         .put("mode",if(power()) "Power" else "Local").put("cached",s.snapshot!=null)
+        .put("publisherUrl", s.source.attributionUrl)
     private fun briefSummary(b: EverydayBrief)=JSONObject().put("id",b.id).put("period",b.period.name).put("audience",b.audience.name).put("date",b.date.toString()).put("zoneId",b.zoneId).put("generatedAt",b.generatedAt.toString())
     private fun brief(b: EverydayBrief)=briefSummary(b).put("facts",JSONArray(b.facts.take(30).map {f -> JSONObject().put("id",f.id).put("kind",f.kind.name).put("title",f.title.take(200)).put("detail",f.detail.take(400)).put("sourceId",f.sourceId).put("revision",f.revision).put("at",f.at?.toString()).put("url",f.externalUrl)}))
         .put("sources",JSONArray(b.sources.map {s -> JSONObject().put("id",s.id).put("version",s.version).put("publisher",s.publisher).put("retrievedAt",s.retrievedAt?.toString()).put("expiresAt",s.expiresAt?.toString()).put("attempt",s.attempt.name)}))
         .put("baselineMissing",b.baselineMissing).put("changes",JSONArray(b.changes.take(30).map {c -> JSONObject().put("kind",c.kind.name).put("factId",c.factId).put("sourceId",c.sourceId)}))
-    private fun time(p: Map<String,Any?>)=OrganizerTime(LocalDateTime.parse(p.string("start")),p.optionalString("end")?.let(LocalDateTime::parse),p.string("zoneId"),p["allDay"]==true,p["followDeviceZone"]==true).also {it.validate()}
+    private fun time(p: Map<String,Any?>)=OrganizerTime(LocalDateTime.parse(p.string("start")),p.optionalString("end")?.let(LocalDateTime::parse),
+        p.string("zoneId"),p["allDay"]==true,p["followDeviceZone"]==true,p.optionalString("startOffset")?.let(ZoneOffset::of),
+        p.optionalString("endOffset")?.let(ZoneOffset::of)).also(OrganizerTime::validate)
     private fun repeat(p: Map<String,Any?>)=RepeatRule(RepeatFrequency.valueOf(p.string("frequency")),p.optionalLong("interval")?.toInt() ?: 1,
         (p["weekdays"] as? List<*>)?.map {DayOfWeek.valueOf(it as String)}?.toSet().orEmpty(),p.optionalLong("count")?.toInt(),p.optionalString("until")?.let(Instant::parse))
     private fun links(p: Map<String,Any?>)=p.optionalMaps("links").map {OrganizerLink(it.string("objectId"),it.optionalString("relation") ?: "RELATED_TO")}

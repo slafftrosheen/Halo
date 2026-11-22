@@ -69,6 +69,25 @@ class OrganizerPersistenceTest {
         repository.save(edited, next.version, resetOccurrences = true)
         assertTrue(repository.overrides(first.id).isEmpty())
     }
+    @Test fun plannerRescheduleKeepsExactRecurringSlotAndCalendarMembership() = runBlocking<Unit> {
+        val time = OrganizerTime(LocalDateTime.parse("2026-01-02T10:00"), LocalDateTime.parse("2026-01-02T11:00"), "UTC")
+        val event = repository.save(OrganizerRecord("event", OrganizerKind.EVENT, "Family event", time = time,
+            repeat = RepeatRule(RepeatFrequency.DAILY, count = 2), calendar = OrganizerCalendar.FAMILY, createdAt = now), null)
+        val start = time.instant(ZoneOffset.UTC)
+        val useCases = OrganizerUseCases(repository, clock, { ZoneOffset.UTC }, { 0L }, { "boot" })
+        val saved = useCases.rescheduleEvent(event.id, event.version, start, OrganizerScheduleEdit.MOVE, 1)
+        assertEquals(OrganizerCalendar.FAMILY, saved.calendar)
+        assertEquals(time, saved.time)
+        val moved = useCases.agenda(now, start.plusSeconds(2 * 86400)).first()
+        assertEquals(start, moved.originalStart)
+        assertEquals(start.plusSeconds(900), moved.start)
+        assertEquals(Duration.ofHours(1), Duration.between(moved.start, moved.end))
+        val restored = RoomOrganizerRepository(db, clock)
+        assertEquals(saved, restored.get(saved.id))
+        assertThrows(OrganizerConflict::class.java) {
+            runBlocking { useCases.rescheduleEvent(event.id, event.version, start, OrganizerScheduleEdit.RESIZE, 1) }
+        }
+    }
     @Test fun staleDeliveryCannotOverwriteEditedScheduleAndFiredCannotBeRescheduled() = runBlocking {
         val first = repository.save(task(), null)
         val receipt = DeliveryReceipt("task@1", first.id, first.version, now.plusSeconds(60), DeliveryState.FIRED, now)

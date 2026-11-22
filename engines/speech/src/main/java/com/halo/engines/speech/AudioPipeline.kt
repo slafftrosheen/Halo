@@ -54,6 +54,10 @@ class AudioPipeline(
 
     suspend fun isRecognitionAvailable(): Boolean = sttProvider.health()
 
+    // Used only while the audio engine holds the same exclusive microphone transaction as live speech.
+    internal fun isolatedCaptureHasSpeech(frame: AudioFrame): Boolean = vad.isSpeech(frame)
+    internal fun resetIsolatedCaptureDetector() = vad.reset()
+
     suspend fun unavailableReason(): String =
         sttProvider.healthDetails().message ?: "Local speech recognition is unavailable"
 

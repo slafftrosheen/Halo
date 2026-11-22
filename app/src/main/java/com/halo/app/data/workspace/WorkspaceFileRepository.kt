@@ -176,6 +176,10 @@ class RoomWorkspaceFileRepository(
         require(displayName.isNotBlank() && displayName.length <= 120)
         require(mimeType.length <= 100)
         if (mimeType.startsWith("image/")) require(bytes.size in 1..20_000_000)
+        else if (mimeType == "video/mp4") {
+            require(bytes.size in 12..64 * 1024 * 1024)
+            require(bytes.copyOfRange(4, 8).contentEquals(byteArrayOf(0x66, 0x74, 0x79, 0x70))) { "Invalid MP4 output" }
+        }
         else if (mimeType == "text/calendar") {
             require(bytes.size in 1..2 * 1024 * 1024)
             val text = WorkspaceTextEncoding.decode(bytes)
@@ -196,7 +200,7 @@ class RoomWorkspaceFileRepository(
         try {
             temporary.outputStream().use { it.write(bytes) }
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
-            check(temporary.renameTo(destination)) { "Cannot publish local image" }
+            check(temporary.renameTo(destination)) { "Cannot publish managed file" }
             val digest = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
             val timestamp = now()
             db.withTransaction {

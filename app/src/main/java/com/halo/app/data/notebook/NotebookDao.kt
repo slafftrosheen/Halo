@@ -102,6 +102,13 @@ interface NotebookDao {
     @Query("SELECT * FROM workspace_objects WHERE id = :id LIMIT 1")
     suspend fun getWorkspaceObject(id: String): WorkspaceObjectEntity?
 
+    @Query("""SELECT w.* FROM workspace_objects w LEFT JOIN workspace_files f ON w.id = f.objectId
+        WHERE w.lifecycle = 'ACTIVE' AND
+        (w.type = 'NOTE' OR (w.type IN ('FILE', 'MEDIA') AND f.ownership = 'HALO_OWNED' AND
+            (f.mimeType = 'application/pdf' OR f.mimeType LIKE 'image/%' OR f.mimeType = 'text/plain')))
+        ORDER BY (w.createdAt >= :fromMs AND w.createdAt < :untilMs) DESC, w.createdAt DESC, w.id LIMIT 161""")
+    suspend fun receiptCandidates(fromMs: Long, untilMs: Long): List<WorkspaceObjectEntity>
+
     @Query(
         """
         SELECT * FROM workspace_objects

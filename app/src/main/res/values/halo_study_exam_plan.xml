@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="study_exam_plan">Plan exam prep</string>
+    <string name="study_exam_name">Exam or subject</string>
+    <string name="study_exam_choose_course">Choose a course</string>
+    <string name="study_exam_without_course">Study sessions only</string>
+    <string name="study_exam_open_lesson">Open lesson</string>
+    <string name="study_exam_course_unavailable">Choose an available course with up to 50 lessons.</string>
+    <string name="study_exam_date">Choose the exam date</string>
+    <string name="study_exam_on_date">Exam on %1$s</string>
+    <string name="study_exam_time">Study time %1$s</string>
+    <string name="study_exam_days">Days of preparation</string>
+    <string name="study_exam_preview">25 minutes each day from %1$s to %2$s. You can move individual sessions in Planner.</string>
+    <string name="study_exam_no_days">There are no future sessions at this time before the exam. Choose an earlier time or a later date.</string>
+    <string name="study_exam_save">Add sessions to Planner</string>
+    <string name="study_exam_event">Exam prep · %1$s</string>
+    <string name="study_exam_details">Preparing for an exam on %1$s.</string>
+    <string name="study_exam_changed">The available dates changed. Check the updated plan before saving.</string>
+    <string name="study_exam_save_failed">Planner could not save the sessions. Try again.</string>
+</resources>

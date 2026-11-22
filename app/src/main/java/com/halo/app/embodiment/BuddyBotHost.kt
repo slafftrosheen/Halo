@@ -35,7 +35,11 @@ data class BuddyBotTelemetry(
     val uptimeMs: Long = 0L,
     val revision: Long = 0L,
     val lastUpdateMs: Long = 0L
-)
+) {
+    val hasFault: Boolean get() = safetyState.equals("FAULT", true) || safetyState.equals("ESTOP", true) ||
+        !safetyFault.isNullOrBlank() && !safetyFault.equals("none", true)
+    val needsAttention: Boolean get() = hasFault || forwardMotionBlocked
+}
 
 /**
  * Host controller for physical BuddyBot embodiment.
@@ -204,7 +208,17 @@ class BuddyBotHost(
         session?.disconnect()
     }
 
-    suspend fun pair(code: String) {
-        session?.pair(code)
+    suspend fun connectTo(url: String) {
+        require(BuddyBotLocalEndpoint.acceptsWebSocket(url)) { BuddyBotLocalEndpoint.MESSAGE }
+        val target = synchronized(ownerLock) {
+            val changed = getTargetUrl() != url || currentTransport?.url != url
+            storage.putString(STORAGE_KEY_URL, url)
+            _connectionError.value = null
+            ensureDeviceRegistered(recreate = changed)
+            requireNotNull(session)
+        }
+        target.connect()
     }
+
+    suspend fun pair(code: String): Boolean = session?.pair(code) == true
 }

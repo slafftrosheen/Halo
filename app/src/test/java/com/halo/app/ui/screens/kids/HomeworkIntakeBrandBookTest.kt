@@ -10,10 +10,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
+import com.halo.app.capture.AndroidImageInputPreparer
 import com.halo.app.ui.screens.settings.BrandBook3PowerManager
 import com.halo.app.ui.screens.study.HomeworkWordingReview
 import com.halo.app.ui.screens.study.HomeworkPageNavigation
 import com.halo.app.ui.theme.HostlessHaloTheme
+import com.halo.sdk.runtime.multimodal.ImageInputLimits
+import com.halo.sdk.runtime.multimodal.MediaAcquisitionException
+import com.halo.sdk.runtime.multimodal.MediaAssetContent
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Rule
@@ -94,11 +98,12 @@ class HomeworkIntakeBrandBookTest {
         assertEquals(1, page)
     }
 
-    @Test fun previewDecodeRejectsInvalidLocalFileWithoutPublishingAnything() = runBlocking {
-        val file = java.io.File.createTempFile("homework-invalid", ".jpg")
-        try {
-            file.writeText("Not an image")
-            assertTrue(runCatching { loadHomeworkPhotoPreview(file.absolutePath) }.isFailure)
-        } finally { file.delete() }
+    @Test fun homeworkImageDecoderRejectsInvalidDataWithoutPublishingAnything() = runBlocking {
+        val preparer = AndroidImageInputPreparer()
+        val failure = runCatching {
+            preparer.prepare(MediaAssetContent("Not an image".toByteArray(), "image/jpeg"), null, ImageInputLimits())
+        }.exceptionOrNull()
+        assertTrue(failure is MediaAcquisitionException)
+        assertNull(preparer.lastSummary)
     }
 }

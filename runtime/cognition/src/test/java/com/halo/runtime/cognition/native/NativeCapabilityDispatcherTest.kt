@@ -47,9 +47,11 @@ class NativeCapabilityDispatcherTest {
                 return ToolExecutionResult.Success(toolCall.id, toolCall.functionName, "Observed execution", ActionTruth.DISPATCHED)
             }
         }
-        val registry = ToolRegistry(listOf(executor), executor.definitions().map {
-            ToolDescriptor(ToolId(it.id), it, ToolCategory.HOST_CONTROL, security = ToolSecurityPolicy.READ_ONLY)
-        })
+        val registry = ToolRegistry(listOf(executor, WorkflowPlanTool(store, coordinator)), executor.definitions().map {
+            val security = if (it.id == "halo_open_screen") ToolSecurityPolicy(ToolRiskClass.REVERSIBLE,
+                ConfirmationPolicy.NONE, ReplaySafety.NEVER_REPLAY) else ToolSecurityPolicy.READ_ONLY
+            ToolDescriptor(ToolId(it.id), it, ToolCategory.HOST_CONTROL, security = security)
+        } + WorkflowPlanTool.descriptor())
         val skills = DefaultSkillRegistry(storage, listOf(SkillDescriptor(SkillId("native"), "Native", "Test", SkillCategory.DEVICE, tools = commands.values.toSet())))
         val authorizer = object : ToolAuthorizer { override suspend fun authorize(toolCall: ToolCall) = ToolAuthorization.Authorized(toolCall) }
         val published = mutableListOf<HaloEvent>()
@@ -82,6 +84,7 @@ class NativeCapabilityDispatcherTest {
                 assertEquals(expected, calls.last().functionName)
                 assertEquals(SpeechOutputTarget.HostDefault, store.get(result.runId)?.speechOutputTarget)
                 assertEquals(AgentRunState.COMPLETED, store.get(result.runId)?.state)
+                assertEquals(listOf(expected), store.get(result.runId)?.steps?.filterIsInstance<AgentStep.PlanCreated>()?.single()?.steps)
                 assertFalse(store.get(result.runId)!!.steps.any { it is AgentStep.ProviderTurnStarted })
                 assertTrue(dispatcher.ownsRun(result.runId))
                 assertNull(dispatcher.resume(result.runId)) // No completed action can be replayed.

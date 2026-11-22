@@ -22,6 +22,10 @@ class OneShotConsent(private val nowNanos: () -> Long = System::nanoTime) {
         if (nowNanos() - entry.issued !in 0..TTL_NANOS || entry.fingerprint != fingerprint)
             throw OnlineOperationRejected(OnlineProblem.CONSENT_EXPIRED)
     }
+    @Synchronized fun matches(id: String, fingerprint: String): Boolean {
+        val entry = entries[id] ?: return false
+        return nowNanos() - entry.issued in 0..TTL_NANOS && entry.fingerprint == fingerprint
+    }
     @Synchronized fun discard(id: String?) { if (id != null) entries.remove(id) }
     companion object {
         const val TTL_NANOS = 120_000_000_000L

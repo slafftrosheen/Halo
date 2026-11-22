@@ -31,7 +31,8 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
     private val lessons: StudyLessonStore? = null,
     private val executionStorage: com.halo.sdk.runtime.Storage? = null,
     private val versionReader: (suspend (String) -> String?)? = null,
-    private val savedState: SavedStateHandle = SavedStateHandle()) : ViewModel() {
+    private val savedState: SavedStateHandle = SavedStateHandle(),
+    private val courseAuthority: () -> (() -> Unit) = { {} }) : ViewModel() {
     private val restoredSelection = runCatching { StudySetupSelectionCodec.decode(savedState["study_material_selection"]) }
     private val mutableReads = MutableStateFlow(StudyHomeReadState(selectionRestoreFailed = restoredSelection.isFailure || savedState.get<Boolean>("study_seed_failed") == true))
     val reads = mutableReads.asStateFlow()
@@ -143,6 +144,33 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         catch (_: Exception) { message.value = "File import failed. Choose an accessible file." }
     }
     val sessions = recoverableRead("sessions", emptyList<com.halo.app.data.study.StudySessionRecord>()) { study.observeActiveSessions() }
+    internal suspend fun keepPhotoCoachCard(
+        lesson: CoachLessonTarget,
+        question: String,
+        answer: String,
+        requireAuthority: () -> Unit,
+    ): Boolean = study.keepReviewedPhotoCoachCard(lesson.id, lesson.updatedAt, question, answer, requireAuthority)
+    internal val courseOutline = lessons?.course?.observe(study.observeCourseSessions(), null)
+        ?: flowOf(StudyCourseRead.Unavailable)
+    private val courseSaving = MutableStateFlow(false)
+    internal val savingCourse = courseSaving.asStateFlow()
+
+    internal fun moveCourseLesson(version: String, id: String, movement: Int) {
+        val order = lessons?.course ?: return
+        if (courseSaving.value) return
+        courseSaving.value = true
+        viewModelScope.launch {
+            try {
+                order.move(version, id, movement, null, courseAuthority()) { study.observeCourseSessions().first() }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                message.value = "The course outline changed. Open it again and try again."
+            } finally {
+                courseSaving.value = false
+            }
+        }
+    }
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val summaries = recoverableRead("summaries", emptyMap<String, StudyLibrarySummary>()) { sessions.flatMapLatest { list ->
         if(list.isEmpty()) flowOf(emptyMap()) else combine(list.map { session ->
@@ -223,11 +251,14 @@ class StudyHomeViewModel(private val study: StudyUseCases, private val workspace
         private val files: WorkspaceFileRepository? = null, private val resolver: StudySourceResolver? = null,
         private val lessons: StudyLessonStore? = null,
         private val executionStorage: com.halo.sdk.runtime.Storage? = null,
-        private val versionReader: (suspend (String) -> String?)? = null) : ViewModelProvider.Factory {
+        private val versionReader: (suspend (String) -> String?)? = null,
+        private val courseAuthority: () -> (() -> Unit) = { {} }) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
-            StudyHomeViewModel(study, workspace, files, resolver, lessons, executionStorage, versionReader, extras.createSavedStateHandle()) as T
+            StudyHomeViewModel(study, workspace, files, resolver, lessons, executionStorage, versionReader,
+                extras.createSavedStateHandle(), courseAuthority) as T
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = StudyHomeViewModel(study, workspace, files, resolver,lessons, executionStorage, versionReader) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>): T = StudyHomeViewModel(study, workspace, files, resolver,
+            lessons, executionStorage, versionReader, courseAuthority = courseAuthority) as T
     }
 }

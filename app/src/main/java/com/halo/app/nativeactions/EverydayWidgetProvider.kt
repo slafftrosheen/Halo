@@ -32,6 +32,7 @@ class HaloBriefWidget : EverydayWidgetProvider()
 class HaloHeadlinesWidget : EverydayWidgetProvider()
 class HaloAlarmTimerWidget : EverydayWidgetProvider()
 class HaloDashboardWidget : EverydayWidgetProvider()
+class HaloTodayWidget : EverydayWidgetProvider()
 
 class HaloScanWidget : EverydayWidgetProvider()
 class HaloRecordWidget : EverydayWidgetProvider()
@@ -55,6 +56,7 @@ object EverydayWidgetProviders {
         HaloUpcomingWidget::class.java to EverydayCardKind.UPCOMING, HaloTasksWidget::class.java to EverydayCardKind.TASKS,
         HaloBriefWidget::class.java to EverydayCardKind.BRIEF, HaloHeadlinesWidget::class.java to EverydayCardKind.HEADLINES,
         HaloAlarmTimerWidget::class.java to EverydayCardKind.ALARMS_TIMERS, HaloDashboardWidget::class.java to EverydayCardKind.DASHBOARD,
+        HaloTodayWidget::class.java to EverydayCardKind.TODAY,
         HaloScanWidget::class.java to EverydayCardKind.SCAN,
         HaloRecordWidget::class.java to EverydayCardKind.RECORD,
         HaloQuickNoteWidget::class.java to EverydayCardKind.QUICK_NOTE,
@@ -146,6 +148,28 @@ object EverydayWidgetUpdates {
     private var observer: Job? = null
     private var stopWallpaperWatch: (() -> Unit)? = null
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.IO)
+    private val libraryBacked = setOf(EverydayCardKind.UPCOMING, EverydayCardKind.AGENDA, EverydayCardKind.TASKS,
+        EverydayCardKind.REMINDERS, EverydayCardKind.ALARMS_TIMERS, EverydayCardKind.BRIEF, EverydayCardKind.DASHBOARD, EverydayCardKind.TODAY,
+        EverydayCardKind.PLANNER_WEEK, EverydayCardKind.FOCUS, EverydayCardKind.LITTLE_HABITS, EverydayCardKind.OUR_HOME,
+        EverydayCardKind.LEARN, EverydayCardKind.LOCK_NEXT_EVENT, EverydayCardKind.SMART_STACK)
+
+    /** Remove already-published launcher snapshots before relying on a deferred repaint. */
+    fun withdrawPrivateSnapshots(context: Context) {
+        val generation = EverydayWidgetGeneration.invalidate()
+        val manager = AppWidgetManager.getInstance(context)
+        val store = EverydayWidgetStore(context)
+        for (id in EverydayWidgetProviders.ids(context)) runCatching {
+            val kind = EverydayWidgetProviders.kind(context, id) ?: return@runCatching
+            if (kind !in libraryBacked) return@runCatching
+            val instance = store.get(id) ?: EverydayWidgetInstance(id, 0, EverydayCardConfig(kind))
+            store.publishIfCurrent(instance, generation) {
+                manager.updateAppWidget(id, EverydayWidgetViews.unavailable(context, id))
+                EverydayWidgetMotion.forget(id)
+            }
+        }
+        enqueue(context)
+    }
+
     fun enqueue(context: Context) {
         EverydayWidgetGeneration.invalidate()
         if (EverydayWidgetProviders.ids(context).isEmpty()) return

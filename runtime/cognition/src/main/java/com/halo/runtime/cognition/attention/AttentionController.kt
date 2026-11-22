@@ -47,6 +47,9 @@ class AttentionController(
     suspend fun submit(request: AttentionRequest): DeliveryReceipt = mutex.withLock {
         delivery.deliver(request, policy.evaluate(request, contextProvider.snapshot(), preferences()))
     }
+    /** Close the gap between withdrawing owned queue rows and a release already in progress. */
+    suspend fun <T> withDeliveryBarrier(action: suspend () -> T): T = mutex.withLock { action() }
+
     suspend fun release() = mutex.withLock {
         val context = contextProvider.snapshot()
         queue.pending.value.toList().forEach { item ->
@@ -56,7 +59,7 @@ class AttentionController(
                 AttentionReleaseCondition.HALO_FOREGROUND -> context.foregroundState == ForegroundState.HALO_FOREGROUND
                 AttentionReleaseCondition.INTERACTION_ENDED -> !context.activeInteraction && !context.activeSpeechSession
             }
-            if (expired || eligible) {
+            if ((expired || eligible) && queue.isPending(item.request.id)) {
                 val receipt = delivery.deliver(item.request, policy.evaluate(item.request, context, preferences()))
                 if (receipt.outcome != DeliveryOutcome.QUEUED) queue.remove(item.request.id)
             }

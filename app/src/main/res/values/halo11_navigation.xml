@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_home_today">Today</string>
+    <string name="halo11_home_library">Library</string>
+    <string name="halo11_home_tools">Tools</string>
+    <string name="halo11_home_reads">Reads</string>
+    <string name="halo11_search_title">Search</string>
+    <string name="halo11_search_hint">Find anything in Halo</string>
+    <string name="halo11_search_previous_month_saved">Showing items saved last month.</string>
+    <string name="halo11_search_saved_excerpt">From %1$s</string>
+    <string name="halo11_search_empty">No matching tools or saved items.</string>
+    <string name="halo11_tool_maps">halo maps</string>
+    <string name="halo11_tool_calc">halo calc</string>
+    <string name="halo11_tool_measure">halo measure</string>
+    <string name="halo11_tool_coach">halo coach</string>
+    <string name="halo11_tool_focus">halo focus</string>
+    <string name="halo11_search_connections">Connections and AI keys</string>
+    <string name="halo11_search_privacy">Context and privacy</string>
+    <string name="halo11_search_permissions">Permissions</string>
+    <string name="halo11_search_speech_input">Speech input</string>
+    <string name="halo11_search_speech_output">Speech output</string>
+    <string name="halo11_search_notifications">Notifications</string>
+    <string name="halo11_search_backup">Storage and backup</string>
+    <string name="halo11_search_devices">Devices</string>
+    <string name="halo11_search_setup">Guided setup</string>
+    <string name="halo11_search_family">Family space</string>
+    <string name="halo11_search_settings">Settings</string>
+</resources>

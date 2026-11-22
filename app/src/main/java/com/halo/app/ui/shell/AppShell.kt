@@ -49,6 +49,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.launch
@@ -86,6 +87,7 @@ import com.halo.app.ui.screens.notebook.NoteEditorScreen
 import com.halo.app.ui.screens.notebook.NoteEditorViewModel
 import com.halo.app.ui.screens.study.StudyScreen
 import com.halo.app.ui.screens.study.StudyViewModel
+import com.halo.app.ui.screens.study.captureStudyCourseAuthority
 import com.halo.app.ui.screens.notebook.NotebookNavigation
 import com.halo.app.ui.screens.notebook.NotebookScreen
 import com.halo.app.ui.screens.notebook.WorkspaceObjectDetailScreen
@@ -100,12 +102,13 @@ import com.halo.app.ui.screens.settings.SystemCheckScreen
 import com.halo.app.ui.screens.settings.SystemCheckViewModel
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 
 sealed class Screen(val route: String, val title: String, val glyph: HaloGlyph) {
     data object Home : Screen("home", "Home", HaloGlyph.HOME)
     data object Study : Screen("study", "Study", HaloGlyph.QUESTION)
     data object Activity : Screen("activity", "Activity", HaloGlyph.ACTIVITY)
-    data object Notebook : Screen("notebook", "Workspace", HaloGlyph.NOTE)
+    data object Notebook : Screen("notebook", "Library", HaloGlyph.NOTE)
     data object Devices : Screen("devices", "Devices", HaloGlyph.DEVICE)
     data object Settings : Screen("settings", "Settings", HaloGlyph.SETTINGS)
 }
@@ -149,8 +152,15 @@ fun AppShell(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(uiText("Starting halo…")) }
         return
     }
+    val todayRoute = HaloHomeTab.TODAY.route
+    var wasInKidsMode by remember { mutableStateOf(kidsMode) }
     LaunchedEffect(kidsMode) {
-        if (kidsMode) { navController.awaitNavigationReady(); navController.navigateToPrimary("home") }
+        val returningToAdultHome = wasInKidsMode && !kidsMode
+        wasInKidsMode = kidsMode
+        if (kidsMode || returningToAdultHome) {
+            navController.awaitNavigationReady()
+            navController.navigateToPrimary(if (kidsMode) Screen.Home.route else todayRoute, restoreSavedState = false)
+        }
     }
     val shellScope = rememberCoroutineScope()
     val studyContext = LocalContext.current
@@ -180,6 +190,9 @@ fun AppShell(
     var parentUnavailable by remember { androidx.compose.runtime.mutableStateOf(false) }
     var settingsRootRequest by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(0L) }
     var workspaceRootRequest by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(0L) }
+    var requestedKidsEntry by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    var requestedKidsHomeworkPhoto by remember { mutableStateOf<String?>(null) }
+    var lastHomeTab by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(todayRoute) }
     fun performNavigation(requested: String) {
         val route = if (ManualDependencyGraph.kidsPreferences.enabled.value && requested == "mini_halo") "home" else requested
         if (com.halo.app.ui.screens.settings.isDeveloperDestination(route) &&
@@ -213,7 +226,10 @@ fun AppShell(
         if (route == "notebook") workspaceRootRequest++
         if (navController.currentDestination?.route != route) {
             if (route == "guided_setup") { navController.navigateToGuidedSetup(); return }
-            if (bottomNavItems.any { it.route == route }) navController.navigateToPrimary(route, restoreSavedState = false)
+            if (route == Screen.Home.route && !ManualDependencyGraph.kidsPreferences.enabled.value)
+                navController.navigateToInstrument(route)
+            else if (bottomNavItems.any { it.route == route } || HaloHomeTab.at(route) != null || route.substringBefore('?') == "search")
+                navController.navigateToPrimary(route, restoreSavedState = route == "home/tools" || route == "home/reads" || route == "search")
             else navController.navigateToInstrument(route)
         }
     }
@@ -231,10 +247,105 @@ fun AppShell(
         onDispose {navController.removeOnDestinationChangedListener(observer)}
     }
     fun navigateSafely(requestedRoute: String) {
-        val route = when (requestedRoute) {
+        val external = requestedRoute.startsWith(HaloDeepLinks.PREFIX)
+        val target = requestedRoute.removePrefix(HaloDeepLinks.PREFIX)
+        if (external) {
+            if (!HaloDeepLinks.acceptsRequest(requestedRoute)) return
+            val child = ManualDependencyGraph.kidsPreferences.enabled.value
+            if (target.startsWith("kids/")) {
+                if (child) {
+                    requestedKidsHomeworkPhoto = null
+                    requestedKidsEntry = target.substringAfter('/').takeUnless { it == "home" }
+                    performNavigation("home")
+                }
+                return
+            }
+            if (child && target != "home") return
+            HaloDeepLinks.setupStage(target)?.let { stage ->
+                if (ManualDependencyGraph.kidsPreferences.loadedState.value) {
+                    setupStore.open(stage)
+                    performNavigation("guided_setup")
+                }
+                return
+            }
+            if (target.startsWith("merchant/checkout/")) {
+                performNavigation("merchant_checkout?requestId=${android.net.Uri.encode(target.substringAfterLast('/'))}")
+                return
+            }
+            if (target == "library/glasses") {
+                performNavigation("notebook")
+                navController.currentBackStackEntry?.savedStateHandle?.set("openGlassesLibrary", true)
+                return
+            }
+            if (target.startsWith("study/collection/")) {
+                performNavigation("study")
+                val entry = navController.currentBackStackEntry
+                val path = target.split('/')
+                val collectionId = path.getOrNull(2) ?: return
+                val index = path.getOrNull(3)?.toIntOrNull()?.minus(1) ?: return
+                shellScope.launch {
+                    try {
+                        val family = ManualDependencyGraph.kidsPreferences
+                        val lease = family.adultActionRevision()
+                        val lesson = com.halo.app.ui.screens.study.observeStudyCollections().first()
+                            .firstOrNull { it.id == collectionId }?.lessons?.getOrNull(index) ?: return@launch
+                        family.requireAdultAction(lease)
+                        if (navController.currentBackStackEntry == entry)
+                            performNavigation("notebook/study/${android.net.Uri.encode(lesson.id)}")
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (_: Exception) { /* Study remains available if a saved lesson has moved. */ }
+                }
+                return
+            }
+            if (target.startsWith("library/item/")) {
+                performNavigation("notebook")
+                val entry = navController.currentBackStackEntry
+                val id = target.substringAfterLast('/')
+                shellScope.launch {
+                    val destination = com.halo.app.ui.screens.notebook.resolveHaloLibraryItemRoute(id)
+                    if (destination != null && navController.currentBackStackEntry == entry &&
+                        !ManualDependencyGraph.kidsPreferences.enabled.value) performNavigation(destination)
+                }
+                return
+            }
+            when {
+                target.startsWith("device/") || target == "discovery" -> performNavigation("devices")
+                target.startsWith("settings/") || target == "family" -> performNavigation("settings")
+                target.startsWith(EverydayRoutes.SOURCE + "?") -> performNavigation("home/reads")
+                target == "study?photoCoach=true" -> performNavigation("study")
+                target.substringBefore('?') == "maps/offline" -> performNavigation("maps")
+            }
+            if (target.startsWith("library/collection/")) {
+                performNavigation("notebook")
+                val entry = navController.currentBackStackEntry
+                val id = target.substringAfterLast('/')
+                shellScope.launch {
+                    val family = ManualDependencyGraph.kidsPreferences
+                    val lease = runCatching { family.adultActionRevision() }.getOrNull() ?: return@launch
+                    try {
+                        if (navController.currentBackStackEntry == entry)
+                            ManualDependencyGraph.notebookViewModel.openLibraryCollection(id) {
+                                family.requireAdultAction(lease)
+                                check(navController.currentBackStackEntry == entry)
+                            }
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (_: Exception) { /* The link no longer owns the visible Library. */ }
+                }
+                return
+            }
+        }
+        if (target == "halo/ask") {
+            if (!ManualDependencyGraph.kidsPreferences.enabled.value) {
+                performNavigation("home")
+                homeViewModel.composerFocus.value += 1
+            }
+            return
+        }
+        val route = when (target) {
             "planner" -> EverydayRoutes.ORGANIZER
             "routines" -> "automation"
-            else -> requestedRoute
+            Screen.Home.route -> if (external && !ManualDependencyGraph.kidsPreferences.enabled.value) todayRoute else target
+            else -> target
         }
         if (route in setOf("kids_scan", "kids_day") && !ManualDependencyGraph.kidsPreferences.enabled.value) return
         val childSurface = route in setOf("home", "mini_halo", "study", "workspace_handoff", "kids_scan", "kids_day") ||
@@ -242,6 +353,26 @@ fun AppShell(
             route.startsWith("notebook/note/") || route.startsWith("notebook/canvas/") || route.startsWith("notebook/study/")
         if (ManualDependencyGraph.kidsPreferences.enabled.value && !childSurface) { parentRoute = route; parentGate() }
         else performNavigation(route)
+    }
+    fun navigateDock(route: String) {
+        val mini = com.halo.app.ui.mini.miniHaloActivityOwner(studyContext) is com.halo.app.ui.mini.MiniHaloActivity
+        if (mini || ManualDependencyGraph.kidsPreferences.enabled.value || route !in setOf("home", "search", "devices", "settings")) {
+            navigateSafely(route)
+            return
+        }
+        val current = navController.currentDestination?.route
+        val previous = primaryNavigationRoute(current)
+        if (route == "home") {
+            val active = previous in setOf("home", "notebook")
+            if (active) performNavigation(todayRoute)
+            else navController.navigateToPrimary(HaloHomeTab.at(lastHomeTab)?.route ?: todayRoute)
+        } else if (previous == route) {
+            if (navController.currentDestination?.route?.substringBefore('?') != route &&
+                !navController.popBackStack(route, inclusive = false)) performNavigation(route)
+            if (route == "settings") settingsRootRequest++
+        } else {
+            navController.navigateToPrimary(route, restoreSavedState = true)
+        }
     }
     suspend fun openWorkspaceFile(id: String) {
         val route = try {
@@ -284,7 +415,7 @@ fun AppShell(
         val kids = ManualDependencyGraph.kidsPreferences.getEnabled()
         fun startingOnHome() = !ManualDependencyGraph.kidsPreferences.enabled.value &&
             !ManualDependencyGraph.explicitHaloScreenRequested && ManualDependencyGraph.requestedHaloScreen.value == null &&
-            navController.currentDestination?.route == "home"
+            navController.currentDestination?.route == todayRoute
         if (!kids && startingOnHome()) {
             if (screen != "home") navigateSafely(screen)
             else if (!startupCarModeChecked && !setupSession && shellActivity is com.halo.app.MainActivity) {
@@ -343,6 +474,15 @@ fun AppShell(
             when(event) {
                 com.halo.app.capture.ContextualCaptureNavigation.Ask -> navigateSafely("home")
                 is com.halo.app.capture.ContextualCaptureNavigation.Study -> navigateSafely("study?captureSource=${android.net.Uri.encode(event.objectId)}")
+                is com.halo.app.capture.ContextualCaptureNavigation.PhotoCoach -> if (!ManualDependencyGraph.kidsPreferences.enabled.value)
+                    navigateSafely("study?photoCoach=true&photoCoachTicket=${android.net.Uri.encode(event.ticket)}") else Unit
+                is com.halo.app.capture.ContextualCaptureNavigation.KidsHomeworkPhoto -> {
+                    if (ManualDependencyGraph.kidsPreferences.enabled.value && !ManualDependencyGraph.isHaloPaused()) {
+                        requestedKidsHomeworkPhoto = event.ticket
+                        requestedKidsEntry = "homework"
+                        navigateSafely("home")
+                    }
+                }
                 is com.halo.app.capture.ContextualCaptureNavigation.OpenNote -> navigateSafely("notebook/note/${android.net.Uri.encode(event.objectId)}")
                 com.halo.app.capture.ContextualCaptureNavigation.Memory -> navigateSafely("notebook/memory?section=Memories")
             }
@@ -370,6 +510,10 @@ fun AppShell(
     BoxWithConstraints {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val homeTab = HaloHomeTab.at(currentRoute)
+    LaunchedEffect(currentRoute, kidsMode) {
+        if (!kidsMode) HaloHomeTab.at(currentRoute)?.let { lastHomeTab = it.route }
+    }
     var lastWorkingRoot by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf("home") }
     val bellOpen = currentRoute?.startsWith("activity") == true || currentRoute?.startsWith("notifications") == true
     LaunchedEffect(currentRoute) {
@@ -531,12 +675,20 @@ fun AppShell(
                     }
                 val inbox by ManualDependencyGraph.notificationInboxSource.state.collectAsStateWithLifecycle()
                 val activity by ManualDependencyGraph.activityViewModel.uiState.collectAsStateWithLifecycle()
+                val buddy = ManualDependencyGraph.buddyBotHost
+                val buddyTelemetry by buddy.telemetry.collectAsStateWithLifecycle()
+                val deviceRevision by ManualDependencyGraph.deviceSessionManager.stateRevision.collectAsStateWithLifecycle()
+                val buddyReady = remember(deviceRevision, buddy) {
+                    ManualDependencyGraph.deviceSessionManager.getSession(buddy.deviceId)?.state?.value ==
+                        com.halo.sdk.runtime.embodiment.SessionState.READY
+                }
                 HaloZone(contextualRoute, (this@BoxWithConstraints.maxHeight -
                     WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding() -
                     WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()).coerceAtLeast(0.dp),
                     compact = this@BoxWithConstraints.maxHeight < 480.dp || WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current) > 0,
-                    actions = orbContext, onAction = dispatchContext, onNavigate = ::navigateSafely,
+                    actions = orbContext, onAction = dispatchContext, onNavigate = ::navigateDock,
                     attentionCount = if (kidsMode) 0 else inbox.items.count { it.active } + activity.events.filter { it.status == com.halo.app.ui.screens.activity.ActivityStatus.PENDING }.mapNotNull { it.reviewRunId }.distinct().size,
+                    devicesNeedAttention = !kidsMode && buddyReady && buddyTelemetry.needsAttention,
                     utility = {
                         if (!privateShell && (contextualRoute != "home" || kidsMode)) {
                             com.halo.app.ui.components.HaloReadAloudBar(allowVoiceSettings = !kidsMode,
@@ -550,10 +702,10 @@ fun AppShell(
                 val scopedOrb = orbOverride.value.takeIf { kidsMode && currentRoute == "home" }
                 if (scopedOrb != null) com.halo.app.ui.presence.HaloOrbLauncher(
                     scopedOrb.signal, scopedOrb.interaction, emptySet(), {}, scopedOrb.onPrimary, scopedOrb.onStop,
-                    onTools = {}, showToolCatalog = false, destinations = orbDestinations, onNavigate = ::navigateSafely,
+                    onTools = {}, showToolCatalog = false, destinations = orbDestinations, onNavigate = ::navigateDock,
                     contextActions = orbContext, onContextAction = dispatchContext, size = zoneOrbSize)
                 else com.halo.app.ui.presence.HomeOrbControl(homeViewModel, onRequestPermissions, ::navigateSafely,
-                    size = zoneOrbSize, destinations = orbDestinations, onNavigate = ::navigateSafely,
+                    size = zoneOrbSize, destinations = orbDestinations, onNavigate = ::navigateDock,
                     contextActions = orbContext, onContextAction = dispatchContext, hint = null, onDismissHint = ::dismissOrbHint)
                 }, destinations = orbDestinations,
                     entryId = backStackEntry?.id,
@@ -574,17 +726,19 @@ fun AppShell(
             com.halo.app.ui.components.HaloReadAloudBar(onVoiceSettings = { navigateSafely("settings/voice/output") })
             contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
         }
+        if (kidsReady && !kidsMode && homeTab != null) HaloHomeTabs(homeTab, ::navigateSafely)
         kidsLoadError?.let { Text(uiText(it), Modifier.padding(16.dp)) }
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            com.halo.app.wallpaper.HaloWallpaperBackdrop(Modifier.matchParentSize(), kidsMode)
+            com.halo.app.wallpaper.HaloWallpaperBackdrop(Modifier.matchParentSize(), kidsMode,
+                home = homeTab != null || currentRoute == Screen.Home.route)
             SharedTransitionLayout {
             com.halo.app.ui.design.HaloLabBoundary(
                 enabled = currentRoute?.let { com.halo.app.ui.screens.settings.isDeveloperDestination(it) } == true,
             ) {
             if (!developerRouteBlocked) NavHost(
                 navController = navController,
-                startDestination = if (initialSetupNeeded) "guided_setup" else Screen.Home.route,
+                startDestination = if (initialSetupNeeded) "guided_setup" else todayRoute,
                 modifier = Modifier.widthIn(max = 1040.dp).fillMaxSize(),
                 enterTransition = { if (reducedMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(com.halo.app.ui.design.HaloMotion.pageEnterMs)) },
                 exitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(com.halo.app.ui.design.HaloMotion.pageExitMs)) },
@@ -614,7 +768,7 @@ fun AppShell(
                             } else if (!navController.popBackStack()) {
                                 // In-app Mini is a destination, not a new window:
                                 // closing it returns to Home instead of hiding Halo.
-                                navController.navigateToPrimary(Screen.Home.route)
+                                navController.navigateToPrimary(if (kidsMode) Screen.Home.route else todayRoute)
                             }
                         })
                 }
@@ -628,14 +782,99 @@ fun AppShell(
                     com.halo.app.ui.onboarding.HaloSetupScreen(setupStore, onOpen = ::navigateSafely, onExit = {
                         setupStore.dismissAutomaticLaunch()
                         setupSession = false
-                        navController.navigate("home") { popUpTo("guided_setup") { inclusive = true }; launchSingleTop = true }
+                        navController.navigate(if (kidsMode) Screen.Home.route else todayRoute) {
+                            popUpTo("guided_setup") { inclusive = true }
+                            launchSingleTop = true
+                        }
                     })
                 }
+                composable(todayRoute) {
+                    if (!kidsMode) com.halo.app.ui.screens.home.HaloTodayScreen(::navigateSafely)
+                }
+                composable("home/tools") {
+                    if (kidsReady && !kidsMode) HaloHomeTools(::navigateSafely)
+                }
+                composable("merchant_checkout?requestId={requestId}", arguments = listOf(
+                    navArgument("requestId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                )) { entry ->
+                    if (!kidsMode) com.halo.app.ui.toolkit.HaloMerchantCheckoutScreen(entry.arguments?.getString("requestId")) {
+                        if (!navController.popBackStack()) navigateSafely("home/tools")
+                    }
+                }
+                composable("home/reads") { entry ->
+                    if (kidsReady && !kidsMode) {
+                        val model: SourcesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                            key = "reads:${entry.id}", factory = EverydayViewModelFactory {
+                                SourcesViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.savedStateHandle)
+                            })
+                        SourcesScreen(model, sourceId = null, itemId = null,
+                            onBack = { if (!navController.popBackStack()) navigateSafely("home") },
+                            onSource = { source, article -> navigateSafely(EverydayRoutes.source(source, article)) },
+                            onOrganizer = { id -> navigateSafely(EverydayRoutes.organizer(id)) },
+                            onLocal = { model.openLocal(it, ::navigateSafely) }, readsOnly = true, onOpenReadBlock = ::navigateSafely)
+                    }
+                }
+                composable("search?q={q}", arguments = listOf(
+                    navArgument("q") { type = NavType.StringType; nullable = true; defaultValue = null },
+                )) { entry ->
+                    if (kidsReady && !kidsMode) {
+                        val entryScope = rememberCoroutineScope()
+                        HaloLibrarySearch(entry.arguments?.getString("q").orEmpty(), ::searchEveryLibraryKind,
+                            onOpenHit = { hit ->
+                                if (hit.type == com.halo.app.data.notebook.WorkspaceObjectType.CANVAS) {
+                                    val node = hit.nodeId?.let { "?nodeId=${android.net.Uri.encode(it)}" }.orEmpty()
+                                    navigateSafely("notebook/canvas/${android.net.Uri.encode(hit.objectId.value)}$node")
+                                } else entryScope.launch { openWorkspaceFile(hit.objectId.value) }
+                            }, onOpenRoute = ::navigateSafely)
+                    }
+                }
+                composable("calc") {
+                    if (kidsReady && !kidsMode) com.halo.app.ui.toolkit.HaloCalcScreen(
+                        onBack = { if (!navController.popBackStack()) navigateSafely("home") },
+                        onCoach = { navigateSafely("study?photoCoach=true") })
+                }
+                composable("measure") {
+                    if (kidsReady && !kidsMode) com.halo.app.ui.toolkit.HaloMeasureScreen(
+                        onBack = { if (!navController.popBackStack()) navigateSafely("home") })
+                }
+                composable("maps?placeId={placeId}&eventId={eventId}&occurrenceStart={occurrenceStart}", arguments = listOf(
+                    navArgument("placeId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("eventId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("occurrenceStart") { type = NavType.StringType; nullable = true; defaultValue = null },
+                )) { entry ->
+                    if (kidsReady && !kidsMode) {
+                        val original = entry.arguments?.getString("occurrenceStart")?.let {
+                            runCatching { java.time.Instant.parse(it) }.getOrNull()
+                        }
+                        com.halo.app.ui.toolkit.HaloMapsScreen(
+                            onBack = { if (!navController.popBackStack()) navigateSafely("home") },
+                            placeId = entry.arguments?.getString("placeId"), eventId = entry.arguments?.getString("eventId"),
+                            occurrenceStart = original,
+                            onOffline = { place, downloads, query ->
+                                val target = place?.let { "&placeId=${android.net.Uri.encode(it)}" }.orEmpty()
+                                val search = query?.let { "&q=${android.net.Uri.encode(it)}" }.orEmpty()
+                                navigateSafely("maps/offline?downloads=$downloads$target$search")
+                            })
+                    }
+                }
+                composable("maps/offline?downloads={downloads}&placeId={placeId}&q={q}", arguments = listOf(
+                    navArgument("downloads") { type = NavType.BoolType; defaultValue = false },
+                    navArgument("placeId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("q") { type = NavType.StringType; nullable = true; defaultValue = null },
+                )) { entry ->
+                    if (kidsReady && !kidsMode) com.halo.app.ui.toolkit.HaloOfflineMapScreen(
+                        { if (!navController.popBackStack()) navigateSafely("maps") },
+                        placeId = entry.arguments?.getString("placeId"), downloadsFirst = entry.arguments?.getBoolean("downloads") == true,
+                        initialQuery = entry.arguments?.getString("q").orEmpty())
+                }
                 composable(Screen.Home.route) { homeEntry ->
+                    androidx.activity.compose.BackHandler(enabled = kidsMode) { }
                     val homeEntryScope = rememberCoroutineScope()
                     var makingNote by remember { androidx.compose.runtime.mutableStateOf(false) }
                     if (kidsMode) com.halo.app.ui.screens.kids.KidsModeScreen(homeViewModel, onRequestPermissions,
-                        onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") }, onOpenTool = ::navigateSafely)
+                        onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") }, onOpenTool = ::navigateSafely,
+                        requestedEntry = requestedKidsEntry, homeworkPhotoTicket = requestedKidsHomeworkPhoto,
+                        onRequestedEntryConsumed = { requestedKidsEntry = null; requestedKidsHomeworkPhoto = null })
                     else Column(Modifier.fillMaxSize()) {
                         HomeScreen(
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
@@ -678,12 +917,23 @@ fun AppShell(
                     com.halo.app.ui.toolkit.HaloSheetsRoute(entry.savedStateHandle, entry.arguments?.getString("objectId"),
                         entry.arguments?.getString("sourceVersion")) { navController.popBackStack() }
                 }
-                composable("scan") {
-                    com.halo.app.ui.toolkit.HaloScanScreen({ navController.popBackStack() }, ::navigateSafely)
+                composable("scan?identify={identify}&translate={translate}&from={from}&to={to}", arguments = listOf(
+                    navArgument("identify") { type = NavType.BoolType; defaultValue = false },
+                    navArgument("translate") { type = NavType.BoolType; defaultValue = false },
+                    navArgument("from") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("to") { type = NavType.StringType; nullable = true; defaultValue = null },
+                )) { entry ->
+                    val mode = when {
+                        entry.arguments?.getBoolean("identify") == true -> com.halo.app.ui.toolkit.HaloScanMode.IDENTIFY
+                        entry.arguments?.getBoolean("translate") == true -> com.halo.app.ui.toolkit.HaloScanMode.TRANSLATE
+                        else -> com.halo.app.ui.toolkit.HaloScanMode.READ
+                    }
+                    com.halo.app.ui.toolkit.HaloScanScreen({ navController.popBackStack() }, ::navigateSafely, initialMode = mode,
+                        initialFrom = entry.arguments?.getString("from"), initialTo = entry.arguments?.getString("to"))
                 }
                 composable("translate") {
-                    com.halo.app.ui.toolkit.HaloScanScreen({ navController.popBackStack() }, ::navigateSafely,
-                        initialMode = com.halo.app.ui.toolkit.HaloScanMode.TRANSLATE)
+                    if (kidsReady && !kidsMode) com.halo.app.ui.toolkit.HaloTranslateScreen(
+                        { if (!navController.popBackStack()) navigateSafely("home") }, ::navigateSafely)
                 }
                 composable("magnifier") {
                     com.halo.app.ui.toolkit.HaloScanScreen({ navController.popBackStack() }, ::navigateSafely, magnifier = true)
@@ -762,13 +1012,21 @@ fun AppShell(
                     val model: WorldClockViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "clocks:${entry.id}", factory = EverydayViewModelFactory { WorldClockViewModel(entry.savedStateHandle) })
                     WorldClockScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("home") },initialZone=entry.arguments?.getString("zoneId"),initialLabel=entry.arguments?.getString("cityLabel"))
                 }
-                composable("screen/brief?briefId={briefId}", arguments = listOf(navArgument("briefId") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
-                    val model: EverydayBriefViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "brief:${entry.id}", factory = EverydayViewModelFactory {
-                        EverydayBriefViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, entry.arguments?.getString("briefId"), entry.savedStateHandle)
-                    })
-                    EverydayBriefScreen(model, onBack = { if (!navController.popBackStack()) navigateSafely("home") },
-                        onSources = { navigateSafely(EverydayRoutes.SOURCES) }, onOrganizer = { navigateSafely(EverydayRoutes.ORGANIZER) },
-                        onOpenFact = { model.openFact(it, ::navigateSafely) })
+                composable("screen/brief?briefId={briefId}&legacy={legacy}", arguments = listOf(
+                    navArgument("briefId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("legacy") { type = NavType.BoolType; defaultValue = false })) { entry ->
+                    val briefId = entry.arguments?.getString("briefId")
+                    val back = { if (!navController.popBackStack()) navigateSafely("home") }
+                    if (briefId == null && entry.arguments?.getBoolean("legacy") != true && !kidsMode) {
+                        DayReportScreen(onBack = back, onBriefs = { navigateSafely(EverydayRoutes.savedBriefs()) }, onOpen = ::navigateSafely)
+                    } else {
+                        val model: EverydayBriefViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "brief:${entry.id}", factory = EverydayViewModelFactory {
+                            EverydayBriefViewModel(studyContext.applicationContext as com.halo.app.HaloApplication, briefId, entry.savedStateHandle)
+                        })
+                        EverydayBriefScreen(model, onBack = back,
+                            onSources = { navigateSafely(EverydayRoutes.SOURCES) }, onOrganizer = { navigateSafely(EverydayRoutes.ORGANIZER) },
+                            onOpenFact = { model.openFact(it, ::navigateSafely) })
+                    }
                 }
                 composable(EverydayRoutes.SOURCES) { entry ->
                     val model: SourcesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(key = "sources:${entry.id}", factory = EverydayViewModelFactory {
@@ -791,14 +1049,17 @@ fun AppShell(
                         onOrganizer = { navigateSafely(EverydayRoutes.organizer(it)) }, onLocal = { model.openLocal(it, ::navigateSafely) },
                         onWidgetsDestination = ::navigateSafely)
                 }
-                composable("study?captureSource={captureSource}&goal={goal}&sourceVersion={sourceVersion}&sourceReference={sourceReference}", arguments = listOf(
+                composable("study?captureSource={captureSource}&goal={goal}&sourceVersion={sourceVersion}&sourceReference={sourceReference}&photoCoach={photoCoach}&photoCoachTicket={photoCoachTicket}", arguments = listOf(
                     navArgument("captureSource") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("goal") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("sourceVersion") { type = NavType.StringType; nullable = true; defaultValue = null },
-                    navArgument("sourceReference") { type = NavType.StringType; nullable = true; defaultValue = null }
+                    navArgument("sourceReference") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("photoCoach") { type = NavType.BoolType; defaultValue = false },
+                    navArgument("photoCoachTicket") { type = NavType.StringType; nullable = true; defaultValue = null },
                 )) { entry ->
                     val model: com.halo.app.ui.screens.study.StudyHomeViewModel = viewModel(
-                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver,ManualDependencyGraph.studyLessonStore, executionStorage = ManualDependencyGraph.storage, versionReader = ManualDependencyGraph.workspaceContext::versionFor))
+                        factory = com.halo.app.ui.screens.study.StudyHomeViewModel.Factory(ManualDependencyGraph.studyUseCases, ManualDependencyGraph.workspaceRepository, ManualDependencyGraph.workspaceFileRepository, ManualDependencyGraph.studySourceResolver, ManualDependencyGraph.studyLessonStore, executionStorage = ManualDependencyGraph.storage,
+                            versionReader = ManualDependencyGraph.workspaceContext::versionFor, courseAuthority = ::captureStudyCourseAuthority))
                     LaunchedEffect(model, entry.arguments?.getString("captureSource"), entry.arguments?.getString("sourceVersion"), entry.arguments?.getString("sourceReference")) {
                         entry.arguments?.getString("captureSource")?.let { id ->
                             val encoded = entry.arguments?.getString("sourceReference")
@@ -818,7 +1079,11 @@ fun AppShell(
                         },
                         onStartVoiceMode = requestVoiceModeFromSurface,
                         initialSourceId = entry.arguments?.getString("captureSource"),
-                        initialGoal = entry.arguments?.getString("goal"))
+                        initialGoal = entry.arguments?.getString("goal"), allowCourseOutline = kidsReady && !kidsMode,
+                        openPhotoCoach = kidsReady && !kidsMode && entry.arguments?.getBoolean("photoCoach") == true,
+                        initialPhotoCoachTicket = entry.arguments?.getString("photoCoachTicket"),
+                        onCoachToStudy = { id -> navigateSafely("study?captureSource=${android.net.Uri.encode(id)}") },
+                        onExamPlanSaved = { id, start -> navigateSafely(EverydayRoutes.organizer(id, start)) })
                 }
                 composable("activity?runId={runId}&objectId={objectId}&eventId={eventId}", arguments = listOf(navArgument("runId") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("objectId") { type=NavType.StringType;nullable=true;defaultValue=null },navArgument("eventId") {type=NavType.StringType;nullable=true;defaultValue=null})) { entry ->
@@ -856,6 +1121,14 @@ fun AppShell(
                         notebookViewModel.bindSavedView(notebookEntry.savedStateHandle)
                         onDispose { }
                     }
+                    LaunchedEffect(notebookEntry) {
+                        notebookEntry.savedStateHandle.getStateFlow("openGlassesLibrary", false).collectLatest { open ->
+                            if (open && !ManualDependencyGraph.kidsPreferences.enabled.value) {
+                                notebookViewModel.setFilter(com.halo.app.ui.screens.notebook.NotebookFilter.GLASSES_PHOTOS)
+                                notebookEntry.savedStateHandle["openGlassesLibrary"] = false
+                            }
+                        }
+                    }
                     LaunchedEffect(notebookViewModel) {
                         notebookViewModel.navigationEvents.collectLatest { event ->
                             when (event) {
@@ -869,7 +1142,10 @@ fun AppShell(
                                 is NotebookNavigation.OpenCanvas -> navigateSafely("notebook/canvas/${event.id}" + (event.nodeId?.let { "?nodeId=${android.net.Uri.encode(it)}" } ?: ""))
                                 is NotebookNavigation.ReviewAutomation -> navigateSafely("automation_review/${android.net.Uri.encode(event.routineId)}/${android.net.Uri.encode(event.suggestionId)}")
                                 NotebookNavigation.ReviewCapabilities -> navigateSafely("ai_settings")
-                                is NotebookNavigation.OpenStudy -> navigateSafely("notebook/study/${event.sessionId}?review=${event.review}")
+                                is NotebookNavigation.OpenStudy -> {
+                                    val card = event.cardId?.let { "&cardId=${android.net.Uri.encode(it)}" }.orEmpty()
+                                    navigateSafely("notebook/study/${android.net.Uri.encode(event.sessionId)}?review=${event.review}$card")
+                                }
                                 is NotebookNavigation.StartStudyFromSource -> navigateSafely(
                                     "study?captureSource=${android.net.Uri.encode(event.objectId)}")
                             }
@@ -877,6 +1153,7 @@ fun AppShell(
                     }
                     NotebookScreen(notebookViewModel, rootRequest = workspaceRootRequest,
                         librarySession = ManualDependencyGraph.notebookLibrarySession,
+                        homeWallpaperVisible = !kidsMode && com.halo.app.wallpaper.hasHaloHomeWallpaper(),
                         requestLocalSearch = requestLocalSearch,
                         onLocalSearchOpened = { notebookEntry.savedStateHandle["openLocalSearch"] = false },
                         onOpenStudy = { navigateSafely(Screen.Study.route) },
@@ -885,6 +1162,7 @@ fun AppShell(
                         onOpenStudio = { navigateSafely("studio") },
                         onOpenFileTools = { navigateSafely("file_tools") },
                         onOpenCanvasLibrary = { navigateSafely("canvases") },
+                        onOpenLibraryPlace = { navigateSafely("maps?placeId=${android.net.Uri.encode(it)}") },
                         onOpenEveryday = {route -> navigateSafely(route)},
                         onStartVoiceMode = requestVoiceModeFromSurface)
                 }
@@ -931,13 +1209,19 @@ fun AppShell(
                                 check(ManualDependencyGraph.kidsPreferences.loadedState.value && !ManualDependencyGraph.kidsPreferences.enabled.value)
                                 ManualDependencyGraph.workspaceTextDocuments.exportNote(id, revision, format)
                             },
+                            onExportPaginatedNote = if (kidsMode) null else { id, revision, comments, first, last ->
+                                check(ManualDependencyGraph.kidsPreferences.loadedState.value && !ManualDependencyGraph.kidsPreferences.enabled.value)
+                                ManualDependencyGraph.workspaceTextDocuments.exportPaginatedNote(id, revision, comments, first, last)
+                            },
                         )
                     }
                 }
 
                 composable(
-                    "notebook/study/{sessionId}?review={review}",
-                    arguments = listOf(navArgument("sessionId") { type = NavType.StringType }, navArgument("review") { type = NavType.BoolType; defaultValue = false })
+                    "notebook/study/{sessionId}?review={review}&cardId={cardId}",
+                    arguments = listOf(navArgument("sessionId") { type = NavType.StringType },
+                        navArgument("review") { type = NavType.BoolType; defaultValue = false },
+                        navArgument("cardId") { type = NavType.StringType; nullable = true; defaultValue = null })
                 ) { entry ->
                     val sessionId = entry.arguments?.getString("sessionId")
                     if (sessionId == null) {
@@ -953,6 +1237,7 @@ fun AppShell(
                                 workspace = ManualDependencyGraph.workspaceRepository,
                                 notes = ManualDependencyGraph.notebookUseCases,
                                 readerStorage = ManualDependencyGraph.storage,
+                                courseAuthority = ::captureStudyCourseAuthority,
                             ),
                         )
                         LaunchedEffect(studyViewModel) {
@@ -966,7 +1251,11 @@ fun AppShell(
                         } }, onConfigureVision = { navigateSafely("settings/intelligence/roles") },
                             presentationStorage = ManualDependencyGraph.storage,
                             onConfigureReadingVoice = { navigateSafely("settings/voice/output") },
-                            onStartVoiceMode = requestVoiceModeFromSurface, activeTools = ManualDependencyGraph.activeStudyToolsOwner) { navController.popBackStack() }
+                            onOpenCourseLesson = if (kidsReady && !kidsMode) {
+                                { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") }
+                            } else null,
+                            onStartVoiceMode = requestVoiceModeFromSurface, activeTools = ManualDependencyGraph.activeStudyToolsOwner,
+                            startingCardId = entry.arguments?.getString("cardId")) { navController.popBackStack() }
                     }
                 }
 
@@ -1198,7 +1487,7 @@ fun AppShell(
                     val deviceKind = state.devices.firstOrNull { it.id == deviceId }?.kind
                     when {
                         deviceId == null -> navController.popBackStack()
-                        deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.BUDDYBOT -> BuddyBotControlScreen(deviceId, viewModel) { navController.popBackStack() }
+                        deviceId == viewModel.buddyBotHost?.deviceId && !kidsMode -> BuddyBotControlScreen(deviceId, viewModel) { navController.popBackStack() }
                         deviceKind == com.halo.sdk.runtime.embodiment.DeviceKind.HEYCYAN_GLASSES -> HeyCyanControlScreen(deviceId, viewModel) { navController.popBackStack() }
                         deviceKind != null && com.halo.app.wearables.NativeWearableHost.supports(deviceKind) ->
                             com.halo.app.wearables.NativeWearableControlScreen(deviceId) { navController.popBackStack() }
@@ -1398,8 +1687,9 @@ fun AppShell(
                                     savedTitle = conversations.firstOrNull { it.id == conversationId }?.title,
                                     turns = turns,
                                     onContinue = {
-                                        homeViewModel.openConversation(conversationId)
-                                        navController.navigateToPrimary("home")
+                                        homeViewModel.openConversation(conversationId) {
+                                            if (navController.currentBackStackEntry == entry) navController.navigateToPrimary("home")
+                                        }
                                     },
                                     onBack = { navController.popBackStack() }
                                 )
@@ -1567,9 +1857,16 @@ fun AppShell(
                 }
                 composable("settings/voice/elevenlabs") {
                     val provider = ManualDependencyGraph.speechSynthesisRegistry.providers.filterIsInstance<com.halo.providers.elevenlabs.tts.ElevenLabsTtsProvider>().first()
+                    val output = ManualDependencyGraph.haloSpeechOutputCoordinator
+                    val test by output.outputTest.collectAsStateWithLifecycle()
+                    val mode by ManualDependencyGraph.privacyModes.mode.collectAsStateWithLifecycle()
                     com.halo.app.ui.screens.settings.ElevenLabsSettingsScreen(provider,
                         onBack = { navController.popBackStack() },
-                        onTestVoice = { ManualDependencyGraph.haloSpeechOutputCoordinator.preview(provider.metadata.id) },
+                        onTestVoice = { output.testOutput(com.halo.sdk.runtime.SpeechOutputTarget.Phone, "Phone speaker",
+                            phrase = "Halo voice test.", previewProviderId = provider.metadata.id) },
+                        outputTest = test,
+                        onStopTest = { output.stopIfTransaction(it) },
+                        powerMode = mode == com.halo.app.ai.PrivacyMode.CLOUD,
                         onUseProvider = { ManualDependencyGraph.speechSynthesisRegistry.selector.selectTts(provider.metadata.id) })
                 }
                 composable("assistant_diagnostics") {

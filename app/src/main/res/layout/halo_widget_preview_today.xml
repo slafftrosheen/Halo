@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="16dp"
+    android:background="@drawable/halo_everyday_widget_background">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:textSize="20sp"
+        android:text="@string/halo11_home_today" android:textColor="@color/everyday_widget_text" />
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:fontFamily="@font/atkinson_hyperlegible_next_variable"
+        android:textSize="14sp" android:text="@string/halo_widget_today_preview" android:textColor="@color/everyday_widget_metadata" />
+</LinearLayout>

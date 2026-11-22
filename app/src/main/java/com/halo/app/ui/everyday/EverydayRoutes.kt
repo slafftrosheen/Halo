@@ -17,6 +17,7 @@ object EverydayRoutes {
         (originalStart?.let { at -> "&occurrenceStart=${encode(at.toString())}" } ?: "") } ?: ORGANIZER
     fun clocks(zoneId: String, label: String) = "$CLOCKS?zoneId=${encode(zoneId)}&cityLabel=${encode(label)}"
     fun brief(id: String? = null) = id?.let { "$BRIEF?briefId=${encode(it)}" } ?: BRIEF
+    fun savedBriefs() = "$BRIEF?legacy=true"
     fun source(id: String, item: String? = null) = "$SOURCE?sourceId=${encode(id)}" + (item?.let { "&itemId=${encode(it)}" } ?: "")
 
     /** Strict shape for internal typed entry delivery; generic screen Intent strings still use the exact catalogue. */

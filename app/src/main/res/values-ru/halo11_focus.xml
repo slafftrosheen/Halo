@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halo11_focus_rest">Перерыв</string>
+    <string name="halo11_focus_end_rest">Закончить перерыв</string>
+    <string name="halo11_focus_start_rest">Начать перерыв на %1$d мин.</string>
+    <string name="halo11_focus_blocks">Учебные блоки</string>
+    <string name="halo11_focus_work_time">Время фокуса (мин.)</string>
+    <string name="halo11_focus_rest_time">Время перерыва (мин.)</string>
+    <string name="halo11_focus_done">Что я сделал(а)</string>
+    <string name="halo11_focus_keep_hint">Можно оставить одну строку на странице «Сегодня».</string>
+    <string name="halo11_focus_finish">Завершить</string>
+    <string name="halo11_focus_kept">Сохранено на странице «Сегодня»</string>
+    <string name="halo11_focus_remove">Удалить</string>
+    <string name="halo11_focus_kids_timer">Таймер фокуса</string>
+    <string name="halo11_focus_kids_clock">%1$d:%2$02d</string>
+    <string name="halo11_focus_kids_minutes">%1$d мин.</string>
+    <string name="halo11_focus_kids_stop">Остановить</string>
+    <string name="halo11_focus_kids_start">Начать</string>
+</resources>

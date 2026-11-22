@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="look_title">Dostosuj do siebie</string>
+    <string name="look_motion_play">Odtwórz podgląd animacji</string>
+    <string name="look_motion_android_off">W ustawieniach Androida animacje są wyłączone.</string>
+    <string name="look_motion_device_limited">Telefon ogranicza teraz animacje.</string>
+    <string name="look_motion_contrast">Przy wyższym kontraście pierścień pozostaje nieruchomy.</string>
 </resources>

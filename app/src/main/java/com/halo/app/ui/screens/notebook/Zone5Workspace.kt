@@ -1,6 +1,8 @@
 package com.halo.app.ui.screens.notebook
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -49,26 +51,31 @@ internal fun WorkspaceHeadingAndTabs(library: Boolean, onSelect: (Boolean) -> Un
 /** Workspace navigation belongs to the Zone; the working area contains saved objects or instruments. */
 @Composable
 internal fun WorkspaceSectionSwitcher(library: Boolean, onSelect: (Boolean) -> Unit) {
+    val colors = MaterialTheme.colorScheme
     val tabs: @Composable (Modifier) -> Unit = { tabModifier ->
         listOf(true, false).forEach { isLibrary ->
             val selected = library == isLibrary
-            val ink = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-            Surface(onClick = { onSelect(isLibrary) }, color = Color.Transparent, contentColor = ink,
+            val ink = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant
+            Surface(onClick = { onSelect(isLibrary) }, shape = RoundedCornerShape(12.dp),
+                color = if (selected) colors.primaryContainer else Color.Transparent, contentColor = ink,
                 modifier = tabModifier.semantics { role = Role.Tab; this.selected = selected }) {
-                Column {
-                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Zone5Icon(if (isLibrary) "nav_workspace" else "action_tools", HaloGlyph.TOOL, Modifier.size(24.dp))
-                        Text(uiText(if (isLibrary) "Library" else "Tools"), Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
-                    }
-                    HorizontalDivider(thickness = if (selected) 3.dp else 1.dp,
-                        color = if (selected) ink else MaterialTheme.colorScheme.outlineVariant)
+                Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 4.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)) {
+                    Zone5Icon(if (isLibrary) "nav_workspace" else "action_tools", HaloGlyph.TOOL, Modifier.size(16.dp), tint = ink)
+                    Text(uiText(if (isLibrary) "Library" else "Tools"), Modifier.weight(1f, fill = false),
+                        style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
     }
-    if (LocalDensity.current.fontScale >= 1.4f) Column(Modifier.fillMaxWidth()) { tabs(Modifier.fillMaxWidth()) }
-    else Row(Modifier.fillMaxWidth()) { tabs(Modifier.weight(1f)) }
+    Surface(shape = RoundedCornerShape(16.dp), color = colors.onSurface.copy(alpha = .06f),
+        border = BorderStroke(1.dp, colors.outlineVariant)) {
+        if (LocalDensity.current.fontScale >= 1.4f) Column(Modifier.fillMaxWidth().padding(3.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)) { tabs(Modifier.fillMaxWidth()) }
+        else Row(Modifier.fillMaxWidth().padding(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp)) { tabs(Modifier.weight(1f)) }
+    }
 }
 
 /** Native entry points keep each tool with its own data and permission owner. */
@@ -82,8 +89,21 @@ internal fun WorkspaceToolsList(
     onEveryday: ((String) -> Unit)? = null,
     easy: Boolean = false,
     onEdit: (() -> Unit)? = null,
+    toolkitRequest: com.halo.app.ui.toolkit.ToolkitShelfRequest? = null,
+    onToolkitRequestHandled: () -> Unit = {},
 ) {
-    com.halo.app.ui.toolkit.HaloToolkitShelf(easy, onEdit) { route ->
+    val routes = com.halo.app.ui.toolkit.HaloToolkit.tools.mapNotNull { tool ->
+        tool.route.takeIf {
+            when (it) {
+                "studio" -> onStudio != null
+                "file_tools" -> onOffice != null
+                "canvases" -> onCanvas != null
+                "study", "notebook/memory" -> true
+                else -> onEveryday != null
+            }
+        }
+    }.toSet()
+    com.halo.app.ui.toolkit.HaloToolkitShelf(easy, onEdit, routes, toolkitRequest, onToolkitRequestHandled) { route ->
         when (route) {
             "studio" -> onStudio?.invoke()
             "file_tools" -> onOffice?.invoke()

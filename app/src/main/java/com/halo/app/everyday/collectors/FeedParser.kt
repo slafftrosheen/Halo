@@ -74,11 +74,21 @@ object FeedParser {
                     item!!.language = attributes.getValue("http://www.w3.org/XML/1998/namespace", "lang") ?: attributes.getValue("xml:lang")
                 }
                 val active = item ?: return
-                if (name in setOf("thumbnail", "content", "enclosure", "img") && active.images.size < ArticleExtractor.MAX_IMAGES) {
-                    val raw = attributes.getValue("url") ?: attributes.getValue("src")
-                    val type = attributes.getValue("type").orEmpty()
-                    if (name in setOf("thumbnail", "img") || type.startsWith("image/") || attributes.getValue("medium") == "image")
-                        link(raw, source.endpoint)?.let { active.images += ArticleImage(it) }
+                val enclosure = name == "enclosure" || name == "link" && attributes.getValue("rel") == "enclosure"
+                if ((name in setOf("thumbnail", "content", "img") || enclosure) && active.images.size < ArticleExtractor.MAX_IMAGES) {
+                    val raw = attributes.getValue("url") ?: attributes.getValue("src") ?: attributes.getValue("href")
+                    val type = attributes.getValue("type").orEmpty().lowercase(Locale.ROOT)
+                    if (name in setOf("thumbnail", "img") || type.startsWith("image/") || attributes.getValue("medium") == "image") {
+                        link(raw, source.endpoint)?.let { url ->
+                            val width = attributes.getValue("width")?.toIntOrNull()
+                            val height = attributes.getValue("height")?.toIntOrNull()
+                            if ((width == null || width > 2) && (height == null || height > 2)) {
+                                active.images += ArticleImage(url, attributes.getValue("alt").orEmpty().take(1000),
+                                    fromArticle = true,
+                                    previewUrl = url.takeIf { name == "thumbnail" || width != null && width <= 800 && (height == null || height <= 800) })
+                            }
+                        }
+                    }
                 }
                 if (name == "link" && attributes.getValue("href") != null && attributes.getValue("rel") in setOf(null, "alternate"))
                     active.url = active.url ?: link(attributes.getValue("href"), source.endpoint)
@@ -107,11 +117,13 @@ object FeedParser {
                 } else if (active != null && field != null && depth > fieldDepth && buffer.length < 262144) buffer.append(' ')
                 if (active != null && depth == itemDepth) {
                     if (articles.size < CollectorRefreshPolicy.MAX_ITEMS && active.title.isNotBlank()) {
-                        active.bodyMarkup?.let { markup -> (active.url ?: source.endpoint)?.let { base -> active.images += ArticleExtractor.images(markup, base) } }
+                        val bodyImages = active.bodyMarkup?.let { markup ->
+                            (active.url ?: source.endpoint)?.let { base -> ArticleExtractor.images(markup, base) }
+                        }.orEmpty()
                         val identity = source.id + ":" + digest(active.id ?: active.url ?: "${active.title}\n${active.published}")
                         articles.putIfAbsent(identity, ArticleFact(identity, active.title, active.text, active.url, source.publisher,
                             date(active.published), active.language?.take(35) ?: source.language, active.categories.distinct(),
-                            active.images.distinctBy { it.url }.take(ArticleExtractor.MAX_IMAGES)))
+                            (bodyImages + active.images).distinctBy { it.url }.take(ArticleExtractor.MAX_IMAGES)))
                         if (source.kind == CollectorKind.ALERTS) warnings.putIfAbsent(identity, WarningFact(identity,
                             active.cap["headline"]?.takeIf { it.isNotBlank() } ?: active.title, active.text, active.cap["areadesc"], active.cap["severity"],
                             date(active.cap["onset"] ?: active.cap["effective"]), date(active.cap["expires"]), link(active.cap["web"], source.endpoint) ?: active.url, source.publisher))

@@ -395,6 +395,12 @@ fun HomeScreen(
         val currentDraft = viewModel.composerDrafts.value[draftKey] ?: return
         val text = currentDraft.text.trim()
         if (text.isBlank() || submission.busy || isActiveSession || isListening || isSpeechProcessing || isSpeaking) return
+        if (onOpenZone6HomeDestination != null && com.halo.app.ui.everyday.isDayReportQuestion(text)) {
+            updateDraft("")
+            focusManager.clearFocus()
+            onOpenZone6HomeDestination(com.halo.app.ui.everyday.EverydayRoutes.BRIEF)
+            return
+        }
         liveFocusRequest += 1
         viewModel.submitComposerText(draftKey, currentDraft.revision, currentDraft.text)
     }
@@ -407,6 +413,7 @@ fun HomeScreen(
         !isListening && !isSpeechProcessing && !isSpeaking &&
         !providerNeedsAttention && !connectionNeedsAttention && !presentation.needsReview
     val canSend = !changingConversation && !submission.busy && !isListening && !isSpeechProcessing && !isSpeaking && !isActiveSession
+    val canClearChat = canSend && draftKey.isNotBlank() && (currentTurns.isNotEmpty() || textInput.isNotBlank())
     val responseText = (if (uiState.sessionState is CognitiveSessionState.Failed &&
         uiState.presentedIdentity?.source != ResponsePresentationSource.INCOMPLETE) ""
         else uiState.presentedResponse.orEmpty()).trim()
@@ -430,17 +437,32 @@ fun HomeScreen(
     var showToday by rememberSaveable { mutableStateOf(false) }
     var webSearchDraft by rememberSaveable { mutableStateOf<String?>(null) }
     var showTaskDetails by rememberSaveable(draftKey) { mutableStateOf(false) }
+    val offerPrivateChat: ((com.halo.app.data.PersistedConversation) -> Unit)? = onOpenZone6HomeDestination?.let { navigate ->
+        { chat ->
+            showHistory = false
+            focusManager.clearFocus()
+            com.halo.app.nativeactions.PrivateLibraryHandoff.offer(
+                com.halo.app.nativeactions.PrivateLibraryTarget.Conversation(chat.id, chat.title, chat.updatedAt))
+            navigate("vault")
+        }
+    }
+    val privateCurrentChat = savedConversations.firstOrNull { it.id == uiState.conversationId }
+        ?.takeIf { !changingConversation }?.let { chat -> offerPrivateChat?.let { protect -> { protect(chat) } } }
     val pendingQuestion = homePendingQuestion(submission, uiState.conversationId, currentTurns)
     val priorSavedReply = pendingQuestion != null && uiState.presentedIdentity?.source == ResponsePresentationSource.COMMITTED_CONVERSATION
     val liveReplyIdentity = homeVisibleReplyIdentity(uiState.presentedIdentity, responseText, priorSavedReply)
     if (showHistory) HomeConversationHistory(savedConversations, uiState.conversationId,
         onSelect = { showHistory = false; viewModel.openConversation(it) },
-        onNew = { showHistory = false; viewModel.newConversation() }, onDismiss = { showHistory = false })
+        onNew = { showHistory = false; viewModel.newConversation() }, onDismiss = { showHistory = false },
+        onMakePrivate = offerPrivateChat?.takeUnless { changingConversation })
     webSearchDraft?.let { query -> com.halo.app.ui.online.GroundedWebSearchDialog(query) { webSearchDraft = null } }
     if (showToday) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showToday = false }) {
         Column(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 12.dp)) {
             Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_your_day), style = MaterialTheme.typography.titleLarge)
+            onOpenZone6HomeDestination?.let { open ->
+                TextButton({ showToday = false; open(com.halo.app.ui.everyday.EverydayRoutes.BRIEF) }) { Text(uiText("Open your day report")) }
+            }
             DailyAssistantSection(daily, compact = true) { action ->
                 viewModel.recordDailyAction(action); onDailyAction(action); showToday = false
             }
@@ -458,7 +480,7 @@ fun HomeScreen(
             HomeStart.TODAY -> onOpenZone6HomeDestination?.invoke(routes.ORGANIZER)
             HomeStart.NOTE -> onStartNote?.invoke()
             HomeStart.STUDY -> onOpenZone6HomeDestination?.invoke("study")
-            HomeStart.CAMERA -> imagePicker.launch("image/*")
+            HomeStart.CAMERA -> onOpenZone6HomeDestination?.invoke("scan?identify=true")
             HomeStart.TIMER -> onOpenZone6HomeDestination?.invoke("${routes.ORGANIZER}?createKind=TIMER")
             HomeStart.WEATHER -> onOpenZone6HomeDestination?.invoke(
                 weatherSource?.source?.id?.let { routes.source(it) } ?: routes.SOURCES)
@@ -540,14 +562,28 @@ fun HomeScreen(
             }
             TextButton(onClick = { showSelectionHelp = false }) { Text(uiText("Close")) }
         } })
-    var confirmClear by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(draftKey) { confirmClear = false }
-    if (confirmClear) androidx.compose.material3.AlertDialog(onDismissRequest = { confirmClear = false },
-        title = { Text(uiText("Clear this conversation?")) },
-        text = { Text(uiText("This removes its messages. Your other conversations and Notebook are kept.")) },
-        confirmButton = { HaloActionButton(onClick = { confirmClear = false; updateDraft(""); viewModel.clearConversation() },
-            style = HaloActionStyle.STOP) { Text(uiText("Clear conversation")) } },
-        dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(uiText("Keep messages")) } })
+    var clearChatId by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(draftKey) {
+        if (clearChatId != draftKey) clearChatId = null
+    }
+    fun requestClearChat() {
+        if (canClearChat) {
+            focusManager.clearFocus()
+            clearChatId = draftKey
+        }
+    }
+    clearChatId?.takeIf { it == draftKey }?.let { expectedConversation ->
+        androidx.compose.material3.AlertDialog(onDismissRequest = { clearChatId = null },
+            title = { Text(uiText("Clear this conversation?")) },
+            text = { Text(uiText("This removes its messages. Your other conversations and Notebook are kept.")) },
+            confirmButton = {
+                HaloActionButton(onClick = { clearChatId = null; viewModel.clearConversation(expectedConversation) },
+                    enabled = canClearChat, style = HaloActionStyle.STOP) {
+                    Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_clear_chat))
+                }
+            },
+            dismissButton = { TextButton(onClick = { clearChatId = null }) { Text(uiText("Keep messages")) } })
+    }
     val actingOnPhone = (uiState.sessionState as? CognitiveSessionState.ExecutingTool)
         ?.toolId?.let(::homeIsPhoneAction) == true
     val feedScroll = rememberScrollState()
@@ -651,7 +687,9 @@ fun HomeScreen(
                         else -> viewModel.cancelSession()
                     }
                 },
-                enabled = canSend && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention,
+                enabled = canSend && !presentation.needsReview &&
+                    ((!providerNeedsAttention && !connectionNeedsAttention) ||
+                        onOpenZone6HomeDestination != null && com.halo.app.ui.everyday.isDayReportQuestion(textInput)),
                 voiceEnabled = !changingConversation && !presentation.needsReview && !providerNeedsAttention && !connectionNeedsAttention &&
                     !isListening && !isSpeechProcessing && (!isActiveSession || isSpeaking),
                 voiceActive = isListening,
@@ -684,6 +722,11 @@ fun HomeScreen(
             add(com.halo.app.ui.presence.ShellPageAction("new-chat", androidx.compose.ui.res.stringResource(com.halo.app.R.string.zone5_new_chat), HaloGlyph.NOTE,
                 enabled = !changingConversation, onInvoke = viewModel::newConversation))
             add(com.halo.app.ui.presence.ShellPageAction("history", "History", HaloGlyph.ACTIVITY) { showHistory = true })
+            privateCurrentChat?.let { protect ->
+                add(com.halo.app.ui.presence.ShellPageAction("private-chat",
+                    androidx.compose.ui.res.stringResource(com.halo.app.R.string.halo11_private_lock_chat),
+                    HaloGlyph.SECURITY, onInvoke = protect))
+            }
             // Hosted Home has one status owner (the shell Orb); retain every recovery
             // callback in its current-page action lease instead of another header/strip.
             addAll(homeRecoveryActions(HomeRecoveryOptions(
@@ -706,7 +749,7 @@ fun HomeScreen(
             add(com.halo.app.ui.presence.ShellPageAction("mode", homeModeLabel(currentMode), HaloGlyph.MODEL,
                 enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing) { modeMenuExpanded = true })
             add(com.halo.app.ui.presence.ShellPageAction("clear-chat", "Clear conversation", HaloGlyph.TRASH,
-                enabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing) { confirmClear = true })
+                enabled = canClearChat, onInvoke = ::requestClearChat))
             if (daily.items.isNotEmpty()) add(com.halo.app.ui.presence.ShellPageAction("today", todayLabel, HaloGlyph.HOME) { showToday = true })
             if (onOpenZone6HomeDestination != null) {
                 add(com.halo.app.ui.presence.ShellPageAction("edit-home", editLabel, HaloGlyph.APPEARANCE,
@@ -735,20 +778,31 @@ fun HomeScreen(
             } },
             confirmButton = { TextButton(onClick = { modeMenuExpanded = false }) { Text(uiText("Close")) } })
     }
-    Box(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground())
+    val wallpaperVisible = shellOwnsOrb && com.halo.app.wallpaper.hasHaloHomeWallpaper()
+    Box(Modifier.fillMaxSize().then(if (wallpaperVisible) Modifier
+        else Modifier.background(com.halo.app.ui.theme.haloWorkspaceBackground()))
         .haloStateAura(light, MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error)
         .haloAssistantEdge(active = actingOnPhone && !lightStopped, attention = presentation.needsReview,
             accent = MaterialTheme.colorScheme.primaryContainer, apricot = MaterialTheme.colorScheme.tertiary),
         contentAlignment = Alignment.TopCenter) {
     Column(Modifier.widthIn(max = 760.dp).fillMaxSize().then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
+        val showStarts = shellOwnsOrb && !keyboardVisible && currentTurns.isEmpty() &&
+            pendingQuestion == null && responseText.isBlank() && !isActiveSession &&
+            !isListening && !isSpeechProcessing && onOpenZone6HomeDestination != null
         if (shellOwnsOrb && !keyboardVisible) {
             val canEditHome = !layoutKept && onOpenZone6HomeDestination != null && homeStartSnapshot != null &&
                 !changingConversation && !isListening && !isSpeechProcessing
-            com.halo.app.ui.zone5.Zone5PageHeading(uiText("Home"),
-                subtitle = androidx.compose.ui.res.stringResource(com.halo.app.R.string.zone5_home_purpose),
-                modifier = Modifier.padding(horizontal = 20.dp).then(
-                    if (canEditHome) homeHeadingEdit(::editHomeStarts) else Modifier))
+            val titleModifier = Modifier.padding(horizontal = 20.dp)
+                .then(if (canEditHome) homeHeadingEdit(::editHomeStarts) else Modifier)
+            if (showStarts) HomeStartHeader(homeStartLayout.greeting, homeClock.hour, homeDate, weather, titleModifier)
+            else com.halo.app.ui.zone5.Zone5PageHeading(
+                androidx.compose.ui.res.stringResource(com.halo.app.R.string.home_chat_title), modifier = titleModifier)
+            Box(Modifier.padding(horizontal = 16.dp)) {
+                HomeChatActions(canStartNew = !changingConversation, canClear = canClearChat,
+                    onNew = viewModel::newConversation, onClear = ::requestClearChat,
+                    onHistory = { showHistory = true })
+            }
             if (layoutKept) Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.layout_kept),
                 Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -760,7 +814,7 @@ fun HomeScreen(
                 modeEnabled = !changingConversation && !isActiveSession && !isListening && !isSpeechProcessing,
                 onMode = { modeMenuExpanded = true }, onHistory = { showHistory = true },
                 onNew = viewModel::newConversation, onUpdates = onOpenNotificationInbox,
-                onActivity = onOpenActivity, onClear = { confirmClear = true },
+                onActivity = onOpenActivity, onClear = ::requestClearChat,
                 onToday = if (daily.items.isNotEmpty()) ({ showToday = true }) else null,
                 modeMenu = {
                     DropdownMenu(expanded = modeMenuExpanded, onDismissRequest = { modeMenuExpanded = false }) {
@@ -775,16 +829,14 @@ fun HomeScreen(
                                 })
                         }
                     }
-                }, surfaceSwitcher = surfaceSwitcher)
+                }, surfaceSwitcher = surfaceSwitcher, onMakePrivate = privateCurrentChat,
+                chatActionsEnabled = !changingConversation, clearEnabled = canClearChat)
 
         }
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(feedScroll)
             .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            if (shellOwnsOrb && !keyboardVisible && currentTurns.isEmpty() &&
-                pendingQuestion == null && responseText.isBlank() && !isActiveSession &&
-                !isListening && !isSpeechProcessing && onOpenZone6HomeDestination != null) {
-                HomeGreetingLine(homeStartLayout.greeting, homeDate, weather)
+            if (showStarts) {
                 HomeStartButtons(homeStartLayout, enabled = { start ->
                     when (start) {
                         HomeStart.NOTE -> onStartNote != null
@@ -806,16 +858,27 @@ fun HomeScreen(
                 androidx.compose.runtime.key(turn.id) {
                     if (turn.userText.isNotBlank()) HomeTranscriptMessage("${turn.id}:user", turn.userText, user = true,
                         onEdit = if (canEditMessage) ({ prepareEarlierQuestion(turn.userText) }) else null)
-                    if (homeShowsHistoricalReply(turn, liveReplyIdentity)) HomeTranscriptMessage(
-                        "${turn.id}:assistant", turn.assistantText, user = false,
-                        onSave = if (canEditMessage) ({ viewModel.saveResponse(PresentedAssistantResponse(
+                    if (homeShowsHistoricalReply(turn, liveReplyIdentity)) {
+                        val storedResponse = remember(turn) { PresentedAssistantResponse(
                             turn.conversationId, turn.id, turn.metadata["interactionId"], turn.metadata["requestId"],
-                            turn.assistantText, ResponsePresentationSource.COMMITTED_CONVERSATION)) }) else null,
+                            turn.assistantText, ResponsePresentationSource.COMMITTED_CONVERSATION,
+                            providerId = turn.metadata["providerId"],
+                            structured = com.halo.runtime.cognition.interaction.PresentationMetadata.decode(turn.metadata)) }
+                        HomeTranscriptMessage(
+                        "${turn.id}:assistant", turn.assistantText, user = false,
+                        onSave = if (canEditMessage) ({ viewModel.saveResponse(storedResponse) }) else null,
                         onEdit = if (canEditMessage && turn.userText.isNotBlank()) ({ prepareEarlierQuestion(turn.userText) }) else null,
                         canRead = canEditMessage,
                         origin = homeAnswerOrigin(providerRows.firstOrNull {
                             it.descriptor.providerId == turn.metadata["providerId"]
-                        }?.descriptor?.location))
+                        }?.descriptor?.location),
+                        answerCards = {
+                            HomeAnswerCards(storedResponse, turn.userText, providerRows.firstOrNull {
+                                it.descriptor.providerId == storedResponse.providerId
+                            }?.descriptor?.displayName ?: storedResponse.providerId, viewModel,
+                                canEditMessage, ::prepareEarlierQuestion)
+                        })
+                    }
                 }
             }
             pendingQuestion?.let { HomeTranscriptMessage("${submission.interactionId}:pending", it, user = true) }
@@ -905,14 +968,25 @@ fun HomeScreen(
                     presentation.needsReview)) HomeThinkingSkeleton()
             HomeAutoReadAnswers(uiState, responseText, isActiveSession, submission)
             if (responseText.isNotBlank() && !priorSavedReply) {
+                val identity = uiState.presentedIdentity
+                val originalQuestion = currentTurns.firstOrNull { it.id == identity?.turnId }?.userText
+                val answerCards: (@Composable () -> Unit)? = if (identity?.turnId != null && uiState.nativeReceiptCopy == null) {
+                    {
+                        HomeAnswerCards(identity, originalQuestion, providerRows.firstOrNull {
+                            it.descriptor.providerId == identity.providerId
+                        }?.descriptor?.displayName ?: identity.providerId, viewModel, canEditMessage,
+                            ::prepareEarlierQuestion, delayEntry = true)
+                    }
+                } else null
                 HomeResponseCard(uiState, responseText, isActiveSession,
                     origin = homeAnswerOrigin(providerRows.firstOrNull {
                         it.descriptor.providerId == uiState.presentedIdentity?.providerId
                     }?.descriptor?.location, walkedNativePath = uiState.nativeReceiptCopy != null),
                     onCopy = { uiState.presentedIdentity?.takeIf { it.turnId != null }?.let { clipboard.setText(AnnotatedString(it.text)) } },
                     onSave = { uiState.presentedIdentity?.let(viewModel::saveResponse) },
-                    onEdit = if (canEditMessage) currentTurns.firstOrNull { it.id == uiState.presentedIdentity?.turnId }
-                        ?.userText?.takeIf(String::isNotBlank)?.let { question -> ({ prepareEarlierQuestion(question) }) } else null)
+                    onEdit = if (canEditMessage) originalQuestion?.takeIf(String::isNotBlank)
+                        ?.let { question -> ({ prepareEarlierQuestion(question) }) } else null,
+                    answerCards = answerCards)
             } else if (currentTurns.isEmpty() && pendingQuestion == null && canSend && !presentation.needsReview &&
                 !submission.needsRecovery && textInput.isBlank() && !(shellOwnsOrb && onOpenZone6HomeDestination != null)) {
                 HomeWelcome(compact = true, onDraft = { updateDraft(it); composerFocusRequester.requestFocus() })

@@ -35,9 +35,13 @@ class RoomRoutineRepository(val dao: RoutineDao) : RoutineRepository {
         migrationErrors.value = migrationErrors.value + (e.id to "${e.name}: ${error.message}")
     }
     override suspend fun upsert(routine: Routine) {
-        dao.upsert(entity(routine)); managementRevision.incrementAndGet()
+        check(dao.upsertPublic(entity(routine))) { "Automation is unavailable" }
+        managementRevision.incrementAndGet()
         migrationErrors.value = migrationErrors.value - routine.id.value
     }
+
+    internal suspend fun hasPrivateReferences(routine: Routine): Boolean = dao.hasPrivateReferences(entity(routine))
+
     private fun entity(routine: Routine): RoutineEntity {
         val r = routine
         return RoutineEntity(r.id.value, r.name, r.enabled, codec.encodeTrigger(r.trigger),
@@ -67,7 +71,10 @@ class RoomRoutineRepository(val dao: RoutineDao) : RoutineRepository {
     suspend fun managementCreate(routine: Routine, commit: (suspend (suspend () -> Unit) -> Unit)? = null): Boolean = managementMutex.withLock {
         if (dao.get(routine.id.value) != null) return@withLock false
         var saved = false
-        val persist: suspend () -> Unit = { dao.upsert(entity(routine)); saved = true }
+        val persist: suspend () -> Unit = {
+            saved = dao.upsertPublic(entity(routine), expectedAbsent = true)
+            check(saved) { "Automation is unavailable" }
+        }
         if (commit == null) persist() else commit(persist)
         if (saved) managementRevision.incrementAndGet()
         saved

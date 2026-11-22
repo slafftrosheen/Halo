@@ -1,17 +1,24 @@
 package com.halo.app.ui.screens.devices
 
-import com.halo.app.language.uiText
-
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph
+import com.halo.app.language.uiText
+import com.halo.app.ui.icons.HaloGlyph
+import com.halo.app.ui.icons.HaloIcon
+import com.halo.app.ui.instruments.HaloInstrumentMotion
 import com.halo.sdk.host.*
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun AccessoryControlsPanel(endpointId: String) {
@@ -60,6 +67,7 @@ internal fun AccessoryControlsPanel(endpointId: String) {
     }
     picker?.let { row -> if (endpoint != null) AlertDialog(onDismissRequest = { picker = null }, title = { Text(uiText("Assign control")) },
         text = { Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+            if (endpoint.connected && row in endpoint.supported) AccessoryGesturePreview(row.first, row.second)
             Row { Checkbox(checked = classDefault, onCheckedChange = { classDefault = it }); Text(uiText("Use as default for this device class")) }
             endpoint.availableActions.sortedBy { it.ordinal }.forEach { action -> TextButton(onClick = {
                 if (action == AccessoryAction.ReviewRoutine) routinePicker = row
@@ -76,6 +84,37 @@ internal fun AccessoryControlsPanel(endpointId: String) {
             routinePicker = null
         }) { Text(routine.name) } } } }, confirmButton = { TextButton(onClick = { routinePicker = null }) { Text(uiText("Close")) } }) }
 }
+
+@Composable
+private fun AccessoryGesturePreview(control: AccessoryControl, gesture: AccessoryControlAction) {
+    val motion = HaloInstrumentMotion.level()
+    var demonstration by remember(control, gesture) { mutableIntStateOf(0) }
+    var pressed by remember(control, gesture) { mutableStateOf(false) }
+    LaunchedEffect(control, gesture, demonstration) {
+        if (demonstration == 0) return@LaunchedEffect
+        pressed = gesture == AccessoryControlAction.RELEASE
+        delay(320)
+        repeat(if (gesture == AccessoryControlAction.DOUBLE) 2 else 1) {
+            pressed = gesture != AccessoryControlAction.RELEASE
+            delay(if (gesture == AccessoryControlAction.LONG) 1_100L else 220L)
+            pressed = false
+            delay(220)
+        }
+    }
+    val colors = MaterialTheme.colorScheme
+    val previewColor by animateColorAsState(if (pressed) colors.primaryContainer else colors.surfaceContainerHigh,
+        HaloInstrumentMotion.spec(HaloInstrumentMotion.QUICK, motion), label = "Gesture preview")
+    Surface(color = previewColor, shape = MaterialTheme.shapes.medium) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            HaloIcon(if (control == AccessoryControl.CAMERA) HaloGlyph.CAMERA else HaloGlyph.DEVICE, null, Modifier.size(22.dp))
+            Text("${uiText(control.controlLabel())} · ${uiText(gesture.gestureLabel())}", Modifier.weight(1f),
+                style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = { demonstration++ }) { Text(stringResource(R.string.halo_pairing_preview_gesture)) }
+        }
+    }
+}
+
 private fun AccessoryAction.label() = when (this) {
     AccessoryAction.TalkToHalo -> "Talk to halo"
     AccessoryAction.StopSpeaking -> "Stop speaking"

@@ -1,5 +1,6 @@
 package com.halo.app.ui.presence
 
+
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -54,6 +55,9 @@ internal class HaloZone5Navigation(
     val zone6: Boolean = false,
     val attentionCount: Int = 0,
     val composer: Boolean = false,
+    val primaryUtility: (@Composable () -> Unit)? = null,
+    val quietToday: Boolean = false,
+    val devicesNeedAttention: Boolean = false,
 )
 internal val LocalHaloZone5Navigation = staticCompositionLocalOf<HaloZone5Navigation?> { null }
 
@@ -125,13 +129,16 @@ internal fun HaloZone5OrbLauncher(
     val latestOpen by rememberUpdatedState(open)
     val latestCoach by rememberUpdatedState(coach)
     val teachDock = HaloGesture.DOCK_SWIPE in gestures
-    if (teachDock) {
-        BindHaloGestureAlternative(HaloGesture.DOCK_SWIPE) { open("menu", "orb") }
-        BindHaloGestureAlternative(HaloGesture.RING_HOLD) { open("menu", "orb") }
-    }
     fun act(effect: () -> Unit) {
         close(false)
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) effect()
+    }
+    fun holdRing() {
+        if (navigation.kids) open("menu", "orb") else act { navigation.onNavigate("mini_halo") }
+    }
+    if (teachDock) {
+        BindHaloGestureAlternative(HaloGesture.DOCK_SWIPE) { open("menu", "orb") }
+        BindHaloGestureAlternative(HaloGesture.RING_HOLD, ::holdRing)
     }
     LaunchedEffect(navigation.route, navigation.entryId) { close(false) }
     LaunchedEffect(pageProjection?.owner, resumeGuidedHelp, guideSession?.paused, lifecycleState) {
@@ -181,6 +188,7 @@ internal fun HaloZone5OrbLauncher(
     else if (recording) uiText("Recording")
     else if (routeFamily == "private_chat" && signal.state == HaloSignalState.IDLE) uiText("Private")
     else if (routeFamily == "focus" && signal.state == HaloSignalState.IDLE) stringResource(R.string.halo_focus_title)
+    else if (navigation.quietToday && signal.state == HaloSignalState.IDLE) "halo"
     else if (navigation.zone6) uiText(when (signal.state) {
         HaloSignalState.LISTENING, HaloSignalState.CAPTURING -> "Listening"
         HaloSignalState.THINKING, HaloSignalState.ACTING -> "Working"
@@ -226,7 +234,7 @@ internal fun HaloZone5OrbLauncher(
     }
     if (navigation.zone6) {
         val interactions = remember { MutableInteractionSource() }
-        val reduce by com.halo.app.ui.theme.rememberReducedMotion()
+        val reduce = com.halo.app.ui.fx.rememberHaloReducedMotion()
         val visual = com.halo.app.ui.theme.rememberVisualPreferences()
         val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
         val chosen = zone6SelectedPlace(navigation.route, navigation.kids)
@@ -237,8 +245,9 @@ internal fun HaloZone5OrbLauncher(
                 showReceipt = false
             }
         }
-        val activeState = showReceipt || signal.state in setOf(HaloSignalState.LISTENING, HaloSignalState.CAPTURING, HaloSignalState.THINKING,
-            HaloSignalState.ACTING, HaloSignalState.WAITING, HaloSignalState.SPEAKING, HaloSignalState.ERROR, HaloSignalState.OFFLINE)
+        val activeState = !paused.paused && !recording && (showReceipt || signal.state in setOf(HaloSignalState.LISTENING,
+            HaloSignalState.CAPTURING, HaloSignalState.THINKING, HaloSignalState.ACTING, HaloSignalState.WAITING,
+            HaloSignalState.SPEAKING, HaloSignalState.ERROR, HaloSignalState.OFFLINE))
         LaunchedEffect(signal.state) {
             if (visual.haptics && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) when (signal.state) {
                 HaloSignalState.WAITING, HaloSignalState.SUCCESS -> haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.Confirm)
@@ -261,48 +270,55 @@ internal fun HaloZone5OrbLauncher(
                             }
                         }
                     }, onLongClick = {
-                        open("menu", "orb")
+                        holdRing()
                         if (teachDock) coach?.gestureUsed(HaloGesture.RING_HOLD)
                     })
                 .semantics(mergeDescendants = true) { testTag = "zone6-ring"; contentDescription = primary },
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 HaloSignalFace(shownSignal, Modifier.clearAndSetSemantics { }, size = size, zone5 = true,
-                    kids = navigation.kids, interactionSource = interactions)
+                    kids = navigation.kids, interactionSource = interactions, dock = true)
                 if (!(navigation.compact && navigation.composer)) Text(caption, style = MaterialTheme.typography.labelMedium,
                     textAlign = TextAlign.Center, modifier = Modifier.clearAndSetSemantics { })
             }
         }
         if (navigation.compact && navigation.composer) face()
         else BoxWithConstraints(Modifier.fillMaxWidth().semantics { isTraversalGroup = true }) {
-            val wide = maxWidth >= Zone6DockTokens.wide && !flatLabels && !navigation.kids
-            val workspaceSlot = if (navigation.kids || wide) "notebook" else
-                com.halo.app.ui.zone6.rememberZone6PageSetting(com.halo.app.ui.zone6.WORKSPACE_DOCK_KEY).value
-                    ?.takeIf { it in com.halo.app.ui.zone6.workspaceDockRoutes } ?: "notebook"
-            val labelsAlways = visual.buttonLabels == com.halo.app.ui.theme.HaloButtonLabels.ALWAYS || flatLabels
+            val showDockNew = maxWidth >= 324.dp && !flatLabels
+            val labelsAlways = (visual.viewMode == com.halo.app.ui.theme.HaloViewMode.EASY ||
+                visual.buttonLabels == com.halo.app.ui.theme.HaloButtonLabels.ALWAYS || flatLabels) &&
+                (!flatLabels || maxWidth >= 420.dp || navigation.kids)
             val tab: @Composable (String) -> Unit = { route ->
                 val place = navigation.destinations.firstOrNull { it.route == route }
                     ?: com.halo.app.ui.shell.ShellOrbCatalog.workspaceDestinations(navigation.kids).firstOrNull { it.route == route }
                 if (place != null) {
                     val (icon, glyph) = zone6PlaceGlyph(route)
                     val activeTool = if (routeFamily == "screen/organizer") "planner" else routeFamily
-                    val selected = if (navigation.destinations.any { it.route == route }) route == chosen else activeTool == route
+                    val selected = if (!navigation.kids && route == "home") chosen in setOf("home", "notebook", "screen/sources")
+                        else if (navigation.destinations.any { it.route == route }) route == chosen else activeTool == route
                     Zone6Tab(if (route == "study") "Learn" else place.title,
-                        glyph, icon, selected = selected, count = if (route == "activity") navigation.attentionCount else 0,
+                        glyph, icon, selected = selected, count = when {
+                            route == "activity" -> navigation.attentionCount
+                            route == "devices" && navigation.devicesNeedAttention -> 1
+                            else -> 0
+                        },
                         modifier = Modifier.fillMaxWidth().alpha(if (focusActive && !selected) .76f else 1f),
                         onClick = { act { navigation.onNavigate(route) } },
                         showLabel = labelsAlways || selected)
                 }
             }
             val places: @Composable () -> Unit = {
-                Zone6Tab("Places", HaloGlyph.TOOL, "action_tools", disclosure == "menu", 0,
+                Zone6Tab("Places", HaloGlyph.INTEGRATIONS, "screen_widgets", disclosure == "menu", 0,
                     modifier = Modifier.fillMaxWidth().focusRequester(menuFocus).haloGuideControl("places"),
                     onClick = { if (disclosure == "menu") close() else open("menu", "menu") })
             }
+            val openActionMenu: (() -> Unit)? = if (hasActionDisclosure) ({ open("actions", "actions") }) else null
             if (navigation.compact) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.weight(1f)) {
-                        Zone6ActionRow(listedActions, pageProjection?.owner?.routeFamily, true, navigation.kids,
+                        if (navigation.primaryUtility != null) Zone6UtilityRow(navigation.primaryUtility, onNew = null,
+                            onMore = openActionMenu, moreModifier = Modifier.focusRequester(actionsFocus))
+                        else Zone6ActionRow(listedActions, pageProjection?.owner?.routeFamily, true, navigation.kids,
                             disclosure == "actions", onMore = { if (disclosure == "actions") close() else open("actions", "actions") },
                             onAction = { action -> act { onAction(action) } }, moreModifier = Modifier.focusRequester(actionsFocus),
                             reducedMotion = reduce || signal.reducedMotion)
@@ -313,11 +329,18 @@ internal fun HaloZone5OrbLauncher(
                 return@BoxWithConstraints
             }
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (activeState && !navigation.compact) Zone6LiveIsland(signal, interaction, reduce || signal.reducedMotion,
+                if (activeState) Zone6LiveIsland(signal, interaction, reduce || signal.reducedMotion,
                     onPrimary = { act { onPrimary(interaction.primary) } }, onStop = { act(onStop) },
                     more = if (listedActions.isNotEmpty() && signal.state in setOf(HaloSignalState.ERROR, HaloSignalState.OFFLINE))
                         ({ open("actions", "orb") }) else null)
-                else if (!navigation.composer) {
+                else if (navigation.primaryUtility != null) {
+                    val newNote = listedActions.firstOrNull { it.id == "page:page.notebook.new-note" && it.enabled }
+                        ?.takeIf { showDockNew }
+                    Zone6UtilityRow(navigation.primaryUtility,
+                        onNew = newNote?.let { action -> { act { onAction(action) } } }, onMore = openActionMenu,
+                        moreModifier = Modifier.focusRequester(actionsFocus))
+                }
+                else if (!navigation.composer && !navigation.quietToday) {
                     Zone6ActionRow(listedActions, pageProjection?.owner?.routeFamily, navigation.compact, navigation.kids,
                         disclosure == "actions", onMore = { if (disclosure == "actions") close() else open("actions", "actions") },
                         onAction = { action -> act { onAction(action) } }, moreModifier = Modifier.focusRequester(actionsFocus),
@@ -327,23 +350,17 @@ internal fun HaloZone5OrbLauncher(
                 }
                 Row(Modifier.fillMaxWidth().zone6GuideOutline(Zone6GuideTarget.NAVIGATION), horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalAlignment = Alignment.CenterVertically) {
-                    if (!navigation.compact) {
-                        Box(Modifier.weight(1f)) { tab("home") }
-                        if (!flatLabels && !navigation.kids) Box(Modifier.weight(1f)) { tab(workspaceSlot) }
-                        if (wide) Box(Modifier.weight(1f)) { tab("devices") }
-                    } else Spacer(Modifier.weight(1f))
+                    Box(Modifier.weight(1f)) { tab("home") }
+                    if (!navigation.kids) Box(Modifier.weight(1f)) { tab("search") }
                     Box(contentAlignment = Alignment.Center) { face() }
-                    when {
-                        navigation.kids -> Box(Modifier.weight(1f)) { tab("study") }
-                        wide -> {
-                            Box(Modifier.weight(1f)) { tab("activity") }
-                            Box(Modifier.weight(1f)) { tab("settings") }
-                            Box(Modifier.weight(1f)) { tab("screen/sources") }
+                    if (navigation.kids) {
+                        Box(Modifier.weight(1f)) {
+                            Zone6Tab("Grown-up space", HaloGlyph.SECURITY, "action_lock", false, 0,
+                                modifier = Modifier.fillMaxWidth(), onClick = { act { navigation.onNavigate("settings") } })
                         }
-                        else -> {
-                            if (!flatLabels && !navigation.compact) Box(Modifier.weight(1f)) { tab("activity") }
-                            Box(Modifier.weight(1f)) { places() }
-                        }
+                    } else {
+                        Box(Modifier.weight(1f)) { tab("devices") }
+                        Box(Modifier.weight(1f)) { tab("settings") }
                     }
                 }
             }
@@ -354,7 +371,7 @@ internal fun HaloZone5OrbLauncher(
             Column(gesture.widthIn(min = if (navigation.compact) targetSize else size, max = if (flatLabels) 180.dp else 112.dp)
                 .combinedClickable(interactionSource = interactions, indication = null, role = Role.Button,
                     onClickLabel = primary, onClick = { act { onPrimary(interaction.primary) } },
-                    onLongClick = { open("menu", "orb") })
+                    onLongClick = ::holdRing)
                 .semantics(mergeDescendants = true) { testTag = "zone5-orb-action"; contentDescription = primary },
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 HaloSignalFace(signal, Modifier.clearAndSetSemantics { }, size = if (navigation.compact) targetSize else size,
@@ -411,7 +428,7 @@ internal fun HaloZone5OrbLauncher(
         Column(Modifier.width(if (size <= 48.dp) 64.dp else 112.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             HaloSignalFace(signal, gesture, size = size, contentDescription = primary,
                 onClick = { act { onPrimary(interaction.primary) } }, onClickLabel = primary,
-                onLongClick = { open("menu", "orb") }, zone5 = true, kids = navigation.kids)
+                onLongClick = ::holdRing, zone5 = true, kids = navigation.kids)
             if (size > 48.dp) {
             Spacer(Modifier.height(4.dp))
             Text(caption,
@@ -511,9 +528,9 @@ internal fun HaloZone5OrbLauncher(
                     }
                 }
                 }
-                if (navigation.zone6 && navigation.composer && listedActions.isNotEmpty()) {
+                if (navigation.zone6 && (navigation.composer || navigation.quietToday) && listedActions.isNotEmpty()) {
                     TextButton(onClick = { disclosure = "actions" }, modifier = Modifier.heightIn(min = targetSize)) {
-                        Text(uiText("Chat actions"))
+                        Text(if (navigation.composer) uiText("Chat actions") else actionsLabel)
                     }
                 }
                 HorizontalDivider()

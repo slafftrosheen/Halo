@@ -18,6 +18,7 @@ import com.halo.app.R
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -167,7 +168,7 @@ import kotlinx.coroutines.launch
                 onCheckedChange = { value -> if (!saving) careReading = value })
         }
         HaloLayoutLock.Controls(layoutLock, locked = false, enabled = !saving && !changed)
-        AppearanceLabel("Looks")
+        AppearanceLabel(stringResource(R.string.look_presets_label))
         FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             HaloLookPreset.entries.forEach { preset ->
@@ -298,13 +299,13 @@ import kotlinx.coroutines.launch
             !saving) { lookDraft = options.copy(appIcon = it) }
         Text(stringResource(R.string.look_app_icon_note), style = MaterialTheme.typography.bodySmall)
         Text(stringResource(R.string.look_icon_style), style = MaterialTheme.typography.labelLarge)
-        LookChoices(options.iconStyle, listOf(HaloIconStyle.LINE to R.string.look_icon_line,
-            HaloIconStyle.SPOT to R.string.look_icon_spot, HaloIconStyle.TILE to R.string.look_icon_tile),
-            !saving) { lookDraft = options.copy(iconStyle = it) }
+        IconStyleChoices(options, dark, palette, enabled = !saving) {
+            lookDraft = options.copy(iconStyle = it)
+        }
         Text(stringResource(R.string.look_motion), style = MaterialTheme.typography.titleMedium)
-        LookChoices(options.motionLevel, listOf(HaloLookMotion.FULL to R.string.look_motion_full,
-            HaloLookMotion.GENTLE to R.string.look_motion_gentle, HaloLookMotion.STILL to R.string.look_motion_still),
-            !saving) { lookDraft = options.copy(motionLevel = it, lessMotion = it == HaloLookMotion.STILL) }
+        AppearanceMotionChoices(options, dark, palette, enabled = !saving) {
+            lookDraft = options.copy(motionLevel = it, lessMotion = it == HaloLookMotion.STILL)
+        }
         com.halo.app.ui.workspace.HaloWorkspaceToggleRow(stringResource(R.string.look_haptics),
             options.haptics, { lookDraft = options.copy(haptics = it) })
         com.halo.app.ui.workspace.HaloWorkspaceToggleRow(stringResource(R.string.look_edge_light),
@@ -348,6 +349,88 @@ import kotlinx.coroutines.launch
         if (failure) Text(if (rollbackUncertain) stringResource(R.string.interface4_appearance_rollback_unknown)
             else uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
     }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun IconStyleChoices(options: HaloVisualOptions, dark: Boolean, palette: HaloPalette,
+                             enabled: Boolean, onSelect: (HaloIconStyle) -> Unit) {
+    HaloTheme(darkTheme = dark, palette = palette) {
+        val colors = MaterialTheme.colorScheme
+        FlowRow(Modifier.fillMaxWidth().selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(HaloIconStyle.LINE to R.string.look_icon_line,
+                HaloIconStyle.SPOT to R.string.look_icon_spot, HaloIconStyle.TILE to R.string.look_icon_tile)
+                .forEach { (style, label) ->
+                    val selected = options.iconStyle == style
+                    Surface(onClick = { onSelect(style) }, enabled = enabled, shape = MaterialTheme.shapes.medium,
+                        color = colors.surface, border = BorderStroke(1.dp, if (selected) colors.primary else colors.outlineVariant),
+                        modifier = Modifier.widthIn(min = 92.dp).heightIn(min = 64.dp)
+                            .semantics { this.selected = selected; role = Role.RadioButton }) {
+                        Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            CompositionLocalProvider(LocalHaloVisualOverride provides options.copy(iconStyle = style)) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    com.halo.app.ui.zone5.Zone5Icon("nav_workspace", HaloGlyph.NOTE, Modifier.size(18.dp), tint = colors.primary)
+                                    com.halo.app.ui.zone5.Zone5Icon("action_notifications", HaloGlyph.NOTIFICATIONS, Modifier.size(18.dp), tint = colors.primary)
+                                    com.halo.app.ui.zone5.Zone5Icon("tool_study", HaloGlyph.QUESTION, Modifier.size(18.dp), tint = colors.primary)
+                                }
+                            }
+                            Text(stringResource(label), style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+        }
+    }
+}
+
+@Composable
+private fun AppearanceMotionChoices(options: HaloVisualOptions, dark: Boolean, palette: HaloPalette,
+                                    enabled: Boolean, onSelect: (HaloLookMotion) -> Unit) {
+    val platformReduced by rememberAndroidReducedMotion()
+    val constrained = com.halo.app.ui.fx.rememberHaloMotionConstrained()
+    val canPreview = enabled && !platformReduced && !constrained && !options.higherContrast
+    var sequence by remember { mutableIntStateOf(0) }
+    var playing by remember { mutableStateOf(false) }
+    fun replay() { playing = true; sequence++ }
+    LaunchedEffect(sequence) {
+        if (playing) {
+            kotlinx.coroutines.delay(2_700)
+            playing = false
+        }
+    }
+    LookChoices(options.motionLevel, listOf(HaloLookMotion.FULL to R.string.look_motion_full,
+        HaloLookMotion.GENTLE to R.string.look_motion_gentle, HaloLookMotion.STILL to R.string.look_motion_still), enabled) {
+        onSelect(it)
+        if (canPreview && it != HaloLookMotion.STILL) replay() else playing = false
+    }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        CompositionLocalProvider(LocalHaloVisualOverride provides options) {
+            HaloTheme(darkTheme = dark, palette = palette) {
+                key(sequence) {
+                    val active = playing && canPreview && options.motionLevel != HaloLookMotion.STILL
+                    com.halo.app.ui.presence.HaloSignalFace(com.halo.app.ui.presence.HaloSignalPresentation(
+                        state = if (active) com.halo.app.ui.presence.HaloSignalState.THINKING
+                            else com.halo.app.ui.presence.HaloSignalState.IDLE,
+                        label = if (active) "Working" else "Talk", reducedMotion = !active),
+                        Modifier.semantics { }, size = 56.dp, zone5 = true, dock = true)
+                }
+            }
+        }
+        TextButton(onClick = ::replay, enabled = canPreview && options.motionLevel != HaloLookMotion.STILL,
+            modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.look_motion_play))
+        }
+    }
+    val motionNotice = when {
+        platformReduced -> R.string.look_motion_android_off
+        constrained -> R.string.look_motion_device_limited
+        options.higherContrast -> R.string.look_motion_contrast
+        else -> null
+    }
+    motionNotice?.let { Text(stringResource(it), style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant) }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
