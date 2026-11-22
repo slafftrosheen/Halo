@@ -208,7 +208,7 @@ object EverydayWidgetUpdates {
         observer = scope.launch {
             combine(Graph.organizerRepository.observe(),Graph.organizerRepository.observeReceipts(), Graph.collectorRepository.observe(), Graph.briefRepository.observe(),Graph.briefRepository.observeSettings(),
                 Graph.worldClocks.observe(), Graph.kidsPreferences.enabled, Graph.privacyModes.mode,
-                Graph.appLanguagePreferences.language,Graph.assistantPreferences.state,
+                Graph.appLanguagePreferences.language,Graph.assistantPreferences.state,Graph.articlePictureSettings.visible,
                 Graph.studyRepository.observeActiveSessions(), Graph.studyLessonStore.widgetJourneyRevision,
                 com.halo.app.ui.toolkit.HaloFocusOwner.get(context).state, com.halo.app.ui.toolkit.HaloLifeOwner.get(context).family,
                 Graph.routineRepository.observeRecentRuns(), Graph.routineRepository.observeRoutinesReadOnly(),
