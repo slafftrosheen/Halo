@@ -28,8 +28,8 @@ internal suspend fun readRoutineSnapshot(section: RoutineSnapshotSection): Strin
             val rows = Graph.organizerUseCases.agenda(from, until, setOf(OrganizerKind.EVENT, OrganizerKind.TASK))
                 .filter { !it.completed && it.start < until && calendars.appearance(it.record.calendar).visible }
             check(PlannerCalendarPreferences.read(Graph.storage) == calendars)
-            resolveUiText(context.resources, if (today) "Today in Planner: %1$d events and %2$d tasks remaining."
-                else "Tomorrow in Planner: %1$d events and %2$d tasks.",
+            resolveUiText(context.resources, if (today) "Today in Planner: %1\$d events and %2\$d tasks remaining."
+                else "Tomorrow in Planner: %1\$d events and %2\$d tasks.",
                 rows.count { it.record.kind == OrganizerKind.EVENT }, rows.count { it.record.kind == OrganizerKind.TASK })
         }
         RoutineSnapshotSection.WEATHER -> {
@@ -38,7 +38,7 @@ internal suspend fun readRoutineSnapshot(section: RoutineSnapshotSection): Strin
             val temperature = forecast.temperatureC?.takeIf(Double::isFinite) ?: return null
             val city = row.source.place?.name ?: return null
             check(row.isStillCurrent())
-            resolveUiText(context.resources, "Saved weather for %1$s: %2$s °C · %3$s",
+            resolveUiText(context.resources, "Saved weather for %1\$s: %2\$s °C · %3\$s",
                 city.take(90), java.text.NumberFormat.getNumberInstance(context.resources.configuration.locales[0])
                     .apply { maximumFractionDigits = 1 }.format(temperature), row.source.publisher.take(50))
         }
@@ -51,7 +51,7 @@ internal suspend fun readRoutineSnapshot(section: RoutineSnapshotSection): Strin
                 ?: return null
             val (row, item) = latest
             check(row.isStillCurrent())
-            resolveUiText(context.resources, "%1$s · %2$s", item.publisher.ifBlank { row.source.publisher }.take(60),
+            resolveUiText(context.resources, "%1\$s · %2\$s", item.publisher.ifBlank { row.source.publisher }.take(60),
                 item.title.replace(Regex("\\s+"), " ").take(150))
         }
     }

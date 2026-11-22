@@ -196,7 +196,7 @@ object ManualDependencyGraph {
                 val verify: () -> Unit = {
                     kidsPreferences.requireAdultAction(family)
                     haloPause.requireActive()
-                    check(foregroundUnlocked() && powerModeEnabled() && privacyModes.revision == mode)
+                    check(isForegroundUnlocked() && powerModeEnabled() && privacyModes.revision == mode)
                 }
                 verify
             })
@@ -1166,14 +1166,16 @@ object ManualDependencyGraph {
     val appSemanticTools: com.halo.app.di.tools.host.AppSemanticTools by lazy { com.halo.app.di.tools.host.AppSemanticTools(appFunctionCapabilityIndex,
         externalSemanticCatalogue, { refreshAppCapabilities() }, { semanticAppActionBroker }) }
 
+    private fun isHaloForeground() =
+        attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND ||
+            com.halo.host.android.assistant.AssistantRuntimeStateStore.state.value.sessionVisible
+
+    private fun isForegroundUnlocked() =
+        isHaloForeground() && applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true
+
     val toolRegistry: com.halo.runtime.cognition.tools.ToolRegistry by lazy {
-        val foreground = {
-            attentionContextProvider.snapshot().foregroundState == com.halo.runtime.cognition.attention.ForegroundState.HALO_FOREGROUND ||
-                com.halo.host.android.assistant.AssistantRuntimeStateStore.state.value.sessionVisible
-        }
-        val foregroundUnlocked = {
-            foreground() && applicationContext.getSystemService(android.app.KeyguardManager::class.java)?.isDeviceLocked != true
-        }
+        val foreground = ::isHaloForeground
+        val foregroundUnlocked = ::isForegroundUnlocked
         val currentTimeExecutor = CurrentTimeToolExecutor()
         val notificationExecutor = notificationDigestTool
         val storageExecutor = StorageStatusToolExecutor(storageUsageRepository, storageAccessRepository)
