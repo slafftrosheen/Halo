@@ -131,7 +131,10 @@ internal object EverydayToolkitWidgetViews {
                 views.setOnClickFillInIntent(R.id.toolkit_widget_root, fillIn)
                 items.addItem(kind.ordinal.toLong(), views)
             }
-            return RemoteViews(context.packageName, R.layout.halo_toolkit_stack).apply {
+            val rotate = config.widgetAutoPage && !snapshot.kids && android.animation.ValueAnimator.areAnimatorsEnabled() &&
+                EverydayWidgetMotion.level(context, config.widgetMotion, snapshot.kids) != com.halo.app.ui.theme.HaloLookMotion.STILL
+            return RemoteViews(context.packageName,
+                if (rotate) R.layout.halo_toolkit_stack_auto else R.layout.halo_toolkit_stack).apply {
                 setRemoteAdapter(R.id.toolkit_widget_stack, items.build())
                 val template = Intent(context, MainActivity::class.java)
                     .setData(Uri.parse("halo://everyday-widget-stack/" + instance.id + "/" + instance.version))

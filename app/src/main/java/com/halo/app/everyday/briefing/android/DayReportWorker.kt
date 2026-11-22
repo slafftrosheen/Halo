@@ -20,9 +20,16 @@ class DayReportWorker(context: Context, parameters: WorkerParameters) : Coroutin
             (applicationContext as HaloApplication).awaitOrganizerBootstrap()
             Graph.collectorBootstrap.ensureInitialized()
             Graph.kidsPreferences.getEnabled()
-            if (java.time.LocalTime.now().hour >= 21) Graph.dayReportService.prepareEvening()
-            Graph.todayNews.refreshIfDue()
-            Result.success()
+            var retry = false
+            try { Graph.todayNews.refreshIfDue() }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { retry = true }
+            if (java.time.LocalTime.now().hour >= 21) {
+                try { Graph.dayReportService.prepareEvening() }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { retry = true }
+            }
+            if (retry) Result.retry() else Result.success()
         } catch (cancelled: CancellationException) { throw cancelled }
           catch (_: Exception) { Result.retry() }
     }

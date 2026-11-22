@@ -137,11 +137,13 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
     var widgetShows by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetShows.name) }
     var widgetSize by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetSize?.name) }
     var widgetMotion by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetMotion) }
+    var widgetAutoPage by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetAutoPage) }
     var widgetLook by rememberSaveable(instance.id,instance.version) { mutableStateOf(instance.config.widgetMatchLook) }
     var sections by rememberSaveable(instance.id,instance.version) { mutableStateOf(ArrayList(instance.config.sections.map { it.name })) }
     var picker by rememberSaveable { mutableStateOf(false) }
     val config=instance.config.copy(zoneId=zone,cityLabel=city,sourceId=source,recordId=recordId,limit=limit,priority=priority?.let(com.halo.app.everyday.organizer.TaskPriority::valueOf),theme=if(launcher) theme else "INHERIT",sections=sections.map(EverydayCardKind::valueOf),headlineSourceId=headlineSource, widgetSize=widgetSize?.let(EverydayWidgetSize::valueOf),
-        widgetMotion=widgetMotion, widgetMatchLook=widgetLook, widgetStyle=EverydayWidgetStyle.valueOf(widgetStyle), widgetShows=EverydayWidgetShows.valueOf(widgetShows))
+        widgetMotion=widgetMotion, widgetMatchLook=widgetLook, widgetStyle=EverydayWidgetStyle.valueOf(widgetStyle),
+        widgetShows=EverydayWidgetShows.valueOf(widgetShows), widgetAutoPage=widgetAutoPage)
     val locale=androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
     val resources=androidx.compose.ui.platform.LocalContext.current.resources
     val face=EverydayCards.project(config,snapshot,locale,externalHost=launcher,text={com.halo.app.language.resolveUiText(resources,it)})
@@ -250,6 +252,7 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
         if (launcher) WidgetDisplayChoices(config, enabled = !busy) { next ->
             widgetSize = next.widgetSize?.name
             widgetMotion = next.widgetMotion
+            widgetAutoPage = next.widgetAutoPage
             widgetLook = next.widgetMatchLook
             widgetStyle = next.widgetStyle.name
             widgetShows = next.widgetShows.name

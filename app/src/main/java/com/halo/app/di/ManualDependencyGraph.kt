@@ -207,7 +207,8 @@ object ManualDependencyGraph {
         com.halo.app.everyday.collectors.ArticleContentCollector(collectorRepository, articleContentStore, { downloader.fetch(it) },
             picturesVisible = { articlePictureSettings.visible.value },
             metered = { applicationContext.getSystemService(android.net.ConnectivityManager::class.java)?.isActiveNetworkMetered != false },
-            downloadSmall = { downloader.fetch(it, maxBytes = 256 * 1024) })
+            downloadSmall = { downloader.fetch(it, maxBytes = 256 * 1024) },
+            additionallyRetainedImages = { todayNews.retainedImageKeys(it) })
     }
     val collectorCoordinator: com.halo.app.everyday.collectors.CollectorCoordinator get() = collectorCoordinatorOwner.value
     val collectorBootstrap by lazy { com.halo.app.everyday.collectors.android.CollectorBootstrap(applicationContext, collectorRepository) }
@@ -1358,7 +1359,7 @@ object ManualDependencyGraph {
                             check(note.lifecycle == "ACTIVE" && "${note.updatedAt}:${note.revision}" == fact.revision)
                             note.body
                         } else null
-                    }, plannerStorage = storage, todayOverview = { com.halo.app.everyday.briefing.readTodayOverview() },
+                    }, plannerStorage = storage, todayOverview = { reportAt -> com.halo.app.everyday.briefing.readTodayOverview(reportAt) },
                     receiptTotals = { merchant, month ->
                         val cloud = privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD
                         check(!cloud || powerModeEnabled() && workspaceContext.remoteAllowed("FILE"))

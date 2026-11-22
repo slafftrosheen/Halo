@@ -24,6 +24,9 @@ import kotlin.math.ceil
 
 /** Cached native presentation. Every clickable body carries its exact content-free target. */
 object EverydayWidgetViews {
+    internal fun supportsPaging(kind: EverydayCardKind) =
+        kind == EverydayCardKind.SMART_STACK || kind !in EverydayToolkitWidgets.launcherKinds &&
+            kind !in setOf(EverydayCardKind.CLOCK, EverydayCardKind.CLOCK_WEATHER, EverydayCardKind.DEVICE, EverydayCardKind.BRIEF)
     const val EXTRA_ID = "com.halo.app.extra.EVERYDAY_WIDGET_ID"
     const val EXTRA_VERSION = "com.halo.app.extra.EVERYDAY_WIDGET_VERSION"
     const val EXTRA_ACTION = "com.halo.app.extra.EVERYDAY_WIDGET_ACTION"
@@ -55,7 +58,7 @@ object EverydayWidgetViews {
             val freshGlow = transition?.motion == WidgetUpdateMotion.SOURCE_UPDATE &&
                 level == com.halo.app.ui.theme.HaloLookMotion.FULL && !lockHost
             val current = render(context, instance, snapshot, width, height, lockHost = lockHost, freshGlow = freshGlow)
-            if (transition == null || lockHost || level == com.halo.app.ui.theme.HaloLookMotion.STILL) current else {
+            if (transition == null || lockHost || instance.config.widgetAutoPage || level == com.halo.app.ui.theme.HaloLookMotion.STILL) current else {
                 val scheme = EverydayWidgetAppearance.scheme(context, instance.config)
                 EverydayWidgetMotion.wrap(context, current, transition, level, scheme.onSurface.toArgb(), scheme.primary.toArgb())
             }
@@ -120,6 +123,10 @@ object EverydayWidgetViews {
                 locale, ratio, preview, rootOpen, clockAsk)
         }
         val hasClock=!unavailable && instance.config.kind in setOf(EverydayCardKind.CLOCK,EverydayCardKind.CLOCK_WEATHER,EverydayCardKind.DASHBOARD)
+        val paging = instance.config.widgetAutoPage && supportsPaging(instance.config.kind) && !unavailable &&
+            !lockHost && !snapshot.kids && width >= 140 &&
+            android.animation.ValueAnimator.areAnimatorsEnabled() &&
+            EverydayWidgetMotion.level(context, instance.config.widgetMotion, snapshot.kids) != com.halo.app.ui.theme.HaloLookMotion.STILL
         val zone=instance.config.zoneId?.let(ZoneId::of) ?: snapshot.zone
         val rowIds=listOf(R.id.everyday_widget_row1,R.id.everyday_widget_row2,R.id.everyday_widget_row3)
         fun measure(value: String,sp: Float,titleFont: Boolean = false,availableWidth: Int = width-32): Int {
@@ -146,7 +153,8 @@ object EverydayWidgetViews {
                 else -> row.detail
             }
             row.copy(title=title,detail=detail)
-        }.let { if (instance.config.widgetSize == null || instance.config.kind in setOf(EverydayCardKind.CLOCK, EverydayCardKind.CLOCK_WEATHER)) it
+        }.let { if (paging) it.take(3)
+            else if (instance.config.widgetSize == null || instance.config.kind in setOf(EverydayCardKind.CLOCK, EverydayCardKind.CLOCK_WEATHER)) it
             else it.take(instance.config.widgetSize.rowLimit) }
         val clockSp=if(width>=220 && scale<1.5f) 32f else 20f
         val valueSp=if(hasClock) clockSp else 20f
@@ -166,6 +174,7 @@ object EverydayWidgetViews {
         val minimal=remaining<required
         val layout=if(locale.language=="ru") R.layout.halo_everyday_widget_ru else R.layout.halo_everyday_widget
         val views=RemoteViews(context.packageName,layout)
+        views.setViewVisibility(R.id.everyday_widget_page_flipper, View.GONE)
         views.showClockMotion(context, instance, snapshot, width, scale, !preview && hasClock && !minimal, scheme.primary.toArgb())
         views.setImageViewBitmap(R.id.everyday_widget_background,
             EverydayWidgetAppearance.background(context, instance.config, scheme, width, height))
@@ -275,10 +284,33 @@ object EverydayWidgetViews {
         views.setTextColor(R.id.everyday_widget_clock_label,scheme.onSurfaceVariant.toArgb())
         views.setTextViewTextSize(R.id.everyday_widget_clock_label,android.util.TypedValue.COMPLEX_UNIT_SP,16f*ratio)
         remaining-=clockLabelHeight
+        val pageHeight = maxOf(56, rowHeights.maxOrNull() ?: 0)
+        val usePages = paging && candidates.size >= 2 && remaining >= pageHeight
+        if (usePages) {
+            remaining -= pageHeight
+            views.removeAllViews(R.id.everyday_widget_page_flipper)
+            val showPictures = !preview && width >= 200 && scale < 1.45f &&
+                runCatching { Graph.articlePictureSettings.visible.value }.getOrDefault(false)
+            candidates.forEachIndexed { index, row ->
+                val page = RemoteViews(context.packageName, R.layout.halo_widget_page_row)
+                page.setTextViewText(R.id.halo_widget_page_text,
+                    listOf(row.title, row.detail).filter(String::isNotBlank).joinToString("\n"))
+                page.setTextColor(R.id.halo_widget_page_text, scheme.onSurface.toArgb())
+                page.setTextViewTextSize(R.id.halo_widget_page_text, android.util.TypedValue.COMPLEX_UNIT_SP, 16f * ratio)
+                if (showPictures) widgetArticleThumbnail(row.pictureKey)?.let { picture ->
+                    page.setImageViewBitmap(R.id.halo_widget_page_picture, picture)
+                    page.setViewVisibility(R.id.halo_widget_page_picture, View.VISIBLE)
+                }
+                if (!preview) page.setOnClickPendingIntent(R.id.halo_widget_page_root,
+                    pending(context, instance, "row:$index", row.target ?: face.target))
+                views.addView(R.id.everyday_widget_page_flipper, page)
+            }
+            views.setViewVisibility(R.id.everyday_widget_page_flipper, View.VISIBLE)
+        }
         rowIds.forEachIndexed { index,id ->
             val row=candidates.getOrNull(index)
             val needed=rowHeights.getOrNull(index) ?: Int.MAX_VALUE
-            val shown=row!=null && remaining>=needed
+            val shown=!usePages && row!=null && remaining>=needed
             views.setViewVisibility(id,if(shown) View.VISIBLE else View.GONE)
             if(shown) {
                 remaining-=needed
@@ -307,6 +339,17 @@ object EverydayWidgetViews {
         }
         return views
     }
+
+    private fun widgetArticleThumbnail(key: String?): android.graphics.Bitmap? = runCatching {
+        val file = Graph.articleContentStore.imageFile(key) ?: return null
+        val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeFile(file.path, options)
+        val largest = maxOf(options.outWidth, options.outHeight)
+        if (largest !in 1..16_384) return null
+        options.inSampleSize = Integer.highestOneBit((largest / 120).coerceAtLeast(1))
+        options.inJustDecodeBounds = false
+        android.graphics.BitmapFactory.decodeFile(file.path, options)
+    }.getOrNull()
 
     fun unavailable(context: Context,id: Int): RemoteViews {
         if (com.halo.app.privacy.HaloPauseOwner.get(context).isPaused()) return haloPausedWidget(context, id)

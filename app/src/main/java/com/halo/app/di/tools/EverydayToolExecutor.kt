@@ -44,7 +44,7 @@ class EverydayToolExecutor(
     private val dayContext: suspend (Map<String, Any?>) -> JSONObject = { error("Day context is not available") },
     private val localFactContent: suspend (LocalFact) -> String? = { null },
     private val plannerStorage: com.halo.sdk.runtime.Storage? = null,
-    private val todayOverview: suspend () -> JSONObject = { error("Today is not available") },
+    private val todayOverview: suspend (Instant?) -> JSONObject = { error("Today is not available") },
     private val receiptTotals: suspend (String, String) -> JSONObject = { _, _ -> error("Library totals are unavailable") },
     private val examSchedule: suspend (LocalDate, List<Pair<String, Long>>) -> Pair<StudyExamSchedule, List<OrganizerLink>> =
         { date, lessons -> require(lessons.isEmpty()); StudyExamSchedule(date, emptyList()) to emptyList() },
@@ -116,7 +116,7 @@ class EverydayToolExecutor(
         fun version()=a.long("version")
         return when(name) {
             "halo_library_receipt_totals" -> receiptTotals(a.string("merchant"), a.string("month"))
-            "halo_today_overview" -> todayOverview()
+            "halo_today_overview" -> todayOverview(a.optionalString("reportAt")?.let(Instant::parse))
             "halo_today_weather_city" -> {
                 val city = requireNotNull(cities.get(a.string("cityId"))) { "Offline city unavailable" }
                 val saved = setTodayWeatherCity(sources, city, version())

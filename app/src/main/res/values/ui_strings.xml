@@ -5109,4 +5109,33 @@
     <string name="ui_1a91a2e0abeb" formatted="false">"Choose photos, then say or type what you remember. Open a clear photo of one person to add them to People search. Make a story creates a video you can play, keep, or share after review."</string>
     <string name="ui_096e1dedffce" formatted="false">"Larger photos"</string>
     <string name="ui_c3c5a845d7c8" formatted="false">"Story video preview"</string>
+    <string name="ui_7cf11bae4433" formatted="false">"Then halo"</string>
+    <string name="ui_b3da1ba826d2" formatted="false">"halo uses the time you choose."</string>
+    <string name="ui_bb80ba61575d" formatted="false">"The trial checks your conditions and keeps the result here and in History."</string>
+    <string name="ui_f9b1300d6b7e" formatted="false">"Time · %1$s"</string>
+    <string name="ui_d2a66f0c747a" formatted="false">"Date · %1$s"</string>
+    <string name="ui_ba25dfccf7a1" formatted="false">"Time zone · %1$s"</string>
+    <string name="ui_417aa59dc28f" formatted="false">"System time zone · %1$s"</string>
+    <string name="ui_a41f5edf596d" formatted="false">"%1$d of 10 actions"</string>
+    <string name="ui_a84325774c41" formatted="false">"Pause automatic paging"</string>
+    <string name="ui_7ae1b655cc34" formatted="false">"Start automatic paging"</string>
+    <string name="ui_d20ffa465b15" formatted="false">"Rotate widget pages"</string>
+    <string name="ui_a9f73dcc653e" formatted="false">"%1$d / %2$d"</string>
+    <string name="ui_6da68646a922" formatted="false">"Read a halo summary"</string>
+    <string name="ui_7baa6de18577" formatted="false">"Today's Planner"</string>
+    <string name="ui_b611a2b7e6db" formatted="false">"Tomorrow's Planner"</string>
+    <string name="ui_85786c4a6afd" formatted="false">"Saved weather"</string>
+    <string name="ui_3d2180244255" formatted="false">"Latest saved headline"</string>
+    <string name="ui_ec75a3a73b46" formatted="false">"Morning Planner"</string>
+    <string name="ui_33c01cf16c66" formatted="false">"Plan for tomorrow"</string>
+    <string name="ui_c32cb09b8312" formatted="false">"Morning weather"</string>
+    <string name="ui_8a381373502d" formatted="false">"Morning headline"</string>
+    <string name="ui_cae76748e07e" formatted="false">"Get the day's event and task counts at 8:00"</string>
+    <string name="ui_44abf8845ba2" formatted="false">"Get tomorrow's event and task counts at 20:00"</string>
+    <string name="ui_664eaeb6a968" formatted="false">"Get your selected city's saved forecast at 8:00"</string>
+    <string name="ui_e90292a90215" formatted="false">"Get the latest headline from your selected Reads sources at 9:00"</string>
+    <string name="ui_37e5e0e66b66" formatted="false">"Today in Planner: %1$d events and %2$d tasks remaining."</string>
+    <string name="ui_9d840ab4c71a" formatted="false">"Tomorrow in Planner: %1$d events and %2$d tasks."</string>
+    <string name="ui_bc14c9e88084" formatted="false">"Saved weather for %1$s: %2$s °C · %3$s"</string>
+    <string name="ui_4542a6443a1e" formatted="false">"halo reads saved information on this phone when the routine runs."</string>
 </resources>

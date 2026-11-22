@@ -5115,3 +5115,32 @@ Choose app and person|||Выбрать приложение и получате�
 Choose photos, then say or type what you remember. Open a clear photo of one person to add them to People search. Make a story creates a video you can play, keep, or share after review.|||Выберите фото, затем скажите или напишите, что помните. Откройте чёткий снимок одного человека, чтобы добавить его для поиска. Из фото можно создать видеоисторию, посмотреть её, сохранить или отправить после проверки.|||Izvēlies fotoattēlus, tad pasaki vai ieraksti, ko atceries. Atver skaidru viena cilvēka fotoattēlu, lai pievienotu viņu cilvēku meklēšanai. No fotoattēliem var izveidot video, ko atskaņot, saglabāt vai pēc pārskatīšanas kopīgot.|||Wybierz zdjęcia, a potem powiedz lub wpisz, co pamiętasz. Otwórz wyraźne zdjęcie jednej osoby, aby dodać ją do wyszukiwania. Utwórz historię ze zdjęć, odtwórz ją, zapisz lub udostępnij po sprawdzeniu.
 Larger photos|||Более крупные фото|||Lielāki fotoattēli|||Większe zdjęcia
 Story video preview|||Предпросмотр видеоистории|||Stāsta video priekšskatījums|||Podgląd filmu z historią
+Then halo|||Затем Halo|||Tad Halo|||Następnie Halo
+Halo uses the time you choose.|||Halo использует указанное вами время.|||Halo izmanto jūsu izvēlēto laiku.|||Halo używa wybranej godziny.
+The trial checks your conditions and keeps the result here and in History.|||Во время пробы Halo проверит условия и сохранит результат здесь и в истории.|||Izmēģinājumā Halo pārbaudīs nosacījumus un saglabās rezultātu šeit un vēsturē.|||Próba sprawdzi warunki i zapisze wynik tutaj oraz w historii.
+Time · %1$s|||Время · %1$s|||Laiks · %1$s|||Godzina · %1$s
+Date · %1$s|||Дата · %1$s|||Datums · %1$s|||Data · %1$s
+Time zone · %1$s|||Часовой пояс · %1$s|||Laika josla · %1$s|||Strefa czasowa · %1$s
+System time zone · %1$s|||Системный часовой пояс · %1$s|||Sistēmas laika josla · %1$s|||Systemowa strefa czasowa · %1$s
+%1$d of 10 actions|||Действий: %1$d из 10|||%1$d no 10 darbībām|||Liczba działań: %1$d z 10
+Pause automatic paging|||Приостановить перелистывание|||Apturēt automātisko pāršķiršanu|||Wstrzymaj automatyczne przewijanie
+Start automatic paging|||Включить перелистывание|||Sākt automātisko pāršķiršanu|||Włącz automatyczne przewijanie
+Rotate widget pages|||Автоматически листать виджет|||Automātiski mainīt logrīka lapas|||Automatycznie przewijaj strony widżetu
+%1$d / %2$d|||%1$d / %2$d|||%1$d / %2$d|||%1$d / %2$d
+Read a Halo summary|||Прочитать сводку Halo|||Lasīt Halo kopsavilkumu|||Odczytaj podsumowanie Halo
+Today's Planner|||План на сегодня|||Šodienas plānotājs|||Dzisiejszy planer
+Tomorrow's Planner|||План на завтра|||Rītdienas plānotājs|||Jutrzejszy planer
+Saved weather|||Сохранённый прогноз|||Saglabātā laika prognoze|||Zapisana pogoda
+Latest saved headline|||Последний сохранённый заголовок|||Jaunākais saglabātais virsraksts|||Najnowszy zapisany nagłówek
+Morning Planner|||Утренний план|||Rīta plānotājs|||Poranny planer
+Plan for tomorrow|||План на завтра|||Rītdienas plāns|||Plan na jutro
+Morning weather|||Утренняя погода|||Rīta laikapstākļi|||Poranna pogoda
+Morning headline|||Утренняя новость|||Rīta ziņu virsraksts|||Poranny nagłówek
+Get the day's event and task counts at 8:00|||Количество событий и задач на день в 8:00|||Dienas notikumu un uzdevumu skaits plkst. 8.00|||Liczba wydarzeń i zadań na dziś o godz. 8:00
+Get tomorrow's event and task counts at 20:00|||Количество событий и задач на завтра в 20:00|||Rītdienas notikumu un uzdevumu skaits plkst. 20.00|||Liczba wydarzeń i zadań na jutro o godz. 20:00
+Get your selected city's saved forecast at 8:00|||Сохранённый прогноз для выбранного города в 8:00|||Izvēlētās pilsētas saglabātā prognoze plkst. 8.00|||Zapisana prognoza dla wybranego miasta o godz. 8:00
+Get the latest headline from your selected Reads sources at 9:00|||Последний заголовок из выбранных источников в 9:00|||Jaunākais virsraksts no izvēlētajiem avotiem plkst. 9.00|||Najnowszy nagłówek z wybranych źródeł o godz. 9:00
+Today in Planner: %1$d events and %2$d tasks remaining.|||На сегодня осталось событий: %1$d, задач: %2$d.|||Šodien plānotājā atlikuši %1$d notikumi un %2$d uzdevumi.|||Pozostało dziś w planerze: %1$d wydarzeń i %2$d zadań.
+Tomorrow in Planner: %1$d events and %2$d tasks.|||На завтра запланировано событий: %1$d, задач: %2$d.|||Rīt plānotājā: %1$d notikumi un %2$d uzdevumi.|||Jutro w planerze: %1$d wydarzeń i %2$d zadań.
+Saved weather for %1$s: %2$s °C · %3$s|||Сохранённый прогноз для %1$s: %2$s °C · %3$s|||Saglabātā prognoze vietai %1$s: %2$s °C · %3$s|||Zapisana prognoza dla %1$s: %2$s °C · %3$s
+Halo reads saved information on this phone when the routine runs.|||При запуске сценария Halo читает данные, сохранённые на этом телефоне.|||Palaižot rutīnu, Halo lasa šajā tālrunī saglabāto informāciju.|||Po uruchomieniu rutyny Halo odczytuje dane zapisane na tym telefonie.

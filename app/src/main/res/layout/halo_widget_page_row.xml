@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/halo_widget_page_root" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:minHeight="48dp" android:orientation="horizontal"
+    android:gravity="center_vertical" android:paddingTop="4dp" android:paddingBottom="4dp">
+    <ImageView android:id="@+id/halo_widget_page_picture" android:layout_width="68dp" android:layout_height="48dp"
+        android:layout_marginEnd="8dp" android:scaleType="centerCrop"
+        android:importantForAccessibility="no" android:visibility="gone" />
+    <TextView android:id="@+id/halo_widget_page_text" android:layout_width="0dp"
+        android:layout_weight="1" android:layout_height="wrap_content" android:maxLines="3"
+        android:ellipsize="end" android:textSize="16sp" android:fontFamily="@font/atkinson_hyperlegible_next_variable" />
+</LinearLayout>

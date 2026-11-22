@@ -2,7 +2,7 @@
 package com.halo.app.language
 import com.halo.app.R
 internal val uiCatalogue: Map<String, Int> by lazy {
-    buildMap(5139) {
+    buildMap(5168) {
         putAll(uiCataloguePart0())
         putAll(uiCataloguePart1())
         putAll(uiCataloguePart2())
@@ -4674,16 +4674,6 @@ private fun uiCataloguePart15(): Map<String, Int> = mapOf(
     "Approximate scheduling" to R.string.ui_9f3333846284,
     "Ask a grown-up to configure this widget." to R.string.ui_2399216958e6,
     "Battery unavailable" to R.string.ui_b0799603a9f9,
-    "Little habits" to R.string.everyday_widget_habits,
-    "Set up little habits" to R.string.everyday_widget_habits_setup,
-    "Days a routine was run" to R.string.everyday_widget_habits_days,
-    "Departures are off" to R.string.everyday_widget_departures_off,
-    "Live departures are off" to R.string.everyday_widget_live_departures_off,
-    "Open Our home" to R.string.everyday_widget_home_open,
-    "Shared list is empty" to R.string.everyday_widget_shared_list_empty,
-    "No saved rain forecast" to R.string.everyday_widget_no_rain_forecast,
-    "Rain chance today" to R.string.everyday_widget_rain_chance,
-    "Smart stack" to R.string.everyday_widget_smart_stack,
     "Build your day from saved information" to R.string.ui_87df86236528,
     "Choose a saved weather source" to R.string.ui_f50ef27c2148,
     "Choose clock city" to R.string.ui_2eb4d5162b77,
@@ -5196,6 +5186,35 @@ private fun uiCataloguePart17(): Map<String, Int> = mapOf(
     "Choose photos, then say or type what you remember. Open a clear photo of one person to add them to People search. Make a story creates a video you can play, keep, or share after review." to R.string.ui_1a91a2e0abeb,
     "Larger photos" to R.string.ui_096e1dedffce,
     "Story video preview" to R.string.ui_c3c5a845d7c8,
+    "Then halo" to R.string.ui_7cf11bae4433,
+    "Halo uses the time you choose." to R.string.ui_b3da1ba826d2,
+    "The trial checks your conditions and keeps the result here and in History." to R.string.ui_bb80ba61575d,
+    "Time · %1\$s" to R.string.ui_f9b1300d6b7e,
+    "Date · %1\$s" to R.string.ui_d2a66f0c747a,
+    "Time zone · %1\$s" to R.string.ui_ba25dfccf7a1,
+    "System time zone · %1\$s" to R.string.ui_417aa59dc28f,
+    "%1\$d of 10 actions" to R.string.ui_a41f5edf596d,
+    "Pause automatic paging" to R.string.ui_a84325774c41,
+    "Start automatic paging" to R.string.ui_7ae1b655cc34,
+    "Rotate widget pages" to R.string.ui_d20ffa465b15,
+    "%1\$d / %2\$d" to R.string.ui_a9f73dcc653e,
+    "Read a Halo summary" to R.string.ui_6da68646a922,
+    "Today's Planner" to R.string.ui_7baa6de18577,
+    "Tomorrow's Planner" to R.string.ui_b611a2b7e6db,
+    "Saved weather" to R.string.ui_85786c4a6afd,
+    "Latest saved headline" to R.string.ui_3d2180244255,
+    "Morning Planner" to R.string.ui_ec75a3a73b46,
+    "Plan for tomorrow" to R.string.ui_33c01cf16c66,
+    "Morning weather" to R.string.ui_c32cb09b8312,
+    "Morning headline" to R.string.ui_8a381373502d,
+    "Get the day's event and task counts at 8:00" to R.string.ui_cae76748e07e,
+    "Get tomorrow's event and task counts at 20:00" to R.string.ui_44abf8845ba2,
+    "Get your selected city's saved forecast at 8:00" to R.string.ui_664eaeb6a968,
+    "Get the latest headline from your selected Reads sources at 9:00" to R.string.ui_e90292a90215,
+    "Today in Planner: %1\$d events and %2\$d tasks remaining." to R.string.ui_37e5e0e66b66,
+    "Tomorrow in Planner: %1\$d events and %2\$d tasks." to R.string.ui_9d840ab4c71a,
+    "Saved weather for %1\$s: %2\$s °C · %3\$s" to R.string.ui_bc14c9e88084,
+    "Halo reads saved information on this phone when the routine runs." to R.string.ui_4542a6443a1e,
 )
 
 private fun uiCatalogueAliases(): Map<String, Int> = mapOf(

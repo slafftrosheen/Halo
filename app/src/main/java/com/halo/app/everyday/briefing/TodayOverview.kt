@@ -44,7 +44,7 @@ internal suspend fun upcomingPlannerEvents(now: Instant, zone: ZoneId, calendars
 }
 
 /** The same saved owners powering the visible Today page. No mutation or network request. */
-internal suspend fun readTodayOverview(): JSONObject {
+internal suspend fun readTodayOverview(reportAt: Instant? = null): JSONObject {
     val zone = ZoneId.systemDefault()
     val now = Instant.now()
     val calendars = PlannerCalendarPreferences.read(Graph.storage)
@@ -60,7 +60,10 @@ internal suspend fun readTodayOverview(): JSONObject {
             .put("publisher", row.source.publisher).put("temperatureC", forecast?.temperatureC ?: JSONObject.NULL)
             .put("observedAt", forecast?.observedAt?.toString() ?: JSONObject.NULL)
     }
-    val news = Graph.todayNews.report.value?.takeIf { it.isVisible(feeds, Graph.appLanguagePreferences.language.value.tag, now) }
+    val archive = Graph.todayNews.history.value.filter {
+        it.isVisible(feeds, Graph.appLanguagePreferences.language.value.tag, now)
+    }
+    val news = archive.firstOrNull { reportAt == null || it.generatedAt == reportAt }
     check(PlannerCalendarPreferences.read(Graph.storage) == calendars)
     return JSONObject().put("asOf", now.toString()).put("zone", zone.id).put("untrustedContent", true)
         .put("weatherSettingsVersion", feeds.find { it.source.id == TODAY_WEATHER_ID }?.source?.version ?: 0)
@@ -73,6 +76,7 @@ internal suspend fun readTodayOverview(): JSONObject {
                 .put("end", event.end.toString()).put("allDay", event.allDay)
         }))
         .put("weather", weather ?: JSONObject.NULL)
+        .put("newsReportTimes", JSONArray(archive.map { it.generatedAt.toString() }))
         .put("news", news?.let { report -> JSONObject().put("generatedAt", report.generatedAt.toString()).put("text", report.text)
             .put("sources", JSONArray(report.sources.map { source -> JSONObject().put("number", source.number).put("id", source.id)
                 .put("version", source.version).put("articleId", source.articleId).put("publisher", source.publisher) })) } ?: JSONObject.NULL)

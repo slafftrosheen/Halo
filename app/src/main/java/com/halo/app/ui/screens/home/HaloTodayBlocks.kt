@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -35,6 +37,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -84,6 +87,8 @@ import java.time.format.FormatStyle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal data class HaloHomeBlock(
@@ -106,6 +111,13 @@ internal class HaloBlockChoices(private val storage: SharedPreferences) {
         private set
     var hidden by mutableStateOf(storage.getStringSet("hidden", emptySet()).orEmpty().toSet())
         private set
+    var autoAdvance by mutableStateOf(storage.getBoolean("autoAdvance", true))
+        private set
+
+    fun toggleAutoAdvance() {
+        autoAdvance = !autoAdvance
+        storage.edit().putBoolean("autoAdvance", autoAdvance).apply()
+    }
 
     fun pin(id: String) {
         pinned = if (id in pinned) pinned - id else pinned + id
@@ -146,7 +158,7 @@ internal fun HaloTodayScreen(open: (String) -> Unit) {
     val pinned = choices.pinned
     val feedsFlow = remember { Graph.collectorRepository.observe() }
     val feeds by feedsFlow.collectAsStateWithLifecycle(emptyList())
-    val cachedNews by Graph.todayNews.report.collectAsStateWithLifecycle()
+    val cachedNews by Graph.todayNews.history.collectAsStateWithLifecycle()
     val picturesVisible by Graph.articlePictureSettings.visible.collectAsStateWithLifecycle()
     val language by Graph.appLanguagePreferences.language.collectAsStateWithLifecycle()
     val weatherSettings: SourcesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
@@ -298,7 +310,11 @@ internal fun HaloTodayScreen(open: (String) -> Unit) {
         }
     }
     HaloTodayContent(hour, available, choices, open, chooseWeatherCity = { chooseCity = true },
-        news = cachedNews?.takeIf { it.isVisible(feeds, language.tag, now) },
+        news = cachedNews.filter { it.isVisible(feeds, language.tag, now) },
+        newsPictures = picturesVisible,
+        liveArticles = activeSources.flatMap { row ->
+            (row.snapshot?.payload as? CollectorPayload.Articles)?.items.orEmpty().map { row.source.id to it.id }
+        }.toSet(),
         newsEnabled = activeSources.any { it.source.kind == CollectorKind.FEED },
         phoneEvents = phoneEvents.takeIf { calendarGranted && PhoneCalendarAgenda.permitted(context) }.orEmpty(),
         connectCalendar = if (!calendarGranted) ({ requestCalendar.launch(android.Manifest.permission.READ_CALENDAR) }) else null,
@@ -314,7 +330,8 @@ internal fun HaloTodayScreen(open: (String) -> Unit) {
 
 @Composable
 internal fun HaloTodayContent(hour: Int, available: List<HaloHomeBlock>, choices: HaloBlockChoices, open: (String) -> Unit,
-    chooseWeatherCity: (() -> Unit)? = null, news: TodayNewsReport? = null, newsEnabled: Boolean = false,
+    chooseWeatherCity: (() -> Unit)? = null, news: List<TodayNewsReport> = emptyList(), newsEnabled: Boolean = false,
+    newsPictures: Boolean = true, liveArticles: Set<Pair<String, String>> = emptySet(),
     phoneEvents: List<PhoneCalendarEvent> = emptyList(), connectCalendar: (() -> Unit)? = null,
     onAddWidget: (() -> Unit)? = null) {
     val evening = hour >= 18
@@ -397,10 +414,10 @@ internal fun HaloTodayContent(hour: Int, available: List<HaloHomeBlock>, choices
                 check(PhoneCalendarAgenda.permitted(context))
                 context.startActivity(PhoneCalendarAgenda.intent(phoneEvent))
             }.isFailure
-        }, showSourceSummary = false)
+        }, showSourceSummary = false, paged = true)
         if (cannotOpenCalendar) Text(stringResource(R.string.today_calendar_unavailable), style = MaterialTheme.typography.bodySmall)
         connectCalendar?.let { connect -> TextButton(connect) { Text(stringResource(R.string.today_connect_calendar)) } }
-        if (newsEnabled || news != null) TodayNewsCard(news, open)
+        if (newsEnabled || news.isNotEmpty()) TodayNewsCard(news, newsPictures, liveArticles, open)
         onAddWidget?.let { add -> TextButton(add, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.halo_today_add_widget))
         } }
@@ -408,25 +425,58 @@ internal fun HaloTodayContent(hour: Int, available: List<HaloHomeBlock>, choices
 }
 
 @Composable
-private fun TodayNewsCard(report: TodayNewsReport?, open: (String) -> Unit) {
+private fun HomeCardsPager(keys: List<String>, autoAdvance: Boolean, card: @Composable (Int) -> Unit) {
+    val pager = rememberPagerState { keys.size }
+    val scope = rememberCoroutineScope()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(autoAdvance, keys, pager.settledPage, lifecycle) {
+        if (autoAdvance && keys.size > 1) lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (isActive) {
+                delay(10_000)
+                if (!pager.isScrollInProgress) pager.animateScrollToPage((pager.currentPage + 1) % keys.size)
+            }
+        }
+    }
+    HorizontalPager(state = pager, key = { keys[it] }, modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top) { index -> card(index) }
+    if (keys.size > 1) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically) {
+        TextButton(onClick = { scope.launch { pager.scrollToPage((pager.currentPage - 1).coerceAtLeast(0)) } },
+            enabled = pager.currentPage > 0) { Text(uiText("Previous")) }
+        Text(uiText("%1\$d / %2\$d", pager.currentPage.coerceIn(0, keys.lastIndex) + 1, keys.size),
+            style = MaterialTheme.typography.labelMedium)
+        TextButton(onClick = { scope.launch { pager.scrollToPage((pager.currentPage + 1).coerceAtMost(keys.lastIndex)) } },
+            enabled = pager.currentPage < keys.lastIndex) { Text(uiText("Next")) }
+    }
+}
+
+@Composable
+private fun TodayNewsCard(reports: List<TodayNewsReport>, pictures: Boolean,
+    liveArticles: Set<Pair<String, String>>, open: (String) -> Unit) {
     Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.today_news_title), style = MaterialTheme.typography.titleLarge)
-            if (report == null) {
+            if (reports.isEmpty()) {
                 Text(stringResource(R.string.today_news_waiting), style = MaterialTheme.typography.bodyMedium)
-            } else {
+            } else HomeCardsPager(reports.map { it.generatedAt.toString() }, autoAdvance = false) { index ->
+                val report = reports[index]
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val locale = LocalConfiguration.current.locales[0]
                 val timestamp = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withLocale(locale)
                     .format(report.generatedAt.atZone(ZoneId.systemDefault()))
                 Text(stringResource(R.string.today_news_generated, timestamp), style = MaterialTheme.typography.labelMedium)
+                if (pictures) report.sources.firstNotNullOfOrNull { it.picture }?.let { ArticleHeadlinePicture(it) }
                 Text(report.text, style = MaterialTheme.typography.bodyMedium)
                 com.halo.app.ui.components.HaloReadAloud(report.text,
                     category = com.halo.sdk.provider.RemoteDataCategory.TEXT)
                 report.sources.forEach { source ->
-                    TextButton({ open(EverydayRoutes.source(source.id, source.articleId)) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text("${source.number}. ${source.publisher}")
+                    val current = (source.id to source.articleId) in liveArticles
+                    TextButton({ open(EverydayRoutes.source(source.id, source.articleId.takeIf { current })) },
+                        modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(listOf("${source.number}. ${source.publisher}", source.title).filter(String::isNotBlank).joinToString(" · "))
                     }
+                }
                 }
             }
         }
@@ -451,6 +501,7 @@ internal fun HaloHomeBlockDeck(
     choices: HaloBlockChoices,
     open: (String) -> Unit,
     showSourceSummary: Boolean = true,
+    paged: Boolean = false,
 ) {
     var order by remember { mutableStateOf(emptyList<String>()) }
     var fresh by remember { mutableStateOf(emptySet<String>()) }
@@ -473,7 +524,7 @@ internal fun HaloHomeBlockDeck(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (showSourceSummary) Text(stringResource(R.string.today_blocks_on_this_phone), style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            displayOrder.forEach { id ->
+            val card: @Composable (String) -> Unit = { id ->
                 val block = visible.getValue(id)
                 key(id) {
                     HaloHomeBlockCard(block, id in choices.pinned, id in fresh,
@@ -485,6 +536,17 @@ internal fun HaloHomeBlockDeck(
                     )
                 }
             }
+            if (paged && displayOrder.size > 1) {
+                val motion = com.halo.app.ui.theme.rememberVisualPreferences().motionLevel
+                val context = LocalContext.current
+                val canAutoAdvance = motion != com.halo.app.ui.theme.HaloLookMotion.STILL &&
+                    android.animation.ValueAnimator.areAnimatorsEnabled() &&
+                    context.getSystemService(android.view.accessibility.AccessibilityManager::class.java)?.isTouchExplorationEnabled != true
+                HomeCardsPager(displayOrder, autoAdvance = choices.autoAdvance && canAutoAdvance) { card(displayOrder[it]) }
+                if (canAutoAdvance) TextButton(onClick = choices::toggleAutoAdvance) {
+                    Text(uiText(if (choices.autoAdvance) "Pause automatic paging" else "Start automatic paging"))
+                }
+            } else displayOrder.forEach { card(it) }
         }
     }
     requestedWhy?.let(visible::get)?.let { block ->

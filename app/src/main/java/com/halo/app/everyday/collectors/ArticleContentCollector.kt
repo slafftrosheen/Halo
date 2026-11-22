@@ -60,7 +60,8 @@ class ArticleDownloader(private val policy: RemoteDispatchPolicy,
 class ArticleContentCollector(private val repository: CollectorRepository, private val store: ArticleContentStore,
     private val download: suspend (String) -> ArticleDownload, private val clock: Clock = Clock.systemUTC(),
     private val picturesVisible: () -> Boolean = { true }, private val metered: () -> Boolean = { false },
-    private val downloadSmall: (suspend (String) -> ArticleDownload)? = null) {
+    private val downloadSmall: (suspend (String) -> ArticleDownload)? = null,
+    private val additionallyRetainedImages: (List<CollectorState>) -> Set<String> = { emptySet() }) {
     suspend fun enrich(reservation: CollectorReservation, payload: CollectorPayload): CollectorPayload = withContext(Dispatchers.IO) {
         if (payload !is CollectorPayload.Articles || reservation.source.kind != CollectorKind.FEED) return@withContext payload
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(120)
@@ -85,8 +86,10 @@ class ArticleContentCollector(private val repository: CollectorRepository, priva
               catch (blocked: RemoteDispatchBlocked) { throw blocked }
               catch (_: Exception) { image }
         }
-        store.prune(repository.states().flatMap { (it.snapshot?.payload as? CollectorPayload.Articles)?.items.orEmpty() }
-            .flatMap { listOfNotNull(it.contentKey) + it.images.mapNotNull { image -> image.assetKey } }.toSet())
+        val savedSources = repository.states()
+        store.prune(savedSources.flatMap { (it.snapshot?.payload as? CollectorPayload.Articles)?.items.orEmpty() }
+            .flatMap { listOfNotNull(it.contentKey) + it.images.mapNotNull { image -> image.assetKey } }.toSet() +
+            additionallyRetainedImages(savedSources))
         val previous = (reservation.cached?.payload as? CollectorPayload.Articles)?.items.orEmpty().associateBy { it.id }
         val bodies = payload.items.map { article ->
             currentCoroutineContext().ensureActive()

@@ -43,7 +43,8 @@ object EverydayToolContracts {
     val definitions=listOf(
         def("halo_library_receipt_totals", "Total readable saved receipts for one merchant and purchase month. Return exact amounts by currency and the saved Library item IDs and versions. No currency conversion or estimate of total spending. If coverage is limited, tell the user. Use YYYY-MM for month and clarify the merchant if needed.",
             mapOf("merchant" to text(80), "month" to text(7)), listOf("merchant", "month")),
-        def("halo_today_overview", "Read what's coming up on Halo Today: visible Planner events, permitted phone-calendar events, the selected weather city, and the latest hourly news report with publisher sources. Use this for spoken or typed requests about what's next, the Today page, or the hourly news. Reading does not refresh or generate news."),
+        def("halo_today_overview", "Read what's coming up on Halo Today: visible Planner events, permitted phone-calendar events, the selected weather city, and hourly news with publisher sources. Use the exact reportAt time from newsReportTimes to read an older saved report. Omitting reportAt shows the latest. Reading does not refresh or generate news.",
+            mapOf("reportAt" to text(64))),
         def("halo_today_weather_city", "Set the main Today forecast city. First read halo_today_overview for weatherSettingsVersion and use halo_clock_query for the exact offline city ID. Confirm ambiguous city names before saving. Saving does not fetch weather.",
             mapOf("cityId" to text(12), "version" to number(0, Long.MAX_VALUE)), listOf("cityId", "version")),
         def("halo_day_context","Gather the passed day across selected sources, organizer, Workspace, permitted notification content and completed Halo activity. Read MANIFEST first with explicit ISO UTC from/until (maximum 48 hours) and IANA zoneId. Then read every section and item, following nextOffset/nextTextOffset and preserving sourceVersion. Sources have separate exact-version source_get/source_image reads. Counts/headlines are not a full-day summary. Report coverage gaps and distinguish source publication, retrieval and activity times. No remote refresh, permission grants or automatic actions; unavailable data is not inferred.",
@@ -89,7 +90,7 @@ object EverydayToolContracts {
         def("halo_widget_query","List installed Halo launcher widget instances and exact independent configuration versions. Does not read personal item bodies or claim placement on a specific launcher page."),
         def("halo_widget_configure","Save one exact installed widget version with typed presentation settings. kind cannot change; launcher limit/section count <=3 and personal details always hidden. Saving a clock city affects only this instance.",mapOf("id" to number(1,Int.MAX_VALUE.toLong()),"version" to number(0,Long.MAX_VALUE),"config" to obj((cardFields - "kind") + mapOf(
             "widgetSize" to choice(listOf("AUTO") + EverydayWidgetSize.entries.map { it.name }),
-            "widgetMotion" to bool, "widgetMatchLook" to bool,
+            "widgetMotion" to bool, "widgetMatchLook" to bool, "widgetAutoPage" to bool,
             "widgetStyle" to choice(EverydayWidgetStyle.entries.map { it.name }),
             "widgetShows" to choice(EverydayWidgetShows.entries.map { it.name })))),listOf("id","version","config")),
         def("halo_widget_pin","Ask Android to place a Halo widget. User/launcher controls acceptance and placement; result is REQUESTED only. Configure independent instances after placement.",mapOf("kind" to choice(EverydayCards.launcherKinds.map {it.name})),listOf("kind")),
@@ -160,8 +161,9 @@ object EverydayToolContracts {
                 "phoneEvents" to array(4, obj(mapOf("id" to number(0, Long.MAX_VALUE), "title" to text(200),
                     "start" to text(64), "end" to text(64), "allDay" to flag))),
                 "weather" to mapOf("type" to listOf("object", "null")),
+                "newsReportTimes" to array(96, text(64)),
                 "news" to mapOf("type" to listOf("object", "null"))),
-                listOf("asOf", "zone", "events", "phoneCalendarAvailable", "phoneEvents", "weather", "news", "untrustedContent", "weatherSettingsVersion"))
+                listOf("asOf", "zone", "events", "phoneCalendarAvailable", "phoneEvents", "weather", "news", "newsReportTimes", "untrustedContent", "weatherSettingsVersion"))
             "halo_today_weather_city" -> obj(mapOf("id" to text(160), "city" to text(120), "version" to version),
                 listOf("id", "city", "version"))
             "halo_planner_calendars", "halo_planner_calendar_appearance" -> obj(mapOf(

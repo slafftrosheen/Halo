@@ -5109,4 +5109,33 @@
     <string name="ui_1a91a2e0abeb" formatted="false">"Выберите фото, затем скажите или напишите, что помните. Откройте чёткий снимок одного человека, чтобы добавить его для поиска. Из фото можно создать видеоисторию, посмотреть её, сохранить или отправить после проверки."</string>
     <string name="ui_096e1dedffce" formatted="false">"Более крупные фото"</string>
     <string name="ui_c3c5a845d7c8" formatted="false">"Предпросмотр видеоистории"</string>
+    <string name="ui_7cf11bae4433" formatted="false">"Затем halo"</string>
+    <string name="ui_b3da1ba826d2" formatted="false">"halo использует указанное вами время."</string>
+    <string name="ui_bb80ba61575d" formatted="false">"Во время пробы halo проверит условия и сохранит результат здесь и в истории."</string>
+    <string name="ui_f9b1300d6b7e" formatted="false">"Время · %1$s"</string>
+    <string name="ui_d2a66f0c747a" formatted="false">"Дата · %1$s"</string>
+    <string name="ui_ba25dfccf7a1" formatted="false">"Часовой пояс · %1$s"</string>
+    <string name="ui_417aa59dc28f" formatted="false">"Системный часовой пояс · %1$s"</string>
+    <string name="ui_a41f5edf596d" formatted="false">"Действий: %1$d из 10"</string>
+    <string name="ui_a84325774c41" formatted="false">"Приостановить перелистывание"</string>
+    <string name="ui_7ae1b655cc34" formatted="false">"Включить перелистывание"</string>
+    <string name="ui_d20ffa465b15" formatted="false">"Автоматически листать виджет"</string>
+    <string name="ui_a9f73dcc653e" formatted="false">"%1$d / %2$d"</string>
+    <string name="ui_6da68646a922" formatted="false">"Прочитать сводку halo"</string>
+    <string name="ui_7baa6de18577" formatted="false">"План на сегодня"</string>
+    <string name="ui_b611a2b7e6db" formatted="false">"План на завтра"</string>
+    <string name="ui_85786c4a6afd" formatted="false">"Сохранённый прогноз"</string>
+    <string name="ui_3d2180244255" formatted="false">"Последний сохранённый заголовок"</string>
+    <string name="ui_ec75a3a73b46" formatted="false">"Утренний план"</string>
+    <string name="ui_33c01cf16c66" formatted="false">"План на завтра"</string>
+    <string name="ui_c32cb09b8312" formatted="false">"Утренняя погода"</string>
+    <string name="ui_8a381373502d" formatted="false">"Утренняя новость"</string>
+    <string name="ui_cae76748e07e" formatted="false">"Количество событий и задач на день в 8:00"</string>
+    <string name="ui_44abf8845ba2" formatted="false">"Количество событий и задач на завтра в 20:00"</string>
+    <string name="ui_664eaeb6a968" formatted="false">"Сохранённый прогноз для выбранного города в 8:00"</string>
+    <string name="ui_e90292a90215" formatted="false">"Последний заголовок из выбранных источников в 9:00"</string>
+    <string name="ui_37e5e0e66b66" formatted="false">"На сегодня осталось событий: %1$d, задач: %2$d."</string>
+    <string name="ui_9d840ab4c71a" formatted="false">"На завтра запланировано событий: %1$d, задач: %2$d."</string>
+    <string name="ui_bc14c9e88084" formatted="false">"Сохранённый прогноз для %1$s: %2$s °C · %3$s"</string>
+    <string name="ui_4542a6443a1e" formatted="false">"При запуске сценария halo читает данные, сохранённые на этом телефоне."</string>
 </resources>

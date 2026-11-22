@@ -5,7 +5,7 @@ object EverydayCardSettings {
     fun patch(base: EverydayCardConfig,values: Map<String,Any?>): EverydayCardConfig {
         val fields=base.fields().toMutableMap()
         require(values.keys.all {it in setOf("kind","zoneId","cityLabel","sourceId","headlineSourceId","recordId","priority","limit","theme","sections",
-            "followPhone","clearSource","clearHeadlineSource","clearRecord","clearPriority","widgetSize","widgetMotion","widgetMatchLook","widgetStyle","widgetShows")})
+            "followPhone","clearSource","clearHeadlineSource","clearRecord","clearPriority","widgetSize","widgetMotion","widgetMatchLook","widgetStyle","widgetShows","widgetAutoPage")})
         values.forEach { (key,value) -> when(key) {
             "followPhone" -> if(value==true) {require("zoneId" !in values);fields.remove("zoneId");fields["cityLabel"]=""}
             "clearSource" -> if(value==true) {require("sourceId" !in values);fields.remove("sourceId")}
@@ -14,7 +14,7 @@ object EverydayCardSettings {
             "clearPriority" -> if(value==true) {require("priority" !in values);fields.remove("priority")}
             "sections" -> fields[key]=(value as List<*>).map {it as String}.joinToString(",")
             "limit" -> fields[key]=(value as Number).toInt().toString()
-            "widgetMotion", "widgetMatchLook" -> fields[key] = (value as Boolean).toString()
+            "widgetMotion", "widgetMatchLook", "widgetAutoPage" -> fields[key] = (value as Boolean).toString()
             "widgetSize" -> if (value == "AUTO") fields.remove(key) else fields[key] = value as String
             else -> fields[key]=value as String
         } }

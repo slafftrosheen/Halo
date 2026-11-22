@@ -192,14 +192,15 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                     TimeChoice(trigger.localTime) { routine = routine.copy(trigger = trigger.copy(localTime = it)) }
                     DayChoices(trigger.days) { routine = routine.copy(trigger = trigger.copy(days = it)) }
                     TextButton(onClick = { zoneQuery = ""; picker = "zone" }) {
-                        Text("Time zone · ${if (trigger.zoneId == ZoneId.systemDefault()) "System · " else ""}${trigger.zoneId.id}")
+                        Text(uiText(if (trigger.zoneId == ZoneId.systemDefault()) "System time zone · %1\$s" else "Time zone · %1\$s",
+                            trigger.zoneId.id))
                     }
                 }
                 is RoutineTrigger.Once -> {
                     val local = trigger.at.atZone(ZoneId.systemDefault())
                     DateChoice(local.toLocalDate()) { date -> routine = routine.copy(trigger = RoutineTrigger.Once(date.atTime(local.toLocalTime()).atZone(local.zone).toInstant())) }
                     TimeChoice(local.toLocalTime()) { time -> routine = routine.copy(trigger = RoutineTrigger.Once(local.toLocalDate().atTime(time).atZone(local.zone).toInstant())) }
-                    Text("Uses system time zone · ${local.zone.id}", style = MaterialTheme.typography.bodySmall)
+                    Text(uiText("System time zone · %1\$s", local.zone.id), style = MaterialTheme.typography.bodySmall)
                 }
                 is RoutineTrigger.BatteryCrossedAbove -> BatteryChoice(trigger.percent) { routine = routine.copy(trigger = trigger.copy(percent = it)) }
                 is RoutineTrigger.BatteryCrossedBelow -> BatteryChoice(trigger.percent) { routine = routine.copy(trigger = trigger.copy(percent = it)) }
@@ -223,7 +224,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                     Text(condition.uiLabel(labels))
                     when (condition) {
                         is RoutineCondition.BatteryAbove -> BatteryChoice(condition.percent) { replaceCondition(index, condition.copy(percent = it)) }
-                        is RoutineCondition.NetworkAvailable -> Row { Switch(condition.required, { replaceCondition(index, condition.copy(required = it)) }); Text(if (condition.required) "Available" else "Unavailable", Modifier.padding(top = 12.dp)) }
+                        is RoutineCondition.NetworkAvailable -> Row { Switch(condition.required, { replaceCondition(index, condition.copy(required = it)) }); Text(uiText(if (condition.required) "Available" else "Unavailable"), Modifier.padding(top = 12.dp)) }
                         is RoutineCondition.DeviceAvailable -> TextButton(onClick = { deviceTarget = index; picker = "device" }) { Text(uiText("Choose device")) }
                         is RoutineCondition.ProviderAvailable -> TextButton(onClick = { deviceTarget = index; picker = "provider" }) { Text(uiText("Choose provider")) }
                     }
@@ -277,7 +278,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                     TextButton(onClick = { routine = routine.copy(actions = routine.actions.filterIndexed { i, _ -> i != index }); invalidInputs = invalidInputs.filterNot { it.startsWith("window-") }.toSet() }) { Text(uiText("Remove action")) }
                 } }
             }
-            if (routine.actions.size >= 8) Text("${routine.actions.size} of 10 actions")
+            if (routine.actions.size >= 8) Text(uiText("%1\$d of 10 actions", routine.actions.size))
             OutlinedButton(enabled = routine.actions.size < 10, onClick = { picker = "action" }) { Text(uiText("Add action")) }
         }
         if (showDetails) HaloSettingsSection(uiText("Tell me")) {
@@ -424,13 +425,19 @@ private fun BatteryChoice(percent: Int, onChange: (Int) -> Unit) {
 @Composable
 private fun TimeChoice(time: LocalTime, onChange: (LocalTime) -> Unit) {
     val context = LocalContext.current
-    OutlinedButton(onClick = { TimePickerDialog(context, { _, hour, minute -> onChange(LocalTime.of(hour, minute)) }, time.hour, time.minute, android.text.format.DateFormat.is24HourFormat(context)).show() }) { Text("Time · ${time.toString().take(5)}") }
+    OutlinedButton(onClick = { TimePickerDialog(context, { _, hour, minute -> onChange(LocalTime.of(hour, minute)) }, time.hour, time.minute, android.text.format.DateFormat.is24HourFormat(context)).show() }) {
+        Text(uiText("Time · %1\$s", time.toString().take(5)))
+    }
 }
 
 @Composable
 private fun DateChoice(date: LocalDate, onChange: (LocalDate) -> Unit) {
     val context = LocalContext.current
-    OutlinedButton(onClick = { DatePickerDialog(context, { _, year, month, day -> onChange(LocalDate.of(year, month + 1, day)) }, date.year, date.monthValue - 1, date.dayOfMonth).show() }) { Text("Date · $date") }
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+    val formatted = java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM).withLocale(locale).format(date)
+    OutlinedButton(onClick = { DatePickerDialog(context, { _, year, month, day -> onChange(LocalDate.of(year, month + 1, day)) }, date.year, date.monthValue - 1, date.dayOfMonth).show() }) {
+        Text(uiText("Date · %1\$s", formatted))
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)

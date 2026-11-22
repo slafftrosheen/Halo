@@ -5109,4 +5109,33 @@
     <string name="ui_1a91a2e0abeb" formatted="false">"Izvēlies fotoattēlus, tad pasaki vai ieraksti, ko atceries. Atver skaidru viena cilvēka fotoattēlu, lai pievienotu viņu cilvēku meklēšanai. No fotoattēliem var izveidot video, ko atskaņot, saglabāt vai pēc pārskatīšanas kopīgot."</string>
     <string name="ui_096e1dedffce" formatted="false">"Lielāki fotoattēli"</string>
     <string name="ui_c3c5a845d7c8" formatted="false">"Stāsta video priekšskatījums"</string>
+    <string name="ui_7cf11bae4433" formatted="false">"Tad halo"</string>
+    <string name="ui_b3da1ba826d2" formatted="false">"halo izmanto jūsu izvēlēto laiku."</string>
+    <string name="ui_bb80ba61575d" formatted="false">"Izmēģinājumā halo pārbaudīs nosacījumus un saglabās rezultātu šeit un vēsturē."</string>
+    <string name="ui_f9b1300d6b7e" formatted="false">"Laiks · %1$s"</string>
+    <string name="ui_d2a66f0c747a" formatted="false">"Datums · %1$s"</string>
+    <string name="ui_ba25dfccf7a1" formatted="false">"Laika josla · %1$s"</string>
+    <string name="ui_417aa59dc28f" formatted="false">"Sistēmas laika josla · %1$s"</string>
+    <string name="ui_a41f5edf596d" formatted="false">"%1$d no 10 darbībām"</string>
+    <string name="ui_a84325774c41" formatted="false">"Apturēt automātisko pāršķiršanu"</string>
+    <string name="ui_7ae1b655cc34" formatted="false">"Sākt automātisko pāršķiršanu"</string>
+    <string name="ui_d20ffa465b15" formatted="false">"Automātiski mainīt logrīka lapas"</string>
+    <string name="ui_a9f73dcc653e" formatted="false">"%1$d / %2$d"</string>
+    <string name="ui_6da68646a922" formatted="false">"Lasīt halo kopsavilkumu"</string>
+    <string name="ui_7baa6de18577" formatted="false">"Šodienas plānotājs"</string>
+    <string name="ui_b611a2b7e6db" formatted="false">"Rītdienas plānotājs"</string>
+    <string name="ui_85786c4a6afd" formatted="false">"Saglabātā laika prognoze"</string>
+    <string name="ui_3d2180244255" formatted="false">"Jaunākais saglabātais virsraksts"</string>
+    <string name="ui_ec75a3a73b46" formatted="false">"Rīta plānotājs"</string>
+    <string name="ui_33c01cf16c66" formatted="false">"Rītdienas plāns"</string>
+    <string name="ui_c32cb09b8312" formatted="false">"Rīta laikapstākļi"</string>
+    <string name="ui_8a381373502d" formatted="false">"Rīta ziņu virsraksts"</string>
+    <string name="ui_cae76748e07e" formatted="false">"Dienas notikumu un uzdevumu skaits plkst. 8.00"</string>
+    <string name="ui_44abf8845ba2" formatted="false">"Rītdienas notikumu un uzdevumu skaits plkst. 20.00"</string>
+    <string name="ui_664eaeb6a968" formatted="false">"Izvēlētās pilsētas saglabātā prognoze plkst. 8.00"</string>
+    <string name="ui_e90292a90215" formatted="false">"Jaunākais virsraksts no izvēlētajiem avotiem plkst. 9.00"</string>
+    <string name="ui_37e5e0e66b66" formatted="false">"Šodien plānotājā atlikuši %1$d notikumi un %2$d uzdevumi."</string>
+    <string name="ui_9d840ab4c71a" formatted="false">"Rīt plānotājā: %1$d notikumi un %2$d uzdevumi."</string>
+    <string name="ui_bc14c9e88084" formatted="false">"Saglabātā prognoze vietai %1$s: %2$s °C · %3$s"</string>
+    <string name="ui_4542a6443a1e" formatted="false">"Palaižot rutīnu, halo lasa šajā tālrunī saglabāto informāciju."</string>
 </resources>

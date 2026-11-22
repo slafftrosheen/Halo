@@ -25,7 +25,7 @@ data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = 
     val sections: List<EverydayCardKind> = listOf(EverydayCardKind.TASKS,EverydayCardKind.UPCOMING,EverydayCardKind.WEATHER),val headlineSourceId: String? = null,
     val widgetSize: EverydayWidgetSize? = null, val widgetMotion: Boolean = true, val widgetMatchLook: Boolean = true,
     val widgetStyle: EverydayWidgetStyle = EverydayWidgetStyle.GLASS,
-    val widgetShows: EverydayWidgetShows = EverydayWidgetShows.DEFAULT) {
+    val widgetShows: EverydayWidgetShows = EverydayWidgetShows.DEFAULT, val widgetAutoPage: Boolean = false) {
     init {
         zoneId?.let(ZoneId::of)
         require(cityLabel.length <= 120 && limit in 1..5 && theme in setOf("INHERIT", "LIGHT", "DARK"))
@@ -46,10 +46,11 @@ data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = 
         if (!widgetMatchLook) put("widgetMatchLook", "false")
         if (widgetStyle != EverydayWidgetStyle.GLASS) put("widgetStyle", widgetStyle.name)
         if (widgetShows != EverydayWidgetShows.DEFAULT) put("widgetShows", widgetShows.name)
+        if (widgetAutoPage) put("widgetAutoPage", "true")
     }
     companion object {
         fun from(fields: Map<String, String>, fallback: EverydayCardKind): EverydayCardConfig {
-            require(fields.keys.all { it in setOf("kind", "zoneId", "cityLabel", "sourceId", "recordId", "priority", "limit", "hidePrivate", "theme", "sections", "headlineSourceId", "widgetSize", "widgetMotion", "widgetMatchLook", "widgetStyle", "widgetShows") })
+            require(fields.keys.all { it in setOf("kind", "zoneId", "cityLabel", "sourceId", "recordId", "priority", "limit", "hidePrivate", "theme", "sections", "headlineSourceId", "widgetSize", "widgetMotion", "widgetMatchLook", "widgetStyle", "widgetShows", "widgetAutoPage") })
             return EverydayCardConfig(fields["kind"]?.let(EverydayCardKind::valueOf) ?: fallback,
                 fields["zoneId"], fields["cityLabel"].orEmpty(), fields["sourceId"], fields["recordId"],
                 fields["priority"]?.let(TaskPriority::valueOf), fields["limit"]?.toInt() ?: 3,
@@ -58,7 +59,8 @@ data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = 
                 fields["widgetSize"]?.let(EverydayWidgetSize::valueOf),
                 fields["widgetMotion"]?.toBooleanStrict() ?: true, fields["widgetMatchLook"]?.toBooleanStrict() ?: true,
                 fields["widgetStyle"]?.let(EverydayWidgetStyle::valueOf) ?: EverydayWidgetStyle.GLASS,
-                fields["widgetShows"]?.let(EverydayWidgetShows::valueOf) ?: EverydayWidgetShows.DEFAULT)
+                fields["widgetShows"]?.let(EverydayWidgetShows::valueOf) ?: EverydayWidgetShows.DEFAULT,
+                fields["widgetAutoPage"]?.toBooleanStrict() ?: false)
         }
     }
 }
@@ -79,7 +81,7 @@ sealed interface EverydayTarget {
 }
 
 data class EverydayCardRow(val title: String, val detail: String = "", val target: EverydayTarget? = null, val personal: Boolean = false,
-    val publisher: String? = null,val savedAt: Instant? = null,val stale: Boolean = false)
+    val publisher: String? = null,val savedAt: Instant? = null,val stale: Boolean = false, val pictureKey: String? = null)
 data class EverydayCardFace(val title: String, val value: String, val rows: List<EverydayCardRow>, val status: String,
     val target: EverydayTarget, val personal: Boolean = false, val observedAt: Instant? = null, val attribution: String? = null,
     val stale: Boolean = false,val lastRefreshFailed: Boolean = false,val oldestSelected: Boolean = false)
@@ -251,7 +253,9 @@ object EverydayCards {
                 face(if (articles.isEmpty()) text("No saved headlines from selected sources") else text("Selected headlines"), articles.map { (s, a) ->
                     EverydayCardRow(a.title, listOfNotNull(a.publisher,s.snapshot?.let { sourceStatus(s,it) },s.snapshot?.retrievedAt?.let { text("Retrieved")+" · "+stamp(it) }).joinToString(" · "),
                         EverydayTarget.Source(s.source.id, s.source.version, s.snapshot?.contentRevision, a.id),publisher=a.publisher,
-                        savedAt=s.snapshot?.retrievedAt,stale=s.snapshot?.stale(input.now,true,input.power)!=false)
+                        savedAt=s.snapshot?.retrievedAt,stale=s.snapshot?.stale(input.now,true,input.power)!=false,
+                        pictureKey = a.images.firstOrNull { it.fromArticle && it.kind == ArticleImageKind.IMAGE &&
+                            it.sensitivity == ArticleImageSensitivity.CLEAR && it.assetKey != null }?.assetKey)
                 }, articles.firstOrNull()?.let { (s,a) -> EverydayTarget.Source(s.source.id, s.source.version, s.snapshot?.contentRevision, a.id) } ?: EverydayTarget.Sources,
                     status = mode+" · "+text(if(displayedSources.isEmpty()) "No saved snapshot" else if(anyStale) "Some saved headlines may be out of date" else "Saved snapshots are current")+
                         (if(anyFailed) " · "+text("Last refresh failed") else "")+(if(oldest != null) " · "+text("Oldest selected snapshot") else ""),at=oldest)

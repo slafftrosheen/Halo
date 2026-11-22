@@ -62,10 +62,12 @@ internal fun EverydayWidgetPicker(initialKind: EverydayCardKind = EverydayCardKi
     var style by rememberSaveable { mutableStateOf(EverydayWidgetStyle.GLASS.name) }
     var shows by rememberSaveable { mutableStateOf(EverydayWidgetShows.DEFAULT.name) }
     var motion by rememberSaveable { mutableStateOf(true) }
+    var autoPage by rememberSaveable { mutableStateOf(false) }
     var matchesLook by rememberSaveable { mutableStateOf(true) }
     var notice by rememberSaveable { mutableStateOf<Int?>(null) }
     val config = EverydayCardConfig(EverydayCardKind.valueOf(kind), widgetSize = size?.let(EverydayWidgetSize::valueOf),
-        widgetMotion = motion, widgetMatchLook = matchesLook, widgetStyle = EverydayWidgetStyle.valueOf(style), widgetShows = EverydayWidgetShows.valueOf(shows))
+        widgetMotion = motion, widgetMatchLook = matchesLook, widgetStyle = EverydayWidgetStyle.valueOf(style),
+        widgetShows = EverydayWidgetShows.valueOf(shows), widgetAutoPage = autoPage && EverydayWidgetViews.supportsPaging(EverydayCardKind.valueOf(kind)))
     var snapshotError by remember { mutableStateOf(false) }
     var retry by remember { mutableIntStateOf(0) }
     val snapshot by produceState<EverydaySnapshot?>(null, retry) {
@@ -118,6 +120,7 @@ internal fun EverydayWidgetPicker(initialKind: EverydayCardKind = EverydayCardKi
             WidgetDisplayChoices(config, enabled = notice != R.string.alive_widget_pin_requested) { next ->
                 size = next.widgetSize?.name
                 motion = next.widgetMotion
+                autoPage = next.widgetAutoPage
                 matchesLook = next.widgetMatchLook
                 style = next.widgetStyle.name
                 shows = next.widgetShows.name
@@ -214,6 +217,9 @@ internal fun WidgetDisplayChoices(config: EverydayCardConfig, enabled: Boolean =
     }
     HaloWorkspaceToggleRow(title = stringResource(R.string.alive_widget_motion), checked = config.widgetMotion,
         onCheckedChange = { onChange(config.copy(widgetMotion = it)) }, enabled = enabled)
+    if (EverydayWidgetViews.supportsPaging(config.kind)) HaloWorkspaceToggleRow(title = uiText("Rotate widget pages"),
+        checked = config.widgetAutoPage, onCheckedChange = { onChange(config.copy(widgetAutoPage = it)) },
+        enabled = enabled && config.widgetMotion)
     HaloWorkspaceToggleRow(title = stringResource(R.string.alive_widget_match), checked = config.widgetMatchLook,
         onCheckedChange = { onChange(config.copy(widgetMatchLook = it)) }, enabled = enabled)
 }
