@@ -96,7 +96,7 @@ data class LocalModelToolPolicy(
             allowedToolIds = BOOTSTRAP,
             activatableToolIds = PHONE_ACTIONS + SCREEN + PersonalConfigurationToolAccess.all + WorkspaceToolAccess.canvasWorkflowTools +
                 setOf("halo_canvas_current", "halo_delegate_task", "halo_research", "halo_read_payload", "halo_search_conversations",
-                    "halo_fetch_url", "halo_web_search_prepare", "halo_web_search") + extraActivatable,
+                    "halo_fetch_url", "halo_web_search_prepare", "halo_web_search", "halo_routine_snapshot", "halo_create_routine") + extraActivatable,
         )
     }
 }

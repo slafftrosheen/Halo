@@ -232,17 +232,14 @@ fun AutomationScreen(viewModel: RoutinesViewModel, onBack: () -> Unit, onNotific
         defaultDisabledActionReason = androidx.compose.ui.res.stringResource(if (state.loading) com.halo.app.R.string.action_loading else com.halo.app.R.string.action_wait),
         actions = listOf(
             ShellPageAction("routine.new", "New automation", HaloGlyph.AUTOMATION, !state.loading && !state.saving) { creating = true },
-            ShellPageAction("routine.routines", "Routines", HaloGlyph.AUTOMATION) { tab = AutomationTab.ROUTINES },
-            ShellPageAction("routine.followups", "Follow-ups", HaloGlyph.ACTIVITY) { tab = AutomationTab.FOLLOW_UPS },
-            ShellPageAction("routine.history", "History", HaloGlyph.ACTIVITY) { tab = AutomationTab.HISTORY },
             ShellPageAction("routine.notifications", "Notification settings", HaloGlyph.NOTIFICATIONS, onInvoke = onNotifications),
         )) {
         val statuses = state.routines.map { routineUiStatus(it, readiness.issue(it) != null, it.id.value in state.blockedRoutines) }
         Text(uiText("%1\$d on · %2\$d off", state.routines.count { it.enabled }, state.routines.count { !it.enabled }))
         val attentionCount = statuses.count { it in setOf(RoutineUiStatus.NEEDS_REVIEW, RoutineUiStatus.NEEDS_SETUP, RoutineUiStatus.BLOCKED) } + state.blockedRoutines.keys.count { id -> state.routines.none { it.id.value == id } }
         Text(uiText(when { state.routines.isEmpty() -> "No automation has been tested yet."; attentionCount == 0 -> "No setup issues reported for saved automations."; else -> "Some automations need review or setup." }), style = MaterialTheme.typography.bodySmall)
-        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) HaloFocusAction(uiText("New automation"), HaloGlyph.AUTOMATION, !state.loading && !state.saving, { creating = true }, active = state.routines.isEmpty())
-        if (!com.halo.app.ui.presence.LocalShellHaloOrb.current) ScrollableTabRow(selectedTabIndex = tab.ordinal, edgePadding = 0.dp,
+        HaloFocusAction(uiText("New automation"), HaloGlyph.AUTOMATION, !state.loading && !state.saving, { creating = true }, active = state.routines.isEmpty())
+        ScrollableTabRow(selectedTabIndex = tab.ordinal, edgePadding = 0.dp,
             containerColor = androidx.compose.ui.graphics.Color.Transparent) {
             AutomationTab.entries.forEach { item -> Tab(selected = tab == item, onClick = { tab = item }, text = { Text(uiText(item.title), maxLines = 1, softWrap = false) }) }
         }
@@ -437,8 +434,8 @@ private fun RunEvidence(run: RoutineRunSummary, onActivity: () -> Unit) {
     DetailField("Delivery", uiText(deliveryResultLabel(run.deliveryOutcome)))
     if (run.coalescedCount > 1) Text(uiText("%1\$d notifications grouped", run.coalescedCount))
     routineRunExplanation(run.state)?.let { DetailField("Details", uiText(it)) }
-    if (run.state == RoutineRunState.COMPLETED) {
-        run.reason?.takeIf { it.isNotBlank() }?.let { DetailField("Result", it) }
+    run.reason?.takeIf { it.isNotBlank() }?.let {
+        DetailField(if (run.state == RoutineRunState.COMPLETED) "Result" else "Reason", it)
     }
     if (run.agentRunId.isNotBlank()) TextButton(onClick = onActivity) { Text(uiText("Open in Activity")) }
 }

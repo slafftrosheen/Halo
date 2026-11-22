@@ -13,9 +13,9 @@ import java.time.format.TextStyle
 @Composable internal fun RoutineTemplate.localizedDraft(): RoutineDraft {
     val seed = androidx.compose.runtime.remember(this) { buildDraft() }
     val name = uiText(seed.routine.name)
-    val actions = if (this == RoutineTemplate.DIGEST) seed.routine.actions else {
-        val message = uiText(actionArguments(seed.routine.actions.single()).optString("text", ""))
-        listOf(messageAction(message))
+    val actions = seed.routine.actions.map { action ->
+        if (action.toolId == "halo_routine_message") messageAction(uiText(actionArguments(action).optString("text")))
+        else action
     }
     return seed.copy(routine = seed.routine.copy(name = name, actions = actions))
 }
@@ -70,6 +70,7 @@ import java.time.format.TextStyle
 @Composable internal fun RoutineAction.uiLabel(): String = when (toolId) {
     "halo_routine_message" -> uiText("Show “%1\$s”", actionArguments(this).optString("text", ""))
     "halo_notification_digest" -> uiText("Notification digest · last %1\$d minutes", actionArguments(this).optInt("window_minutes", 60))
+    com.halo.app.automation.RoutineSnapshotTool.ID -> uiText(snapshotSection()?.title ?: "Read a Halo summary")
     else -> uiText("Additional approved action")
 }
 

@@ -960,8 +960,17 @@ object ManualDependencyGraph {
         }
     }
     val routineMessageTool by lazy { com.halo.app.automation.RoutineMessageTool() }
+    val routineSnapshotTool by lazy { com.halo.app.automation.RoutineSnapshotTool { section ->
+        com.halo.app.everyday.briefing.readRoutineSnapshot(section)
+    } }
     // Same executor and registry contract, without initializing unrelated workspace/device tools in a worker.
-    val automationToolRegistry by lazy { com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool, routineMessageTool), notificationDigestTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::notificationDigest) + routineMessageTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::routineMessage), payloadStore = contentPayloadStore) }
+    val automationToolRegistry by lazy {
+        val localActions = listOf(routineMessageTool, routineSnapshotTool)
+        com.halo.runtime.cognition.tools.ToolRegistry(listOf(notificationDigestTool) + localActions,
+            notificationDigestTool.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::notificationDigest) +
+                localActions.flatMap { it.definitions().mapNotNull(com.halo.app.di.tools.HaloToolDescriptors::routineMessage) },
+            payloadStore = contentPayloadStore)
+    }
     val screenStore by lazy { com.halo.app.screen.LocalScreenStore(applicationContext) }
     val routineRepository by lazy { com.halo.app.data.routine.RoomRoutineRepository(appDatabase.routineDao()) }
     val routineExecutor by lazy { com.halo.app.automation.RoutineExecutor(appDatabase, routineRepository,
@@ -984,7 +993,7 @@ object ManualDependencyGraph {
         }, attention = attentionController, pause = haloPause, currentlyAllowed = { tool ->
             val skill = when (tool) {
                 com.halo.app.notification.NotificationDigestTool.ID -> "halo.notifications"
-                com.halo.app.automation.RoutineMessageTool.ID -> "halo.automation"
+                com.halo.app.automation.RoutineMessageTool.ID, com.halo.app.automation.RoutineSnapshotTool.ID -> "halo.automation"
                 else -> null
             }
             skill != null && storage.getBoolean("skill_enabled_$skill", true) &&
@@ -1502,6 +1511,7 @@ object ManualDependencyGraph {
                 currentTimeExecutor,
                 notificationExecutor,
                 routineMessageTool,
+                routineSnapshotTool,
                 storageExecutor,
                 fileExecutor,
                 workspaceExecutor,
@@ -1525,6 +1535,7 @@ object ManualDependencyGraph {
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.CURRENT_TIME to currentTimeExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.NOTIFICATION_DIGEST to notificationExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ROUTINE_MESSAGE to routineMessageTool,
+                com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.ROUTINE_MESSAGE to routineSnapshotTool,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.STORAGE_STATUS to storageExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.FILE to fileExecutor,
                 com.halo.app.di.tools.HaloToolDescriptors.ExecutorKind.WORKSPACE to workspaceExecutor,

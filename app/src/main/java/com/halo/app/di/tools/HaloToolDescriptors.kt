@@ -9,6 +9,9 @@ import com.halo.runtime.cognition.tools.ToolDescriptor
 import com.halo.runtime.cognition.tools.ToolExecutionPolicy
 import com.halo.runtime.cognition.tools.ToolConcurrency
 import com.halo.runtime.cognition.tools.ToolId
+import com.halo.runtime.cognition.tools.ToolOperability
+import com.halo.runtime.cognition.tools.ToolOperation
+import com.halo.runtime.cognition.tools.ToolResultEncoding
 import com.halo.runtime.cognition.tools.ToolPresentation
 import com.halo.runtime.cognition.tools.ToolRequirement
 import com.halo.runtime.cognition.tools.ToolRiskClass
@@ -267,13 +270,21 @@ object HaloToolDescriptors {
     }
 
     fun routineMessage(definition: ToolDefinition): ToolDescriptor? {
-        if (definition.name != "halo_routine_message") return null
+        val snapshot = definition.name == com.halo.app.automation.RoutineSnapshotTool.ID
+        if (!snapshot && definition.name != "halo_routine_message") return null
         return descriptor(definition.name, definition, ToolCategory.INFORMATION, readOnly(definition.name),
-            keywords = setOf("routine", "message", "alert"),
-            presentation = ToolPresentation(title = "Show message", actionVerb = "Show message"))
+            keywords = if (snapshot) setOf("routine", "Planner", "weather", "headline", "brief", "automation")
+                else setOf("routine", "message", "alert"),
+            presentation = if (snapshot) ToolPresentation(title = "Read a Halo summary", actionVerb = "Read", targetArgument = "section")
+                else ToolPresentation(title = "Show message", actionVerb = "Show message"))
             .copy(automation = ToolAutomationMetadata(
                 com.halo.runtime.cognition.routine.AutomationPermission.ALLOWED_WITH_ROUTINE_GRANT,
-                backgroundCompatible = true, argumentsPersistable = true, requiresModel = false))
+                backgroundCompatible = true, argumentsPersistable = true, requiresModel = false),
+                operability = if (snapshot) ToolOperability(capabilityId = CapabilityId("workspace.read"), owner = "RoutineSnapshotTool",
+                    operation = ToolOperation.QUERY, resultEncoding = ToolResultEncoding.TEXT,
+                    resultSchema = mapOf("type" to "string", "maxLength" to 240),
+                    limitations = setOf("Local saved data, grown-up access, no network or direct delivery."))
+                else null)
     }
 
     fun modelSetup(definition: ToolDefinition): ToolDescriptor? {

@@ -1,5 +1,8 @@
 package com.halo.app.ui.screens.settings
 
+import com.halo.app.automation.RoutineSnapshotSection
+import com.halo.app.automation.RoutineSnapshotTool
+
 import com.halo.runtime.cognition.routine.*
 import com.halo.app.automation.RoutineArguments
 import com.halo.runtime.cognition.watch.*
@@ -71,7 +74,11 @@ enum class RoutineTemplate(val title: String, val description: String) {
     BATTERY("Battery low alert", "Tell me when battery falls below 20%"),
     NETWORK("Network is back", "Tell me when a usable connection returns"),
     DEVICE("Device connected", "Choose a device and receive an update"),
-    DIGEST("Daily notification digest", "An evening summary of the last 8 hours");
+    DIGEST("Daily notification digest", "An evening summary of the last 8 hours"),
+    MORNING_PLAN("Morning Planner", "Get the day's event and task counts at 8:00"),
+    TOMORROW_PLAN("Plan for tomorrow", "Get tomorrow's event and task counts at 20:00"),
+    MORNING_WEATHER("Morning weather", "Get your selected city's saved forecast at 8:00"),
+    READS_HEADLINE("Morning headline", "Get the latest headline from your selected Reads sources at 9:00");
 
     fun buildDraft(now: Instant = Instant.now(), zone: ZoneId = ZoneId.systemDefault()): RoutineDraft {
         val trigger = when (this) {
@@ -79,10 +86,17 @@ enum class RoutineTemplate(val title: String, val description: String) {
             NETWORK -> RoutineTrigger.NetworkAvailable
             DEVICE -> RoutineTrigger.DeviceConnected("")
             DIGEST -> RoutineTrigger.AtTime(LocalTime.of(18, 0), zoneId = zone)
+            MORNING_PLAN, MORNING_WEATHER -> RoutineTrigger.AtTime(LocalTime.of(8, 0), zoneId = zone)
+            TOMORROW_PLAN -> RoutineTrigger.AtTime(LocalTime.of(20, 0), zoneId = zone)
+            READS_HEADLINE -> RoutineTrigger.AtTime(LocalTime.of(9, 0), zoneId = zone)
         }
         val name = when (this) { BATTERY -> "Battery low"; DIGEST -> "Evening digest"; else -> title }
         val action = when (this) {
             DIGEST -> RoutineAction("halo_notification_digest", "{\"window_minutes\":480}")
+            MORNING_PLAN -> snapshotAction(RoutineSnapshotSection.TODAY)
+            TOMORROW_PLAN -> snapshotAction(RoutineSnapshotSection.TOMORROW)
+            MORNING_WEATHER -> snapshotAction(RoutineSnapshotSection.WEATHER)
+            READS_HEADLINE -> snapshotAction(RoutineSnapshotSection.HEADLINE)
             else -> messageAction(when (this) {
                 BATTERY -> "Battery is below 20%"
                 NETWORK -> "Network connection is available again"
@@ -95,9 +109,14 @@ enum class RoutineTemplate(val title: String, val description: String) {
 }
 
 fun messageAction(text: String) = RoutineAction("halo_routine_message", JSONObject().put("text", text).toString())
+internal fun snapshotAction(section: RoutineSnapshotSection) =
+    RoutineAction(RoutineSnapshotTool.ID, JSONObject().put("section", section.name).toString())
+internal fun RoutineAction.snapshotSection(): RoutineSnapshotSection? =
+    RoutineSnapshotSection.entries.firstOrNull { it.name == actionArguments(this).optString("section") }
 fun actionArguments(action: RoutineAction): JSONObject = runCatching { JSONObject(action.argumentsJson) }.getOrElse { JSONObject() }
 fun RoutineAction.humanLabel(): String = when (toolId) {
     "halo_routine_message" -> "Show \"${actionArguments(this).optString("text", "")}\""
+    RoutineSnapshotTool.ID -> snapshotSection()?.title ?: "Read a Halo summary"
     "halo_notification_digest" -> {
         val minutes = actionArguments(this).optInt("window_minutes", 60)
         "Notification digest · last ${if (minutes % 60 == 0) "${minutes / 60} hour${if (minutes == 60) "" else "s"}" else "$minutes minutes"}"

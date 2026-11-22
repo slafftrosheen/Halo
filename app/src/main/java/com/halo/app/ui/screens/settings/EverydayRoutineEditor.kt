@@ -14,6 +14,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.activity.compose.BackHandler
+import com.halo.app.automation.RoutineSnapshotSection
+import com.halo.app.automation.RoutineSnapshotTool
 import com.halo.app.ui.design.HaloFocusAction
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
@@ -76,8 +78,9 @@ private fun RoutinePrivacy(routine: Routine) {
         is RoutineTrigger.AtTime, is RoutineTrigger.Once -> uiText("Halo uses the time you choose.")
     }
     val output = when {
-        routine.actions.any { it.toolId !in setOf("halo_routine_message", "halo_notification_digest") } ->
+        routine.actions.any { it.toolId !in setOf("halo_routine_message", "halo_notification_digest", RoutineSnapshotTool.ID) } ->
             uiText("Review the additional action and its access before saving.")
+        routine.actions.any { it.toolId == RoutineSnapshotTool.ID } -> uiText("Halo reads saved information on this phone when the routine runs.")
         routine.actions.any { it.toolId == "halo_notification_digest" } -> uiText("The notification digest is made on this phone.")
         else -> null
     }
@@ -121,6 +124,11 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
     val labels = readiness.labels.copy(apps = readiness.labels.apps + chosenApps)
     val editorReadiness = readiness.copy(labels = labels)
     fun replaceAction(index: Int, action: RoutineAction) { routine = routine.copy(actions = routine.actions.mapIndexed { i, old -> if (i == index) action else old }) }
+    fun moveAction(index: Int, destination: Int) {
+        val reordered = routine.actions.toMutableList()
+        reordered.add(destination, reordered.removeAt(index))
+        routine = routine.copy(actions = reordered)
+    }
     fun replaceCondition(index: Int, condition: RoutineCondition) { routine = routine.copy(conditions = routine.conditions.mapIndexed { i, old -> if (i == index) condition else old }) }
     fun openReview(tryIt: Boolean) {
         try {
@@ -240,11 +248,30 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                             val minutes = actionArguments(action).optInt("window_minutes", 60)
                             DigestWindow(minutes, onValidity = { inputValidity("window-$index", it) }) { value -> replaceAction(index, action.copy(argumentsJson = JSONObject().put("window_minutes", value).toString())) }
                         }
+                        RoutineSnapshotTool.ID -> {
+                            Text(uiText("Read a Halo summary"), style = MaterialTheme.typography.titleMedium)
+                            RoutineSnapshotSection.entries.forEach { section ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    RadioButton(selected = action.snapshotSection() == section,
+                                        onClick = { replaceAction(index, snapshotAction(section)) })
+                                    Text(uiText(section.title))
+                                }
+                            }
+                        }
                         else -> {
                             val descriptor = descriptors.firstOrNull { it.name == action.toolId }
                             Text(descriptor?.presentation?.title ?: "Additional approved action")
                             if (descriptor == null) Text(uiText("Preserved from this automation. This action must be available before saving."))
                             else SchemaArguments(descriptor, action.argumentsJson) { replaceAction(index, action.copy(argumentsJson = it)) }
+                        }
+                    }
+                    Row {
+                        if (routine.actions.size > 1) {
+                            TextButton(enabled = index > 0 && invalidInputs.isEmpty(), onClick = { moveAction(index, index - 1) }) {
+                                Text(uiText("Move up"))
+                            }
+                            TextButton(enabled = index < routine.actions.lastIndex && invalidInputs.isEmpty(),
+                                onClick = { moveAction(index, index + 1) }) { Text(uiText("Move down")) }
                         }
                     }
                     TextButton(onClick = { routine = routine.copy(actions = routine.actions.filterIndexed { i, _ -> i != index }); invalidInputs = invalidInputs.filterNot { it.startsWith("window-") }.toSet() }) { Text(uiText("Remove action")) }
@@ -326,11 +353,13 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
             "action" -> descriptors.forEach { descriptor -> PickerItem(when (descriptor.name) {
                 "halo_routine_message" -> "Show message"
                 "halo_notification_digest" -> "Notification digest"
+                RoutineSnapshotTool.ID -> "Read a Halo summary"
                 else -> descriptor.presentation?.title ?: "Additional action"
             }, enabled = routineSchemaEditable(descriptor)) {
                 routine = routine.copy(actions = routine.actions + when (descriptor.name) {
                     "halo_routine_message" -> messageAction("")
                     "halo_notification_digest" -> RoutineAction(descriptor.name, "{\"window_minutes\":480}")
+                    RoutineSnapshotTool.ID -> snapshotAction(RoutineSnapshotSection.TODAY)
                     else -> RoutineAction(descriptor.name)
                 }); picker = null
             } }
