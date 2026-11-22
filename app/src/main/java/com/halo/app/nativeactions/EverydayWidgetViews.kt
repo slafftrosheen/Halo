@@ -24,9 +24,10 @@ import kotlin.math.ceil
 
 /** Cached native presentation. Every clickable body carries its exact content-free target. */
 object EverydayWidgetViews {
-    internal fun supportsPaging(kind: EverydayCardKind) =
-        kind == EverydayCardKind.SMART_STACK || kind !in EverydayToolkitWidgets.launcherKinds &&
-            kind !in setOf(EverydayCardKind.CLOCK, EverydayCardKind.CLOCK_WEATHER, EverydayCardKind.DEVICE, EverydayCardKind.BRIEF)
+    internal fun supportsPaging(kind: EverydayCardKind) = kind in setOf(
+        EverydayCardKind.TODAY, EverydayCardKind.HEADLINES, EverydayCardKind.DASHBOARD, EverydayCardKind.UPCOMING,
+        EverydayCardKind.AGENDA, EverydayCardKind.TASKS, EverydayCardKind.REMINDERS, EverydayCardKind.ALARMS_TIMERS,
+        EverydayCardKind.QUICK_ACTIONS, EverydayCardKind.SMART_STACK)
     const val EXTRA_ID = "com.halo.app.extra.EVERYDAY_WIDGET_ID"
     const val EXTRA_VERSION = "com.halo.app.extra.EVERYDAY_WIDGET_VERSION"
     const val EXTRA_ACTION = "com.halo.app.extra.EVERYDAY_WIDGET_ACTION"

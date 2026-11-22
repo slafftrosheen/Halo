@@ -196,7 +196,12 @@ object EverydayCards {
                 val upcoming = occurrences.filter { it.record.kind == OrganizerKind.EVENT &&
                     (config.recordId == null || config.recordId == it.record.id) &&
                     EverydayToolkitWidgets.shows(config, it.start.atZone(zone).toLocalDate(), today, locale) }.sortedBy { it.start }
-                val rows = upcoming.map { EverydayCardRow(it.record.title, stamp(it.start), EverydayTarget.Record(it.record.id, it.record.version,it.originalStart), true) }
+                val rows = if (externalHost && config.widgetAutoPage && !input.kids) listOf(
+                    EverydayCardRow(text("Today") + " · " + upcoming.count { it.start.atZone(zone).toLocalDate() == today },
+                        target = EverydayTarget.Organizer),
+                    EverydayCardRow(text("Tomorrow") + " · " + upcoming.count { it.start.atZone(zone).toLocalDate() == today.plusDays(1) },
+                        target = EverydayTarget.Organizer),
+                ) else upcoming.map { EverydayCardRow(it.record.title, stamp(it.start), EverydayTarget.Record(it.record.id, it.record.version,it.originalStart), true) }
                 face(if (upcoming.isEmpty()) text(if (config.widgetShows == EverydayWidgetShows.DEFAULT)
                     "No upcoming events in the next seven days" else "No upcoming events") else "${upcoming.size} · ${text("Events")}", rows,
                     rows.firstOrNull()?.target ?: EverydayTarget.Organizer, true,status=text(when (config.widgetShows) {
@@ -222,7 +227,11 @@ object EverydayCards {
                 val due=deadlines.count { it.atZone(input.zone).toLocalDate()==today }
                 val cutoff=today.minusDays(30).atStartOfDay(input.zone).toInstant()
                 val overdue=deadlines.count { it < input.now && it>=cutoff }
-                face(if (rows.isEmpty()) text("No matching active items") else "${rows.size} · ${text("Active items")}", recordRows(rows), EverydayTarget.Organizer, true,
+                val display = if (externalHost && config.widgetAutoPage && !input.kids) listOf(
+                    EverydayCardRow(text("Due today") + " · $due", target = EverydayTarget.Organizer),
+                    EverydayCardRow(text("Overdue in the last 30 days") + " · $overdue", target = EverydayTarget.Organizer),
+                ) else recordRows(rows)
+                face(if (rows.isEmpty()) text("No matching active items") else "${rows.size} · ${text("Active items")}", display, EverydayTarget.Organizer, true,
                     status="${text("Due today")}: $due · ${text("Overdue in the last 30 days")}: $overdue")
             }
             EverydayCardKind.ALARMS_TIMERS -> {
