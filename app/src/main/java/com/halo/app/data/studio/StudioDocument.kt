@@ -100,6 +100,9 @@ sealed interface StudioCommand {
     data class Resize(val width: Int, val height: Int) : StudioCommand
     data class Background(val color: Int) : StudioCommand
     data class SetResolution(val dpi: Int) : StudioCommand
+    data class EditPath(val layerId: String, val contour: Int, val edit: StudioNodeEdit) : StudioCommand
+    data class CombineShapes(val targetId: String, val otherId: String, val operation: StudioShapeOperation,
+        val keepSources: Boolean = true, val name: String? = null, val resultId: String = UUID.randomUUID().toString()) : StudioCommand
 }
 
 fun StudioDocument.apply(command: StudioCommand): StudioDocument {
@@ -135,6 +138,12 @@ fun StudioDocument.apply(command: StudioCommand): StudioDocument {
         is StudioCommand.Resize -> copy(width = command.width, height = command.height)
         is StudioCommand.Background -> copy(background = command.color)
         is StudioCommand.SetResolution -> copy(dpi = command.dpi)
+        is StudioCommand.EditPath -> {
+            val layer = editable(command.layerId)
+            val shape = requireNotNull(layer.vector).editPath(command.contour, command.edit)
+            copy(layers = layers.map { if (it.id == layer.id) layer.copy(vector = shape) else it }, selectedLayerId = layer.id)
+        }
+        is StudioCommand.CombineShapes -> combineShapes(command)
     }
     return result.also(StudioDocument::requireValid)
 }

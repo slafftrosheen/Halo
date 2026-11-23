@@ -56,6 +56,14 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
             listOf("x", "y", "inX", "inY", "outX", "outY").associateWith { fraction }, listOf("x", "y"))),
     ), listOf("kind"))
     private val fields = schema(changes + mapOf(
+        "otherLayerId" to id,
+        "shapeOperation" to mapOf("type" to "string", "enum" to StudioShapeOperation.entries.map { it.name }),
+        "keepSources" to mapOf("type" to "boolean"),
+        "contour" to mapOf("type" to "integer", "minimum" to 0, "maximum" to StudioVectorGeometry.MAX_CONTOURS - 1),
+        "node" to mapOf("type" to "integer", "minimum" to 0, "maximum" to StudioVectorGeometry.MAX_CONTOUR_NODES - 1),
+        "control" to mapOf("type" to "string", "enum" to StudioPathControl.entries.map { it.name }),
+        "x" to fraction, "y" to fraction,
+        "fraction" to mapOf("type" to "number", "minimum" to .01, "maximum" to .99),
         "vector" to vector, "dpi" to mapOf("type" to "integer", "minimum" to 36, "maximum" to 1200),
         "layerId" to mapOf("anyOf" to listOf(id, mapOf("type" to "null"))),
         "changes" to schema(changes, emptyList()),
@@ -82,13 +90,18 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
             mapOf("title" to text, "handoffId" to id, "sourceId" to id, "sourceVersion" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 200), "width" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
                 "height" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 4096),
                 "preset" to mapOf("type" to "string", "enum" to StudioPreset.entries.map { it.name })), listOf("title")),
-        definition("halo_studio_get", "Read one Studio project's revision, layer metadata, saved versions and whether it has a fresh explicit Ink or pixel selection.", mapOf("projectId" to id)),
-        definition("halo_studio_edit", "Edit a local draft using its exact observed revision. Bounds/mask/crop use thousandths. Add requires name; add_text also text; add_ink/set_ink use bounded portable Ink encoding. update_layer uses layerId and changes; transforms are global. Local pixel tools require the project open in Studio. select_pixels takes shape and explicit points in thousandths (two corners, lasso vertices, or a wand seed; subject can infer a foreground without points). Smudge takes an explicit points path. Ask for a gesture or explicit coordinates when needed. Copy and erase act on the current pixel selection. Undo/redo/restore preserve originals. Stale revisions are rejected.",
+        definition("halo_studio_get", "Read Studio layer IDs and the current project revision. Pass vectorLayerId to read one editable path, with optional zero-based contour and nodeOffset. Path nodes and handles use 0 to 1 coordinates within that layer.", mapOf(
+            "projectId" to id, "vectorLayerId" to id,
+            "contour" to mapOf("type" to "integer", "minimum" to 0, "maximum" to StudioVectorGeometry.MAX_CONTOURS - 1),
+            "nodeOffset" to mapOf("type" to "integer", "minimum" to 0, "maximum" to StudioVectorGeometry.MAX_CONTOUR_NODES - 1),
+        ), listOf("projectId")),
+        definition("halo_studio_edit", "Edit a local draft using its exact observed revision. Bounds/mask/crop use thousandths. Add requires name; add_text also text; add_ink/set_ink use bounded portable Ink encoding. update_layer uses layerId and changes; transforms are global. Local pixel tools require the project open in Studio. select_pixels takes shape and explicit points in thousandths (two corners, lasso vertices, or a wand seed; subject can infer a foreground without points). Smudge takes an explicit points path. Ask for a gesture or explicit coordinates when needed. Copy and erase act on the current pixel selection. Use combine_shapes with layerId as the target, otherLayerId, and WELD, TRIM, or INTERSECT as shapeOperation. TRIM removes the second shape from the target. Sources are kept hidden by default. For path edits use zero-based contour and node indexes and explicit 0 to 1 coordinates. Read vectorLayerId first. Stale revisions are rejected.",
             mapOf("projectId" to id, "revision" to revision, "operation" to mapOf("type" to "string", "enum" to listOf(
                 "add_text", "add_rectangle", "add_ellipse", "add_ink", "set_ink", "update_layer", "delete_layer", "move_layer", "select_layer",
                 "transform", "resize", "background", "undo", "redo", "restore_version", "import_image", "delete_selected_ink",
                 "select_pixels", "clear_pixel_selection", "copy_selected_pixels", "erase_selected_pixels", "smudge_pixels",
-                "add_shape", "edit_shape", "set_resolution")), "fields" to fields)),
+                "add_shape", "edit_shape", "set_resolution", "combine_shapes", "move_path_node",
+                "split_path_segment", "delete_path_node", "reverse_path_contour")), "fields" to fields)),
         definition("halo_studio_save", "Save a local draft as a version, save a separate copy, rename, or discard draft changes. Copy/rename require title. Exact revision required.",
             mapOf("projectId" to id, "revision" to revision, "action" to mapOf("type" to "string", "enum" to listOf("save", "copy", "rename", "discard")),
                 "title" to text), listOf("projectId", "revision", "action")),
@@ -113,6 +126,12 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
             val numeric = value.toDouble()
             require(numeric.isFinite() && numeric % 1.0 == 0.0 && numeric in 1.0..9_007_199_254_740_991.0)
             return numeric.toLong()
+        }
+        fun index(key: String, max: Int): Int {
+            if (key !in args) return 0
+            val value = (args[key] as? Number)?.toDouble() ?: throw IllegalArgumentException("Expected index")
+            require(value in 0.0..max.toDouble() && value % 1.0 == 0.0)
+            return value.toInt()
         }
         try {
             when (toolCall.functionName) {
@@ -168,11 +187,18 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                     return success(JSONObject().put("canvasId", canvas).put("outputId", output).put("nodeId", node).put("inserted", true))
                 }
                 "halo_studio_get" -> {
-                    exact(setOf("projectId")); val project = requireNotNull(studio.projects.get(objectId("projectId")))
+                    exact(setOf("projectId"), setOf("vectorLayerId", "contour", "nodeOffset"))
+                    val project = requireNotNull(studio.projects.get(objectId("projectId")))
+                    if ("vectorLayerId" in args) return success(pathPage(project, objectId("vectorLayerId"),
+                        index("contour", StudioVectorGeometry.MAX_CONTOURS - 1),
+                        index("nodeOffset", StudioVectorGeometry.MAX_CONTOUR_NODES - 1)))
+                    require("contour" !in args && "nodeOffset" !in args)
                     val result = summary(project)
                     result.put("layers", JSONArray().apply { project.session.current.layers.forEach { layer ->
                         put(JSONObject().put("id", layer.id).put("name", layer.name.take(80)).put("kind", layer.kind.name)
                             .put("visible", layer.visible).put("locked", layer.locked).put("opacity", layer.opacity)
+                            .put("rotation", layer.rotation).put("canCombineShape", layer.canCombineShape())
+                            .put("vectorShape", layer.vector?.shape?.name ?: JSONObject.NULL)
                             .put("bounds", JSONObject().put("x", layer.bounds.x).put("y", layer.bounds.y).put("width", layer.bounds.width).put("height", layer.bounds.height))
                             .put("text", layer.text.take(120)).put("textTruncated", layer.text.length > 120)
                             .put("sourceId", layer.source?.objectId ?: JSONObject.NULL).put("sourceVersion", layer.source?.version ?: JSONObject.NULL))
@@ -224,8 +250,28 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
         catch (_: Exception) { return ToolExecutionResult.Failed(toolCall.id, toolCall.functionName,
             "Studio could not complete this action. Reopen the project before retrying.") }
     }
+    private fun pathPage(project: StudioProject, layerId: String, contour: Int, offset: Int): JSONObject {
+        val document = project.session.current
+        val layer = requireNotNull(document.layers.find { it.id == layerId })
+        val vector = requireNotNull(layer.vector).also { require(it.shape == StudioShape.PATH) }
+        val nodes = requireNotNull(vector.contours.getOrNull(contour))
+        require(offset < nodes.size)
+        val page = nodes.drop(offset).take(24)
+        val next = (offset + page.size).takeIf { it < nodes.size }
+        return summary(project).put("vectorPath", JSONObject()
+            .put("layerId", layer.id).put("locked", layer.locked).put("closed", vector.closed)
+            .put("contourCount", vector.contours.size).put("contour", contour).put("nodeCount", nodes.size)
+            .put("nodeOffset", offset).put("nextOffset", next ?: JSONObject.NULL)
+            .put("nodes", JSONArray(page.map { n -> JSONObject()
+                .put("x", n.x.toDouble()).put("y", n.y.toDouble())
+                .put("inX", n.incomingX.toDouble()).put("inY", n.incomingY.toDouble())
+                .put("outX", n.outgoingX.toDouble()).put("outY", n.outgoingY.toDouble())
+            })))
+    }
+
     private fun summary(project: StudioProject) = JSONObject().put("projectId", project.id).put("revision", project.revision)
         .put("title", project.title).put("width", project.session.current.width).put("height", project.session.current.height)
         .put("layerCount", project.session.current.layers.size).put("localDraft", project.hasUnsavedChanges)
+        .put("selectedLayerId", project.session.current.selectedLayerId ?: JSONObject.NULL)
         .put("canUndo", project.session.undo.isNotEmpty()).put("canRedo", project.session.redo.isNotEmpty())
 }

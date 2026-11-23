@@ -111,6 +111,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     var transforms by remember(projectId) { mutableStateOf<StudioProject?>(null) }
     var cropOnly by remember(projectId) { mutableStateOf(false) }
     var choosingShape by remember(projectId) { mutableStateOf(false) }
+    var combineRevision by remember(projectId) { mutableStateOf<Long?>(null) }
     var vectorExport by remember(projectId) { mutableStateOf(false) }
     var vectorEditing by remember(projectId) { mutableStateOf<Triple<Long, StudioLayer?, StudioShape>?>(null) }
     var moveTarget by remember(projectId) { mutableStateOf<Pair<StudioProject, StudioLayer>?>(null) }
@@ -228,7 +229,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         selectionIds = listOfNotNull(selectedLayerId),
         helpDescription = stringResource(R.string.zone5_help_studio),
         guidanceBlocked = lookDraft != null || discardTarget != null || busy || state.error || state.loading || naming != null || addingLayer || editing != null || importing ||
-            background != null || transforms != null || choosingShape || vectorExport || vectorEditing != null || moveTarget != null || eyedropper != null ||
+            background != null || transforms != null || choosingShape || combineRevision != null || vectorExport || vectorEditing != null || moveTarget != null || eyedropper != null ||
             fillTarget != null || pixelTarget != null || eraseTarget != null || wheelOpen || symmetryOpen || paletteOpen ||
             referenceOpen || lightTarget != null || layers || removingLayer != null || historyOpen || activeInk != null || state.aiReview || state.output != null,
         completedGuideIds = buildSet {
@@ -422,7 +423,8 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     "studio.fill" to HaloInstrumentAction({ fillTarget = project }, ready && canAdd),
                     "studio.eyedropper" to HaloInstrumentAction({ eyedropper = project }, ready && document.layers.isNotEmpty() && canAdd),
                     "studio.colour_wheel_triangle" to HaloInstrumentAction({ wheelOpen = true }, ready && canAdd),
-                    "studio.shapes" to HaloInstrumentAction({ choosingShape = true }, ready && canAdd),
+                    "studio.shapes" to HaloInstrumentAction({ choosingShape = true }, ready && (canAdd ||
+                        document.layers.any { it.kind == StudioLayerKind.RECTANGLE || it.kind == StudioLayerKind.ELLIPSE })),
                     "studio.text" to HaloInstrumentAction({ add(StudioLayerKind.TEXT, textName) }, ready && canAdd),
                     "studio.transform" to HaloInstrumentAction({ selectedLayer?.let { editing = StudioLayerEdit(project.revision, it, geometryFirst = true) } }, ready && selectedLayer != null),
                     "studio.crop" to HaloInstrumentAction(::openCrop, ready),
@@ -552,12 +554,13 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     }
     if (choosingShape && project != null) com.halo.app.ui.zone6.Zone6ButtonSheet(uiText("Shapes"), { choosingShape = false }) {
         val ellipseName = stringResource(R.string.studio_ellipse)
-        TextButton({ choosingShape = false; add(StudioLayerKind.RECTANGLE, rectangleName) }, enabled = !busy) { Text(rectangleName) }
-        TextButton({ choosingShape = false; add(StudioLayerKind.ELLIPSE, ellipseName) }, enabled = !busy) { Text(ellipseName) }
+        val canAdd = !busy && project.session.current.layers.size < StudioDocument.MAX_LAYERS
+        TextButton({ choosingShape = false; add(StudioLayerKind.RECTANGLE, rectangleName) }, enabled = canAdd) { Text(rectangleName) }
+        TextButton({ choosingShape = false; add(StudioLayerKind.ELLIPSE, ellipseName) }, enabled = canAdd) { Text(ellipseName) }
         TextButton(onClick = {
             choosingShape = false
             vectorEditing = Triple(project.revision, null, StudioShape.PATH)
-        }, enabled = !busy) { Text(uiText("Precision drawing")) }
+        }, enabled = canAdd) { Text(uiText("Precision drawing")) }
         val selectedShape = project.session.current.layers.firstOrNull {
             it.id == project.session.current.selectedLayerId && !it.locked &&
                 it.kind in setOf(StudioLayerKind.RECTANGLE, StudioLayerKind.ELLIPSE)
@@ -565,8 +568,20 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         if (selectedShape != null) TextButton(onClick = {
             choosingShape = false
             vectorEditing = Triple(project.revision, selectedShape,
-                selectedShape.vector?.shape ?: if (selectedShape.kind == StudioLayerKind.ELLIPSE) StudioShape.ARC else StudioShape.ROUNDED_RECT)
+                selectedShape.vector?.shape ?: if (selectedShape.kind == StudioLayerKind.ELLIPSE) StudioShape.ELLIPSE else StudioShape.ROUNDED_RECT)
         }, enabled = !busy) { Text(uiText("Edit selected shape")) }
+        if (project.session.current.layers.count { it.canCombineShape() } >= 2) TextButton(onClick = {
+            choosingShape = false
+            combineRevision = project.revision
+        }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Combine shapes")) }
+    }
+    combineRevision?.let { revision ->
+        val current = project?.takeIf { it.revision == revision }
+        if (current != null && !busy) StudioCombineShapesDialog(current.session.current, onApply = { command ->
+            combineRevision = null
+            viewModel.command(revision, command)
+        }, onDismiss = { combineRevision = null })
+        else LaunchedEffect(revision) { combineRevision = null }
     }
     vectorEditing?.let { (revision, layer, shape) ->
         val current = project?.takeIf { it.revision == revision }

@@ -72,6 +72,39 @@ object StudioEditParser {
                 StudioCommand.Replace(current.copy(bounds = fields["bounds"]?.let(::rect) ?: current.bounds,
                     vector = vector(fields["vector"])))
             }
+            "combine_shapes" -> {
+                only("layerId", "otherLayerId", "shapeOperation", "keepSources", "name")
+                val target = layer()
+                return StudioEditRequest.Command(StudioCommand.CombineShapes(target.id, fields.text("otherLayerId"),
+                    StudioShapeOperation.valueOf(fields.text("shapeOperation")),
+                    if ("keepSources" in fields) fields.flag("keepSources") else true,
+                    if ("name" in fields) fields.text("name").also { require(it.isNotBlank() && it.length <= 120) } else null))
+            }
+            "move_path_node", "split_path_segment", "delete_path_node", "reverse_path_contour" -> {
+                val contour = if ("contour" in fields) fields.integer("contour") else 0
+                val target = layer()
+                val edit = when (operation) {
+                    "move_path_node" -> {
+                        only("layerId", "contour", "node", "control", "x", "y")
+                        StudioNodeEdit.Move(fields.integer("node"),
+                            if ("control" in fields) StudioPathControl.valueOf(fields.text("control")) else StudioPathControl.NODE,
+                            fields.unit("x"), fields.unit("y"))
+                    }
+                    "split_path_segment" -> {
+                        only("layerId", "contour", "node", "fraction")
+                        StudioNodeEdit.Split(fields.integer("node"), fields.unit("fraction", .5f))
+                    }
+                    "delete_path_node" -> {
+                        only("layerId", "contour", "node")
+                        StudioNodeEdit.Delete(fields.integer("node"))
+                    }
+                    else -> {
+                        only("layerId", "contour")
+                        StudioNodeEdit.Reverse
+                    }
+                }
+                StudioCommand.EditPath(target.id, contour, edit)
+            }
             "set_resolution" -> { only("dpi"); StudioCommand.SetResolution(fields.integer("dpi")) }
             "set_ink" -> {
                 only("layerId", "ink")

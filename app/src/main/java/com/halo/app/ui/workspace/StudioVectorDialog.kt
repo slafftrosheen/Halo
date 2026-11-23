@@ -7,7 +7,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
@@ -17,9 +16,6 @@ import com.halo.app.R
 import com.halo.app.data.studio.*
 import com.halo.app.language.uiText
 import kotlin.math.roundToInt
-
-private val coordinate = Regex("""^[0-9]+(?:\.[0-9]+)?$""")
-private fun Float.nodeText() = java.math.BigDecimal(toString()).stripTrailingZeros().toPlainString()
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -34,10 +30,14 @@ internal fun StudioVectorDialog(
         original ?: StudioLayer(name = initialShape.name.replace('_', ' ').lowercase().replaceFirstChar(Char::uppercase),
             kind = StudioLayerKind.RECTANGLE, bounds = StudioRect(200, 200, 600, 600))
     }
-    val initial = remember(layer, initialShape) { layer.vector ?: StudioVectorGeometry.default(initialShape) }
+    val initial = remember(layer, initialShape) {
+        layer.vector ?: StudioVectorGeometry.default(initialShape).let {
+            if (original != null && initialShape == StudioShape.ROUNDED_RECT) it.copy(corners = List(4) { 0f }) else it
+        }
+    }
     var unit by remember { mutableStateOf(StudioLengthUnit.MM) }
-    var shape by remember { mutableStateOf(initial.shape) }
     var vector by remember { mutableStateOf(initial) }
+    val shape = vector.shape
     var failure by remember { mutableStateOf(false) }
     val axes = remember(doc) { listOf(doc.width, doc.height, doc.width, doc.height) }
     val bounds = remember(layer) { listOf(layer.bounds.x, layer.bounds.y, layer.bounds.width, layer.bounds.height) }
@@ -46,43 +46,22 @@ internal fun StudioVectorDialog(
             .setScale(5, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()
     }
     var position by remember { mutableStateOf(fields(unit)) }
-    var nodesInput by remember(initial) { mutableStateOf(initial.nodes.joinToString("\n") { node ->
-        listOf(node.x, node.y, node.incomingX, node.incomingY, node.outgoingX, node.outgoingY).joinToString(" ") { it.nodeText() }
-    }) }
-    fun readNodes(): List<StudioPathNode> = nodesInput.lineSequence().filter { it.isNotBlank() }.map { row ->
-        val numbers = row.trim().split(Regex("""\s+"""))
-        require(numbers.size == 2 || numbers.size == 6)
-        val parsed = numbers.map { require(coordinate.matches(it)); it.toFloat() }
-        if (parsed.size == 2) StudioPathNode(parsed[0], parsed[1])
-        else StudioPathNode(parsed[0], parsed[1], parsed[2], parsed[3], parsed[4], parsed[5])
-    }.take(129).toList()
-    val preview = remember(vector, nodesInput) {
-        if (shape != StudioShape.PATH) vector
-        else runCatching { vector.copy(nodes = readNodes()) }.getOrDefault(vector)
-    }
     val previewColor = MaterialTheme.colorScheme.primary
     StudioAlertDialog(onDismissRequest = onDismiss, title = { Text(uiText("Precision drawing")) }, text = {
         Column(Modifier.heightIn(max = 600.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Canvas(Modifier.fillMaxWidth().height(120.dp)) {
+            if (shape != StudioShape.PATH) Canvas(Modifier.fillMaxWidth().height(120.dp)) {
                 val padding = 12.dp.toPx()
                 val box = RectF(padding, padding, size.width - padding, size.height - padding)
                 if (box.width() > 0 && box.height() > 0) {
-                    val path = preview.path(box).asComposePath()
-                    if (preview.outlineOnly) drawPath(path, previewColor, style = Stroke(3.dp.toPx()))
+                    val path = vector.path(box).asComposePath()
+                    if (vector.outlineOnly) drawPath(path, previewColor, style = Stroke(3.dp.toPx()))
                     else drawPath(path, previewColor)
                 }
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 StudioShape.entries.forEach { option ->
                     FilterChip(option == shape, {
-                        if (option != shape) {
-                            shape = option
-                            vector = StudioVectorGeometry.default(option)
-                            nodesInput = vector.nodes.joinToString("\n") { node ->
-                                listOf(node.x, node.y, node.incomingX, node.incomingY, node.outgoingX, node.outgoingY)
-                                    .joinToString(" ") { it.nodeText() }
-                            }
-                        }
+                        if (option != shape) vector = StudioVectorGeometry.default(option)
                     }, label = { Text(uiText(option.name.replace('_', ' ').lowercase().replaceFirstChar(Char::uppercase))) })
                 }
             }
@@ -131,11 +110,13 @@ internal fun StudioVectorDialog(
                     Slider(vector.sweep, { vector = vector.copy(sweep = it) }, valueRange = 1f..360f)
                 }
                 StudioShape.PATH -> {
-                    OutlinedTextField(nodesInput, { nodesInput = it.take(8000); failure = false },
-                        label = { Text(stringResource(R.string.vec_nodes)) }, modifier = Modifier.fillMaxWidth(),
-                        supportingText = { Text(uiText("One node per line: x y, then optional incoming and outgoing x y. Values from 0 to 1.")) },
-                        minLines = 3, maxLines = 7)
+                    val width = studioQuantity(position[2], unit.fromPixels(bounds[2] * axes[2] / 1000.0, doc.dpi))
+                    val height = studioQuantity(position[3], unit.fromPixels(bounds[3] * axes[3] / 1000.0, doc.dpi))
+                    val ratio = if (width != null && height != null && width > 0.0 && height > 0.0)
+                        (width / height).toFloat().coerceIn(.05f, 20f) else 1f
+                    StudioPathControls(vector, ratio) { vector = it }
                     FilterChip(vector.closed, { vector = vector.copy(closed = !vector.closed) },
+                        enabled = vector.additionalContours.isEmpty(),
                         label = { Text(stringResource(R.string.vec_close_path)) })
                 }
                 else -> Unit
@@ -156,7 +137,7 @@ internal fun StudioVectorDialog(
                     (unit.toPixels(raw, doc.dpi) * 1000.0 / axes[i]).roundToInt()
                 }
                 layer.copy(bounds = StudioRect(values[0], values[1], values[2], values[3]),
-                    vector = if (shape == StudioShape.PATH) vector.copy(nodes = readNodes()) else vector).also(StudioLayer::requireValid)
+                    vector = vector).also(StudioLayer::requireValid)
             }.onSuccess(onApply).onFailure { failure = true }
         }) { Text(stringResource(R.string.studio_apply)) }
     }, dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.studio_cancel)) } })

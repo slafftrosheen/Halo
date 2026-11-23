@@ -75,7 +75,8 @@ object WorkspaceOperabilityContracts {
                 "links" to "array", "truncated" to "boolean", "targetId" to "string", "targetVersion" to "integer", "linked" to "boolean",
                 "tag" to "string", "tagged" to "boolean")
             "CurrentCanvasContextOwner" -> mapOf("canvasId" to "string", "version" to "string", "selectedNodeIds" to "array", "selectionToken" to "string")
-            "StudioService" -> mapOf("projectId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "outputId" to "string", "fileVersion" to "string", "requestId" to "string", "nodeId" to "string")
+            "StudioService" -> mapOf("projectId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "outputId" to "string", "fileVersion" to "string", "requestId" to "string", "nodeId" to "string",
+                "selectedLayerId" to "string", "vectorPath" to "object", "layers" to "array")
             "WorkspaceFileTools" -> mapOf("noteId" to "string", "revision" to "integer", "objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string")
             "StudyUseCases" -> mapOf("sessionId" to "string", "version" to "string", "localDataVersion" to "string", "itemId" to "string", "itemVersion" to "string", "attemptId" to "string", "sessions" to "array", "cards" to "array", "saved" to "boolean", "deleted" to "boolean", "graded" to "boolean")
             else -> mapOf("objectId" to "string", "version" to "string", "nodeId" to "string", "requestId" to "string", "resultId" to "string", "resultVersion" to "string")

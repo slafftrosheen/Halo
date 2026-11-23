@@ -67,7 +67,7 @@ internal object StudioProjectExport {
         StudioDocumentCodec.decode(decoded).also { require(it.layers.none { layer -> layer.source != null }) }
     }
 
-    private data class Shape(val layer: StudioLayer, val path: Path, val stroke: Float)
+    private data class Shape(val layer: StudioLayer, val path: Path, val stroke: Float, val box: RectF)
 
     private fun shapes(document: StudioDocument) = document.layers.filter { it.visible && it.opacity > 0 }.map { layer ->
         val rect = layer.bounds.let { bounds ->
@@ -80,7 +80,7 @@ internal object StudioProjectExport {
             else addOval(rect, Path.Direction.CW)
         }
         path.transform(Matrix().apply { setRotate(layer.rotation.toFloat(), rect.centerX(), rect.centerY()) })
-        Shape(layer, path, minOf(rect.width(), rect.height()) * (vector?.stroke ?: 0f))
+        Shape(layer, path, minOf(rect.width(), rect.height()) * (vector?.stroke ?: 0f), rect)
     }
 
     private fun flatten(path: Path): List<Pair<List<Pair<Float, Float>>, Boolean>> {
@@ -112,12 +112,16 @@ internal object StudioProjectExport {
             val color = rgb(shape.layer.color)
             val alpha = (shape.layer.color ushr 24) / 255f * shape.layer.opacity / 1000f
             append("<path d=\"")
-            flatten(shape.path).forEach { (vertices, closed) ->
+            val native = writeNativePath(shape.layer, shape.box)
+            if (!native) flatten(shape.path).forEach { (vertices, closed) ->
                 vertices.forEachIndexed { index, (x, y) -> append(if (index == 0) "M" else "L").append(x).append(' ').append(y) }
                 if (closed) append('Z')
             }
             append("\" opacity=\"").append(alpha).append('"')
             val vector = shape.layer.vector
+            if (native && shape.layer.rotation != 0) append(" transform=\"rotate(").append(shape.layer.rotation)
+                .append(' ').append(shape.box.centerX()).append(' ').append(shape.box.centerY()).append(")\"")
+            if (vector?.additionalContours?.isNotEmpty() == true) append(" fill-rule=\"evenodd\"")
             if (vector?.outlineOnly == true) {
                 append(" fill=\"none\" stroke=\"").append(color).append("\" stroke-width=\"").append(shape.stroke).append('"')
                 if (vector.dash) append(" stroke-dasharray=\"").append(shape.stroke * 4).append(' ').append(shape.stroke * 3).append('"')
@@ -125,6 +129,47 @@ internal object StudioProjectExport {
             append("/>\n")
         }
         append("</svg>\n")
+    }
+
+    /** SVG preserves editable cubic segments. The DXF polyline writer still samples curved shapes. */
+    private fun StringBuilder.writeNativePath(layer: StudioLayer, box: RectF): Boolean {
+        val vector = layer.vector
+        if (vector?.shape == StudioShape.PATH) {
+            fun coordinate(x: Float, y: Float) {
+                append(box.left + box.width() * x).append(' ').append(box.top + box.height() * y).append(' ')
+            }
+            fun segment(a: StudioPathNode, b: StudioPathNode) {
+                if (a.x == a.outgoingX && a.y == a.outgoingY && b.x == b.incomingX && b.y == b.incomingY) append('L')
+                else {
+                    append('C')
+                    coordinate(a.outgoingX, a.outgoingY)
+                    coordinate(b.incomingX, b.incomingY)
+                }
+                coordinate(b.x, b.y)
+            }
+            vector.contours.forEach { contour ->
+                append('M')
+                coordinate(contour.first().x, contour.first().y)
+                for (index in 0 until contour.lastIndex) segment(contour[index], contour[index + 1])
+                if (vector.closed) { segment(contour.last(), contour.first()); append('Z') }
+            }
+            return true
+        }
+        if (vector?.shape == StudioShape.ELLIPSE || vector == null && layer.kind == StudioLayerKind.ELLIPSE) {
+            val mid = box.centerY()
+            val rx = box.width() / 2
+            val ry = box.height() / 2
+            append('M').append(box.left).append(' ').append(mid)
+            append('A').append(rx).append(' ').append(ry).append(" 0 1 0 ").append(box.right).append(' ').append(mid)
+            append('A').append(rx).append(' ').append(ry).append(" 0 1 0 ").append(box.left).append(' ').append(mid).append('Z')
+            return true
+        }
+        if (vector == null) {
+            append('M').append(box.left).append(' ').append(box.top)
+                .append('H').append(box.right).append('V').append(box.bottom).append('H').append(box.left).append('Z')
+            return true
+        }
+        return false
     }
 
     private fun rgb(value: Int) = "#" + (value and 0xFFFFFF).toString(16).padStart(6, '0')

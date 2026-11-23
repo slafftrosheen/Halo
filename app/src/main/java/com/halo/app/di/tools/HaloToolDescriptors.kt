@@ -384,11 +384,11 @@ object HaloToolDescriptors {
             reversible(ReplaySafety.NEVER_REPLAY), keywords = setOf("workspace", "continue", "context", "studio", "study", "canvas"),
             presentation = ToolPresentation(title = "Continue with this item", actionVerb = "Continue"))
         "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_status" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
-            readOnly(definition.name), keywords = setOf("studio", "image", "drawing", "layers", "project"),
+            readOnly(definition.name), keywords = setOf("studio", "image", "drawing", "layers", "project", "vector", "nodes", "path"),
             presentation = ToolPresentation(title = "Studio", actionVerb = "Open"))
         "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft" -> descriptor(
             definition.name, definition, ToolCategory.WORKSPACE, reversible(ReplaySafety.NEVER_REPLAY),
-            keywords = setOf("studio", "image", "drawing", "layers", "project", "export", "canvas"),
+            keywords = setOf("studio", "image", "drawing", "layers", "project", "export", "canvas", "vector", "weld", "trim", "intersect", "node"),
             presentation = ToolPresentation(title = "Studio", actionVerb = "Edit"))
         "halo_get_workspace_object" -> descriptor(definition.name, definition, ToolCategory.WORKSPACE,
             readOnly(definition.name), keywords = setOf("note", "workspace", "read"))

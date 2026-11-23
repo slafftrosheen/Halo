@@ -80,22 +80,36 @@ object StudioDocumentCodec {
         .put("sides", value.sides).put("inner", value.innerRadius.toDouble())
         .put("start", value.startAngle.toDouble()).put("sweep", value.sweep.toDouble())
         .put("stroke", value.stroke.toDouble()).put("dash", value.dash).put("closed", value.closed)
-        .put("nodes", JSONArray(value.nodes.map { node ->
-            JSONArray(listOf(node.x, node.y, node.incomingX, node.incomingY, node.outgoingX, node.outgoingY))
-        }))
+        .put("nodes", encodeNodes(value.nodes)).apply {
+            if (value.additionalContours.isNotEmpty()) put("contours", JSONArray(value.additionalContours.map(::encodeNodes)))
+        }
+
+    private fun encodeNodes(nodes: List<StudioPathNode>) = JSONArray(nodes.map { node ->
+        JSONArray(listOf(node.x, node.y, node.incomingX, node.incomingY, node.outgoingX, node.outgoingY))
+    })
 
     private fun decodeVector(value: JSONObject): StudioVectorGeometry {
-        value.fields("shape", "corners", "sides", "inner", "start", "sweep", "stroke", "dash", "closed", "nodes")
+        val expected = listOf("shape", "corners", "sides", "inner", "start", "sweep", "stroke", "dash", "closed", "nodes")
+        value.fields(*(expected + listOf("contours").filter(value::has)).toTypedArray())
         val corners = value.getJSONArray("corners").also { require(it.length() == 4) }
-        val nodes = value.getJSONArray("nodes").also { require(it.length() <= 128) }
-        fun numeric(array: JSONArray, index: Int): Float = (array.get(index) as? Number)?.toFloat() ?: error("Invalid vector coordinate")
         fun numeric(key: String): Float = (value.get(key) as? Number)?.toFloat() ?: error("Invalid vector quantity")
-        return StudioVectorGeometry(StudioShape.valueOf(value.string("shape")), List(4) { numeric(corners, it) },
+        return StudioVectorGeometry(StudioShape.valueOf(value.string("shape")), List(4) { (corners.get(it) as? Number)?.toFloat() ?: error("Invalid corner radius") },
             value.integer("sides"), numeric("inner"), numeric("start"), numeric("sweep"), numeric("stroke"),
-            value.boolean("dash"), value.boolean("closed"), List(nodes.length()) { index ->
-                val item = nodes.getJSONArray(index).also { require(it.length() == 6) }
-                StudioPathNode(numeric(item, 0), numeric(item, 1), numeric(item, 2), numeric(item, 3), numeric(item, 4), numeric(item, 5))
+            value.boolean("dash"), value.boolean("closed"), decodeNodes(value.getJSONArray("nodes")),
+            if (!value.has("contours")) emptyList() else value.getJSONArray("contours").let { contours ->
+                require(contours.length() < StudioVectorGeometry.MAX_CONTOURS)
+                List(contours.length()) { decodeNodes(contours.getJSONArray(it)) }
             })
+    }
+
+    private fun decodeNodes(nodes: JSONArray): List<StudioPathNode> {
+        require(nodes.length() <= StudioVectorGeometry.MAX_CONTOUR_NODES)
+        return List(nodes.length()) { index ->
+            val item = nodes.getJSONArray(index)
+            require(item.length() == 6)
+            fun coordinate(i: Int) = (item.get(i) as? Number)?.toFloat() ?: error("Invalid vector coordinate")
+            StudioPathNode(coordinate(0), coordinate(1), coordinate(2), coordinate(3), coordinate(4), coordinate(5))
+        }
     }
 
     private fun JSONObject.fields(vararg expected: String): JSONObject = apply {

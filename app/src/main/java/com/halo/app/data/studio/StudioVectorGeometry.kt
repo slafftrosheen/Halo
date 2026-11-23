@@ -7,7 +7,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /** Controls are relative to the live layer box. Its exact physical position comes from the document DPI. */
-enum class StudioShape { ROUNDED_RECT, ARC, POLYGON, STAR, LINE, ARROW, FRAME, PATH, DIMENSION }
+enum class StudioShape { ROUNDED_RECT, ARC, POLYGON, STAR, LINE, ARROW, FRAME, PATH, DIMENSION, ELLIPSE }
 
 data class StudioPathNode(
     val x: Float, val y: Float,
@@ -28,14 +28,20 @@ data class StudioVectorGeometry(
     val dash: Boolean = false,
     val closed: Boolean = true,
     val nodes: List<StudioPathNode> = emptyList(),
+    val additionalContours: List<List<StudioPathNode>> = emptyList(),
 ) {
     init {
         require(corners.size == 4 && corners.all { it in 0f..0.5f })
         require(sides in 3..60 && innerRadius in .05f..1f)
         require(startAngle in -360f..360f && sweep in -360f..360f && sweep != 0f)
         require(stroke in .001f..0.5f)
-        require(nodes.size <= 128 && (shape != StudioShape.PATH || nodes.size >= 2))
+        require(nodes.size <= MAX_CONTOUR_NODES && (shape != StudioShape.PATH || nodes.size >= 2))
+        require(additionalContours.size < MAX_CONTOURS)
+        require(additionalContours.isEmpty() || (shape == StudioShape.PATH && closed && nodes.size >= 3 &&
+            additionalContours.all { it.size in 3..MAX_CONTOUR_NODES }))
     }
+
+    val contours get() = listOf(nodes) + additionalContours
 
     val outlineOnly get() = shape in setOf(StudioShape.ARC, StudioShape.LINE, StudioShape.ARROW, StudioShape.FRAME, StudioShape.DIMENSION) ||
         (shape == StudioShape.PATH && !closed)
@@ -51,6 +57,7 @@ data class StudioVectorGeometry(
                 addRoundRect(box, radii, Direction.CW)
             }
             StudioShape.ARC -> arcTo(box, startAngle, sweep, true)
+            StudioShape.ELLIPSE -> addOval(box, Direction.CW)
             StudioShape.POLYGON, StudioShape.STAR -> {
                 val count = if (shape == StudioShape.STAR) sides * 2 else sides
                 repeat(count) { index ->
@@ -76,18 +83,29 @@ data class StudioVectorGeometry(
                 }
             }
             StudioShape.PATH -> {
-                val first = nodes.first()
-                moveTo(x(first.x), y(first.y))
+                if (additionalContours.isNotEmpty()) fillType = FillType.EVEN_ODD
                 fun connect(a: StudioPathNode, b: StudioPathNode) {
-                    cubicTo(x(a.outgoingX), y(a.outgoingY), x(b.incomingX), y(b.incomingY), x(b.x), y(b.y))
+                    if (a.outgoingX == a.x && a.outgoingY == a.y && b.incomingX == b.x && b.incomingY == b.y)
+                        lineTo(x(b.x), y(b.y))
+                    else cubicTo(x(a.outgoingX), y(a.outgoingY), x(b.incomingX), y(b.incomingY), x(b.x), y(b.y))
                 }
-                nodes.zipWithNext { from, to -> connect(from, to) }
-                if (closed) { connect(nodes.last(), first); close() }
+                contours.forEach { contour ->
+                    val first = contour.first()
+                    moveTo(x(first.x), y(first.y))
+                    for (index in 0 until contour.lastIndex) connect(contour[index], contour[index + 1])
+                    if (closed) {
+                        connect(contour.last(), first)
+                        close()
+                    }
+                }
             }
         }
     }
 
     companion object {
+        const val MAX_CONTOUR_NODES = 128
+        const val MAX_CONTOURS = 8
+
         fun default(shape: StudioShape) = if (shape == StudioShape.PATH) StudioVectorGeometry(shape, nodes = listOf(
             StudioPathNode(.15f, .72f, outgoingX = .16f, outgoingY = .2f),
             StudioPathNode(.55f, .24f, incomingX = .32f, incomingY = .17f, outgoingX = .78f, outgoingY = .28f),
