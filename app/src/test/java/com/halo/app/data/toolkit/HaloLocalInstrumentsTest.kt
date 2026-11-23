@@ -72,7 +72,13 @@ class HaloLocalInstrumentsTest {
         val definitions = HaloLocalInstrumentTools().definitions()
         val descriptors = definitions.map { requireNotNull(HaloLocalInstrumentTools.descriptor(it)) }
         val feature = ToolFeatureOperability("halo-11-instruments", definitions.map { it.name }.toSet())
-        assertEquals(10, feature.toolIds.size)
+        assertTrue(feature.toolIds.containsAll(setOf("halo_page_plan_sections", "halo_page_list", "halo_page_save", "halo_page_remove")))
+        for (name in listOf("halo_page_save", "halo_page_remove")) {
+            val change = descriptors.single { it.name == name }
+            assertEquals(ConfirmationPolicy.ALWAYS, change.security.confirmation)
+            assertEquals(ReplaySafety.NEVER_REPLAY, change.security.replaySafety)
+            assertEquals(setOf("revision"), change.operability?.sourceVersionArguments)
+        }
         assertEquals(emptyList<Any>(), ToolOperabilityReview.inspect(listOf(feature), descriptors))
         val keep = descriptors.single { it.name == "halo_maps_keep_place" }
         assertEquals(ConfirmationPolicy.ALWAYS, keep.security.confirmation)

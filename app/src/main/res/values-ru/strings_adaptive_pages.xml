@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="adaptive_page_changed">"Сохранённая страница изменилась. Откройте её заново или сохраните макет как копию."</string>
+    <string name="adaptive_page_source_changed">"Этот элемент изменился. Обновите страницу и повторите попытку."</string>
+    <string name="adaptive_page_save_failed">"Не удалось сохранить изменение"</string>
+    <string name="adaptive_page_saved">"Страница сохранена"</string>
+    <string name="adaptive_page_removed">"Сохранённая страница удалена"</string>
+    <string name="adaptive_page_suggest_less_receipt">"Этот блок будет реже появляться в предложениях."</string>
+    <string name="adaptive_page_adult_only">"Откройте пространство для взрослых, чтобы пользоваться этой страницей."</string>
+    <string name="adaptive_page_make">"Создать страницу"</string>
+    <string name="adaptive_page_editor">"Редактор страниц"</string>
+    <string name="adaptive_page_new">"Новая страница"</string>
+    <string name="adaptive_page_read_failed">"Не удалось открыть сохранённые страницы."</string>
+    <string name="adaptive_page_empty">"Сохранённые страницы появятся здесь."</string>
+    <string name="adaptive_page_remove_saved">"Удалить сохранённую страницу"</string>
+    <string name="adaptive_page_request">"Чем вы занимаетесь?"</string>
+    <string name="adaptive_page_request_hint">"Попробуйте назвать конкретный блок, например «Задачи» или «Погода»."</string>
+    <string name="adaptive_page_refresh">"Обновить блоки"</string>
+    <string name="adaptive_page_save_changes">"Сохранить изменения"</string>
+    <string name="adaptive_page_save_copy">"Сохранить копию"</string>
+    <string name="adaptive_page_name">"Название страницы"</string>
+    <string name="adaptive_page_smaller">"Меньше"</string>
+    <string name="adaptive_page_remove_block">"Убрать блок"</string>
+    <string name="adaptive_page_stored_preferences">"Настройки блоков на этом телефоне"</string>
+    <string name="adaptive_page_empty_events">"Нет предстоящих событий"</string>
+    <string name="adaptive_page_upcoming_events">"Предстоящие события"</string>
+    <string name="adaptive_page_empty_study">"Нет карточек для повторения"</string>
+    <string name="adaptive_page_empty_library">"Нет недавних заметок или холстов"</string>
+    <string name="adaptive_page_empty_focus">"Сегодня нет завершённых сеансов фокусировки"</string>
+    <string name="adaptive_page_quiet_off">"Часы тишины выключены"</string>
+    <string name="adaptive_page_wind_down">"Время отдыха"</string>
+    <string name="adaptive_page_why_agenda">"Предстоящие события из календарей, отображаемых в разделе «Сегодня»."</string>
+    <string name="adaptive_page_why_weather">"Последний сохранённый прогноз из выбранного источника погоды."</string>
+    <string name="adaptive_page_why_study">"Карточки из раздела «Учёба», которые пора повторить."</string>
+    <string name="adaptive_page_why_reads">"Свежие материалы из выбранных лент."</string>
+    <string name="adaptive_page_why_library">"Вернитесь к недавней заметке или холсту."</string>
+    <string name="adaptive_page_why_focus">"Вернитесь к сеансу фокусировки, который вы завершили сегодня."</string>
+    <string name="adaptive_page_why_wind_down">"Установленные вами часы тишины."</string>
+    <string name="adaptive_page_why_tasks">"Активные задачи и ближайшие сроки из органайзера."</string>
+    <string name="adaptive_page_why_reminders">"Напоминания, сохранённые в органайзере."</string>
+    <string name="adaptive_page_why_alarms">"Будильники, таймеры и состояние их расписания."</string>
+    <string name="adaptive_page_why_clock">"Время и дата в вашем текущем часовом поясе."</string>
+    <string name="adaptive_page_why_brief">"Сохранённая сводка на сегодня."</string>
+    <string name="adaptive_page_why_device">"Текущий заряд аккумулятора и состояние зарядки телефона."</string>
+</resources>

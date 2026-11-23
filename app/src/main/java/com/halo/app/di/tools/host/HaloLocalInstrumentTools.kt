@@ -9,8 +9,13 @@ import com.halo.app.data.toolkit.HaloMapsStore
 import com.halo.app.data.toolkit.HaloMeasurement
 import com.halo.app.data.toolkit.HaloSavedPlace
 import com.halo.app.data.toolkit.RoomWall
+import com.halo.app.data.workspace.AdaptiveLayout
+import com.halo.app.data.workspace.AdaptivePageChanged
+import com.halo.app.data.workspace.AdaptivePageRef
+import com.halo.app.data.workspace.AdaptivePageStore
 import com.halo.app.data.workspace.AdaptivePlanner
 import com.halo.app.data.workspace.AdaptiveSlot
+import com.halo.app.data.workspace.SavedAdaptivePage
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.organizer.OrganizerOccurrence
 import com.halo.runtime.cognition.agent.ActionTruth
@@ -24,7 +29,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Typed and spoken requests use the same numeric and local place owners as the three tool screens. */
+/** Typed and spoken requests act through the same instrument owners as the UI. */
 internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Boolean = { false }) : ToolExecutor {
     override fun definitions(): List<ToolDefinition> = catalogue
 
@@ -43,17 +48,54 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                 Graph.applicationContext.getSystemService(KeyguardManager::class.java)?.isDeviceLocked != false)
                 return reject("Unlock the phone to read or change saved places and plans", ToolRejectionKind.PERMISSION_REQUIRED)
         }
+        val pageRevision = if (name.startsWith("halo_page_")) {
+            if (coroutineContext[RunToolScope]?.targetIsLocal != true)
+                return reject("Pages require an on-device run", ToolRejectionKind.PERMISSION_REQUIRED)
+            runCatching { Graph.kidsPreferences.adultActionRevision() }.getOrElse {
+                return reject("Pages require the grown-up space", ToolRejectionKind.PERMISSION_REQUIRED)
+            }
+        } else null
+
+        fun verifyPageAccess() {
+            Graph.kidsPreferences.requireAdultAction(checkNotNull(pageRevision))
+            Graph.haloPause.requireActive()
+            if (name != "halo_page_plan_sections" &&
+                Graph.applicationContext.getSystemService(KeyguardManager::class.java)?.isDeviceLocked != false)
+                throw PagesLocked()
+        }
+
         return try {
+            if (pageRevision != null) verifyPageAccess()
             val json = when (name) {
                 "halo_page_plan_sections" -> {
-                    if (coroutineContext[RunToolScope]?.targetIsLocal != true ||
-                        !Graph.kidsPreferences.loadedState.value || Graph.kidsPreferences.enabled.value)
-                        return reject("This layout planner is available in an adult on-device session.", ToolRejectionKind.PERMISSION_REQUIRED)
                     require(input.keys == setOf("request"))
                     val request = input.text("request").trim()
                     require(request.isNotEmpty() && request.none(Char::isISOControl))
                     val requested = AdaptivePlanner.select(request, AdaptiveSlot.entries.toSet(), 7)
                     JSONObject().put("sections", JSONArray(requested.map { it.name })).put("needsChoice", requested.isEmpty())
+                }
+                "halo_page_list" -> {
+                    require(input.isEmpty())
+                    withContext(Dispatchers.IO) {
+                        val pages = AdaptivePageStore(Graph.applicationContext).pages()
+                        verifyPageAccess()
+                        JSONObject().put("pages", JSONArray(pages.map(::pageJson)))
+                    }
+                }
+                "halo_page_save" -> {
+                    require(input.keys.all { it in setOf("title", "sections", "large", "pageId", "revision") })
+                    val previous = if ("pageId" in input || "revision" in input) input.pageRef() else null
+                    val slots = input.slots("sections")
+                    val large = if ("large" in input) input.slots("large") else emptyList()
+                    val page = AdaptivePageStore(Graph.applicationContext).save(previous, input.text("title").trim(),
+                        AdaptiveLayout(slots, large.toSet()), ::verifyPageAccess)
+                    pageJson(page)
+                }
+                "halo_page_remove" -> {
+                    require(input.keys == setOf("pageId", "revision"))
+                    val ref = input.pageRef()
+                    AdaptivePageStore(Graph.applicationContext).delete(ref, ::verifyPageAccess)
+                    JSONObject().put("pageId", ref.id).put("removed", true)
                 }
                 "halo_calc_evaluate" -> {
                     val result = HaloCalcEngine.calculate(input.text("expression"))
@@ -138,13 +180,35 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                     return ToolExecutionResult.Success(toolCall.id, name, JSONObject().put("opened", "maps").toString(),
                         ActionTruth.DISPATCHED)
                 }
-                else -> return reject("Unknown calculator, measurement or maps operation", ToolRejectionKind.TOOL_UNKNOWN)
+                else -> return reject("Unknown local instrument operation", ToolRejectionKind.TOOL_UNKNOWN)
             }
             ToolExecutionResult.Success(toolCall.id, name, json.toString())
         } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: PagesLocked) { reject("Unlock the phone to read or change saved pages", ToolRejectionKind.PERMISSION_REQUIRED) }
+        catch (_: AdaptivePageChanged) { reject("The saved page changed. List saved pages again.", ToolRejectionKind.RESOURCE_UNAVAILABLE) }
         catch (_: IllegalArgumentException) { reject("The inputs are outside the supported format or range", ToolRejectionKind.INVALID_ARGUMENTS) }
         catch (_: ArithmeticException) { reject("The calculation is undefined or exceeds the supported range", ToolRejectionKind.INVALID_ARGUMENTS) }
         catch (_: Exception) { reject("The operation could not finish on this phone", ToolRejectionKind.CAPABILITY_UNAVAILABLE) }
+    }
+
+    private class PagesLocked : IllegalStateException()
+
+    private fun pageJson(page: SavedAdaptivePage) = JSONObject().put("pageId", page.ref.id)
+        .put("revision", page.ref.revision).put("title", page.title)
+        .put("sections", JSONArray(page.layout.slots.map { it.name }))
+        .put("large", JSONArray(page.layout.slots.filter { it in page.layout.large }.map { it.name }))
+
+    private fun Map<String, Any?>.pageRef(): AdaptivePageRef {
+        val number = requireNotNull(this["revision"] as? Number)
+        val revision = number.toLong()
+        require(number.toDouble() == revision.toDouble())
+        return AdaptivePageRef(text("pageId"), revision)
+    }
+
+    private fun Map<String, Any?>.slots(key: String): List<AdaptiveSlot> {
+        val entries = requireNotNull(this[key] as? List<*>)
+        require(entries.size <= 9 && entries.distinct() == entries)
+        return entries.map { AdaptiveSlot.valueOf(requireNotNull(it as? String)) }
     }
 
     private fun placeJson(place: HaloSavedPlace) = JSONObject().put("id", place.id).put("version", place.version)
@@ -167,9 +231,22 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
         private fun definition(id: String, description: String, args: Map<String, Any>, vararg required: String) =
             ToolDefinition(id, id, description, mapOf("type" to "object", "properties" to args, "required" to required.toList(), "additionalProperties" to false))
 
+        private val pageIdentity = mapOf(
+            "pageId" to mapOf("type" to "string", "maxLength" to 36),
+            "revision" to mapOf("type" to "integer", "minimum" to 1, "maximum" to 9_007_199_254_740_991L),
+        )
+        private val sectionList = mapOf("type" to "array", "maxItems" to 9, "uniqueItems" to true,
+            "items" to mapOf("type" to "string", "enum" to AdaptiveSlot.entries.map { it.name }))
+
         private val catalogue = listOf(
             definition("halo_page_plan_sections", "Suggest an ordered list of local Today sections for an adult's request. Use for made-for-you and page layout requests. This does not fetch content, save a page or open a screen.",
                 mapOf("request" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 280)), "request"),
+            definition("halo_page_list", "List saved Today pages with their current identifiers, exact layout revisions, and section order.", emptyMap()),
+            definition("halo_page_save", "Save an explicitly reviewed Today layout. To change a saved page, provide its current pageId and revision together. Large sections must also appear in sections. Always requests confirmation.",
+                pageIdentity + mapOf("title" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 80),
+                    "sections" to (sectionList + ("minItems" to 1)), "large" to sectionList), "title", "sections"),
+            definition("halo_page_remove", "Remove one saved Today page at the exact listed revision. Always requests confirmation.",
+                pageIdentity, "pageId", "revision"),
             definition("halo_calc_evaluate", "Evaluate an arithmetic expression or a supported phrase such as 15% of 84. Scientific angles are radians.",
                 mapOf("expression" to expression), "expression"),
             definition("halo_calc_convert", "Convert compatible units. Currency uses the dated ECB table saved on this phone or an explicit rate supplied by the user. Do not invent a rate.",
@@ -202,11 +279,17 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
         fun descriptor(definition: ToolDefinition): ToolDescriptor? {
             val id = definition.name
             if (catalogue.none { it.name == id }) return null
-            val writes = id == "halo_maps_keep_place"
+            val pageSave = id == "halo_page_save"
+            val pageRemove = id == "halo_page_remove"
+            val pageWrite = pageSave || pageRemove
+            val writes = id == "halo_maps_keep_place" || pageWrite
             val presents = id == "halo_maps_go_home"
             val capability = CapabilityId(if (writes) "workspace.write" else "workspace.read")
             val shape = when (id) {
                 "halo_page_plan_sections" -> mapOf("sections" to "array", "needsChoice" to "boolean")
+                "halo_page_list" -> mapOf("pages" to "array")
+                "halo_page_save" -> mapOf("pageId" to "string", "revision" to "integer", "title" to "string", "sections" to "array", "large" to "array")
+                "halo_page_remove" -> mapOf("pageId" to "string", "removed" to "boolean")
                 "halo_calc_evaluate" -> mapOf("expression" to "string", "value" to "string")
                 "halo_calc_convert" -> mapOf("value" to "string", "unit" to "string", "manualRate" to "boolean",
                     "referenceDate" to "string", "referenceSource" to "string")
@@ -223,6 +306,7 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
             }
             val owner = when {
                 id == "halo_page_plan_sections" -> "AdaptivePlanner"
+                id.startsWith("halo_page_") -> "AdaptivePageStore"
                 id.startsWith("halo_calc") -> "HaloCalcEngine"
                 id.startsWith("halo_measure") -> "HaloMeasurement"
                 else -> "HaloMapsStore"
@@ -235,23 +319,36 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                 },
                 keywords = when (owner) {
                     "AdaptivePlanner" -> setOf("make a page", "made for you", "page layout", "собери страницу")
+                    "AdaptivePageStore" -> setOf("saved page", "today page", "page layout")
                     "HaloCalcEngine" -> setOf("calc", "calculator", "graph", "convert", "вычислить", "калькулятор")
                     "HaloMeasurement" -> setOf("measure", "room", "estimate", "линейка", "измерить")
                     else -> if (presents) setOf("maps", "take me home", "карты", "домой")
                         else setOf("maps", "places", "coordinates", "карты", "координаты", "места")
                 },
                 requirements = setOf(ToolRequirement.Capability(capability)),
-                security = if (writes) ToolSecurityPolicy(ToolRiskClass.REVERSIBLE, ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY)
+                security = if (writes) ToolSecurityPolicy(
+                    if (pageRemove) ToolRiskClass.DESTRUCTIVE else ToolRiskClass.REVERSIBLE,
+                    ConfirmationPolicy.ALWAYS, ReplaySafety.NEVER_REPLAY)
                     else if (presents) ToolSecurityPolicy(ToolRiskClass.REVERSIBLE, ConfirmationPolicy.USER_POLICY, ReplaySafety.NEVER_REPLAY)
                     else ToolSecurityPolicy.READ_ONLY,
                 execution = ToolExecutionPolicy(maxOutputChars = when (id) {
                     "halo_calc_graph", "halo_measure_outline", "halo_maps_arrived" -> 8_000
-                    "halo_maps_saved_places" -> 24_000
+                    "halo_maps_saved_places", "halo_page_list" -> 24_000
                     else -> ToolExecutionPolicy.DEFAULT_MAX_OUTPUT
                 }),
-                presentation = if (writes) ToolPresentation(title = "Keep place", actionVerb = "Keep", targetArgument = "title") else null,
+                presentation = when {
+                    pageSave -> ToolPresentation(title = "Save Today page", actionVerb = "Save", targetArgument = "title")
+                    pageRemove -> ToolPresentation(title = "Remove Today page", actionVerb = "Remove", targetArgument = "pageId")
+                    writes -> ToolPresentation(title = "Keep place", actionVerb = "Keep", targetArgument = "title")
+                    else -> null
+                },
                 operability = ToolOperability(capabilityId = capability, owner = owner,
-                    operation = if (writes) ToolOperation.CREATE else if (presents) ToolOperation.PRESENT else ToolOperation.QUERY,
+                    operation = when {
+                        pageWrite -> ToolOperation.EDIT
+                        writes -> ToolOperation.CREATE
+                        presents -> ToolOperation.PRESENT
+                        else -> ToolOperation.QUERY
+                    },
                     resultEncoding = ToolResultEncoding.JSON,
                     resultSchema = mapOf("type" to "object", "properties" to shape.mapValues { mapOf("type" to it.value) },
                         "required" to when (id) {
@@ -259,10 +356,19 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                             "halo_calc_convert" -> listOf("value", "unit", "manualRate")
                             else -> shape.keys.toList()
                         }, "additionalProperties" to false),
-                    sourceVersionArguments = if (id == "halo_maps_arrived") setOf("place_version") else emptySet(),
-                    resultIdFields = if (writes) setOf("id") else emptySet(),
+                    sourceVersionArguments = when {
+                        pageWrite -> setOf("revision")
+                        id == "halo_maps_arrived" -> setOf("place_version")
+                        else -> emptySet()
+                    },
+                    resultIdFields = when {
+                        pageWrite -> setOf("pageId")
+                        writes -> setOf("id")
+                        else -> emptySet()
+                    },
                     limitations = when (owner) {
                         "AdaptivePlanner" -> setOf("The planning result contains section identifiers. Today resolves the current collector data separately.")
+                        "AdaptivePageStore" -> setOf("Adult on-device use. Stored pages contain layout identifiers and a user-supplied title only.")
                         "HaloCalcEngine" -> setOf("Currency conversion uses a saved dated ECB reference rate or a rate supplied by the person. This tool does not fetch rates.")
                         "HaloMeasurement" -> setOf("Camera point placement and phone level are on-device interactions. Typed measures require explicit numeric inputs.")
                         else -> setOf("Adult local runs only. Organic Maps provides offline routing and region downloads. Live departures are off.")

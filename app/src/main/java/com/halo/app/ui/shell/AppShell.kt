@@ -789,7 +789,7 @@ fun AppShell(
                     })
                 }
                 composable(todayRoute) {
-                    if (!kidsMode) com.halo.app.ui.screens.home.HaloTodayScreen(::navigateSafely)
+                    if (kidsReady && !kidsMode) com.halo.app.ui.screens.home.HaloTodayScreen(::navigateSafely)
                 }
                 composable("home/pages") {
                     if (kidsReady && !kidsMode) com.halo.app.ui.screens.home.HaloTodayScreen(::navigateSafely,

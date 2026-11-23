@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="adaptive_page_changed">"The saved page changed. Reopen it, or save this layout as a copy."</string>
+    <string name="adaptive_page_source_changed">"That item changed. Refresh the page and try again."</string>
+    <string name="adaptive_page_save_failed">"The change could not be saved"</string>
+    <string name="adaptive_page_saved">"Page saved"</string>
+    <string name="adaptive_page_removed">"Saved page removed"</string>
+    <string name="adaptive_page_suggest_less_receipt">"This block will appear less often in suggestions."</string>
+    <string name="adaptive_page_adult_only">"Open the grown-up space to use this page."</string>
+    <string name="adaptive_page_make">"Make a page"</string>
+    <string name="adaptive_page_editor">"Page editor"</string>
+    <string name="adaptive_page_new">"New page"</string>
+    <string name="adaptive_page_read_failed">"Saved pages could not be opened."</string>
+    <string name="adaptive_page_empty">"When you save a page, it appears here."</string>
+    <string name="adaptive_page_remove_saved">"Remove saved page"</string>
+    <string name="adaptive_page_request">"What are you doing?"</string>
+    <string name="adaptive_page_request_hint">"Try naming a specific block, such as Tasks or Weather."</string>
+    <string name="adaptive_page_refresh">"Refresh blocks"</string>
+    <string name="adaptive_page_save_changes">"Save changes"</string>
+    <string name="adaptive_page_save_copy">"Save a copy"</string>
+    <string name="adaptive_page_name">"Page name"</string>
+    <string name="adaptive_page_smaller">"Smaller"</string>
+    <string name="adaptive_page_remove_block">"Remove block"</string>
+    <string name="adaptive_page_stored_preferences">"Block preferences saved on this phone"</string>
+    <string name="adaptive_page_empty_events">"No upcoming events"</string>
+    <string name="adaptive_page_upcoming_events">"Upcoming events"</string>
+    <string name="adaptive_page_empty_study">"No practice cards due"</string>
+    <string name="adaptive_page_empty_library">"No recent note or canvas"</string>
+    <string name="adaptive_page_empty_focus">"No completed focus session today"</string>
+    <string name="adaptive_page_quiet_off">"Quiet hours are off"</string>
+    <string name="adaptive_page_wind_down">"Wind down"</string>
+    <string name="adaptive_page_why_agenda">"See the next events from the calendars shown in Today."</string>
+    <string name="adaptive_page_why_weather">"See the latest saved forecast from your selected weather source."</string>
+    <string name="adaptive_page_why_study">"See practice cards that are due in Study."</string>
+    <string name="adaptive_page_why_reads">"See recent material from your selected feeds."</string>
+    <string name="adaptive_page_why_library">"Return to a recent note or canvas."</string>
+    <string name="adaptive_page_why_focus">"Return to the focus session you finished today."</string>
+    <string name="adaptive_page_why_wind_down">"See the quiet hours you set."</string>
+    <string name="adaptive_page_why_tasks">"See active tasks and upcoming deadlines from Organizer."</string>
+    <string name="adaptive_page_why_reminders">"See the reminders saved in Organizer."</string>
+    <string name="adaptive_page_why_alarms">"Review alarms, timers, and their scheduling status."</string>
+    <string name="adaptive_page_why_clock">"See the time and date in your current time zone."</string>
+    <string name="adaptive_page_why_brief">"See today's saved brief."</string>
+    <string name="adaptive_page_why_device">"See the phone's current battery and charging status."</string>
+</resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="adaptive_page_changed">"Zapisana strona się zmieniła. Otwórz ją ponownie lub zapisz kopię układu."</string>
+    <string name="adaptive_page_source_changed">"Ten element się zmienił. Odśwież stronę i spróbuj ponownie."</string>
+    <string name="adaptive_page_save_failed">"Nie udało się zapisać zmiany"</string>
+    <string name="adaptive_page_saved">"Strona zapisana"</string>
+    <string name="adaptive_page_removed">"Zapisana strona usunięta"</string>
+    <string name="adaptive_page_suggest_less_receipt">"Ten blok będzie się rzadziej pojawiał w sugestiach."</string>
+    <string name="adaptive_page_adult_only">"Otwórz przestrzeń dla dorosłych, aby użyć tej strony."</string>
+    <string name="adaptive_page_make">"Utwórz stronę"</string>
+    <string name="adaptive_page_editor">"Edytor stron"</string>
+    <string name="adaptive_page_new">"Nowa strona"</string>
+    <string name="adaptive_page_read_failed">"Nie udało się otworzyć zapisanych stron."</string>
+    <string name="adaptive_page_empty">"Tu pojawią się zapisane strony."</string>
+    <string name="adaptive_page_remove_saved">"Usuń zapisaną stronę"</string>
+    <string name="adaptive_page_request">"Co teraz robisz?"</string>
+    <string name="adaptive_page_request_hint">"Podaj nazwę bloku, na przykład „Zadania” lub „Pogoda”."</string>
+    <string name="adaptive_page_refresh">"Odśwież bloki"</string>
+    <string name="adaptive_page_save_changes">"Zapisz zmiany"</string>
+    <string name="adaptive_page_save_copy">"Zapisz kopię"</string>
+    <string name="adaptive_page_name">"Nazwa strony"</string>
+    <string name="adaptive_page_smaller">"Mniejszy"</string>
+    <string name="adaptive_page_remove_block">"Usuń blok"</string>
+    <string name="adaptive_page_stored_preferences">"Preferencje bloków zapisane na tym telefonie"</string>
+    <string name="adaptive_page_empty_events">"Brak nadchodzących wydarzeń"</string>
+    <string name="adaptive_page_upcoming_events">"Nadchodzące wydarzenia"</string>
+    <string name="adaptive_page_empty_study">"Brak fiszek do powtórzenia"</string>
+    <string name="adaptive_page_empty_library">"Brak ostatnich notatek lub płócien"</string>
+    <string name="adaptive_page_empty_focus">"Dziś nie ukończono żadnej sesji skupienia"</string>
+    <string name="adaptive_page_quiet_off">"Godziny ciszy są wyłączone"</string>
+    <string name="adaptive_page_wind_down">"Wyciszenie"</string>
+    <string name="adaptive_page_why_agenda">"Nadchodzące wydarzenia z kalendarzy widocznych w widoku „Dzisiaj”."</string>
+    <string name="adaptive_page_why_weather">"Najnowsza zapisana prognoza z wybranego źródła pogody."</string>
+    <string name="adaptive_page_why_study">"Fiszki do powtórzenia w sekcji „Nauka”."</string>
+    <string name="adaptive_page_why_reads">"Najnowsze materiały z wybranych kanałów."</string>
+    <string name="adaptive_page_why_library">"Wróć do ostatniej notatki lub płótna."</string>
+    <string name="adaptive_page_why_focus">"Wróć do sesji skupienia ukończonej dzisiaj."</string>
+    <string name="adaptive_page_why_wind_down">"Ustawione przez Ciebie godziny ciszy."</string>
+    <string name="adaptive_page_why_tasks">"Aktywne zadania i najbliższe terminy z Organizera."</string>
+    <string name="adaptive_page_why_reminders">"Przypomnienia zapisane w Organizerze."</string>
+    <string name="adaptive_page_why_alarms">"Budzik, minutniki i stan ich harmonogramu."</string>
+    <string name="adaptive_page_why_clock">"Czas i data w Twojej bieżącej strefie czasowej."</string>
+    <string name="adaptive_page_why_brief">"Zapisane podsumowanie dnia."</string>
+    <string name="adaptive_page_why_device">"Bieżący poziom baterii i stan ładowania telefonu."</string>
+</resources>

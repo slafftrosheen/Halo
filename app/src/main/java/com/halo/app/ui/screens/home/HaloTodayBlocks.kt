@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -57,6 +58,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.halo.app.R
 import com.halo.app.data.notebook.WorkspaceObjectType
+import com.halo.app.data.workspace.AdaptiveSlot
 import com.halo.app.data.workspace.WorkspaceQuery
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.briefing.DayReportSettings
@@ -70,6 +72,8 @@ import com.halo.app.everyday.organizer.OrganizerOccurrence
 import com.halo.app.everyday.organizer.PlannerCalendarPreferences
 import com.halo.app.everyday.organizer.android.PhoneCalendarAgenda
 import com.halo.app.everyday.organizer.android.PhoneCalendarEvent
+import com.halo.app.ui.adaptive.AdaptiveTodayPage
+import com.halo.app.ui.adaptive.adaptiveTodayFeed
 import com.halo.app.ui.everyday.EverydayRoutes
 import com.halo.app.ui.everyday.ArticleHeadlinePicture
 import com.halo.app.ui.everyday.ArticleHeadlineStrip
@@ -236,11 +240,39 @@ internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false
     val focusNote by focusSettings.focusNote.collectAsStateWithLifecycle()
     val planner = stringResource(R.string.today_block_planner)
     val recent = recentLibraryBlock("library")
+    val weatherSource = todayWeather(activeSources)
+    val study = if (dueCount > 0) HaloHomeBlock("study", R.string.today_block_study,
+        stringResource(R.string.today_block_due, dueCount), stringResource(R.string.halo11_home_library),
+        R.string.today_block_why_study, "study") else null
+    val windDown = if (quiet.quietEnabled) HaloHomeBlock("winddown", R.string.today_block_wind_down,
+        stringResource(R.string.today_block_quiet_at, clock.format(quiet.quietStart)), planner,
+        R.string.today_block_why_wind_down, "winddown") else null
+    val focus = focusNote?.takeIf { Instant.ofEpochMilli(it.completedAt).atZone(zone).toLocalDate() == today }?.let {
+        HaloHomeBlock("focus", R.string.halo11_focus_done, it.text, stringResource(R.string.halo_focus_title),
+            R.string.halo11_focus_keep_hint, "focus")
+    }
+    val permittedPhoneEvents = phoneEvents.takeIf {
+        calendarGranted && PhoneCalendarAgenda.permitted(context)
+    }.orEmpty()
+    if (adaptivePage) {
+        var refresh by remember { mutableIntStateOf(0) }
+        val local = listOfNotNull(
+            study?.let { AdaptiveSlot.STUDY to it },
+            recent?.let { AdaptiveSlot.LIBRARY to it },
+            focus?.let { AdaptiveSlot.FOCUS to it },
+            windDown?.let { AdaptiveSlot.WIND_DOWN to it },
+        ).toMap()
+        val blocks = adaptiveTodayFeed(refresh, now, upcoming, permittedPhoneEvents, local,
+            weatherSource?.source?.id)
+        AdaptiveTodayPage(blocks, open, savedPages,
+            onBack = { if (savedPages) onBack() else adaptivePage = false },
+            onRefresh = { refresh++ })
+        return
+    }
     val article = activeSources.asSequence().filter { it.source.kind == CollectorKind.FEED }.flatMap { state ->
         val snapshot = state.snapshot?.takeIf { it.sourceVersion == state.source.version }
         (snapshot?.payload as? CollectorPayload.Articles)?.items.orEmpty().asSequence().map { state.source to it }
     }.maxByOrNull { it.second.publishedAt ?: Instant.MIN }
-    val weatherSource = todayWeather(activeSources)
     val weather = weatherSource?.let { state ->
         state.snapshot?.takeIf { it.sourceVersion == state.source.version && it.expiresAt.isAfter(now) }
             ?.payload as? CollectorPayload.Weather
@@ -292,23 +324,15 @@ internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false
             add(HaloHomeBlock("weather", R.string.today_block_weather, state.source.place?.name ?: state.source.title,
                 state.source.publisher, R.string.today_block_why_weather, EverydayRoutes.source(state.source.id), supporting = supporting))
         }
-        if (dueCount > 0 && (!evening || "study" in pinned))
-            add(HaloHomeBlock("study", R.string.today_block_study, stringResource(R.string.today_block_due, dueCount),
-                stringResource(R.string.halo11_home_library), R.string.today_block_why_study, "study"))
+        if (!evening || "study" in pinned) study?.let(::add)
         article?.let { (source, item) ->
             if (!evening || "reads" in pinned) add(HaloHomeBlock("reads", R.string.today_block_reads, item.title, item.publisher.ifBlank { source.publisher },
                 R.string.today_block_why_reads, EverydayRoutes.source(source.id, item.id),
                 pictures = item.gallery(picturesVisible, kids = false)))
         }
-        if ((evening || "winddown" in pinned) && quiet.quietEnabled)
-            add(HaloHomeBlock("winddown", R.string.today_block_wind_down,
-                stringResource(R.string.today_block_quiet_at, clock.format(quiet.quietStart)),
-                planner, R.string.today_block_why_wind_down, "winddown"))
+        if (evening || "winddown" in pinned) windDown?.let(::add)
         if (!evening || "library" in pinned) recent?.let(::add)
-        focusNote?.takeIf { Instant.ofEpochMilli(it.completedAt).atZone(zone).toLocalDate() == today }?.let {
-            add(HaloHomeBlock("focus", R.string.halo11_focus_done, it.text, stringResource(R.string.halo_focus_title),
-                R.string.halo11_focus_keep_hint, "focus"))
-        }
+        focus?.let(::add)
     }
     HaloTodayContent(hour, available, choices, open, chooseWeatherCity = { chooseCity = true },
         news = cachedNews.filter { it.isVisible(feeds, language.tag, now) },
@@ -317,13 +341,9 @@ internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false
             (row.snapshot?.payload as? CollectorPayload.Articles)?.items.orEmpty().map { row.source.id to it.id }
         }.toSet(),
         newsEnabled = activeSources.any { it.source.kind == CollectorKind.FEED },
-        phoneEvents = phoneEvents.takeIf { calendarGranted && PhoneCalendarAgenda.permitted(context) }.orEmpty(),
+        phoneEvents = permittedPhoneEvents,
         connectCalendar = if (!calendarGranted) ({ requestCalendar.launch(android.Manifest.permission.READ_CALENDAR) }) else null,
         onAddWidget = { addWidget = true }, onMakePage = { adaptivePage = true })
-    if (adaptivePage) com.halo.app.ui.adaptive.AdaptiveTodayPage(available, open, savedPages) {
-        adaptivePage = false
-        if (savedPages) onBack()
-    }
     if (addWidget) com.halo.app.nativeactions.EverydayWidgetPicker(
         initialKind = com.halo.app.everyday.presentation.EverydayCardKind.TODAY) { addWidget = false }
     if (chooseCity && !weatherSettingsState.kids) {

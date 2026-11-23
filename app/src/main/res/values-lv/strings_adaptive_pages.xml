@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="adaptive_page_changed">"Saglabātā lapa ir mainīta. Atveriet to vēlreiz vai saglabājiet izkārtojuma kopiju."</string>
+    <string name="adaptive_page_source_changed">"Šis vienums ir mainīts. Atsvaidziniet lapu un mēģiniet vēlreiz."</string>
+    <string name="adaptive_page_save_failed">"Neizdevās saglabāt izmaiņas"</string>
+    <string name="adaptive_page_saved">"Lapa saglabāta"</string>
+    <string name="adaptive_page_removed">"Saglabātā lapa noņemta"</string>
+    <string name="adaptive_page_suggest_less_receipt">"Šis bloks ieteikumos parādīsies retāk."</string>
+    <string name="adaptive_page_adult_only">"Atveriet pieaugušo sadaļu, lai lietotu šo lapu."</string>
+    <string name="adaptive_page_make">"Izveidot lapu"</string>
+    <string name="adaptive_page_editor">"Lapu redaktors"</string>
+    <string name="adaptive_page_new">"Jauna lapa"</string>
+    <string name="adaptive_page_read_failed">"Neizdevās atvērt saglabātās lapas."</string>
+    <string name="adaptive_page_empty">"Šeit būs redzamas saglabātās lapas."</string>
+    <string name="adaptive_page_remove_saved">"Noņemt saglabāto lapu"</string>
+    <string name="adaptive_page_request">"Ko jūs darāt?"</string>
+    <string name="adaptive_page_request_hint">"Nosauciet konkrētu bloku, piemēram, «Uzdevumi» vai «Laikapstākļi»."</string>
+    <string name="adaptive_page_refresh">"Atsvaidzināt blokus"</string>
+    <string name="adaptive_page_save_changes">"Saglabāt izmaiņas"</string>
+    <string name="adaptive_page_save_copy">"Saglabāt kopiju"</string>
+    <string name="adaptive_page_name">"Lapas nosaukums"</string>
+    <string name="adaptive_page_smaller">"Mazāks"</string>
+    <string name="adaptive_page_remove_block">"Noņemt bloku"</string>
+    <string name="adaptive_page_stored_preferences">"Bloku iestatījumi šajā tālrunī"</string>
+    <string name="adaptive_page_empty_events">"Nav gaidāmu pasākumu"</string>
+    <string name="adaptive_page_upcoming_events">"Gaidāmie pasākumi"</string>
+    <string name="adaptive_page_empty_study">"Nav atkārtojamu kartīšu"</string>
+    <string name="adaptive_page_empty_library">"Nav nesenu piezīmju vai audeklu"</string>
+    <string name="adaptive_page_empty_focus">"Šodien nav pabeigtu koncentrēšanās sesiju"</string>
+    <string name="adaptive_page_quiet_off">"Klusuma stundas ir izslēgtas"</string>
+    <string name="adaptive_page_wind_down">"Atpūtas laiks"</string>
+    <string name="adaptive_page_why_agenda">"Nākamie pasākumi no kalendāriem, kas redzami sadaļā «Šodien»."</string>
+    <string name="adaptive_page_why_weather">"Jaunākā saglabātā prognoze no izvēlētā laikapstākļu avota."</string>
+    <string name="adaptive_page_why_study">"Kartītes, kas jāatkārto sadaļā «Mācības»."</string>
+    <string name="adaptive_page_why_reads">"Jaunākie materiāli no izvēlētajām plūsmām."</string>
+    <string name="adaptive_page_why_library">"Atgriezieties pie nesenas piezīmes vai audekla."</string>
+    <string name="adaptive_page_why_focus">"Atgriezieties pie šodien pabeigtās koncentrēšanās sesijas."</string>
+    <string name="adaptive_page_why_wind_down">"Jūsu iestatītās klusuma stundas."</string>
+    <string name="adaptive_page_why_tasks">"Aktīvie uzdevumi un tuvākie termiņi no plānotāja."</string>
+    <string name="adaptive_page_why_reminders">"Plānotājā saglabātie atgādinājumi."</string>
+    <string name="adaptive_page_why_alarms">"Modinātāji, taimeri un to plānošanas statuss."</string>
+    <string name="adaptive_page_why_clock">"Laiks un datums jūsu pašreizējā laika joslā."</string>
+    <string name="adaptive_page_why_brief">"Šodienas saglabātais kopsavilkums."</string>
+    <string name="adaptive_page_why_device">"Tālruņa akumulatora uzlādes līmenis un stāvoklis."</string>
+</resources>
