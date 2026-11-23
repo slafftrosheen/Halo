@@ -40,25 +40,3 @@ internal data class AdaptiveWidgetExport(val available: List<EverydayCardKind>, 
         }
     }
 }
-
-/** An in-app request carries an exact page version and the current adult authority. */
-internal data class AdaptiveWidgetEntry(val page: AdaptivePageRef, val familyRevision: Long) {
-    init { require(familyRevision >= 0) }
-
-    fun route() = "$ROOT/${page.id}/${page.revision}/$familyRevision"
-
-    companion object {
-        const val ROOT = "home/pages/widget"
-        const val PATTERN = "$ROOT/{pageId}/{pageRevision}/{familyRevision}"
-
-        fun parse(route: String): AdaptiveWidgetEntry? {
-            if (!route.startsWith("$ROOT/")) return null
-            val parts = route.removePrefix("$ROOT/").split('/')
-            if (parts.size != 3) return null
-            val version = parts[1].toLongOrNull() ?: return null
-            val familyRevision = parts[2].toLongOrNull() ?: return null
-            return runCatching { AdaptiveWidgetEntry(AdaptivePageRef(parts[0], version), familyRevision) }
-                .getOrNull()?.takeIf { it.route() == route }
-        }
-    }
-}

@@ -45,7 +45,8 @@ internal fun routineErrorLabel(reason: String): String = when (reason) {
     "Suggestion no longer available", "Choose a future time", "Enter a message with 1 to 240 characters",
     "Enter a name of at most 120 characters", "A routine requires 1–10 actions",
     "Choose a device", "Set up Phone screen access before saving",
-    "Set up Notification access before saving" -> reason
+    "Set up Notification access before saving", "Automation changed; open it again before saving",
+    "Routine saved. Scheduling could not be confirmed." -> reason
     "Open and save this automation to approve its actions", "Review this automation before running it",
     "Save and review this automation first" -> "Review this routine before turning it on or running it."
     else -> "Could not complete this change. Review the routine and try again."
@@ -109,8 +110,9 @@ enum class RoutineTemplate(val title: String, val description: String) {
 }
 
 fun messageAction(text: String) = RoutineAction("halo_routine_message", JSONObject().put("text", text).toString())
-internal fun snapshotAction(section: RoutineSnapshotSection) =
-    RoutineAction(RoutineSnapshotTool.ID, JSONObject().put("section", section.name).toString())
+internal fun snapshotAction(section: RoutineSnapshotSection, allowUnavailable: Boolean = false) =
+    RoutineAction(RoutineSnapshotTool.ID, JSONObject().put("section", section.name)
+        .apply { if (allowUnavailable) put("allow_unavailable", true) }.toString())
 internal fun RoutineAction.snapshotSection(): RoutineSnapshotSection? =
     RoutineSnapshotSection.entries.firstOrNull { it.name == actionArguments(this).optString("section") }
 fun actionArguments(action: RoutineAction): JSONObject = runCatching { JSONObject(action.argumentsJson) }.getOrElse { JSONObject() }

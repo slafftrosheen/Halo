@@ -52,7 +52,7 @@ class RoutineCreationToolExecutor(
             name = "halo_create_routine",
             description = "Propose a Halo automation with a tagged trigger, optional conditions, delivery and existing " +
                 "tool actions. Requires the user's approval and only succeeds for actions that are " +
-                "allowed to run unattended. Use halo_routine_snapshot with arguments JSON {section: TODAY, TOMORROW, WEATHER, or HEADLINE} for local Planner counts, saved weather or the latest selected Reads headline.",
+                "allowed to run unattended. Use halo_routine_snapshot with a supported section for a local summary. For an existing Today layout, use halo_page_open_routine_review.",
             parameters = mapOf(
                 "type" to "object",
                 "properties" to mapOf(

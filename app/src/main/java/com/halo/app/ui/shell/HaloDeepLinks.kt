@@ -1,7 +1,7 @@
 package com.halo.app.ui.shell
 
 import android.net.Uri
-import com.halo.app.data.workspace.AdaptiveWidgetEntry
+import com.halo.app.data.workspace.AdaptivePageEntry
 import com.halo.app.ui.everyday.EverydayRoutes
 import com.halo.app.ui.onboarding.SetupStage
 
@@ -25,7 +25,7 @@ internal object HaloDeepLinks {
     fun acceptsRequest(request: String): Boolean {
         if (!request.startsWith(PREFIX)) return false
         val target = request.removePrefix(PREFIX)
-        if (AdaptiveWidgetEntry.parse(target) != null) return true
+        if (AdaptivePageEntry.parse(target) != null) return true
         val route = target.substringBefore('?')
         if (route.startsWith("guided_setup")) return target == "guided_setup" || setupStage(target) != null
         if (Regex("^merchant/checkout/[a-f0-9-]{36}$").matches(route)) return true

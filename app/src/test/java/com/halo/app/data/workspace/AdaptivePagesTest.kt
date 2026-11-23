@@ -4,6 +4,9 @@ import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.workspace.AdaptiveSlot.*
+import com.halo.app.automation.RoutineSnapshotSection
+import com.halo.app.automation.RoutineSnapshotTool
+import org.json.JSONObject
 import com.halo.app.everyday.presentation.EverydayCardConfig
 import com.halo.app.everyday.presentation.EverydayCardKind
 import com.halo.app.ui.adaptive.adaptiveRows
@@ -59,13 +62,28 @@ class AdaptivePagesTest {
         }
     }
 
+    @Test fun routineExportKeepsOrderedReadOnlyActionsAndRequiresReview() {
+        val plan = AdaptiveRoutineExport.from(AdaptiveLayout(listOf(WEATHER, STUDY, TASKS, PLANNER)))
+        assertEquals(listOf(STUDY), plan.unsupported)
+        assertEquals(listOf(RoutineSnapshotSection.WEATHER, RoutineSnapshotSection.TASKS, RoutineSnapshotSection.AGENDA), plan.sections)
+        val draft = plan.draft("Morning")
+        assertTrue(!draft.enabled && draft.grantDigest == null && draft.nextRunAt == null)
+        assertTrue(draft.actions.all { it.toolId == RoutineSnapshotTool.ID &&
+            JSONObject(it.argumentsJson).getBoolean("allow_unavailable") })
+        assertEquals(listOf("WEATHER", "TASKS", "AGENDA"), draft.actions.map { JSONObject(it.argumentsJson).getString("section") })
+        assertTrue(AdaptiveRoutineExport.from(AdaptiveLayout(listOf(LIBRARY))).sections.isEmpty())
+    }
+
     @Test fun widgetReviewRouteRefusesMalformedAndUnboundedRevisions() {
-        val request = AdaptiveWidgetEntry(AdaptivePageRef("legacy", 2), 9)
-        assertEquals(request, AdaptiveWidgetEntry.parse(request.route()))
-        assertNull(AdaptiveWidgetEntry.parse(request.route() + "?unreviewed=true"))
-        assertNull(AdaptiveWidgetEntry.parse("home/pages/widget/legacy/0/9"))
-        assertNull(AdaptiveWidgetEntry.parse("home/pages/widget/legacy/9007199254740992/9"))
-        assertNull(AdaptiveWidgetEntry.parse("home/pages/widget/legacy/2/-1"))
+        val request = AdaptivePageEntry(AdaptivePageDestination.WIDGET, AdaptivePageRef("legacy", 2), 9)
+        assertEquals(request, AdaptivePageEntry.parse(request.route()))
+        assertNull(AdaptivePageEntry.parse(request.route() + "?unreviewed=true"))
+        assertNull(AdaptivePageEntry.parse("home/pages/widget/legacy/0/9"))
+        assertNull(AdaptivePageEntry.parse("home/pages/widget/legacy/9007199254740992/9"))
+        assertNull(AdaptivePageEntry.parse("home/pages/widget/legacy/2/-1"))
+        assertNull(AdaptivePageEntry.parse("home/pages/unknown/legacy/2/9"))
+        assertEquals(request.copy(destination = AdaptivePageDestination.ROUTINE),
+            AdaptivePageEntry.parse("home/pages/routine/legacy/2/9"))
     }
 
     @Test fun legacyLayoutsKeepTheirOrderAndOnlyExactRevisionsCanReplaceOrDelete() = runBlocking {
@@ -77,6 +95,9 @@ class AdaptivePagesTest {
         val saved = store.save(legacy.ref, "Morning", layout) {}
         assertEquals(AdaptivePageRef("legacy", 2), saved.ref)
         assertEquals(listOf(saved), AdaptivePageStore(context).pages())
+        assertEquals(saved, store.requirePage(saved.ref))
+        assertEquals(saved, store.save(saved.ref, saved.title, layout) {})
+        assertTrue(runCatching { store.requirePage(legacy.ref) }.exceptionOrNull() is AdaptivePageChanged)
         assertTrue(runCatching { store.save(legacy.ref, "Stale", layout) {} }
             .exceptionOrNull() is AdaptivePageChanged)
         assertTrue(runCatching { store.delete(legacy.ref) {} }.exceptionOrNull() is AdaptivePageChanged)

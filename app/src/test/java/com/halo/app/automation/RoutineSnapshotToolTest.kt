@@ -20,6 +20,14 @@ class RoutineSnapshotToolTest {
         assertEquals("Tomorrow has one event.", (result as ToolExecutionResult.Success).output)
     }
 
+    @Test fun reviewedFallbackReportsMissingDataButNeverCoversAnAccessFailure() = runTest {
+        val call = ToolCall("read", RoutineSnapshotTool.ID, mapOf("section" to "WEATHER", "allow_unavailable" to true))
+        val missing = RoutineSnapshotTool(unavailable = { "Saved weather unavailable" }) { null }
+        val denied = RoutineSnapshotTool { error("Adult session changed") }
+        assertEquals("Saved weather unavailable", (missing.execute(call) as ToolExecutionResult.Success).output)
+        assertEquals(ToolRejectionKind.RESOURCE_UNAVAILABLE, (denied.execute(call) as ToolExecutionResult.Rejected).kind)
+    }
+
     @Test fun unavailableExternalSnapshotIsBlockedInsteadOfReportedAsCompleted() = runTest {
         val tool = RoutineSnapshotTool { null }
         val result = tool.execute(ToolCall("read", RoutineSnapshotTool.ID, mapOf("section" to "WEATHER")))

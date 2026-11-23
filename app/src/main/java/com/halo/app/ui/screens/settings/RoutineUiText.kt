@@ -3,6 +3,7 @@ package com.halo.app.ui.screens.settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalResources
 import com.halo.app.language.uiText
+import com.halo.app.everyday.briefing.routineSnapshotLabel
 import com.halo.runtime.cognition.routine.*
 import com.halo.runtime.cognition.watch.*
 import java.time.DayOfWeek
@@ -70,7 +71,10 @@ import java.time.format.TextStyle
 @Composable internal fun RoutineAction.uiLabel(): String = when (toolId) {
     "halo_routine_message" -> uiText("Show “%1\$s”", actionArguments(this).optString("text", ""))
     "halo_notification_digest" -> uiText("Notification digest · last %1\$d minutes", actionArguments(this).optInt("window_minutes", 60))
-    com.halo.app.automation.RoutineSnapshotTool.ID -> uiText(snapshotSection()?.title ?: "Read a Halo summary")
+    com.halo.app.automation.RoutineSnapshotTool.ID -> {
+        val resources = LocalResources.current
+        snapshotSection()?.let { routineSnapshotLabel(resources, it) } ?: uiText("Read a Halo summary")
+    }
     else -> uiText("Additional approved action")
 }
 

@@ -62,18 +62,27 @@ class RoutinesViewModel(private val repository: RoomRoutineRepository, private v
         try { error.value = null; block() } catch (e: CancellationException) { throw e }
         catch (e: Exception) { error.value = e.message ?: "Operation failed" }
     } }
-    fun save(r: Routine, suggestionId: String? = null, saved: () -> Unit) {
-        if (saving.value || mutableTrial.value.running) return
-        saving.value = true
-        act { try {
-        val receipt = managementActions.save(r, commit = { persist ->
-            if (suggestionId == null) persist()
-            else learning.acceptRoutineReview(suggestionId, r.id.value, persist)
-        })
-        check(receipt != null) { "Automation changed; open it again before saving" }
-        if (receipt.scheduling == "BLOCKED" && r.enabled) error.value = receipt.schedulingReason
-        withContext(Dispatchers.Main) { saved() }
-        } finally { saving.value = false } }
+    fun save(r: Routine, suggestionId: String? = null, saved: () -> Unit) =
+        saveReviewed(r, suggestionId) { saved() }
+
+    internal fun saveReviewed(r: Routine, suggestionId: String? = null, verify: () -> Unit = {},
+        saved: (RoutineManagementReceipt) -> Unit) {
+        if (mutableTrial.value.running || !saving.compareAndSet(false, true)) return
+        act {
+            try {
+                verify()
+                val receipt = managementActions.save(r, commit = { persist ->
+                    if (suggestionId == null) {
+                        verify()
+                        persist()
+                    } else learning.acceptRoutineReview(suggestionId, r.id.value) { verify(); persist() }
+                })
+                check(receipt != null) { "Automation changed; open it again before saving" }
+                if (r.enabled && receipt.scheduling in setOf("BLOCKED", "SCHEDULE_FAILED"))
+                    error.value = receipt.schedulingReason
+                withContext(Dispatchers.Main) { saved(receipt) }
+            } finally { saving.value = false }
+        }
     }
     fun enable(id: RoutineId, enabled: Boolean) = act {
         val receipt = managementActions.setEnabled(id, enabled)

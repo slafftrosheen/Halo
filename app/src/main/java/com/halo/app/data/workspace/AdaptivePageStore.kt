@@ -81,6 +81,9 @@ internal class AdaptivePageStore(context: Context) {
         }.also { pages -> check(pages.map { it.ref.id }.distinct().size == pages.size) }
     }
 
+    fun requirePage(ref: AdaptivePageRef): SavedAdaptivePage =
+        pages().find { it.ref == ref } ?: throw AdaptivePageChanged()
+
     fun hidden(): Set<AdaptiveSlot> = disk.getStringSet("hidden", null).orEmpty()
         .mapNotNullTo(mutableSetOf()) { key -> AdaptiveSlot.entries.firstOrNull { it.name == key } }
 
@@ -90,7 +93,13 @@ internal class AdaptivePageStore(context: Context) {
             synchronized(disk) {
                 val current = pages()
                 if (previous == null) require(current.size < MAX_PAGES) { "Saved page limit reached" }
-                else if (current.none { it.ref == previous }) throw AdaptivePageChanged()
+                else {
+                    val before = current.find { it.ref == previous } ?: throw AdaptivePageChanged()
+                    if (before.title == title && before.layout == layout) {
+                        verify()
+                        return@synchronized before
+                    }
+                }
                 val saved = SavedAdaptivePage(AdaptivePageRef(previous?.id ?: UUID.randomUUID().toString(),
                     (previous?.revision ?: 0L) + 1), title, layout)
                 val updated = if (previous == null) listOf(saved) + current

@@ -26,6 +26,10 @@ import com.halo.app.ui.theme.rememberVisualPreferences
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
+import com.halo.app.R
+import com.halo.app.everyday.briefing.routineSnapshotLabel
 import androidx.compose.ui.unit.dp
 import com.halo.app.ui.workspace.*
 import com.halo.host.android.resolver.AndroidApplicationResolver
@@ -105,6 +109,7 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
     val busy = saving || trial.running
     var localError by remember { mutableStateOf<String?>(null) }
     var picker by rememberSaveable { mutableStateOf<String?>(null) }
+    var snapshotSelection by rememberSaveable { mutableStateOf<Int?>(null) }
     var category by rememberSaveable { mutableStateOf<TriggerCategory?>(null) }
     var deviceTarget by rememberSaveable { mutableStateOf<Int?>(null) }
     var zoneQuery by rememberSaveable { mutableStateOf("") }
@@ -130,9 +135,29 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
         routine = routine.copy(actions = reordered)
     }
     fun replaceCondition(index: Int, condition: RoutineCondition) { routine = routine.copy(conditions = routine.conditions.mapIndexed { i, old -> if (i == index) condition else old }) }
+    snapshotSelection?.let { index ->
+        val action = routine.actions.getOrNull(index)
+        if (action != null && action.toolId == RoutineSnapshotTool.ID) {
+            AlertDialog(onDismissRequest = { snapshotSelection = null },
+                title = { Text(stringResource(R.string.adaptive_summary_choose)) },
+                text = {
+                    Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
+                        val resources = LocalResources.current
+                        RoutineSnapshotSection.entries.forEach { section ->
+                            TextButton(onClick = {
+                                replaceAction(index, snapshotAction(section, actionArguments(action).optBoolean("allow_unavailable")))
+                                snapshotSelection = null
+                            }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                                Text(routineSnapshotLabel(resources, section))
+                            }
+                        }
+                    }
+                }, confirmButton = { TextButton(onClick = { snapshotSelection = null }) { Text(uiText("Cancel")) } })
+        }
+    }
     fun openReview(tryIt: Boolean) {
         try {
-            val candidate = routine.copy(name = routine.name.trim(), grantDigest = null, updatedAt = Instant.now())
+            val candidate = routine.copy(name = routine.name.trim(), grantDigest = null)
             candidate.actions.filter { it.toolId == "halo_routine_message" }.forEach {
                 require(actionArguments(it).optString("text", "").trim().length in 1..240) { "Enter a message with 1 to 240 characters" }
             }
@@ -251,12 +276,10 @@ internal fun EverydayRoutineEditor(initial: RoutineDraft, error: String?, descri
                         }
                         RoutineSnapshotTool.ID -> {
                             Text(uiText("Read a Halo summary"), style = MaterialTheme.typography.titleMedium)
-                            RoutineSnapshotSection.entries.forEach { section ->
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    RadioButton(selected = action.snapshotSection() == section,
-                                        onClick = { replaceAction(index, snapshotAction(section)) })
-                                    Text(uiText(section.title))
-                                }
+                            Text(action.uiLabel())
+                            TextButton(onClick = { snapshotSelection = index }, enabled = !busy,
+                                modifier = Modifier.heightIn(min = 48.dp)) {
+                                Text(stringResource(R.string.adaptive_summary_choose))
                             }
                         }
                         else -> {

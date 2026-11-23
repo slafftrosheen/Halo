@@ -59,6 +59,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.halo.app.R
 import com.halo.app.data.notebook.WorkspaceObjectType
 import com.halo.app.data.workspace.AdaptiveSlot
+import com.halo.app.data.workspace.SavedAdaptivePage
 import com.halo.app.data.workspace.WorkspaceQuery
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.briefing.DayReportSettings
@@ -156,7 +157,8 @@ internal fun rememberHaloBlockChoices(page: String): HaloBlockChoices {
 }
 
 @Composable
-internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false, onBack: () -> Unit = {}) {
+internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false, onBack: () -> Unit = {},
+    initialPage: SavedAdaptivePage? = null) {
     val context = LocalContext.current
     val choices = rememberHaloBlockChoices("today")
     val pinned = choices.pinned
@@ -266,7 +268,7 @@ internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false
             weatherSource?.source?.id)
         AdaptiveTodayPage(blocks, open, savedPages,
             onBack = { if (savedPages) onBack() else adaptivePage = false },
-            onRefresh = { refresh++ })
+            onRefresh = { refresh++ }, initialPage = initialPage)
         return
     }
     val article = activeSources.asSequence().filter { it.source.kind == CollectorKind.FEED }.flatMap { state ->

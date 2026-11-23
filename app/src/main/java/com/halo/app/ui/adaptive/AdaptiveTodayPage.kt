@@ -53,7 +53,9 @@ private data class AdaptiveDraft(
     val page: AdaptivePageRef? = null,
     val title: String = "",
     val undo: List<AdaptiveLayout> = emptyList(),
+    val checkpoint: AdaptiveLayout? = null,
 ) {
+    val dirty: Boolean get() = checkpoint?.let { layout != it } ?: layout.slots.isNotEmpty()
     fun change(next: AdaptiveLayout): AdaptiveDraft =
         if (next == layout) this else copy(layout = next, undo = (undo + layout).takeLast(20))
     fun undoChange(): AdaptiveDraft = undo.lastOrNull()?.let { copy(layout = it, undo = undo.dropLast(1)) } ?: this
@@ -62,6 +64,7 @@ private data class AdaptiveDraft(
 private val draftSaver = Saver<AdaptiveDraft, String>(
     save = { draft -> JSONObject().put("original", draft.original.json()).put("layout", draft.layout.json())
         .put("id", draft.page?.id).put("revision", draft.page?.revision).put("title", draft.title)
+        .put("checkpoint", draft.checkpoint?.json())
         .put("undo", JSONArray(draft.undo.map { it.json() })).toString() },
     restore = { raw -> runCatching {
         val value = JSONObject(raw)
@@ -71,7 +74,9 @@ private val draftSaver = Saver<AdaptiveDraft, String>(
         val undo = value.getJSONArray("undo")
         AdaptiveDraft(AdaptiveLayout.read(value.getJSONObject("original")), AdaptiveLayout.read(value.getJSONObject("layout")),
             page, value.optString("title").take(80),
-            List(undo.length().coerceAtMost(20)) { AdaptiveLayout.read(undo.getJSONObject(it)) })
+            List(undo.length().coerceAtMost(20)) { AdaptiveLayout.read(undo.getJSONObject(it)) },
+            value.optJSONObject("checkpoint")?.let { AdaptiveLayout.read(it) }
+                ?: page?.let { AdaptiveLayout.read(value.getJSONObject("original")) })
     }.getOrNull() },
 )
 
@@ -83,6 +88,7 @@ internal fun AdaptiveTodayPage(
     showSaved: Boolean,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
+    initialPage: SavedAdaptivePage? = null,
 ) {
     val context = LocalContext.current
     val store = remember(context) { AdaptivePageStore(context) }
@@ -103,10 +109,14 @@ internal fun AdaptiveTodayPage(
     val removedText = stringResource(R.string.adaptive_page_removed)
     val hiddenText = stringResource(R.string.adaptive_page_suggest_less_receipt)
     val deniedText = stringResource(R.string.adaptive_page_adult_only)
-    var draft by rememberSaveable(stateSaver = draftSaver) { mutableStateOf(AdaptiveDraft()) }
+    var draft by rememberSaveable(stateSaver = draftSaver) {
+        mutableStateOf(initialPage?.let {
+            AdaptiveDraft(it.layout, page = it.ref, title = it.title, checkpoint = it.layout)
+        } ?: AdaptiveDraft())
+    }
     var editing by rememberSaveable { mutableStateOf(false) }
-    var showLibrary by rememberSaveable { mutableStateOf(showSaved) }
-    var backToLibrary by rememberSaveable { mutableStateOf(false) }
+    var showLibrary by rememberSaveable { mutableStateOf(showSaved && initialPage == null) }
+    var backToLibrary by rememberSaveable { mutableStateOf(initialPage != null) }
     var request by remember { mutableStateOf("") }
     var saved by remember { mutableStateOf(emptyList<SavedAdaptivePage>()) }
     var hidden by remember { mutableStateOf(emptySet<AdaptiveSlot>()) }
@@ -122,10 +132,19 @@ internal fun AdaptiveTodayPage(
     var name by rememberSaveable { mutableStateOf("") }
     var copyPage by rememberSaveable { mutableStateOf(false) }
     var showWidgetReview by rememberSaveable { mutableStateOf(false) }
+    var routineAuthority by rememberSaveable { mutableStateOf<Long?>(null) }
+    var discardAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var confirmDelete by remember { mutableStateOf<SavedAdaptivePage?>(null) }
     var generation by remember { mutableIntStateOf(0) }
     var animatePlan by remember { mutableStateOf(false) }
     val layout = draft.layout
+    val pageScroll = rememberScrollState()
+    val routineExport = remember(layout) { AdaptiveRoutineExport.from(layout) }
+    val noRoutineSections = stringResource(R.string.adaptive_routine_no_sections)
+    routineAuthority?.let { revision ->
+        AdaptiveRoutineReview(routineExport, draft.title, revision, open, onBack = { routineAuthority = null })
+        return
+    }
     val widgetExport = remember(layout) { AdaptiveWidgetExport.from(layout) }
     val noWidgetSections = stringResource(R.string.adaptive_widget_no_sections)
     val suggestions = AdaptivePlanner.suggestions(blocks.keys, hidden, limit)
@@ -154,9 +173,13 @@ internal fun AdaptiveTodayPage(
     }
 
     LaunchedEffect(store) { store.changes().collect { reload() } }
+    fun leaveDraft(next: () -> Unit) {
+        if (draft.dirty) discardAction = next else next()
+    }
+
     fun back() {
         if (busy) return
-        if (!showLibrary && backToLibrary) showLibrary = true else onBack()
+        if (!showLibrary && backToLibrary) showLibrary = true else leaveDraft(onBack)
     }
 
     BackHandler(onBack = ::back)
@@ -218,7 +241,7 @@ internal fun AdaptiveTodayPage(
     }
 
     fun loadPage(page: SavedAdaptivePage) {
-        draft = AdaptiveDraft(page.layout, page.layout, page.ref, page.title)
+        draft = AdaptiveDraft(page.layout, page = page.ref, title = page.title, checkpoint = page.layout)
         backToLibrary = true
         editing = false
         showLibrary = false
@@ -255,7 +278,7 @@ internal fun AdaptiveTodayPage(
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 680.dp
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+        Column(Modifier.fillMaxSize().verticalScroll(pageScroll)
             .padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 TextButton(onClick = ::back, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -269,10 +292,7 @@ internal fun AdaptiveTodayPage(
                 Modifier.semantics { heading() }, style = MaterialTheme.typography.headlineSmall)
 
             if (showLibrary) {
-                TextButton(onClick = {
-                    showPlan(emptyList())
-                    request = ""
-                }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.adaptive_page_new)) }
+                TextButton(onClick = { leaveDraft { showPlan(emptyList()); request = "" } }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.adaptive_page_new)) }
                 if (!loaded) Text(uiText("Loading"))
                 else if (readFailed) Text(stringResource(R.string.adaptive_page_read_failed), color = MaterialTheme.colorScheme.error)
                 else if (saved.isEmpty()) Text(stringResource(R.string.adaptive_page_empty))
@@ -280,7 +300,7 @@ internal fun AdaptiveTodayPage(
                     key(page.ref.id) {
                         OutlinedCard(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
-                                TextButton(onClick = { loadPage(page) }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                                TextButton(onClick = { leaveDraft { loadPage(page) } }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
                                     Text(page.title.ifBlank { newTitle }, style = MaterialTheme.typography.titleMedium)
                                 }
                                 Text(page.layout.slots.joinToString(" · ") { blocks[it]?.heading ?: it.localizedLabel(resources) },
@@ -334,13 +354,25 @@ internal fun AdaptiveTodayPage(
                         }
                         Button(onClick = { startSave(false) }, enabled = layout.slots.isNotEmpty() && !busy,
                             modifier = Modifier.heightIn(min = 48.dp)) {
-                            Text(if (draft.page == null) stringResource(R.string.adaptive_pin_page) else stringResource(R.string.adaptive_page_save_changes))
+                            val label = when {
+                                draft.page == null -> R.string.adaptive_pin_page
+                                draft.dirty -> R.string.adaptive_page_save_changes
+                                else -> R.string.adaptive_page_rename
+                            }
+                            Text(stringResource(label))
                         }
                         TextButton(onClick = {
                             if (widgetExport.available.isEmpty()) receipt = noWidgetSections
                             else showWidgetReview = true
                         }, enabled = layout.slots.isNotEmpty() && !busy, modifier = Modifier.heightIn(min = 48.dp)) {
                             Text(stringResource(R.string.adaptive_widget_open))
+                        }
+                        TextButton(onClick = {
+                            if (routineExport.sections.isEmpty()) receipt = noRoutineSections
+                            else runCatching { Graph.kidsPreferences.adultActionRevision() }
+                                .onSuccess { routineAuthority = it }.onFailure { receipt = deniedText }
+                        }, enabled = layout.slots.isNotEmpty() && !busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                            Text(stringResource(R.string.adaptive_routine_open))
                         }
                     }
                     if (editing || layout.slots.isEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -397,7 +429,12 @@ internal fun AdaptiveTodayPage(
             widgetExport.unsupported.map { it.localizedLabel(resources) })) { showWidgetReview = false }
     }
     if (askName) AlertDialog(onDismissRequest = { askName = false },
-        title = { Text(stringResource(R.string.adaptive_pin_page)) },
+        title = { Text(stringResource(when {
+            copyPage -> R.string.adaptive_page_save_copy
+            draft.page == null -> R.string.adaptive_pin_page
+            draft.dirty -> R.string.adaptive_page_save_changes
+            else -> R.string.adaptive_page_rename
+        })) },
         text = {
             HaloTextField(name, { name = it.take(80) }, VoiceFieldKind.SHORT, label = { Text(stringResource(R.string.adaptive_page_name)) },
                 maxChars = 80, singleLine = true)
@@ -413,7 +450,7 @@ internal fun AdaptiveTodayPage(
                     saved = if (previous == null) listOf(page) + saved else saved.map { old ->
                         if (old.ref.id == page.ref.id) page else old
                     }
-                    draft = draft.copy(page = page.ref, title = page.title)
+                    draft = draft.copy(page = page.ref, title = page.title, checkpoint = page.layout)
                     receipt = savedText
                 })
             }, enabled = name.isNotBlank() && !busy) { Text(uiText("Save")) }
@@ -439,6 +476,13 @@ internal fun AdaptiveTodayPage(
                 }
             }, confirmButton = { TextButton(onClick = ::close) { Text(uiText("Cancel")) } })
     }
+    discardAction?.let { next ->
+        AlertDialog(onDismissRequest = { discardAction = null },
+            title = { Text(stringResource(R.string.adaptive_page_discard)) },
+            text = { Text(stringResource(R.string.adaptive_page_discard_detail)) },
+            confirmButton = { TextButton(onClick = { discardAction = null; next() }) { Text(uiText("Discard")) } },
+            dismissButton = { TextButton(onClick = { discardAction = null }) { Text(uiText("Keep editing")) } })
+    }
     confirmDelete?.let { page ->
         AlertDialog(onDismissRequest = { confirmDelete = null }, title = { Text(stringResource(R.string.adaptive_page_remove_saved)) },
             text = { Text(page.title.ifBlank { newTitle }) }, confirmButton = {
@@ -446,7 +490,7 @@ internal fun AdaptiveTodayPage(
                     confirmDelete = null
                     operate(operation = { store.delete(page.ref, it) }, finish = {
                         saved = saved.filterNot { it.ref == page.ref }
-                        if (draft.page == page.ref) draft = draft.copy(page = null)
+                        if (draft.page == page.ref) draft = draft.copy(page = null, checkpoint = null)
                         receipt = removedText
                     })
                 }, enabled = !busy) { Text(uiText("Remove")) }

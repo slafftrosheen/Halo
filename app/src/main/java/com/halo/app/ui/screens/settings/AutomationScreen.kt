@@ -84,7 +84,7 @@ data class AutomationReadiness(
 }
 
 @Composable
-private fun rememberAutomationReadiness(routines: List<Routine>, watches: List<ContinuationWatch>): AutomationReadiness {
+internal fun rememberAutomationReadiness(routines: List<Routine>, watches: List<ContinuationWatch>): AutomationReadiness {
     val context = LocalContext.current
     val graph = ManualDependencyGraph
     var labels by remember { mutableStateOf(AutomationLabels()) }

@@ -961,7 +961,9 @@ object ManualDependencyGraph {
         }
     }
     val routineMessageTool by lazy { com.halo.app.automation.RoutineMessageTool() }
-    val routineSnapshotTool by lazy { com.halo.app.automation.RoutineSnapshotTool { section ->
+    val routineSnapshotTool by lazy { com.halo.app.automation.RoutineSnapshotTool(
+        unavailable = { section -> com.halo.app.everyday.briefing.routineSnapshotUnavailable(section) },
+    ) { section ->
         com.halo.app.everyday.briefing.readRoutineSnapshot(section)
     } }
     // Same executor and registry contract, without initializing unrelated workspace/device tools in a worker.

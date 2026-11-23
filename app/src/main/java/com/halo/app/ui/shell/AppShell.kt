@@ -795,13 +795,13 @@ fun AppShell(
                     if (kidsReady && !kidsMode) com.halo.app.ui.screens.home.HaloTodayScreen(::navigateSafely,
                         savedPages = true, onBack = { navController.popBackStack() })
                 }
-                composable(com.halo.app.data.workspace.AdaptiveWidgetEntry.PATTERN) { entry ->
+                composable(com.halo.app.data.workspace.AdaptivePageEntry.PATTERN) { entry ->
                     if (kidsReady && !kidsMode) {
                         val args = entry.arguments
-                        val route = listOf("pageId", "pageRevision", "familyRevision").joinToString("/") { args?.getString(it).orEmpty() }
-                        val request = com.halo.app.data.workspace.AdaptiveWidgetEntry.parse(
-                            "${com.halo.app.data.workspace.AdaptiveWidgetEntry.ROOT}/$route")
-                        if (request != null) com.halo.app.ui.adaptive.AdaptiveWidgetReviewEntry(request) {
+                        val route = com.halo.app.data.workspace.AdaptivePageEntry.arguments.joinToString("/") { args?.getString(it).orEmpty() }
+                        val request = com.halo.app.data.workspace.AdaptivePageEntry.parse(
+                            "${com.halo.app.data.workspace.AdaptivePageEntry.ROOT}/$route")
+                        if (request != null) com.halo.app.ui.adaptive.AdaptivePageEntryScreen(request, ::navigateSafely) {
                             navController.popBackStack()
                         }
                     }

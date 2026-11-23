@@ -2,6 +2,7 @@ package com.halo.app.automation
 
 import com.halo.app.data.routine.*
 import com.halo.runtime.cognition.routine.*
+import kotlinx.coroutines.CancellationException
 import java.time.Instant
 
 data class RoutineManagementReceipt(val routineId: RoutineId, val snapshot: ManagedRoutineSnapshot?,
@@ -87,7 +88,14 @@ class RoutineManagementActions(
     private suspend fun schedule(routine: Routine): RoutineManagementReceipt {
         val current = requireNotNull(repository.get(routine.id)) { "Automation no longer saved" }
         check(current.updatedAt == routine.updatedAt) { "Automation changed before scheduling" }
-        val result = scheduler.schedule(current)
+        val result = try {
+            scheduler.schedule(current)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            return RoutineManagementReceipt(routine.id, repository.managementGet(routine.id), "SCHEDULE_FAILED",
+                schedulingReason = "Routine saved. Scheduling could not be confirmed.")
+        }
         val state = when (result) {
             is RoutineScheduleResult.Scheduled -> "SCHEDULED"
             is RoutineScheduleResult.EventDriven -> "EVENT_DRIVEN"
