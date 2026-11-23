@@ -19,21 +19,28 @@ enum class EverydayWidgetSize(val widthDp: Int, val heightDp: Int, val rowLimit:
     SMALL(160, 150, 1), WIDE(280, 170, 2), TALL(200, 284, 3);
 }
 
+internal val dashboardCardSections = listOf(
+    EverydayCardKind.TASKS, EverydayCardKind.UPCOMING, EverydayCardKind.WEATHER, EverydayCardKind.BRIEF,
+    EverydayCardKind.HEADLINES, EverydayCardKind.DEVICE, EverydayCardKind.ALARMS_TIMERS,
+    EverydayCardKind.REMINDERS, EverydayCardKind.CLOCK,
+)
+
 data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = null, val cityLabel: String = "",
     val sourceId: String? = null, val recordId: String? = null, val priority: TaskPriority? = null,
     val limit: Int = 3, val hidePrivate: Boolean = true, val theme: String = "INHERIT",
     val sections: List<EverydayCardKind> = listOf(EverydayCardKind.TASKS,EverydayCardKind.UPCOMING,EverydayCardKind.WEATHER),val headlineSourceId: String? = null,
     val widgetSize: EverydayWidgetSize? = null, val widgetMotion: Boolean = true, val widgetMatchLook: Boolean = true,
     val widgetStyle: EverydayWidgetStyle = EverydayWidgetStyle.GLASS,
-    val widgetShows: EverydayWidgetShows = EverydayWidgetShows.DEFAULT, val widgetAutoPage: Boolean = false) {
+    val widgetShows: EverydayWidgetShows = EverydayWidgetShows.DEFAULT, val widgetAutoPage: Boolean = false,
+    val adaptiveDashboard: Boolean = false) {
     init {
         zoneId?.let(ZoneId::of)
         require(cityLabel.length <= 120 && limit in 1..5 && theme in setOf("INHERIT", "LIGHT", "DARK"))
         require(sourceId == null || sourceId.matches(Regex("[A-Za-z0-9_.:-]{1,160}")))
         require(headlineSourceId == null || headlineSourceId.matches(Regex("[A-Za-z0-9_.:-]{1,160}")))
         require(recordId == null || recordId.matches(Regex("[A-Za-z0-9_.:-]{1,200}")))
-        require(sections.size in 1..5 && sections.distinct().size==sections.size && sections.all { it in setOf(EverydayCardKind.TASKS,EverydayCardKind.UPCOMING,
-            EverydayCardKind.WEATHER,EverydayCardKind.BRIEF,EverydayCardKind.HEADLINES,EverydayCardKind.DEVICE,EverydayCardKind.ALARMS_TIMERS) })
+        require(sections.size in 1..5 && sections.distinct() == sections && sections.all { it in dashboardCardSections })
+        require(!adaptiveDashboard || kind == EverydayCardKind.DASHBOARD && hidePrivate)
     }
     fun fields(): Map<String, String> = buildMap {
         put("kind", kind.name); zoneId?.let { put("zoneId", it) }; put("cityLabel", cityLabel)
@@ -47,10 +54,11 @@ data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = 
         if (widgetStyle != EverydayWidgetStyle.GLASS) put("widgetStyle", widgetStyle.name)
         if (widgetShows != EverydayWidgetShows.DEFAULT) put("widgetShows", widgetShows.name)
         if (widgetAutoPage) put("widgetAutoPage", "true")
+        if (adaptiveDashboard) put("adaptiveDashboard", "true")
     }
     companion object {
         fun from(fields: Map<String, String>, fallback: EverydayCardKind): EverydayCardConfig {
-            require(fields.keys.all { it in setOf("kind", "zoneId", "cityLabel", "sourceId", "recordId", "priority", "limit", "hidePrivate", "theme", "sections", "headlineSourceId", "widgetSize", "widgetMotion", "widgetMatchLook", "widgetStyle", "widgetShows", "widgetAutoPage") })
+            require(fields.keys.all { it in setOf("kind", "zoneId", "cityLabel", "sourceId", "recordId", "priority", "limit", "hidePrivate", "theme", "sections", "headlineSourceId", "widgetSize", "widgetMotion", "widgetMatchLook", "widgetStyle", "widgetShows", "widgetAutoPage", "adaptiveDashboard") })
             return EverydayCardConfig(fields["kind"]?.let(EverydayCardKind::valueOf) ?: fallback,
                 fields["zoneId"], fields["cityLabel"].orEmpty(), fields["sourceId"], fields["recordId"],
                 fields["priority"]?.let(TaskPriority::valueOf), fields["limit"]?.toInt() ?: 3,
@@ -60,7 +68,8 @@ data class EverydayCardConfig(val kind: EverydayCardKind, val zoneId: String? = 
                 fields["widgetMotion"]?.toBooleanStrict() ?: true, fields["widgetMatchLook"]?.toBooleanStrict() ?: true,
                 fields["widgetStyle"]?.let(EverydayWidgetStyle::valueOf) ?: EverydayWidgetStyle.GLASS,
                 fields["widgetShows"]?.let(EverydayWidgetShows::valueOf) ?: EverydayWidgetShows.DEFAULT,
-                fields["widgetAutoPage"]?.toBooleanStrict() ?: false)
+                fields["widgetAutoPage"]?.toBooleanStrict() ?: false,
+                fields["adaptiveDashboard"]?.toBooleanStrict() ?: false)
         }
     }
 }
@@ -94,7 +103,8 @@ data class EverydaySnapshot(val now: Instant, val zone: ZoneId, val records: Lis
     val widgetLearning: WidgetLearning? = null, val widgetFocus: WidgetFocus? = null,
     val widgetHabits: List<List<Boolean>> = emptyList(), val widgetHabitNow: Boolean = false,
     val widgetChildAttempts: Int = 0, val widgetHomeCount: Int = 0, val widgetHomeDone: Int = 0, val widgetRecording: Boolean = false,
-    val dayNewsEnabled: Boolean = false, val phoneEventsToday: Int = 0)
+    val dayNewsEnabled: Boolean = false, val phoneEventsToday: Int = 0,
+    val visibleAgendaCalendars: Set<OrganizerCalendar> = OrganizerCalendar.entries.toSet())
 
 /** Shared deterministic read-only faces for Screen and launcher hosts. This never fetches or runs a model. */
 object EverydayCards {
@@ -304,13 +314,38 @@ object EverydayCards {
                 }
             }
             EverydayCardKind.DASHBOARD -> {
-                val faces=config.sections.map { section -> project(config.copy(kind=section,sourceId=when(section) {
-                    EverydayCardKind.WEATHER -> config.sourceId;EverydayCardKind.HEADLINES -> config.headlineSourceId;else -> null }),input,locale,externalHost,locked,text) }
-                face(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(input.now.atZone(zone)),
-                    faces.map { child -> EverydayCardRow(child.title+" · "+child.value,listOfNotNull(child.status,child.attribution,
-                        child.observedAt?.let { text("Saved at")+" · "+stamp(it) }).joinToString(" · "),child.target,
-                        publisher=child.attribution,savedAt=child.observedAt,stale=child.stale) },
-                    EverydayTarget.Organizer, status = mode)
+                if (config.adaptiveDashboard && input.kids) {
+                    return face("", emptyList(), EverydayTarget.WidgetTool(EverydayWidgetTool.KIDS))
+                }
+                val rows = config.sections.map { section ->
+                    val sourceId = when (section) {
+                        EverydayCardKind.WEATHER -> config.sourceId ?: if (config.adaptiveDashboard)
+                            com.halo.app.everyday.briefing.todayWeather(input.sources)?.source?.id else null
+                        EverydayCardKind.HEADLINES -> config.headlineSourceId
+                        else -> null
+                    }
+                    val snapshot = when {
+                        config.adaptiveDashboard && section == EverydayCardKind.TASKS ->
+                            input.copy(records = input.records.filter { it.kind == OrganizerKind.TASK })
+                        config.adaptiveDashboard && section == EverydayCardKind.UPCOMING ->
+                            input.copy(records = input.records.filter { it.calendar in input.visibleAgendaCalendars })
+                        else -> input
+                    }
+                    val child = project(config.copy(kind = section, sourceId = sourceId, adaptiveDashboard = false),
+                        snapshot, locale, externalHost, locked, text)
+                    val value = if (section == EverydayCardKind.CLOCK) child.rows.firstOrNull()?.title ?: child.value
+                        else child.value
+                    val sectionTitle = if (section == EverydayCardKind.TASKS && config.adaptiveDashboard)
+                        text("Tasks") else child.title
+                    EverydayCardRow(sectionTitle + " · " + value, listOfNotNull(child.status, child.attribution,
+                        child.observedAt?.let { text("Saved at") + " · " + stamp(it) }).joinToString(" · "),
+                        if (config.adaptiveDashboard && section == EverydayCardKind.UPCOMING) EverydayTarget.Organizer
+                        else child.target, publisher = child.attribution, savedAt = child.observedAt, stale = child.stale)
+                }
+                val value = if (config.adaptiveDashboard && EverydayCardKind.CLOCK !in config.sections) ""
+                    else DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(input.now.atZone(zone))
+                face(value, rows, if (config.adaptiveDashboard) EverydayTarget.Today else EverydayTarget.Organizer,
+                    status = mode)
             }
             else -> EverydayToolkitWidgets.project(config, input, locale, text)
         }

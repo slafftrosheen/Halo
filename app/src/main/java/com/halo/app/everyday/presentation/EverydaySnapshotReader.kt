@@ -14,6 +14,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.*
 
+private fun visibleAgendaCalendars(): Set<OrganizerCalendar> = runCatching {
+    val settings = PlannerCalendarPreferences.read(Graph.storage)
+    OrganizerCalendar.entries.filterTo(linkedSetOf()) { settings.appearance(it).visible }
+}.getOrDefault(emptySet())
+
 /** Local database reads only, bounded to the card's seven-day window. No bootstrap seed or remote refresh. */
 suspend fun readEverydaySnapshot(context: Context, now: Instant = Instant.now(), includePastWeek: Boolean = false): EverydaySnapshot = withContext(Dispatchers.IO) {
     val kids = Graph.kidsPreferences.getEnabled()
@@ -21,6 +26,7 @@ suspend fun readEverydaySnapshot(context: Context, now: Instant = Instant.now(),
     val modeRevision=Graph.privacyModes.revision
     val epoch = if (!kids) Graph.kidsPreferences.adultActionRevision() else null
     val zone = ZoneId.systemDefault()
+    val agendaCalendars = visibleAgendaCalendars()
     val snapshot = Graph.appDatabase.withTransaction {
         val settings = Graph.briefRepository.settings()
         val records = Graph.organizerRepository.records().filter { !kids || it.id in settings.childRecordIds }
@@ -47,8 +53,9 @@ suspend fun readEverydaySnapshot(context: Context, now: Instant = Instant.now(),
             if (kids) emptyList() else Graph.worldClocks.all(), records.flatMap { Graph.organizerRepository.receipts(it.id) },
             kids, settings.childRecordIds, Graph.privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD,
             if (level >= 0 && scale > 0) (level * 100 / scale).coerceIn(0,100) else null,
-            (battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0,readEverydayAuthorityStamp(),familyRevision,modeRevision,
-            dayNewsEnabled = !kids && Graph.dayReportService.settings.choices.value.news)
+            (battery?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0,readEverydayAuthorityStamp(agendaCalendars),familyRevision,modeRevision,
+            dayNewsEnabled = !kids && Graph.dayReportService.settings.choices.value.news,
+            visibleAgendaCalendars = agendaCalendars)
     }
     if (kids != Graph.kidsPreferences.enabled.value || runCatching { Graph.kidsPreferences.requirePresentation(familyRevision) }.isFailure ||
         epoch != null && runCatching { Graph.kidsPreferences.requireAdultAction(epoch) }.isFailure)
@@ -57,7 +64,7 @@ suspend fun readEverydaySnapshot(context: Context, now: Instant = Instant.now(),
 }
 
 /** Called inside the final Room publication transaction. Includes same-profile sharing/source edits. */
-suspend fun readEverydayAuthorityStamp(): String = Graph.appDatabase.withTransaction {
+suspend fun readEverydayAuthorityStamp(agendaCalendars: Set<OrganizerCalendar> = visibleAgendaCalendars()): String = Graph.appDatabase.withTransaction {
     val value=buildString {
         Graph.organizerRepository.records(true).sortedBy { it.id }.forEach { append(it.id).append(':').append(it.version).append(';') }
         Graph.appDatabase.organizerDao().allReceipts().forEach { append(it.occurrenceKey).append(':').append(it.recordVersion).append(':')
@@ -68,6 +75,7 @@ suspend fun readEverydayAuthorityStamp(): String = Graph.appDatabase.withTransac
         append(Graph.briefRepository.settings().version)
         append(':').append(Graph.dayReportService.settings.choices.value.news)
         Graph.worldClocks.all().forEach { append(it.id).append(':').append(it.version).append(';') }
+        append(agendaCalendars.sorted().joinToString(",") { it.name }).append(';')
         append(Graph.kidsPreferences.presentationRevision()).append(':').append(Graph.privacyModes.revision)
     }
     java.security.MessageDigest.getInstance("SHA-256").digest(value.toByteArray()).joinToString("") { "%02x".format(it) }

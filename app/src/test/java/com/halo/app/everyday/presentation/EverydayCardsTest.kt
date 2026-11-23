@@ -74,6 +74,29 @@ class EverydayCardsTest {
         assertEquals(EverydayTarget.Source(news.source.id,news.source.version,news.snapshot!!.contentRevision,"article:chosen"),face.rows.first().target)
         assertEquals(config,EverydayCardConfig.from(config.fields(),EverydayCardKind.DASHBOARD))
     }
+    @Test fun adaptiveDashboardUsesVisibleCalendarsAndKeepsTaskAndReminderSummariesSeparate() {
+        val reminder = task("reminder").copy(kind = OrganizerKind.REMINDER)
+        val hidden = task("appointment").copy(kind = OrganizerKind.EVENT, calendar = OrganizerCalendar.FAMILY)
+        val data = input(listOf(task(), reminder, hidden),
+            listOf(OrganizerOccurrence(hidden, now.plusSeconds(60), now.plusSeconds(60), now.plusSeconds(120), false)))
+            .copy(visibleAgendaCalendars = setOf(OrganizerCalendar.PERSONAL), phoneEventsToday = 2)
+        val config = EverydayCardConfig(EverydayCardKind.DASHBOARD,
+            sections = listOf(EverydayCardKind.TASKS, EverydayCardKind.UPCOMING, EverydayCardKind.REMINDERS),
+            adaptiveDashboard = true)
+        val face = EverydayCards.project(config, data, Locale.US, externalHost = true)
+        assertEquals(EverydayTarget.Today, face.target)
+        assertTrue(face.value.isEmpty())
+        assertEquals(3, face.rows.size)
+        assertTrue(face.rows[0].title.startsWith("Tasks · 1"))
+        assertTrue(face.rows[1].title.contains("No upcoming events"))
+        assertTrue(face.rows[2].title.startsWith("Reminders · 1"))
+        assertFalse(face.rows.any { it.title.contains("Secret plan title") || it.detail.contains("Secret plan title") })
+        val kidsFace = EverydayCards.project(config, data.copy(kids = true, sharedRecordIds = setOf("task")), Locale.US,
+            externalHost = true)
+        assertTrue(kidsFace.rows.isEmpty())
+        assertEquals(EverydayTarget.WidgetTool(EverydayWidgetTool.KIDS), kidsFace.target)
+    }
+
     @Test fun upcomingMovedEventCarriesOriginalOccurrenceIdentity() {
         val event=task().copy(kind=OrganizerKind.EVENT,time=OrganizerTime(LocalDateTime.parse("2026-11-04T09:00"),LocalDateTime.parse("2026-11-04T10:00"),"UTC"))
         val original=now.plusSeconds(75600)

@@ -42,4 +42,14 @@
     <string name="adaptive_page_why_clock">"Czas i data w Twojej bieżącej strefie czasowej."</string>
     <string name="adaptive_page_why_brief">"Zapisane podsumowanie dnia."</string>
     <string name="adaptive_page_why_device">"Bieżący poziom baterii i stan ładowania telefonu."</string>
+    <string name="adaptive_widget_open">"Zapisz jako widżet"</string>
+    <string name="adaptive_widget_title">"Widżet z tej strony"</string>
+    <string name="adaptive_widget_choose">"Wybierz maksymalnie trzy bloki. Zachowają kolejność ze strony."</string>
+    <string name="adaptive_widget_omitted">"Dostępne w aplikacji Halo: %1$s"</string>
+    <string name="adaptive_widget_agenda_scope">"Widżet pokazuje wydarzenia z Organizera Halo. Kalendarz telefonu pozostaje w widoku „Dzisiaj”."</string>
+    <string name="adaptive_widget_privacy">"Ekran główny pokazuje podsumowania. Prywatne tytuły i szczegóły pozostają w Halo."</string>
+    <string name="adaptive_widget_unavailable">"Wznów działanie Halo w przestrzeni dla dorosłych, aby dodać widżet."</string>
+    <string name="adaptive_widget_layout_locked">"Odblokuj układ Halo w ustawieniach, aby dodać widżet."</string>
+    <string name="adaptive_widget_no_sections">"Dodaj blok obsługiwany na ekranie głównym, np. „Zadania”, „Pogoda” lub „Plan dnia”."</string>
+    <string name="adaptive_widget_changed">"Zapisana strona się zmieniła lub jest niedostępna. Wybierz ją ponownie z listy zapisanych stron."</string>
 </resources>

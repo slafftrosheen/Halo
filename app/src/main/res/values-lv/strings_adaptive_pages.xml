@@ -42,4 +42,14 @@
     <string name="adaptive_page_why_clock">"Laiks un datums jūsu pašreizējā laika joslā."</string>
     <string name="adaptive_page_why_brief">"Šodienas saglabātais kopsavilkums."</string>
     <string name="adaptive_page_why_device">"Tālruņa akumulatora uzlādes līmenis un stāvoklis."</string>
+    <string name="adaptive_widget_open">"Saglabāt kā logrīku"</string>
+    <string name="adaptive_widget_title">"Logrīks no šīs lapas"</string>
+    <string name="adaptive_widget_choose">"Izvēlieties līdz trim blokiem. Tie būs redzami lapas secībā."</string>
+    <string name="adaptive_widget_omitted">"Pieejams lietotnē Halo: %1$s"</string>
+    <string name="adaptive_widget_agenda_scope">"Logrīks rāda Halo plānotāja pasākumus. Tālruņa kalendārs paliek sadaļā «Šodien»."</string>
+    <string name="adaptive_widget_privacy">"Sākuma ekrānā redzami kopsavilkumi. Personiskie nosaukumi un informācija paliek Halo."</string>
+    <string name="adaptive_widget_unavailable">"Lai pievienotu logrīku, atsāciet Halo darbību pieaugušo sadaļā."</string>
+    <string name="adaptive_widget_layout_locked">"Lai pievienotu logrīku, atbloķējiet Halo izkārtojumu iestatījumos."</string>
+    <string name="adaptive_widget_no_sections">"Pievienojiet sākuma ekrāna atbalstītu bloku, piemēram, «Uzdevumi», «Laikapstākļi» vai «Darba kārtība»."</string>
+    <string name="adaptive_widget_changed">"Saglabātā lapa ir mainīta vai nav pieejama. Izvēlieties to vēlreiz saglabāto lapu sarakstā."</string>
 </resources>

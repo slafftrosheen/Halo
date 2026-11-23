@@ -28,6 +28,8 @@ import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.organizer.android.PhoneCalendarAgenda
 import com.halo.app.everyday.presentation.route
 import com.halo.app.language.uiText
+import com.halo.app.nativeactions.AdaptiveWidgetReview
+import com.halo.app.nativeactions.EverydayWidgetPicker
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.ui.theme.HaloLookMotion
@@ -119,10 +121,13 @@ internal fun AdaptiveTodayPage(
     var askName by rememberSaveable { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf("") }
     var copyPage by rememberSaveable { mutableStateOf(false) }
+    var showWidgetReview by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf<SavedAdaptivePage?>(null) }
     var generation by remember { mutableIntStateOf(0) }
     var animatePlan by remember { mutableStateOf(false) }
     val layout = draft.layout
+    val widgetExport = remember(layout) { AdaptiveWidgetExport.from(layout) }
+    val noWidgetSections = stringResource(R.string.adaptive_widget_no_sections)
     val suggestions = AdaptivePlanner.suggestions(blocks.keys, hidden, limit)
 
     suspend fun reload() {
@@ -331,6 +336,12 @@ internal fun AdaptiveTodayPage(
                             modifier = Modifier.heightIn(min = 48.dp)) {
                             Text(if (draft.page == null) stringResource(R.string.adaptive_pin_page) else stringResource(R.string.adaptive_page_save_changes))
                         }
+                        TextButton(onClick = {
+                            if (widgetExport.available.isEmpty()) receipt = noWidgetSections
+                            else showWidgetReview = true
+                        }, enabled = layout.slots.isNotEmpty() && !busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                            Text(stringResource(R.string.adaptive_widget_open))
+                        }
                     }
                     if (editing || layout.slots.isEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         TextButton(onClick = { chooseBlock = true }, enabled = layout.slots.size < limit && !busy,
@@ -381,6 +392,10 @@ internal fun AdaptiveTodayPage(
         }
     }
 
+    if (showWidgetReview && widgetExport.available.isNotEmpty()) {
+        EverydayWidgetPicker(adaptiveReview = AdaptiveWidgetReview(widgetExport,
+            widgetExport.unsupported.map { it.localizedLabel(resources) })) { showWidgetReview = false }
+    }
     if (askName) AlertDialog(onDismissRequest = { askName = false },
         title = { Text(stringResource(R.string.adaptive_pin_page)) },
         text = {

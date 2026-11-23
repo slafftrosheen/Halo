@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.R
+import com.halo.app.data.workspace.AdaptiveWidgetExport
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.presentation.EverydayCardConfig
 import com.halo.app.everyday.presentation.EverydayToolkitWidgets
@@ -35,9 +36,11 @@ import com.halo.app.everyday.presentation.EverydayCardKind
 import com.halo.app.everyday.presentation.EverydayCards
 import com.halo.app.everyday.presentation.EverydaySnapshot
 import com.halo.app.everyday.presentation.EverydayWidgetSize
+import com.halo.app.everyday.presentation.readEverydaySnapshot
 import com.halo.app.language.resolveUiText
 import com.halo.app.language.uiText
 import com.halo.app.ui.design.HaloShapes
+import com.halo.app.ui.theme.HaloLayoutLock
 import com.halo.app.ui.theme.rememberVisualPreferences
 import com.halo.app.ui.workspace.HaloWorkspaceToggleRow
 import com.halo.app.wallpaper.HaloWallpaper
@@ -48,70 +51,120 @@ import com.halo.app.wallpaper.wallpaperAt
 import com.halo.app.wallpaper.wallpaperPeriod
 import kotlinx.coroutines.CancellationException
 
+internal data class AdaptiveWidgetReview(val export: AdaptiveWidgetExport, val omittedLabels: List<String>)
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-internal fun EverydayWidgetPicker(initialKind: EverydayCardKind = EverydayCardKind.DASHBOARD, onDismiss: () -> Unit) {
+internal fun EverydayWidgetPicker(initialKind: EverydayCardKind = EverydayCardKind.DASHBOARD,
+    adaptiveReview: AdaptiveWidgetReview? = null, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val manager = remember(context) { AppWidgetManager.getInstance(context) }
     val supportsPin = remember(manager) { manager.isRequestPinAppWidgetSupported }
     val installed = remember { EverydayWidgetProviders.ids(context).mapNotNull { id ->
         EverydayWidgetProviders.kind(context, id)?.let { id to it }
     } }
-    var kind by rememberSaveable(initialKind) { mutableStateOf(initialKind.name) }
-    var size by rememberSaveable { mutableStateOf<String?>(null) }
+    val export = adaptiveReview?.export
+    val layoutLocked by remember(context) { HaloLayoutLock.get(context) }.state.collectAsStateWithLifecycle()
+    val initialConfig = remember(export, initialKind) { export?.config() ?: EverydayCardConfig(initialKind) }
+    var kind by rememberSaveable(initialConfig.kind) { mutableStateOf(initialConfig.kind.name) }
+    var size by rememberSaveable(export) { mutableStateOf(initialConfig.widgetSize?.name) }
+    var sections by rememberSaveable(export) { mutableStateOf(ArrayList(export?.suggested.orEmpty().map { it.name })) }
     var style by rememberSaveable { mutableStateOf(EverydayWidgetStyle.GLASS.name) }
     var shows by rememberSaveable { mutableStateOf(EverydayWidgetShows.DEFAULT.name) }
     var motion by rememberSaveable { mutableStateOf(true) }
     var autoPage by rememberSaveable { mutableStateOf(false) }
     var matchesLook by rememberSaveable { mutableStateOf(true) }
     var notice by rememberSaveable { mutableStateOf<Int?>(null) }
-    val config = EverydayCardConfig(EverydayCardKind.valueOf(kind), widgetSize = size?.let(EverydayWidgetSize::valueOf),
+    val base = export?.let { plan ->
+        val selected = plan.available.filter { it.name in sections }
+        plan.config(selected.ifEmpty { plan.suggested })
+    } ?: EverydayCardConfig(EverydayCardKind.valueOf(kind))
+    val config = base.copy(widgetSize = size?.let(EverydayWidgetSize::valueOf),
         widgetMotion = motion, widgetMatchLook = matchesLook, widgetStyle = EverydayWidgetStyle.valueOf(style),
-        widgetShows = EverydayWidgetShows.valueOf(shows), widgetAutoPage = autoPage && EverydayWidgetViews.supportsPaging(EverydayCardKind.valueOf(kind)))
+        widgetShows = EverydayWidgetShows.valueOf(shows), widgetAutoPage = autoPage && EverydayWidgetViews.supportsPaging(base.kind))
     var snapshotError by remember { mutableStateOf(false) }
     var retry by remember { mutableIntStateOf(0) }
-    val snapshot by produceState<EverydaySnapshot?>(null, retry) {
+    val kidsEnabled by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
+    val paused by Graph.haloPause.state.collectAsStateWithLifecycle()
+    val snapshot by produceState<EverydaySnapshot?>(null, retry, kidsEnabled, paused.version) {
+        value = null
         snapshotError = false
-        try { value = readEverydayWidgetSnapshot(context) }
+        if (export != null && (kidsEnabled || paused.paused)) return@produceState
+        try {
+            value = if (export == null) readEverydayWidgetSnapshot(context)
+                else readEverydaySnapshot(context, includePastWeek = true)
+        }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { snapshotError = true }
     }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text(stringResource(R.string.alive_widget_title), style = MaterialTheme.typography.headlineSmall)
-            val easy = rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
-            var moreKinds by rememberSaveable { mutableStateOf(false) }
-            val groups = if (easy && !moreKinds) listOf(
-                R.string.widget_toolkit_original to listOf(EverydayCardKind.TODAY, EverydayCardKind.DASHBOARD, EverydayCardKind.TASKS,
-                    EverydayCardKind.CLOCK_WEATHER, EverydayCardKind.BRIEF, config.kind).distinct()
-            ) else listOf(
-                R.string.widget_toolkit_capture to EverydayToolkitWidgets.capture,
-                R.string.widget_toolkit_planning to EverydayToolkitWidgets.planning,
-                R.string.widget_toolkit_family to EverydayToolkitWidgets.family,
-                R.string.widget_toolkit_smarter to listOf(EverydayCardKind.SMART_STACK,
-                    EverydayCardKind.LOCK_NEXT_EVENT, EverydayCardKind.LOCK_RAIN),
-                R.string.widget_toolkit_original to EverydayCards.launcherKinds.filterNot { it in EverydayToolkitWidgets.launcherKinds },
-            )
-            groups.forEach { (heading, options) ->
-                Text(stringResource(heading), style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(if (adaptiveReview == null) R.string.alive_widget_title else R.string.adaptive_widget_title),
+                style = MaterialTheme.typography.headlineSmall)
+            if (adaptiveReview != null) {
+                Text(stringResource(R.string.adaptive_widget_choose))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    options.forEach { option ->
-                        FilterChip(config.kind == option, {
-                            kind = option.name
-                            size = null
-                            shows = EverydayWidgetShows.DEFAULT.name
+                    adaptiveReview.export.available.forEach { option ->
+                        val chosen = option in config.sections
+                        val label = when (option) {
+                            EverydayCardKind.TASKS -> "Tasks"
+                            EverydayCardKind.UPCOMING -> "Agenda"
+                            else -> EverydayCards.title(option)
+                        }
+                        FilterChip(selected = chosen, onClick = {
+                            sections = ArrayList(if (chosen) sections - option.name else sections + option.name)
                             notice = null
-                        }, label = { Text(uiText(EverydayCards.title(option))) },
-                            modifier = Modifier.heightIn(min = if (easy) 64.dp else 48.dp))
+                        }, enabled = notice != R.string.alive_widget_pin_requested &&
+                            if (chosen) config.sections.size > 1 else config.sections.size < AdaptiveWidgetExport.MAX_SECTIONS,
+                            label = { Text(uiText(label)) }, modifier = Modifier.heightIn(min = 48.dp))
                     }
                 }
+                if (adaptiveReview.omittedLabels.isNotEmpty()) {
+                    Text(stringResource(R.string.adaptive_widget_omitted, adaptiveReview.omittedLabels.joinToString(", ")),
+                        style = MaterialTheme.typography.bodySmall)
+                }
+                if (EverydayCardKind.UPCOMING in config.sections) {
+                    Text(stringResource(R.string.adaptive_widget_agenda_scope), style = MaterialTheme.typography.bodySmall)
+                }
+                Text(stringResource(R.string.adaptive_widget_privacy), style = MaterialTheme.typography.bodySmall)
+            } else {
+                val easy = rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
+                var moreKinds by rememberSaveable { mutableStateOf(false) }
+                val groups = if (easy && !moreKinds) listOf(
+                    R.string.widget_toolkit_original to listOf(EverydayCardKind.TODAY, EverydayCardKind.DASHBOARD, EverydayCardKind.TASKS,
+                        EverydayCardKind.CLOCK_WEATHER, EverydayCardKind.BRIEF, config.kind).distinct()
+                ) else listOf(
+                    R.string.widget_toolkit_capture to EverydayToolkitWidgets.capture,
+                    R.string.widget_toolkit_planning to EverydayToolkitWidgets.planning,
+                    R.string.widget_toolkit_family to EverydayToolkitWidgets.family,
+                    R.string.widget_toolkit_smarter to listOf(EverydayCardKind.SMART_STACK,
+                        EverydayCardKind.LOCK_NEXT_EVENT, EverydayCardKind.LOCK_RAIN),
+                    R.string.widget_toolkit_original to EverydayCards.launcherKinds.filterNot { it in EverydayToolkitWidgets.launcherKinds },
+                )
+                groups.forEach { (heading, options) ->
+                    Text(stringResource(heading), style = MaterialTheme.typography.titleSmall)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        options.forEach { option ->
+                            FilterChip(config.kind == option, {
+                                kind = option.name
+                                size = null
+                                shows = EverydayWidgetShows.DEFAULT.name
+                                notice = null
+                            }, label = { Text(uiText(EverydayCards.title(option))) },
+                                modifier = Modifier.heightIn(min = if (easy) 64.dp else 48.dp))
+                        }
+                    }
+                }
+                if (easy && !moreKinds) TextButton({ moreKinds = true }) { Text(uiText("More")) }
             }
-            if (easy && !moreKinds) TextButton({ moreKinds = true }) { Text(uiText("More")) }
             if (config.kind in EverydayToolkitWidgets.lockScreen) {
                 Text(stringResource(R.string.widget_toolkit_lock_hint), style = MaterialTheme.typography.bodySmall)
             }
-            if (snapshot != null) EverydayWidgetPreview(config, snapshot!!)
+            val unavailable = export != null && (kidsEnabled || paused.paused)
+            val reviewedSnapshot = snapshot?.takeIf { !unavailable && (export == null || !it.kids) }
+            if (reviewedSnapshot != null) EverydayWidgetPreview(config, reviewedSnapshot)
+            else if (unavailable) Text(stringResource(R.string.adaptive_widget_unavailable), color = MaterialTheme.colorScheme.error)
             else if (!snapshotError) LinearProgressIndicator(Modifier.fillMaxWidth())
             if (snapshotError) {
                 Text(stringResource(R.string.alive_widget_preview_error), color = MaterialTheme.colorScheme.error)
@@ -127,18 +180,19 @@ internal fun EverydayWidgetPicker(initialKind: EverydayCardKind = EverydayCardKi
                 notice = null
             }
             Button(onClick = {
-                val reviewed = snapshot ?: return@Button
+                val reviewed = reviewedSnapshot ?: return@Button
                 notice = try {
                     if (EverydayWidgetPin.request(context, config, reviewed)) R.string.alive_widget_pin_requested
                     else R.string.alive_widget_pin_unavailable
                 } catch (_: Exception) { R.string.alive_widget_pin_unavailable }
-            }, enabled = snapshot != null && supportsPin && notice != R.string.alive_widget_pin_requested,
+            }, enabled = reviewedSnapshot != null && supportsPin && !layoutLocked && notice != R.string.alive_widget_pin_requested,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                 Text(stringResource(R.string.alive_widget_title))
             }
             if (!supportsPin) Text(stringResource(R.string.alive_widget_pin_unavailable))
+            else if (layoutLocked) Text(stringResource(R.string.adaptive_widget_layout_locked))
             notice?.let { Text(stringResource(it), style = MaterialTheme.typography.bodyMedium) }
-            if (installed.isNotEmpty()) {
+            if (adaptiveReview == null && installed.isNotEmpty()) {
                 Text(stringResource(R.string.alive_widget_installed), style = MaterialTheme.typography.titleMedium)
                 installed.forEach { (id, widgetKind) ->
                     TextButton(onClick = {

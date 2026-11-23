@@ -213,6 +213,7 @@ object EverydayWidgetUpdates {
                 com.halo.app.ui.toolkit.HaloFocusOwner.get(context).state, com.halo.app.ui.toolkit.HaloLifeOwner.get(context).family,
                 Graph.routineRepository.observeRecentRuns(), Graph.routineRepository.observeRoutinesReadOnly(),
                 EverydayWidgetRecording.active,
+                com.halo.app.everyday.organizer.PlannerCalendarPreferences.observeChanges,
                 Graph.studyRepository.observeChildAttemptCount(0L, Long.MAX_VALUE)) { _: Array<Any?> -> Unit }.debounce(500).collect { enqueue(context) }
         }
     }

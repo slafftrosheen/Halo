@@ -80,6 +80,13 @@ class HaloLocalInstrumentsTest {
             assertEquals(setOf("revision"), change.operability?.sourceVersionArguments)
         }
         assertEquals(emptyList<Any>(), ToolOperabilityReview.inspect(listOf(feature), descriptors))
+        val preview = descriptors.single { it.name == "halo_page_widget_preview" }
+        assertEquals(com.halo.runtime.cognition.tools.ToolOperation.EXPORT, preview.operability?.operation)
+        assertEquals(setOf("revision"), preview.operability?.sourceVersionArguments)
+        val review = descriptors.single { it.name == "halo_page_open_widget_review" }
+        assertEquals(com.halo.runtime.cognition.tools.ToolOperation.PRESENT, review.operability?.operation)
+        assertEquals(ReplaySafety.NEVER_REPLAY, review.security.replaySafety)
+        assertEquals(setOf("revision"), review.operability?.sourceVersionArguments)
         val keep = descriptors.single { it.name == "halo_maps_keep_place" }
         assertEquals(ConfirmationPolicy.ALWAYS, keep.security.confirmation)
         assertEquals(ReplaySafety.NEVER_REPLAY, keep.security.replaySafety)

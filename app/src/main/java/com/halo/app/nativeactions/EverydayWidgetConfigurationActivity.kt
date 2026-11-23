@@ -169,7 +169,9 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
         Column(Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if(launcher) Text(uiText("Personal titles and details stay inside Halo. The widget shows safe summaries and opens the original item."),style=MaterialTheme.typography.bodySmall)
-        if (config.kind in setOf(EverydayCardKind.CLOCK,EverydayCardKind.CLOCK_WEATHER,EverydayCardKind.DASHBOARD)) {
+        val clockChoices = if (config.adaptiveDashboard) EverydayCardKind.CLOCK in config.sections
+            else config.kind in setOf(EverydayCardKind.CLOCK, EverydayCardKind.CLOCK_WEATHER, EverydayCardKind.DASHBOARD)
+        if (clockChoices) {
             Text(city.ifBlank { zone ?: uiText("Phone time zone") })
             TextButton({ picker=true },enabled=!busy,modifier=Modifier.heightIn(min=48.dp)) { Text(uiText("Choose clock city")) }
             TextButton({ zone=null;city="" },enabled=!busy) { Text(uiText("Use phone time zone")) }
@@ -178,7 +180,10 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
             EverydayCardKind.WEATHER,EverydayCardKind.CLOCK_WEATHER,EverydayCardKind.LOCK_RAIN -> listOf(CollectorKind.WEATHER)
             EverydayCardKind.AIR_POLLEN -> listOf(CollectorKind.AIR_QUALITY)
             EverydayCardKind.HEADLINES -> listOf(CollectorKind.FEED)
-            EverydayCardKind.DASHBOARD -> listOf(CollectorKind.WEATHER,CollectorKind.FEED)
+            EverydayCardKind.DASHBOARD -> buildList {
+                if (!config.adaptiveDashboard || EverydayCardKind.WEATHER in config.sections) add(CollectorKind.WEATHER)
+                if (!config.adaptiveDashboard || EverydayCardKind.HEADLINES in config.sections) add(CollectorKind.FEED)
+            }
             else -> emptyList()
         }
         sourceKinds.forEach { sourceKind ->
@@ -237,7 +242,7 @@ internal fun EverydayWidgetConfigurationForm(instance: EverydayWidgetInstance, s
                     TextButton({ sections=ArrayList(sections).apply { java.util.Collections.swap(this,index,index+1) } },enabled=!busy && index<sections.lastIndex,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(uiText("Move down")+" · "+sectionTitle) }
                 }
             }
-            listOf(EverydayCardKind.TASKS,EverydayCardKind.UPCOMING,EverydayCardKind.WEATHER,EverydayCardKind.BRIEF,EverydayCardKind.HEADLINES,EverydayCardKind.DEVICE,EverydayCardKind.ALARMS_TIMERS).forEach { section ->
+            dashboardCardSections.forEach { section ->
                 com.halo.app.ui.everyday.EverydayToggle(uiText(EverydayCards.title(section)),section.name in sections,
                     !busy && if(section.name in sections) sections.size>1 else sections.size<if(launcher) 3 else 5) { selected ->
                     sections=ArrayList(if(selected) sections+section.name else sections-section.name)

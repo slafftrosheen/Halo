@@ -123,7 +123,9 @@ object EverydayWidgetViews {
             return EverydayWidgetClockFace.render(context, instance.config, snapshot, scheme, width, height,
                 locale, ratio, preview, rootOpen, clockAsk)
         }
-        val hasClock=!unavailable && instance.config.kind in setOf(EverydayCardKind.CLOCK,EverydayCardKind.CLOCK_WEATHER,EverydayCardKind.DASHBOARD)
+        val adaptive = instance.config.adaptiveDashboard
+        val hasClock = !unavailable && (if (adaptive) !snapshot.kids && EverydayCardKind.CLOCK in instance.config.sections
+            else instance.config.kind in setOf(EverydayCardKind.CLOCK, EverydayCardKind.CLOCK_WEATHER, EverydayCardKind.DASHBOARD))
         val paging = instance.config.widgetAutoPage && supportsPaging(instance.config.kind) && !unavailable &&
             !lockHost && !snapshot.kids && width >= 140 &&
             android.animation.ValueAnimator.areAnimatorsEnabled() &&
@@ -171,7 +173,12 @@ object EverydayWidgetViews {
         }
         val dateHeight=measure("2233-12-31",16f)+8
         var remaining=height-32-measure(presentation.freshness,13f)-8
-        val required=(if(headline) 0 else valueHeight+8)+mandatoryRows+(if(hasClock) dateHeight+clockLabelHeight else 0)
+        val showValue = !headline && (hasClock || face.value.isNotBlank())
+        val showClockDate = hasClock && !(instance.config.kind == EverydayCardKind.DASHBOARD &&
+            EverydayCardKind.CLOCK in instance.config.sections)
+        val required = (if (showValue) valueHeight + 8 else 0) +
+            (if (adaptive) rowHeights.firstOrNull() ?: 0 else mandatoryRows) +
+            clockLabelHeight + (if (showClockDate) dateHeight else 0)
         val minimal=remaining<required
         val layout=if(locale.language=="ru") R.layout.halo_everyday_widget_ru else R.layout.halo_everyday_widget
         val views=RemoteViews(context.packageName,layout)
@@ -261,7 +268,6 @@ object EverydayWidgetViews {
             views.setTextViewTextSize(R.id.everyday_widget_alert, android.util.TypedValue.COMPLEX_UNIT_SP, 14f * ratio)
             remaining -= alertHeight
         }
-        val showValue=!headline
         views.setViewVisibility(R.id.everyday_widget_value,if(showValue && !hasClock) View.VISIBLE else View.GONE)
         views.setViewVisibility(R.id.everyday_widget_clock,if(showValue && hasClock) View.VISIBLE else View.GONE)
         views.setTextViewText(R.id.everyday_widget_value,face.value)
@@ -272,7 +278,7 @@ object EverydayWidgetViews {
         views.setCharSequence(R.id.everyday_widget_clock,"setFormat24Hour","HH:mm")
         views.setCharSequence(R.id.everyday_widget_clock,"setFormat12Hour","h:mm a")
         if(showValue) remaining-=valueHeight+8
-        val showDate=hasClock && remaining>=dateHeight+clockLabelHeight+mandatoryRows
+        val showDate=showClockDate && remaining>=dateHeight+clockLabelHeight+mandatoryRows
         views.setViewVisibility(R.id.everyday_widget_clock_date,if(showDate) View.VISIBLE else View.GONE)
         views.setString(R.id.everyday_widget_clock_date,"setTimeZone",instance.config.zoneId)
         views.setCharSequence(R.id.everyday_widget_clock_date,"setFormat24Hour","yyyy-MM-dd")
@@ -308,10 +314,12 @@ object EverydayWidgetViews {
             }
             views.setViewVisibility(R.id.everyday_widget_page_flipper, View.VISIBLE)
         }
+        var sectionClipped = false
         rowIds.forEachIndexed { index,id ->
             val row=candidates.getOrNull(index)
             val needed=rowHeights.getOrNull(index) ?: Int.MAX_VALUE
-            val shown=!usePages && row!=null && remaining>=needed
+            val shown=!usePages && row!=null && !sectionClipped && remaining>=needed
+            if (adaptive && !shown) sectionClipped = true
             views.setViewVisibility(id,if(shown) View.VISIBLE else View.GONE)
             if(shown) {
                 remaining-=needed

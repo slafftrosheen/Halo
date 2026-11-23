@@ -42,4 +42,14 @@
     <string name="adaptive_page_why_clock">"See the time and date in your current time zone."</string>
     <string name="adaptive_page_why_brief">"See today's saved brief."</string>
     <string name="adaptive_page_why_device">"See the phone's current battery and charging status."</string>
+    <string name="adaptive_widget_open">"Save as widget"</string>
+    <string name="adaptive_widget_title">"Widget from this page"</string>
+    <string name="adaptive_widget_choose">"Choose up to three blocks. They appear in page order."</string>
+    <string name="adaptive_widget_omitted">"Available inside Halo: %1$s"</string>
+    <string name="adaptive_widget_agenda_scope">"The widget shows Halo Organizer events. Your phone calendar stays in Today."</string>
+    <string name="adaptive_widget_privacy">"The launcher shows summaries. Personal titles and details stay in Halo."</string>
+    <string name="adaptive_widget_unavailable">"Resume Halo in the grown-up space to add this widget."</string>
+    <string name="adaptive_widget_layout_locked">"Unlock the Halo layout in Settings to add a widget."</string>
+    <string name="adaptive_widget_no_sections">"Add a block supported by the launcher, such as Tasks, Weather, or Agenda."</string>
+    <string name="adaptive_widget_changed">"The saved page changed or is unavailable. Open Pages you made to choose it again."</string>
 </resources>

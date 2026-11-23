@@ -18,7 +18,7 @@ internal object Zone6WidgetFace {
     fun present(context: Context, instance: EverydayWidgetInstance, face: EverydayCardFace, snapshot: EverydaySnapshot,
                 locale: Locale, unavailable: Boolean): Presentation {
         val kind = instance.config.kind
-        val sources = snapshot.sources.filter { row -> row.source.enabled && row.source.selected &&
+        val sources = snapshot.sources.filter { row -> row.source.enabled && row.source.selected && !row.source.muted &&
             (!snapshot.kids || row.source.childApproved) }
         val sourceKind = when (kind) {
             EverydayCardKind.WEATHER, EverydayCardKind.CLOCK_WEATHER -> CollectorKind.WEATHER
@@ -41,7 +41,7 @@ internal object Zone6WidgetFace {
             face.stale -> context.getString(R.string.everyday_widget_old, stamp)
             else -> context.getString(R.string.everyday_widget_updated, stamp)
         }
-        val alert = if (unavailable || snapshot.kids || kind != EverydayCardKind.DASHBOARD) null else sources.asSequence()
+        val alert = if (unavailable || snapshot.kids || kind != EverydayCardKind.DASHBOARD || instance.config.adaptiveDashboard) null else sources.asSequence()
             .filter { it.source.kind == CollectorKind.ALERTS }
             .mapNotNull { row ->
                 row.snapshot?.takeIf { it.sourceVersion == row.source.version }?.payload as? CollectorPayload.Warnings

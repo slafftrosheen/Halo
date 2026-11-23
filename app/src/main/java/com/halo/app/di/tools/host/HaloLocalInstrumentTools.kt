@@ -16,6 +16,8 @@ import com.halo.app.data.workspace.AdaptivePageStore
 import com.halo.app.data.workspace.AdaptivePlanner
 import com.halo.app.data.workspace.AdaptiveSlot
 import com.halo.app.data.workspace.SavedAdaptivePage
+import com.halo.app.data.workspace.AdaptiveWidgetEntry
+import com.halo.app.data.workspace.AdaptiveWidgetExport
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.organizer.OrganizerOccurrence
 import com.halo.runtime.cognition.agent.ActionTruth
@@ -80,6 +82,35 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                         val pages = AdaptivePageStore(Graph.applicationContext).pages()
                         verifyPageAccess()
                         JSONObject().put("pages", JSONArray(pages.map(::pageJson)))
+                    }
+                }
+                "halo_page_widget_preview", "halo_page_open_widget_review" -> {
+                    require(input.keys == setOf("pageId", "revision"))
+                    val ref = input.pageRef()
+                    val plan = withContext(Dispatchers.IO) {
+                        val page = AdaptivePageStore(Graph.applicationContext).pages().find { it.ref == ref }
+                            ?: throw AdaptivePageChanged()
+                        verifyPageAccess()
+                        AdaptiveWidgetExport.from(page.layout)
+                    }
+                    val result = JSONObject().put("pageId", ref.id).put("revision", ref.revision)
+                        .put("canCreateWidget", plan.available.isNotEmpty())
+                        .put("availableSections", JSONArray(plan.available.map { it.name }))
+                        .put("omittedBlocks", JSONArray(plan.unsupported.map { it.name }))
+                        .put("configuration", if (plan.available.isEmpty()) JSONObject() else JSONObject(plan.config().fields()))
+                    if (name == "halo_page_widget_preview") result else {
+                        if (plan.available.isEmpty())
+                            return reject("That page has no blocks supported by the launcher widget.", ToolRejectionKind.RESOURCE_UNAVAILABLE)
+                        val request = AdaptiveWidgetEntry(ref, checkNotNull(pageRevision))
+                        val dispatched = withContext(Dispatchers.Main.immediate) {
+                            verifyPageAccess()
+                            foregroundUnlocked() && Graph.requestedHaloScreen.compareAndSet(null,
+                                com.halo.app.ui.shell.HaloDeepLinks.PREFIX + request.route())
+                        }
+                        if (!dispatched)
+                            return reject("Open Halo on the unlocked phone to review this widget.", ToolRejectionKind.RESOURCE_UNAVAILABLE)
+                        return ToolExecutionResult.Success(toolCall.id, name,
+                            result.put("reviewRequested", true).toString(), ActionTruth.DISPATCHED)
                     }
                 }
                 "halo_page_save" -> {
@@ -242,6 +273,10 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
             definition("halo_page_plan_sections", "Suggest an ordered list of local Today sections for an adult's request. Use for made-for-you and page layout requests. This does not fetch content, save a page or open a screen.",
                 mapOf("request" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 280)), "request"),
             definition("halo_page_list", "List saved Today pages with their current identifiers, exact layout revisions, and section order.", emptyMap()),
+            definition("halo_page_widget_preview", "Derive the launcher widget configuration from a saved Today page at its exact revision. Returns the available sections, omitted page blocks and a suggested configuration. Android placement requires the person to review and add it in Today.",
+                pageIdentity, "pageId", "revision"),
+            definition("halo_page_open_widget_review", "Open the launcher widget review on the unlocked phone for a saved Today page at its exact revision. The person then chooses sections and confirms placement with Android.",
+                pageIdentity, "pageId", "revision"),
             definition("halo_page_save", "Save an explicitly reviewed Today layout. To change a saved page, provide its current pageId and revision together. Large sections must also appear in sections. Always requests confirmation.",
                 pageIdentity + mapOf("title" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 80),
                     "sections" to (sectionList + ("minItems" to 1)), "large" to sectionList), "title", "sections"),
@@ -279,15 +314,20 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
         fun descriptor(definition: ToolDefinition): ToolDescriptor? {
             val id = definition.name
             if (catalogue.none { it.name == id }) return null
+            val widgetReview = id == "halo_page_open_widget_review"
+            val widgetPreview = id == "halo_page_widget_preview"
             val pageSave = id == "halo_page_save"
             val pageRemove = id == "halo_page_remove"
             val pageWrite = pageSave || pageRemove
             val writes = id == "halo_maps_keep_place" || pageWrite
-            val presents = id == "halo_maps_go_home"
+            val presents = id == "halo_maps_go_home" || widgetReview
             val capability = CapabilityId(if (writes) "workspace.write" else "workspace.read")
             val shape = when (id) {
                 "halo_page_plan_sections" -> mapOf("sections" to "array", "needsChoice" to "boolean")
                 "halo_page_list" -> mapOf("pages" to "array")
+                "halo_page_widget_preview", "halo_page_open_widget_review" -> mapOf("pageId" to "string", "revision" to "integer",
+                    "canCreateWidget" to "boolean", "availableSections" to "array", "omittedBlocks" to "array", "configuration" to "object") +
+                    if (widgetReview) mapOf("reviewRequested" to "boolean") else emptyMap()
                 "halo_page_save" -> mapOf("pageId" to "string", "revision" to "integer", "title" to "string", "sections" to "array", "large" to "array")
                 "halo_page_remove" -> mapOf("pageId" to "string", "removed" to "boolean")
                 "halo_calc_evaluate" -> mapOf("expression" to "string", "value" to "string")
@@ -306,6 +346,7 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
             }
             val owner = when {
                 id == "halo_page_plan_sections" -> "AdaptivePlanner"
+                widgetPreview || widgetReview -> "AdaptiveWidgetExport"
                 id.startsWith("halo_page_") -> "AdaptivePageStore"
                 id.startsWith("halo_calc") -> "HaloCalcEngine"
                 id.startsWith("halo_measure") -> "HaloMeasurement"
@@ -320,6 +361,7 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                 keywords = when (owner) {
                     "AdaptivePlanner" -> setOf("make a page", "made for you", "page layout", "собери страницу")
                     "AdaptivePageStore" -> setOf("saved page", "today page", "page layout")
+                    "AdaptiveWidgetExport" -> setOf("page widget", "today widget", "launcher layout")
                     "HaloCalcEngine" -> setOf("calc", "calculator", "graph", "convert", "вычислить", "калькулятор")
                     "HaloMeasurement" -> setOf("measure", "room", "estimate", "линейка", "измерить")
                     else -> if (presents) setOf("maps", "take me home", "карты", "домой")
@@ -344,6 +386,7 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                 },
                 operability = ToolOperability(capabilityId = capability, owner = owner,
                     operation = when {
+                        widgetPreview -> ToolOperation.EXPORT
                         pageWrite -> ToolOperation.EDIT
                         writes -> ToolOperation.CREATE
                         presents -> ToolOperation.PRESENT
@@ -357,18 +400,19 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                             else -> shape.keys.toList()
                         }, "additionalProperties" to false),
                     sourceVersionArguments = when {
-                        pageWrite -> setOf("revision")
+                        pageWrite || widgetPreview || widgetReview -> setOf("revision")
                         id == "halo_maps_arrived" -> setOf("place_version")
                         else -> emptySet()
                     },
                     resultIdFields = when {
-                        pageWrite -> setOf("pageId")
+                        pageWrite || widgetPreview || widgetReview -> setOf("pageId")
                         writes -> setOf("id")
                         else -> emptySet()
                     },
                     limitations = when (owner) {
                         "AdaptivePlanner" -> setOf("The planning result contains section identifiers. Today resolves the current collector data separately.")
                         "AdaptivePageStore" -> setOf("Adult on-device use. Stored pages contain layout identifiers and a user-supplied title only.")
+                        "AdaptiveWidgetExport" -> setOf("The configuration contains section choices only. Android requires personal confirmation for widget placement.")
                         "HaloCalcEngine" -> setOf("Currency conversion uses a saved dated ECB reference rate or a rate supplied by the person. This tool does not fetch rates.")
                         "HaloMeasurement" -> setOf("Camera point placement and phone level are on-device interactions. Typed measures require explicit numeric inputs.")
                         else -> setOf("Adult local runs only. Organic Maps provides offline routing and region downloads. Live departures are off.")

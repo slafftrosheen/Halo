@@ -42,4 +42,14 @@
     <string name="adaptive_page_why_clock">"Время и дата в вашем текущем часовом поясе."</string>
     <string name="adaptive_page_why_brief">"Сохранённая сводка на сегодня."</string>
     <string name="adaptive_page_why_device">"Текущий заряд аккумулятора и состояние зарядки телефона."</string>
+    <string name="adaptive_widget_open">"Сохранить как виджет"</string>
+    <string name="adaptive_widget_title">"Виджет из этой страницы"</string>
+    <string name="adaptive_widget_choose">"Выберите до трёх блоков. Порядок будет таким же, как на странице."</string>
+    <string name="adaptive_widget_omitted">"Доступно в приложении Halo: %1$s"</string>
+    <string name="adaptive_widget_agenda_scope">"Виджет показывает события органайзера Halo. Календарь телефона доступен в разделе «Сегодня»."</string>
+    <string name="adaptive_widget_privacy">"На главном экране видны сводки. Личные названия и подробности остаются в Halo."</string>
+    <string name="adaptive_widget_unavailable">"Возобновите работу Halo в пространстве для взрослых, чтобы добавить виджет."</string>
+    <string name="adaptive_widget_layout_locked">"Разблокируйте макет Halo в настройках, чтобы добавить виджет."</string>
+    <string name="adaptive_widget_no_sections">"Добавьте блок для главного экрана, например «Задачи», «Погода» или «Расписание»."</string>
+    <string name="adaptive_widget_changed">"Сохранённая страница изменилась или недоступна. Выберите её заново в списке ваших страниц."</string>
 </resources>

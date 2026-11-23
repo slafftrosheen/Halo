@@ -4,10 +4,14 @@ import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.workspace.AdaptiveSlot.*
+import com.halo.app.everyday.presentation.EverydayCardConfig
+import com.halo.app.everyday.presentation.EverydayCardKind
 import com.halo.app.ui.adaptive.adaptiveRows
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,6 +43,29 @@ class AdaptivePagesTest {
         assertEquals(layout.slots.map { listOf(it) }, adaptiveRows(layout, false))
         val edited = layout.swap(PLANNER, BRIEF).remove(WEATHER).move(BRIEF, -1)
         assertEquals(AdaptiveLayout(listOf(BRIEF, TASKS, CLOCK, DEVICE), setOf(BRIEF)), edited)
+    }
+
+    @Test fun launcherExportKeepsPageOrderAndReportsUnsupportedBlocks() {
+        val plan = AdaptiveWidgetExport.from(AdaptiveLayout(listOf(LIBRARY, REMINDERS, WEATHER, WIND_DOWN, CLOCK, TASKS)))
+        assertEquals(listOf(LIBRARY, WIND_DOWN), plan.unsupported)
+        val default = plan.config()
+        assertEquals(listOf(EverydayCardKind.REMINDERS, EverydayCardKind.WEATHER, EverydayCardKind.CLOCK), default.sections)
+        assertEquals(default, EverydayCardConfig.from(default.fields(), EverydayCardKind.DASHBOARD))
+        val selected = plan.config(listOf(EverydayCardKind.TASKS, EverydayCardKind.REMINDERS))
+        assertEquals(listOf(EverydayCardKind.REMINDERS, EverydayCardKind.TASKS), selected.sections)
+        assertThrows(IllegalArgumentException::class.java) { plan.config(listOf(EverydayCardKind.UPCOMING)) }
+        assertThrows(IllegalArgumentException::class.java) {
+            AdaptiveWidgetExport.from(AdaptiveLayout(listOf(LIBRARY, STUDY))).config()
+        }
+    }
+
+    @Test fun widgetReviewRouteRefusesMalformedAndUnboundedRevisions() {
+        val request = AdaptiveWidgetEntry(AdaptivePageRef("legacy", 2), 9)
+        assertEquals(request, AdaptiveWidgetEntry.parse(request.route()))
+        assertNull(AdaptiveWidgetEntry.parse(request.route() + "?unreviewed=true"))
+        assertNull(AdaptiveWidgetEntry.parse("home/pages/widget/legacy/0/9"))
+        assertNull(AdaptiveWidgetEntry.parse("home/pages/widget/legacy/9007199254740992/9"))
+        assertNull(AdaptiveWidgetEntry.parse("home/pages/widget/legacy/2/-1"))
     }
 
     @Test fun legacyLayoutsKeepTheirOrderAndOnlyExactRevisionsCanReplaceOrDelete() = runBlocking {
