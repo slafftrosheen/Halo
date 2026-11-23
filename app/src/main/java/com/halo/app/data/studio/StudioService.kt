@@ -384,13 +384,25 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
     }
     suspend fun exportProject(id: String, expectedRevision: Long, format: StudioProjectFormat): WorkspaceFile {
         val project = current(id, expectedRevision)
-        val bytes = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            StudioProjectExport.encode(project.session.current, format)
+        val document = project.session.current
+        require(StudioProjectExport.allows(document, format))
+        val bytes = if (format == StudioProjectFormat.PDF) renderer.exportPdf(document) else withContext(Dispatchers.Default) {
+            StudioProjectExport.encode(document, format)
         }
         val metadata = JSONObject().put("operation", "studio-project-export").put("projectId", id)
             .put("projectRevision", expectedRevision).put("format", format.name).toString()
         return files.createManagedFile(project.title.take(100) + "." + format.extension, format.mime, bytes,
             id, expectedRevision.toString(), metadata) { current(id, expectedRevision) }
+    }
+
+    internal suspend fun restorePackage(uri: android.net.Uri, title: String, verify: () -> Unit): StudioProject {
+        require(uri.scheme == "content" && title.isNotBlank())
+        val document = withContext(Dispatchers.IO) {
+            verify()
+            requireNotNull(context.contentResolver.openInputStream(uri)).use(StudioProjectExport::readPackage)
+        }
+        verify()
+        return projects.create(title.take(120), document, validateSource = { verify() })
     }
 
     private suspend fun current(id: String, expectedRevision: Long): StudioProject = requireNotNull(projects.get(id)) {

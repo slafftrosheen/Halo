@@ -5,18 +5,22 @@ import android.graphics.Path
 import android.graphics.PathMeasure
 import android.graphics.RectF
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import kotlin.math.ceil
 
 enum class StudioProjectFormat(val extension: String, val mime: String) {
-    SVG("svg", "image/svg+xml"), DXF("dxf", "application/dxf"), HALO("halo", "application/zip")
+    SVG("svg", "image/svg+xml"), DXF("dxf", "application/dxf"), PDF("pdf", "application/pdf"), HALO("halo", "application/zip")
 }
 
 internal object StudioProjectExport {
     fun allows(document: StudioDocument, format: StudioProjectFormat): Boolean {
         if (format == StudioProjectFormat.HALO) return document.layers.none { it.source != null }
         val recipe = document.recipe
+        if (format == StudioProjectFormat.PDF) return document.layers.none { it.source != null } && !recipe.squareCrop &&
+            recipe.crop == null && !recipe.mirrorHorizontal && recipe.quarterTurns == 0
         val visible = document.layers.filter { it.visible && it.opacity > 0 }
         return !recipe.squareCrop && recipe.crop == null && !recipe.mirrorHorizontal && recipe.quarterTurns == 0 &&
             visible.isNotEmpty() && visible.all {
@@ -40,7 +44,27 @@ internal object StudioProjectExport {
             }
             StudioProjectFormat.SVG -> svg(document).toByteArray(Charsets.UTF_8)
             StudioProjectFormat.DXF -> dxf(document).toByteArray(Charsets.UTF_8)
+            StudioProjectFormat.PDF -> error("PDF export requires the shared Studio renderer")
         }
+    }
+
+    fun readPackage(source: InputStream): StudioDocument = ZipInputStream(source).use { archive ->
+        val entry = requireNotNull(archive.nextEntry)
+        require(!entry.isDirectory && entry.name == "project.json")
+        val limit = StudioDocument.MAX_ENCODED_CHARS * 4
+        require(entry.size <= limit)
+        val buffer = ByteArray(8192)
+        val content = ByteArrayOutputStream()
+        while (true) {
+            val count = archive.read(buffer)
+            if (count < 0) break
+            require(content.size() + count <= limit) { "Invalid Studio package size" }
+            content.write(buffer, 0, count)
+        }
+        archive.closeEntry()
+        require(archive.nextEntry == null)
+        val decoded = Charsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(content.toByteArray())).toString()
+        StudioDocumentCodec.decode(decoded).also { require(it.layers.none { layer -> layer.source != null }) }
     }
 
     private data class Shape(val layer: StudioLayer, val path: Path, val stroke: Float)

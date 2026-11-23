@@ -92,8 +92,8 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
         definition("halo_studio_save", "Save a local draft as a version, save a separate copy, rename, or discard draft changes. Copy/rename require title. Exact revision required.",
             mapOf("projectId" to id, "revision" to revision, "action" to mapOf("type" to "string", "enum" to listOf("save", "copy", "rename", "discard")),
                 "title" to text), listOf("projectId", "revision", "action")),
-        definition("halo_studio_export", "Save an exact Studio revision as a new Workspace file. PNG and JPEG render the artwork. SVG and DXF require supported vector-only artwork. HALO packages projects without external image sources.",
-            mapOf("projectId" to id, "revision" to revision, "format" to mapOf("type" to "string", "enum" to listOf("PNG", "JPEG", "SVG", "DXF", "HALO")))),
+        definition("halo_studio_export", "Save an exact Studio revision as a new Workspace file. PNG and JPEG render the artwork. SVG and DXF require supported vector-only artwork. PDF uses document scale. PDF and HALO require artwork without external image sources.",
+            mapOf("projectId" to id, "revision" to revision, "format" to mapOf("type" to "string", "enum" to listOf("PNG", "JPEG", "SVG", "DXF", "PDF", "HALO")))),
         definition("halo_studio_insert", "Insert a previously exported exact Studio image on an exact current Canvas revision as a new reference. The managed Workspace copy remains authoritative.",
             mapOf("canvasId" to id, "canvasVersion" to mapOf("type" to "string", "maxLength" to 30), "outputId" to id, "fileVersion" to mapOf("type" to "string", "maxLength" to 200)))
     )

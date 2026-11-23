@@ -320,6 +320,19 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             else viewModel.reportError(StudioOperation.IMPORT, StudioFailureReason.CHANGED)
         }
     }
+    var restoreLease by rememberSaveable { mutableStateOf<Long?>(null) }
+    val restoredTitle = uiText("Restored Studio project")
+    val packagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val lease = restoreLease
+        restoreLease = null
+        if (uri != null && lease != null && viewModel.state.value.project == null && !viewModel.state.value.busy) {
+            viewModel.restorePackage(uri, restoredTitle) {
+                val graph = com.halo.app.di.ManualDependencyGraph
+                graph.kidsPreferences.requireAdultAction(lease)
+                graph.haloPause.requireActive()
+            }
+        }
+    }
     val referencePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val owner = referencePickOwner
         referencePickOwner = null
@@ -467,6 +480,12 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 } else if (project == null && !state.loading) {
                     item {
                         if (!shellOwnsOrb) Text(stringResource(R.string.studio_local), style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = {
+                            val graph = com.halo.app.di.ManualDependencyGraph
+                            restoreLease = runCatching { graph.kidsPreferences.adultActionRevision() }.getOrNull()
+                            if (restoreLease != null && !graph.isHaloPaused())
+                                packagePicker.launch(arrayOf("application/zip", "application/octet-stream"))
+                        }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Open Halo project file")) }
                         if (library.projectsLoading && projects.isEmpty()) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(uiText("Loading…")) }
                         if (library.projectsError) {
                             Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
@@ -515,7 +534,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     Text(format.name)
                 }
             }
-            Text(uiText("SVG and DXF require a vector-only project. A Halo package can include ink and text."),
+            Text(uiText("SVG and DXF use vector shapes. PDF uses the document scale. A Halo package keeps editable layers."),
                 style = MaterialTheme.typography.bodySmall)
         }
     }

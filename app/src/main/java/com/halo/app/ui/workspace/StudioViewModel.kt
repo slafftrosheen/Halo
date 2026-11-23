@@ -240,6 +240,12 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
             mutable.value = mutable.value.copy(output = output, exportedSource = sourceReceipt)
         }
     }
+    internal fun restorePackage(uri: Uri, title: String, verify: () -> Unit) = operation(StudioOperation.IMPORT) {
+        val restored = service.restorePackage(uri, title, verify)
+        verify()
+        attachAfterOperation(restored.id)
+    }
+
     internal fun exportProject(format: StudioProjectFormat) {
         val project = mutable.value.project ?: return
         operation(StudioOperation.EXPORT) {

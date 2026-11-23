@@ -50,6 +50,27 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
         } finally { owned?.takeUnless { it.isRecycled }?.recycle() }
     }
 
+    internal suspend fun exportPdf(document: StudioDocument): ByteArray = rendering.withPermit { withContext(Dispatchers.IO) {
+        document.requireValid()
+        require(document.layers.none { it.source != null })
+        val recipe = document.recipe
+        require(recipe.crop == null && !recipe.squareCrop && !recipe.mirrorHorizontal && recipe.quarterTurns == 0)
+        val width = (document.width * 72.0 / document.dpi).roundToInt().coerceAtLeast(1)
+        val height = (document.height * 72.0 / document.dpi).roundToInt().coerceAtLeast(1)
+        val pdf = android.graphics.pdf.PdfDocument()
+        try {
+            val page = pdf.startPage(android.graphics.pdf.PdfDocument.PageInfo.Builder(width, height, 1).create())
+            try {
+                if (document.background ushr 24 != 0) page.canvas.drawColor(document.background)
+                for (layer in document.layers) {
+                    coroutineContext.ensureActive()
+                    if (layer.visible && layer.opacity > 0) drawLayer(page.canvas, layer, false, document)
+                }
+            } finally { pdf.finishPage(page) }
+            java.io.ByteArrayOutputStream().use { output -> pdf.writeTo(output); output.toByteArray() }
+        } finally { pdf.close() }
+    } }
+
     /** Shows the other layers in the exact coordinate rectangle used by this Ink layer. */
     suspend fun inkBackdrop(document: StudioDocument, layer: StudioLayer): Bitmap {
         require(layer.kind == StudioLayerKind.INK && document.layers.any { it == layer })

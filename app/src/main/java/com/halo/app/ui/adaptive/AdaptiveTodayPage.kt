@@ -30,6 +30,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.halo.app.data.workspace.AdaptivePlanner
 import com.halo.app.data.workspace.AdaptiveSlot
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.UUID
 
 private fun HaloHomeBlock.adaptiveSlot(): AdaptiveSlot? = when {
     id.startsWith("event:") || id.startsWith("phone-calendar/") -> AdaptiveSlot.PLANNER
@@ -42,20 +45,56 @@ private fun HaloHomeBlock.adaptiveSlot(): AdaptiveSlot? = when {
     else -> null
 }
 
-internal class AdaptivePagePreferences(context: Context) {
+private data class SavedAdaptivePage(val id: String, val title: String, val slots: List<AdaptiveSlot>,
+    val big: Set<AdaptiveSlot>, val revision: Long)
+private data class AdaptiveEdit(val slots: List<AdaptiveSlot>, val big: Set<AdaptiveSlot>)
+
+private class AdaptivePagePreferences(context: Context) {
     private val disk = context.applicationContext.getSharedPreferences("halo_adaptive_pages_v1", Context.MODE_PRIVATE)
 
-    fun pinned(): List<AdaptiveSlot> = disk.getString("pinned", null).orEmpty().split(',')
+    private fun slots(value: String) = value.split(',')
         .mapNotNull { key -> AdaptiveSlot.entries.firstOrNull { it.name == key } }.distinct()
+
+    fun pages(): List<SavedAdaptivePage> {
+        val source = disk.getString("pages", null)
+        if (source == null) {
+            val legacySlots = slots(disk.getString("pinned", null).orEmpty())
+            return if (legacySlots.isEmpty()) emptyList() else listOf(SavedAdaptivePage("legacy", "", legacySlots, emptySet(), 1))
+        }
+        val rows = runCatching { JSONArray(source) }.getOrElse { JSONArray() }
+        return List(minOf(rows.length(), 24)) { rows.optJSONObject(it) }.mapNotNull { row ->
+            val item = row ?: return@mapNotNull null
+            val id = item.optString("id")
+            val revision = item.optLong("revision")
+            val selected = slots(item.optString("slots"))
+            if (!id.matches(Regex("[a-z0-9-]{1,36}")) || selected.isEmpty() || revision <= 0) return@mapNotNull null
+            SavedAdaptivePage(id, item.optString("title").take(80), selected, slots(item.optString("large")).toSet().intersect(selected.toSet()), revision)
+        }.distinctBy { it.id }
+    }
 
     fun hidden(): Set<AdaptiveSlot> = disk.getStringSet("hidden", null).orEmpty()
         .mapNotNullTo(mutableSetOf()) { key -> AdaptiveSlot.entries.firstOrNull { it.name == key } }
 
-    suspend fun pin(slots: List<AdaptiveSlot>, verify: () -> Unit) = withContext(Dispatchers.IO) {
-        require(slots.isNotEmpty() && slots.size <= 9 && slots.distinct() == slots)
-        verify()
-        check(disk.edit().putString("pinned", slots.joinToString(",") { it.name }).commit())
-    }
+    suspend fun pin(previous: SavedAdaptivePage?, title: String, edit: AdaptiveEdit, verify: () -> Unit): SavedAdaptivePage =
+        withContext(Dispatchers.IO) {
+            require(edit.slots.isNotEmpty() && edit.slots.size <= 9 && edit.slots.distinct() == edit.slots && title.length in 1..80)
+            require(edit.big.all { it in edit.slots })
+            synchronized(disk) {
+                val current = pages()
+                if (previous == null) require(current.size < 24)
+                else check(current.any { it.id == previous.id && it.revision == previous.revision })
+                val saved = SavedAdaptivePage(previous?.id ?: UUID.randomUUID().toString(), title,
+                    edit.slots, edit.big, (previous?.revision ?: 0L) + 1)
+                val update = listOf(saved) + current.filterNot { it.id == saved.id }
+                val rows = JSONArray(update.map { item ->
+                    JSONObject().put("id", item.id).put("title", item.title).put("revision", item.revision)
+                        .put("slots", item.slots.joinToString(",") { it.name }).put("large", item.big.joinToString(",") { it.name })
+                })
+                verify()
+                check(disk.edit().putString("pages", rows.toString()).remove("pinned").commit())
+                saved
+            }
+        }
 
     suspend fun hide(slot: AdaptiveSlot, verify: () -> Unit) = withContext(Dispatchers.IO) {
         synchronized(disk) {
@@ -88,10 +127,14 @@ internal fun AdaptiveTodayPage(available: List<HaloHomeBlock>, open: (String) ->
     val bySlot = available.distinctBy { it.adaptiveSlot() }.mapNotNull { item -> item.adaptiveSlot()?.let { it to item } }.toMap()
     var hidden by remember { mutableStateOf(store.hidden()) }
     var request by rememberSaveable { mutableStateOf("") }
-    var original by remember { mutableStateOf(if (showSaved) store.pinned() else emptyList()) }
-    var layout by remember { mutableStateOf(original) }
-    var bigger by remember { mutableStateOf(emptySet<AdaptiveSlot>()) }
-    var previous by remember { mutableStateOf<Pair<List<AdaptiveSlot>, Set<AdaptiveSlot>>?>(null) }
+    var savedPages by remember { mutableStateOf(if (showSaved) store.pages() else emptyList()) }
+    var selectedPage by remember { mutableStateOf<SavedAdaptivePage?>(null) }
+    var original by remember { mutableStateOf(AdaptiveEdit(emptyList(), emptySet())) }
+    var layout by remember { mutableStateOf(original.slots) }
+    var bigger by remember { mutableStateOf(original.big) }
+    var undo by remember { mutableStateOf(emptyList<AdaptiveEdit>()) }
+    var askName by remember { mutableStateOf(false) }
+    var title by remember { mutableStateOf("") }
     var explanation by remember { mutableStateOf<AdaptiveSlot?>(null) }
     var swap by remember { mutableStateOf<AdaptiveSlot?>(null) }
     var alternates by remember { mutableStateOf(false) }
@@ -104,7 +147,7 @@ internal fun AdaptiveTodayPage(available: List<HaloHomeBlock>, open: (String) ->
     val notReady = uiText("There is no current source for this block")
 
     fun change(next: List<AdaptiveSlot>, large: Set<AdaptiveSlot> = bigger) {
-        previous = layout to bigger
+        if (next != layout || large != bigger) undo = (undo + AdaptiveEdit(layout, bigger)).takeLast(20)
         layout = next
         bigger = large
         receipt = null
@@ -128,7 +171,8 @@ internal fun AdaptiveTodayPage(available: List<HaloHomeBlock>, open: (String) ->
         }
     }
     fun showPlan(slots: List<AdaptiveSlot>) {
-        original = slots
+        selectedPage = null
+        original = AdaptiveEdit(slots, emptySet())
         change(slots, emptySet())
         alternates = false
         edited = false
@@ -143,6 +187,24 @@ internal fun AdaptiveTodayPage(available: List<HaloHomeBlock>, open: (String) ->
         if (showSaved) R.string.adaptive_pages_you_made else R.string.adaptive_made_for_you), onDismiss = onDismiss) {
         Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (showSaved && savedPages.isNotEmpty()) {
+                Text(stringResource(R.string.adaptive_pages_you_made), style = MaterialTheme.typography.titleMedium)
+                savedPages.forEach { page ->
+                    TextButton(onClick = {
+                        selectedPage = page
+                        title = page.title
+                        original = AdaptiveEdit(page.slots, page.big)
+                        layout = page.slots
+                        bigger = page.big
+                        undo = emptyList()
+                        edited = false
+                        receipt = null
+                        generation++
+                    }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(page.title.ifBlank { stringResource(R.string.adaptive_made_for_you) })
+                    }
+                }
+            }
             HaloTextField(request, { request = it.take(280); alternates = false }, VoiceFieldKind.TEXT,
                 label = { Text(uiText("What are you doing?")) }, modifier = Modifier.fillMaxWidth(), maxChars = 280, singleLine = true)
             Button(onClick = ::assemble, enabled = request.isNotBlank() && !busy && bySlot.isNotEmpty(),
@@ -209,23 +271,42 @@ internal fun AdaptiveTodayPage(available: List<HaloHomeBlock>, open: (String) ->
                     }
                 }
             }
-            if (layout.isNotEmpty() || previous != null) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (layout.isNotEmpty() || undo.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 TextButton(onClick = { edited = !edited }, enabled = layout.isNotEmpty() && !busy) {
                     Text(stringResource(if (edited) R.string.adaptive_done else R.string.adaptive_edit))
                 }
-                TextButton(onClick = { previous?.let { (slots, large) -> layout = slots; bigger = large }; previous = null },
-                    enabled = previous != null && !busy) { Text(stringResource(R.string.adaptive_undo)) }
-                TextButton(onClick = { change(original, emptySet()) }, enabled = !busy && (layout != original || bigger.isNotEmpty())) {
+                TextButton(onClick = { undo.lastOrNull()?.let { step -> layout = step.slots; bigger = step.big }; undo = undo.dropLast(1) },
+                    enabled = undo.isNotEmpty() && !busy) { Text(stringResource(R.string.adaptive_undo)) }
+                TextButton(onClick = { change(original.slots, original.big) },
+                    enabled = !busy && AdaptiveEdit(layout, bigger) != original) {
                     Text(stringResource(R.string.adaptive_reset_page))
                 }
-                Button(onClick = {
-                    val toPin = layout.toList()
-                    write({ store.pin(toPin, it) }) { receipt = savedText }
-                }, enabled = layout.isNotEmpty() && !busy) { Text(stringResource(R.string.adaptive_pin_page)) }
+                Button(onClick = { title = selectedPage?.title.orEmpty(); askName = true },
+                    enabled = layout.isNotEmpty() && !busy) { Text(stringResource(R.string.adaptive_pin_page)) }
             }
             receipt?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         }
     }
+    if (askName) AlertDialog(onDismissRequest = { askName = false },
+        title = { Text(stringResource(R.string.adaptive_pin_page)) },
+        text = {
+            HaloTextField(title, { title = it.take(80) }, VoiceFieldKind.SHORT,
+                label = { Text(uiText("Page name")) }, maxChars = 80, singleLine = true)
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                askName = false
+                val name = title.trim()
+                val base = selectedPage
+                val newLayout = AdaptiveEdit(layout.toList(), bigger.toSet())
+                var result: SavedAdaptivePage? = null
+                write({ check -> result = store.pin(base, name, newLayout, check) }) {
+                    selectedPage = result
+                    if (showSaved) savedPages = store.pages()
+                    receipt = savedText
+                }
+            }, enabled = title.isNotBlank() && !busy) { Text(uiText("Save")) }
+        }, dismissButton = { TextButton(onClick = { askName = false }) { Text(uiText("Cancel")) } })
     swap?.let { old ->
         AlertDialog(onDismissRequest = { swap = null }, title = { Text(stringResource(R.string.adaptive_swap)) }, text = {
             Column(Modifier.heightIn(max = 300.dp).verticalScroll(rememberScrollState())) {
