@@ -144,6 +144,7 @@ internal object StudioProjectExport {
         shapes.forEachIndexed { index, shape ->
             flatten(shape.path).filter { it.first.size >= 2 }.forEach { (points, closed) ->
                 tag(0, "LWPOLYLINE"); tag(100, "AcDbEntity"); tag(8, "Halo_" + (index + 1))
+                tag(420, shape.layer.color and 0xFFFFFF)
                 tag(100, "AcDbPolyline"); tag(90, points.size); tag(70, if (closed) 1 else 0)
                 points.forEach { (x, y) ->
                     tag(10, StudioLengthUnit.MM.fromPixels(x.toDouble(), document.dpi))

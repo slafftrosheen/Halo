@@ -395,11 +395,13 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
             id, expectedRevision.toString(), metadata) { current(id, expectedRevision) }
     }
 
-    internal suspend fun restorePackage(uri: android.net.Uri, title: String, verify: () -> Unit): StudioProject {
+    internal suspend fun restoreProjectFile(uri: android.net.Uri, title: String, dxf: Boolean, verify: () -> Unit): StudioProject {
         require(uri.scheme == "content" && title.isNotBlank())
         val document = withContext(Dispatchers.IO) {
             verify()
-            requireNotNull(context.contentResolver.openInputStream(uri)).use(StudioProjectExport::readPackage)
+            requireNotNull(context.contentResolver.openInputStream(uri)).use { source ->
+                if (dxf) StudioDxfImport.read(source) else StudioProjectExport.readPackage(source)
+            }
         }
         verify()
         return projects.create(title.take(120), document, validateSource = { verify() })

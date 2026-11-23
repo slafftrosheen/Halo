@@ -321,12 +321,14 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         }
     }
     var restoreLease by rememberSaveable { mutableStateOf<Long?>(null) }
+    var restoreDxf by rememberSaveable { mutableStateOf(false) }
     val restoredTitle = uiText("Restored Studio project")
+    val importedDxfTitle = uiText("Imported DXF")
     val packagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val lease = restoreLease
         restoreLease = null
         if (uri != null && lease != null && viewModel.state.value.project == null && !viewModel.state.value.busy) {
-            viewModel.restorePackage(uri, restoredTitle) {
+            viewModel.restoreProjectFile(uri, if (restoreDxf) importedDxfTitle else restoredTitle, restoreDxf) {
                 val graph = com.halo.app.di.ManualDependencyGraph
                 graph.kidsPreferences.requireAdultAction(lease)
                 graph.haloPause.requireActive()
@@ -480,12 +482,22 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                 } else if (project == null && !state.loading) {
                     item {
                         if (!shellOwnsOrb) Text(stringResource(R.string.studio_local), style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = {
-                            val graph = com.halo.app.di.ManualDependencyGraph
-                            restoreLease = runCatching { graph.kidsPreferences.adultActionRevision() }.getOrNull()
-                            if (restoreLease != null && !graph.isHaloPaused())
-                                packagePicker.launch(arrayOf("application/zip", "application/octet-stream"))
-                        }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Open Halo project file")) }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(false, true).forEach { dxf ->
+                                TextButton(onClick = {
+                                    val graph = com.halo.app.di.ManualDependencyGraph
+                                    restoreLease = runCatching { graph.kidsPreferences.adultActionRevision() }.getOrNull()
+                                    if (restoreLease != null && !graph.isHaloPaused()) {
+                                        restoreDxf = dxf
+                                        packagePicker.launch(if (dxf) arrayOf("application/dxf", "application/x-dxf",
+                                            "image/vnd.dxf", "text/plain", "application/octet-stream")
+                                            else arrayOf("application/zip", "application/octet-stream"))
+                                    }
+                                }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                                    Text(uiText(if (dxf) "Open DXF" else "Open Halo project"))
+                                }
+                            }
+                        }
                         if (library.projectsLoading && projects.isEmpty()) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(uiText("Loading…")) }
                         if (library.projectsError) {
                             Text(stringResource(R.string.studio_error), color = MaterialTheme.colorScheme.error)
