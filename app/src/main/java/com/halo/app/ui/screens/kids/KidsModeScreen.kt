@@ -575,8 +575,8 @@ import kotlinx.coroutines.launch
             val appearance by preferences.appearance.collectAsStateWithLifecycle()
             KidsAppearanceControls(appearance, preferences::applyGrownUpAppearance)
             com.halo.app.ui.toolkit.KidsPictureToolSettings(preferences.pictureTools)
-            KidsCardSettings(preferences.cards)
             val familyRevision = remember { runCatching { preferences.presentationRevision() }.getOrNull() }
+            if (familyRevision != null) KidsCardSettings(preferences.cards) { preferences.requirePresentation(familyRevision) }
             if (familyRevision != null) KidsHomeworkSettings(preferences.homework,
                     requireAuthority = { preferences.requirePresentation(familyRevision) }) { previous, next ->
                 preferences.configureHomework(familyRevision, previous, next)

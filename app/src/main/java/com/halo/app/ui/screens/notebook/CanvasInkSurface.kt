@@ -24,6 +24,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.key.*
@@ -69,6 +72,9 @@ internal fun CanvasInkSurface(
     strokeWidthFraction: Float? = null,
     initialMode: InkMode = InkMode.DRAW,
     hardPencil: Boolean = false,
+    showBrushes: Boolean = false,
+    ghostGuide: (DrawScope.(Rect) -> Unit)? = null,
+    mirrorCopies: Int = 1,
 ) {
     val sourceAspect = background?.let { (it.width * 1000f / it.height).roundToInt() } ?: aspectMilli
     val parsed = remember(initial, sourceAspect) {
@@ -262,6 +268,8 @@ internal fun CanvasInkSurface(
         }
         val height = (LocalConfiguration.current.screenHeightDp * 0.42f).coerceIn(180f, 440f).dp
         val inkColor = strokeColor ?: if (background != null) Color.Black else MaterialTheme.colorScheme.onSurface
+        if (showBrushes && readable && mode == InkMode.DRAW) CanvasBrushOptions(inkColor.toArgb()) { editor.nextBrush = it }
+        else SideEffect { editor.nextBrush = null }
         val selectionColor = MaterialTheme.colorScheme.primary
         Canvas(Modifier.fillMaxWidth().height(height).clipToBounds()
             .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -394,10 +402,13 @@ internal fun CanvasInkSurface(
                     drawRect(selectionColor, topLeft, androidx.compose.ui.geometry.Size(selectionRect.width, selectionRect.height),
                         style = Stroke(2.dp.toPx() / zoom))
                 }
-                drawInk(preview, inkColor, rect, strokeWidthFraction?.let { rect.width * it }, hardPencil)
+                ghostGuide?.invoke(this, rect)
+                drawInkCopies(rect, mirrorCopies) {
+                    drawInk(preview, inkColor, rect, strokeWidthFraction?.let { rect.width * it }, hardPencil)
+                }
                 selectionContext?.let { selected ->
                     val ids = selected.selectedStrokeIds.toSet()
-                    drawInk(preview.copy(strokes = preview.strokes.filter { it.strokeId in ids }), selectionColor, rect, strokeWidthFraction?.let { rect.width * it }, hardPencil)
+                    drawInk(preview.copy(strokes = preview.strokes.filter { it.strokeId in ids }.map { it.copy(brush = null) }), selectionColor, rect, strokeWidthFraction?.let { rect.width * it }, hardPencil)
                 }
                 val dragStart = selectionStart
                 val dragEnd = selectionEnd
@@ -463,7 +474,12 @@ internal fun DrawScope.drawInk(document: InkDocument, ink: Color, rect: Rect, ba
     fun InkPoint.pixel() = Offset(rect.left + x / 1000f * rect.width, rect.top + y / 1000f * rect.height)
     fun width(point: InkPoint) = ((baseWidth ?: (minOf(rect.width, rect.height) * 0.006f)) *
         (point.pressure?.let { 0.3f + 1.4f * it / 1000f } ?: 1f)).coerceAtLeast(0.75f)
+    val pixelRect = android.graphics.RectF(rect.left, rect.top, rect.right, rect.bottom)
     for (stroke in document.strokes) {
+        if (stroke.brush != null) {
+            drawIntoCanvas { com.halo.app.data.workspace.drawStyledInk(it.nativeCanvas, stroke, pixelRect, ink.alpha) }
+            continue
+        }
         val points = stroke.points
         if (points.isEmpty()) continue
         if (stroke.tool == InkTool.LEGACY && baseWidth == null) {
@@ -492,6 +508,18 @@ internal fun DrawScope.drawInk(document: InkDocument, ink: Color, rect: Rect, ba
             path.reset(); path.moveTo(start.x, start.y); path.quadraticBezierTo(control.x, control.y, end.x, end.y)
             drawPath(path, ink, style = Stroke((width(points[i - 1]) + width(points[i])) / 2, cap = StrokeCap.Round))
             start = end
+        }
+    }
+}
+
+internal fun DrawScope.drawInkCopies(rect: Rect, copies: Int, draw: DrawScope.() -> Unit) {
+    repeat(copies) { index ->
+        when {
+            index == 0 -> draw()
+            copies == 2 -> withTransform({ scale(-1f, 1f, rect.center) }, draw)
+            copies == 4 -> withTransform({ scale(if ((index and 1) == 0) 1f else -1f,
+                if ((index and 2) == 0) 1f else -1f, rect.center) }, draw)
+            else -> withTransform({ rotate(index * 360f / copies, rect.center) }, draw)
         }
     }
 }

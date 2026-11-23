@@ -24,6 +24,7 @@ internal data class InstrumentSpec(
     val levels: Set<String>,
     val states: List<String>,
     val hardStop: Boolean,
+    val menu: InstrumentMenu = instrumentMenu(group, id),
 ) {
     fun isVisible(level: InstrumentLevel): Boolean = level.code in levels || "E" in levels
 
@@ -82,7 +83,27 @@ internal object HaloInstrumentCatalogue {
                 )
             }
         }
-        return legacy + current
+        val baseline = legacy + current
+        val v12 = resources.assets.open("toolshell/instruments-12.json").bufferedReader().use { JSONObject(it.readText()) }
+            .getJSONArray("instruments")
+        val additions = List(v12.length(), v12::getJSONObject).groupBy { item ->
+            item.getString("tool").let { if (it == "lock") "vault" else it }
+        }
+        return (baseline.keys + additions.keys).associateWith { tool ->
+            val entries = baseline[tool].orEmpty()
+            val designed = additions[tool].orEmpty().associateBy { it.getString("id").substringAfter('.') }
+            val used = entries.mapTo(mutableSetOf()) { it.id.substringAfter('.').replace('_', '-') }
+            fun JSONObject.menu() = InstrumentMenu.valueOf(getJSONArray("menu").getString(0))
+            entries.map { spec ->
+                val design = designed[spec.id.substringAfter('.').replace('_', '-')] ?: return@map spec
+                spec.copy(menu = design.menu(), hardStop = spec.hardStop || !design.isNull("askFirst"))
+            } + designed.filterKeys { it !in used }.map { (suffix, item) ->
+                val label = item.getString("name")
+                InstrumentSpec("$tool.${suffix.replace('-', '_')}", label, label, R.drawable.halo_ic_find_replace,
+                    null, item.getJSONArray("menu").getString(1), label, label, "", item.getJSONArray("levels").strings()
+                        .mapTo(mutableSetOf()) { InstrumentLevel.valueOf(it).code }, emptyList(), !item.isNull("askFirst"), item.menu())
+            }
+        }
     }
 
     private fun JSONArray.strings() = List(length(), ::getString)

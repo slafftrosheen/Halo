@@ -9,6 +9,8 @@ import com.halo.app.data.toolkit.HaloMapsStore
 import com.halo.app.data.toolkit.HaloMeasurement
 import com.halo.app.data.toolkit.HaloSavedPlace
 import com.halo.app.data.toolkit.RoomWall
+import com.halo.app.data.workspace.AdaptivePlanner
+import com.halo.app.data.workspace.AdaptiveSlot
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.organizer.OrganizerOccurrence
 import com.halo.runtime.cognition.agent.ActionTruth
@@ -43,6 +45,16 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
         }
         return try {
             val json = when (name) {
+                "halo_page_plan_sections" -> {
+                    if (coroutineContext[RunToolScope]?.targetIsLocal != true ||
+                        !Graph.kidsPreferences.loadedState.value || Graph.kidsPreferences.enabled.value)
+                        return reject("This layout planner is available in an adult on-device session.", ToolRejectionKind.PERMISSION_REQUIRED)
+                    require(input.keys == setOf("request"))
+                    val request = input.text("request").trim()
+                    require(request.isNotEmpty() && request.none(Char::isISOControl))
+                    val requested = AdaptivePlanner.select(request, AdaptiveSlot.entries.toSet(), 7)
+                    JSONObject().put("sections", JSONArray(requested.map { it.name })).put("needsChoice", requested.isEmpty())
+                }
                 "halo_calc_evaluate" -> {
                     val result = HaloCalcEngine.calculate(input.text("expression"))
                     JSONObject().put("expression", result.expression).put("value", result.result.stripTrailingZeros().toString())
@@ -156,6 +168,8 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
             ToolDefinition(id, id, description, mapOf("type" to "object", "properties" to args, "required" to required.toList(), "additionalProperties" to false))
 
         private val catalogue = listOf(
+            definition("halo_page_plan_sections", "Suggest an ordered list of local Today sections for an adult's request. Use for made-for-you and page layout requests. This does not fetch content, save a page or open a screen.",
+                mapOf("request" to mapOf("type" to "string", "minLength" to 1, "maxLength" to 280)), "request"),
             definition("halo_calc_evaluate", "Evaluate an arithmetic expression or a supported phrase such as 15% of 84. Scientific angles are radians.",
                 mapOf("expression" to expression), "expression"),
             definition("halo_calc_convert", "Convert compatible units. Currency uses the dated ECB table saved on this phone or an explicit rate supplied by the user. Do not invent a rate.",
@@ -192,6 +206,7 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
             val presents = id == "halo_maps_go_home"
             val capability = CapabilityId(if (writes) "workspace.write" else "workspace.read")
             val shape = when (id) {
+                "halo_page_plan_sections" -> mapOf("sections" to "array", "needsChoice" to "boolean")
                 "halo_calc_evaluate" -> mapOf("expression" to "string", "value" to "string")
                 "halo_calc_convert" -> mapOf("value" to "string", "unit" to "string", "manualRate" to "boolean",
                     "referenceDate" to "string", "referenceSource" to "string")
@@ -207,6 +222,7 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                     "title" to "string", "departAt" to "string")
             }
             val owner = when {
+                id == "halo_page_plan_sections" -> "AdaptivePlanner"
                 id.startsWith("halo_calc") -> "HaloCalcEngine"
                 id.startsWith("halo_measure") -> "HaloMeasurement"
                 else -> "HaloMapsStore"
@@ -218,6 +234,7 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                     else -> ToolCategory.INFORMATION
                 },
                 keywords = when (owner) {
+                    "AdaptivePlanner" -> setOf("make a page", "made for you", "page layout", "собери страницу")
                     "HaloCalcEngine" -> setOf("calc", "calculator", "graph", "convert", "вычислить", "калькулятор")
                     "HaloMeasurement" -> setOf("measure", "room", "estimate", "линейка", "измерить")
                     else -> if (presents) setOf("maps", "take me home", "карты", "домой")
@@ -245,6 +262,7 @@ internal class HaloLocalInstrumentTools(private val foregroundUnlocked: () -> Bo
                     sourceVersionArguments = if (id == "halo_maps_arrived") setOf("place_version") else emptySet(),
                     resultIdFields = if (writes) setOf("id") else emptySet(),
                     limitations = when (owner) {
+                        "AdaptivePlanner" -> setOf("The planning result contains section identifiers. Today resolves the current collector data separately.")
                         "HaloCalcEngine" -> setOf("Currency conversion uses a saved dated ECB reference rate or a rate supplied by the person. This tool does not fetch rates.")
                         "HaloMeasurement" -> setOf("Camera point placement and phone level are on-device interactions. Typed measures require explicit numeric inputs.")
                         else -> setOf("Adult local runs only. Organic Maps provides offline routing and region downloads. Live departures are off.")

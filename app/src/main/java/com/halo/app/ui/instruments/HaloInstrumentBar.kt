@@ -29,6 +29,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.halo.app.R
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -198,8 +200,12 @@ fun HaloInstrumentBar(
                 FilterChip(selected = item == level, onClick = { selectLevel(item) }, label = { Text(label) },
                     modifier = Modifier.padding(end = 6.dp))
             }
-            TextButton(onClick = ::openHelp) { Text(if (russian) "Где…?" else "Where is…?") }
+            TextButton(onClick = ::openHelp) { Text(stringResource(R.string.shell_find_action)) }
         }
+
+        OrderedToolMenus(tool, level == InstrumentLevel.EASY, shown, { it.menu }, { instrumentName(it) },
+            enabled = { actions[it.id]?.let { action -> action.enabled && !action.working } == true },
+            onAction = { activate(it) }, onHelp = ::openHelp)
 
         Crossfade(level, animationSpec = HaloInstrumentMotion.spec(HaloInstrumentMotion.CALM, motion), label = "Instrument level") { areaLevel ->
             CandidateRow(instruments.filter { it.id in actions && it.isVisible(areaLevel) }, areaLevel,
@@ -253,7 +259,7 @@ fun HaloInstrumentBar(
     }
 
     if (help) InstrumentHelpSheet(
-        instruments, actions.keys, russian, query, { query = it },
+        tool, usable, actions.keys, russian, query, { query = it },
         taskAvailable = task.isNotEmpty(), taskActive = taskActive, nudges = nudges,
         onToggleTask = {
             taskActive = !taskActive
@@ -370,14 +376,14 @@ private fun InstrumentTourStep(step: Int, copy: String, russian: Boolean, onRead
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun InstrumentHelpSheet(instruments: List<InstrumentSpec>, bindingIds: Set<String>, russian: Boolean, query: String,
+private fun InstrumentHelpSheet(tool: String, instruments: List<InstrumentSpec>, bindingIds: Set<String>, russian: Boolean, query: String,
     onQuery: (String) -> Unit, taskAvailable: Boolean, taskActive: Boolean, nudges: Boolean, onToggleTask: () -> Unit,
     onReplay: () -> Unit, onToggleNudges: () -> Unit, onClose: () -> Unit, onReveal: (InstrumentSpec, Boolean) -> Unit) {
     ModalBottomSheet(onDismissRequest = onClose, scrimColor = Color.Black.copy(alpha = .40f)) {
         val matches = instruments.filter { it.matches(query) }.sortedBy { it.id !in bindingIds }
         Column(Modifier.fillMaxWidth().heightIn(max = 580.dp).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(if (russian) "Где…?" else "Where is…?", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.shell_find_action), style = MaterialTheme.typography.titleLarge)
             HaloTextField(query, onQuery, VoiceFieldKind.SEARCH,
                 label = { Text(if (russian) "Найти инструмент" else "Find an instrument") }, maxChars = 100)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -393,7 +399,8 @@ private fun InstrumentHelpSheet(instruments: List<InstrumentSpec>, bindingIds: S
                         Icon(painterResource(spec.icon), null, Modifier.size(24.dp))
                         Column(Modifier.weight(1f)) {
                             Text(if (russian) spec.russianName else spec.name, style = MaterialTheme.typography.titleSmall)
-                            Text(listOfNotNull(instrumentGroup(spec.group, russian), spec.shortcut?.let { instrumentShortcutLabel(it, russian) }).joinToString(" · "),
+                            Text(listOfNotNull(spec.menu.title(tool), instrumentGroup(spec.group, russian),
+                                spec.shortcut?.let { instrumentShortcutLabel(it, russian) }).distinct().joinToString(" › "),
                                 style = MaterialTheme.typography.labelMedium)
                         }
                     }

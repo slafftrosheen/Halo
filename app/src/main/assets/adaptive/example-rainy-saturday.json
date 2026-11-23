@@ -1,0 +1,38 @@
+{
+ "page": "rainy-saturday",
+ "title": "Rainy Saturday",
+ "mode": "adult",
+ "density": "standard",
+ "refresh": "sat 07:00",
+ "saveAs": "page",
+ "blocks": [
+  {
+   "type": "chart",
+   "span": 4,
+   "why": "Rain decides the plan",
+   "source": "weather.hourly"
+  },
+  {
+   "type": "options",
+   "span": 4,
+   "max": 2,
+   "source": "places.nearby",
+   "why": "Indoor, under 25 min, fine for age 4+"
+  },
+  {
+   "type": "timeline",
+   "span": 4
+  },
+  {
+   "type": "checklist",
+   "span": 4
+  },
+  {
+   "type": "askFirstAction",
+   "action": "book",
+   "limit": {
+    "eur": 40
+   }
+  }
+ ]
+}

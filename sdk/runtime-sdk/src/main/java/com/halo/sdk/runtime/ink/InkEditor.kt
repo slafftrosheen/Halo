@@ -16,6 +16,9 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
     private var working: InkDocument? = null
     private var tool: InkTool? = null
     private var activeStrokeId: String? = null
+    /** The input owner sets this before contact; changes during contact apply to the next stroke. */
+    var nextBrush: InkBrushStyle? = null
+    private var activeBrush: InkBrushStyle? = null
     private var erasing = false
     private var previousErase: InkPoint? = null
     var limitReached = false
@@ -35,6 +38,7 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
         }
         this.tool = tool; this.erasing = erasing; working = document
         activeStrokeId = if (erasing) null else InkStrokeIds.create()
+        activeBrush = activeStrokeId?.let { nextBrush?.copy(seed = it.hashCode()) }
         return true
     }
 
@@ -64,7 +68,7 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
 
     fun preview(): InkDocument = if (erasing && active) working ?: document else
         if (points.isNotEmpty() && tool != null) document.copy(strokes = document.strokes +
-            InkStroke(tool!!, points.toList(), requireNotNull(activeStrokeId))) else document
+            InkStroke(tool!!, points.toList(), requireNotNull(activeStrokeId), activeBrush)) else document
 
     fun finish(): Boolean {
         if (!active) return false
@@ -74,7 +78,7 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
     }
 
     /** Platform palm/navigation cancellation rolls back drawing AND erasing. */
-    fun cancel() { points.clear(); working = null; tool = null; activeStrokeId = null; previousErase = null; erasing = false }
+    fun cancel() { points.clear(); working = null; tool = null; activeStrokeId = null; activeBrush = null; previousErase = null; erasing = false }
 
     fun clear(): Boolean { cancel(); limitReached = false; return commit(document.copy(strokes = emptyList())) }
     fun undo(): Boolean {

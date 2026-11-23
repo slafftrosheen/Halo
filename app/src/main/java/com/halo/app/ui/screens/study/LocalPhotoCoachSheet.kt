@@ -137,6 +137,7 @@ internal fun LocalPhotoCoachSheet(
 @Composable
 private fun problemLabel(problem: LocalCoachProblem): String = when (problem) {
     is LocalCoachProblem.Arithmetic -> problem.equation
+    is LocalCoachProblem.Fraction -> problem.equation
     is LocalCoachProblem.Acceleration -> stringResource(R.string.halo11_coach_acceleration,
         showNumber(problem.startSpeed), showNumber(problem.endSpeed), showNumber(problem.seconds))
 }
@@ -183,7 +184,10 @@ private fun CoachProblemContent(
     targets: List<CoachLessonTarget>,
     keepCard: (suspend (CoachLessonTarget, String, String) -> Boolean)?,
 ) {
-    var step by remember { mutableStateOf(if (child) CoachStep.IDEA else CoachStep.MODE) }
+    var step by remember { mutableStateOf(if (child) CoachStep.GIVEN else CoachStep.MODE) }
+    var attempts by remember { mutableIntStateOf(0) }
+    var exampleOpen by remember { mutableStateOf(false) }
+    var exampleSeen by remember { mutableStateOf(false) }
     var feedback by remember { mutableStateOf<Int?>(null) }
     var smaller by remember { mutableStateOf(false) }
     var explain by remember { mutableStateOf(false) }
@@ -216,7 +220,12 @@ private fun CoachProblemContent(
         }
         onHint(area)
     }
-    fun wrong() { feedback = R.string.halo11_coach_wrong; hint() }
+    fun wrong() {
+        attempts++
+        feedback = if (!child) R.string.halo11_coach_wrong else if (attempts >= 2)
+            R.string.coach_tricky_break else R.string.coach_not_yet
+        hint()
+    }
     fun submit() {
         if (allowed() && answer.isNotBlank()) when (checkLocalCoachAnswer(problem, answer, unit)) {
             CoachCheck.CORRECT -> { onCorrect(); advance(CoachStep.CHECKED) }
@@ -229,6 +238,15 @@ private fun CoachProblemContent(
         showNumber(problem.answer) + if (problem.unitsRequired) " m/s²" else ""
     } else null
     Text(label, style = MaterialTheme.typography.titleLarge)
+    if (child) {
+        val stage = when (step) {
+            CoachStep.MODE, CoachStep.GIVEN -> R.string.coach_step_notice
+            CoachStep.IDEA, CoachStep.PLACE -> R.string.coach_step_idea
+            CoachStep.WORKING, CoachStep.RESPONSE -> R.string.coach_step_try
+            CoachStep.CHECKED, CoachStep.SHOWN -> R.string.coach_step_check
+        }
+        Text(stringResource(stage), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+    }
     val tabletWriting = if (!child && allowed()) {
         val phase = when (step) {
             CoachStep.MODE -> stringResource(R.string.halo11_coach_coach_mode)
@@ -256,7 +274,7 @@ private fun CoachProblemContent(
             onExplain = { if (allowed()) { explain = true; advance(CoachStep.GIVEN) } },
             onAnswer = { advance(CoachStep.SHOWN) })
         CoachStep.GIVEN -> CoachGivens(problem) { advance(CoachStep.IDEA) }
-        CoachStep.IDEA -> CoachIdeas(problem) { chosen ->
+        CoachStep.IDEA -> CoachIdeas(problem, child) { chosen ->
             if (allowed()) {
                 if (chosen == problem.operation) {
                     if (place != null) advance(CoachStep.PLACE) else startWorking()
@@ -314,9 +332,28 @@ private fun CoachProblemContent(
             }
         }
         CoachHelp(child, onHint = ::hint, onExplain = { if (allowed()) explain = !explain }, onAsk = {
-            if (child) { feedback = R.string.halo11_coach_no_tell; hint() }
-            else advance(CoachStep.SHOWN)
+            if (child && allowed()) { exampleOpen = true; onHint(CoachHintArea.IDEA) }
+            else if (!child) advance(CoachStep.SHOWN)
         })
+    }
+    if (child && exampleSeen && !done) Text(stringResource(R.string.coach_now_try))
+    if (child && exampleOpen && !done && allowed()) {
+        val example = remember(problem) { safeWorkedExample(problem) }
+        AlertDialog(onDismissRequest = { exampleOpen = false }, title = { Text(stringResource(R.string.coach_similar)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.coach_just_tell_no))
+                    if (example != null) {
+                        Text(problemLabel(example), style = MaterialTheme.typography.titleMedium)
+                        localCoachWorking(example, child = false).forEach { work ->
+                            Text(coachWorkingPrompt(work) + " · " + showNumber(work.expected))
+                        }
+                        Text(stringResource(R.string.halo11_coach_result, showNumber(example.answer)))
+                    }
+                }
+            }, confirmButton = {
+                TextButton(onClick = { exampleOpen = false; exampleSeen = true }) { Text(stringResource(R.string.coach_ill_try)) }
+            })
     }
     if (!child) HaloInstrumentBar("coach", buildMap {
         if (!done) {
@@ -381,6 +418,7 @@ private fun CoachHintIllustration(problem: LocalCoachProblem, child: Boolean) {
             }
         }
         is LocalCoachProblem.Acceleration -> Text("v₀ → v₁    Δt", style = MaterialTheme.typography.bodyMedium)
+        is LocalCoachProblem.Fraction -> Text(stringResource(R.string.coach_fraction_hint), style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -397,6 +435,7 @@ private fun CoachModeOptions(onCoach: () -> Unit, onExplain: () -> Unit, onAnswe
 private fun CoachGivens(problem: LocalCoachProblem, onContinue: () -> Unit) {
     val values = when (problem) {
         is LocalCoachProblem.Arithmetic -> listOf(problem.first.toString(), problem.second.toString())
+        is LocalCoachProblem.Fraction -> listOf(problem.first.toString() + "/" + problem.denominator, problem.second.toString() + "/" + problem.divisor)
         is LocalCoachProblem.Acceleration -> listOf(
             stringResource(R.string.halo11_coach_initial_speed, showNumber(problem.startSpeed)),
             stringResource(R.string.halo11_coach_final_speed, showNumber(problem.endSpeed)),
@@ -421,10 +460,13 @@ private fun CoachGivens(problem: LocalCoachProblem, onContinue: () -> Unit) {
 }
 
 @Composable
-private fun CoachIdeas(problem: LocalCoachProblem, onChoice: (CoachOperation) -> Unit) {
-    val options = remember(problem) {
+private fun CoachIdeas(problem: LocalCoachProblem, child: Boolean, onChoice: (CoachOperation) -> Unit) {
+    val options = remember(problem, child) {
         if (problem.unitsRequired) listOf(CoachOperation.MULTIPLY, CoachOperation.ACCELERATION, CoachOperation.SUBTRACT)
-        else CoachOperation.entries.filter { it != CoachOperation.ACCELERATION }
+        else CoachOperation.entries.filter { it != CoachOperation.ACCELERATION }.let { arithmetic ->
+            if (!child) arithmetic else arithmetic.filter { it == problem.operation || it in arithmetic.filterNot { other ->
+                other == problem.operation }.take(2) }
+        }
     }
     Text(stringResource(R.string.halo11_coach_idea), style = MaterialTheme.typography.titleMedium)
     for (option in options) OutlinedButton({ onChoice(option) }, Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
@@ -438,7 +480,8 @@ private fun CoachAnswerInput(problem: LocalCoachProblem, child: Boolean,
     focus: FocusRequester, allowed: () -> Boolean, tabletWriting: InkDocument?, check: () -> Unit) {
     Text(stringResource(if (child) R.string.halo11_coach_own_answer else R.string.halo11_coach_check_steps))
     OutlinedTextField(answer, onAnswer, label = { Text(stringResource(R.string.halo11_coach_answer)) },
-        singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, autoCorrectEnabled = false),
+        singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = if (problem is LocalCoachProblem.Fraction) KeyboardType.Text
+            else KeyboardType.Decimal, autoCorrectEnabled = false),
         modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("coach.answer_box"))
     if (problem.unitsRequired) OutlinedTextField(unit, onUnit,
         label = { Text(stringResource(R.string.halo11_coach_units)) }, singleLine = true)

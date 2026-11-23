@@ -432,6 +432,11 @@ fun NotebookScreen(viewModel: NotebookViewModel, onOpenStudy: () -> Unit, onSkil
                 libraryActions.forEach { action -> TextButton(onClick = action.onInvoke, enabled = action.enabled) { Text(uiText(action.title)) } }
             }
         }
+        if (showLibrary && onOpenEveryday != null) item(key = "pages-made") {
+            TextButton(onClick = { onOpenEveryday("home/pages") }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(androidx.compose.ui.res.stringResource(R.string.adaptive_pages_you_made))
+            }
+        }
         if (showLibrary) item(key = "library-controls") {
             val colors = MaterialTheme.colorScheme
             Column(

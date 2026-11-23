@@ -19,6 +19,10 @@ object WorkspaceInkBitmapRenderer {
             (baseWidth *
                 (point.pressure?.let { .3f + 1.4f * it / 1000f } ?: 1f)).coerceAtLeast(.75f)
         for (stroke in document.strokes) {
+            if (stroke.brush != null) {
+                drawStyledInk(canvas, stroke, rect, paint.alpha / 255f)
+                continue
+            }
             val points = stroke.points
             paint.style = Paint.Style.FILL
             canvas.drawCircle(x(points.first()), y(points.first()), width(points.first()) / 2, paint)

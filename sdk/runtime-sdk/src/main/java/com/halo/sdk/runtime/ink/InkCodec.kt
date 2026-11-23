@@ -5,15 +5,18 @@ object InkCodec {
     private const val V1 = "sketch:v1|"
     private const val V2 = "sketch:v2|"
     private const val V3 = "sketch:v3|"
+    private const val V4 = "sketch:v4|"
 
     fun encode(document: InkDocument): String {
         InkLimits.requireValid(document)
         val length = encodedLength(document)
         require(length <= InkLimits.MAX_ENCODED_CHARS)
+        val styled = document.strokes.any { it.brush != null }
         return buildString(length) {
-            append(V3).append(document.aspectMilli)
+            append(if (styled) V4 else V3).append(document.aspectMilli)
             document.strokes.forEach { stroke ->
                 append('|').append(stroke.tool.wire).append('@').append(stroke.strokeId).append('@')
+                if (styled) append(stroke.brush?.encode() ?: "_").append('@')
                 stroke.points.forEachIndexed { index, p ->
                     if (index > 0) append(';')
                     append(p.x).append(',').append(p.y)
@@ -27,11 +30,13 @@ object InkCodec {
         }.also { require(it.length <= InkLimits.MAX_ENCODED_CHARS) }
     }
 
-    /** Exact v3 size for a validated document, without allocating the serialized payload. */
+    /** Exact encoded size for a validated document, without allocating the serialized payload. */
     internal fun encodedLength(document: InkDocument): Int {
+        val styled = document.strokes.any { it.brush != null }
         var length = V3.length + document.aspectMilli.toString().length
         document.strokes.forEach { stroke ->
             length += 4 + stroke.strokeId.length // |tool@id@
+            if (styled) length += (stroke.brush?.encode()?.length ?: 1) + 1
             stroke.points.forEachIndexed { index, point ->
                 if (index > 0) length++
                 length += point.x.toString().length + 1 + point.y.toString().length
@@ -53,7 +58,8 @@ object InkCodec {
             when {
                 encoded.startsWith(V1) -> legacy(encoded)
                 encoded.startsWith(V2) -> versionTwo(encoded)
-                encoded.startsWith(V3) -> versionThree(encoded)
+                encoded.startsWith(V3) -> stableIds(encoded, styled = false)
+                encoded.startsWith(V4) -> stableIds(encoded, styled = true)
                 else -> null
             }
         } catch (_: IllegalArgumentException) { null }
@@ -117,19 +123,21 @@ object InkCodec {
         return InkDocument(strokes, aspect)
     }
 
-    private fun versionThree(encoded: String): InkDocument? {
-        val rows = encoded.substring(V3.length).split('|', limit = InkLimits.MAX_STROKES + 2)
+    private fun stableIds(encoded: String, styled: Boolean): InkDocument? {
+        val rows = encoded.substring(if (styled) V4.length else V3.length).split('|', limit = InkLimits.MAX_STROKES + 2)
         if (rows.size > InkLimits.MAX_STROKES + 1) return null
         val aspect = rows.first().toIntOrNull() ?: return null
         if (aspect != 0 && aspect !in 125..8000) return null
         var total = 0
         val strokes = rows.drop(1).map { row ->
-            val fields = row.split('@', limit = 3)
-            if (fields.size != 3) return null
+            val fieldCount = if (styled) 4 else 3
+            val fields = row.split('@', limit = fieldCount)
+            if (fields.size != fieldCount) return null
             val tool = InkTool.entries.firstOrNull { it.wire == fields[0] } ?: return null
             val id = fields[1]
             if (id.length !in 1..128 || !id.matches(Regex("[A-Za-z0-9_-]+"))) return null
-            val points = fields[2].split(';', limit = InkLimits.MAX_POINTS_PER_STROKE + 1)
+            val brush = if (styled && fields[2] != "_") InkBrushStyle.decode(fields[2]) ?: return null else null
+            val points = fields.last().split(';', limit = InkLimits.MAX_POINTS_PER_STROKE + 1)
             if (points.isEmpty() || points.size > InkLimits.MAX_POINTS_PER_STROKE) return null
             total += points.size
             if (total > InkLimits.MAX_TOTAL_POINTS) return null
@@ -156,7 +164,7 @@ object InkCodec {
                 previous = point.timeMs
                 point
             }
-            InkStroke(tool, decoded, id)
+            InkStroke(tool, decoded, id, brush)
         }
         return InkDocument(strokes, aspect).also(InkLimits::requireValid)
     }

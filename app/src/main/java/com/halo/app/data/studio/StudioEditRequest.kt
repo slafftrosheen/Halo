@@ -59,6 +59,20 @@ object StudioEditParser {
                     contrast = if ("contrast" in changes) changes.integer("contrast") else current.contrast,
                     saturation = if ("saturation" in changes) changes.integer("saturation") else current.saturation))
             }
+            "add_shape" -> {
+                only("name", "bounds", "color", "vector")
+                StudioCommand.Add(StudioLayer(name = fields.text("name"), kind = StudioLayerKind.RECTANGLE,
+                    bounds = fields["bounds"]?.let(::rect) ?: StudioRect(200, 200, 600, 600),
+                    color = fields["color"]?.let(::color) ?: 0xff18203a.toInt(), vector = vector(fields["vector"])))
+            }
+            "edit_shape" -> {
+                only("layerId", "bounds", "vector")
+                val current = layer()
+                require(current.kind == StudioLayerKind.RECTANGLE || current.kind == StudioLayerKind.ELLIPSE)
+                StudioCommand.Replace(current.copy(bounds = fields["bounds"]?.let(::rect) ?: current.bounds,
+                    vector = vector(fields["vector"])))
+            }
+            "set_resolution" -> { only("dpi"); StudioCommand.SetResolution(fields.integer("dpi")) }
             "set_ink" -> {
                 only("layerId", "ink")
                 val current = layer(); require(current.kind == StudioLayerKind.INK)
@@ -90,6 +104,32 @@ object StudioEditParser {
         require(this is Map<*, *> && keys.all { it is String })
         return entries.associate { (key, value) -> key as String to value }
     }
+    private fun vector(value: Any?): StudioVectorGeometry {
+        val fields = value.objectFields()
+        require(fields.keys.all { it in setOf("kind", "closed", "nodes") })
+        val defaults = StudioVectorGeometry.default(StudioShape.valueOf(fields.text("kind")))
+        val points = if ("nodes" !in fields) defaults.nodes else {
+            val values = fields["nodes"] as? List<*> ?: throw IllegalArgumentException("Invalid vector nodes")
+            require(values.size in 2..128 && defaults.shape == StudioShape.PATH)
+            values.map { item ->
+                val coordinates = item.objectFields()
+                require(coordinates.keys.all { it in setOf("x", "y", "inX", "inY", "outX", "outY") })
+                val x = coordinates.unit("x")
+                val y = coordinates.unit("y")
+                StudioPathNode(x, y, coordinates.unit("inX", x), coordinates.unit("inY", y),
+                    coordinates.unit("outX", x), coordinates.unit("outY", y))
+            }
+        }
+        return defaults.copy(nodes = points, closed = if ("closed" in fields) fields.flag("closed") else defaults.closed)
+    }
+
+    private fun Map<String, Any?>.unit(key: String, fallback: Float? = null): Float {
+        if (key !in this && fallback != null) return fallback
+        val number = (get(key) as? Number)?.toDouble() ?: throw IllegalArgumentException("Invalid coordinate")
+        require(number in 0.0..1.0)
+        return number.toFloat()
+    }
+
     private fun rect(value: Any?): StudioRect {
         val fields = value.objectFields()
         require(fields.keys == setOf("x", "y", "width", "height"))

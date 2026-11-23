@@ -86,6 +86,7 @@ class HaloApplication :
 
     override fun onCreate() {
         super.onCreate()
+        com.halo.app.data.workspace.InkBrushPresets.initialize(assets)
 
         // Native benchmark workers must not bootstrap Halo's normal application graph,
         // migrations, observers, providers or user-facing background jobs.

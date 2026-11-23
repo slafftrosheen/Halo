@@ -1,0 +1,901 @@
+{
+ "version": "12.0-b1",
+ "families": [
+  "read",
+  "do",
+  "choose",
+  "make",
+  "see",
+  "talk"
+ ],
+ "blocks": [
+  {
+   "type": "text",
+   "family": "read",
+   "name": "Text",
+   "does": "Plain or rich text, read aloud",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "sourceCard",
+   "family": "read",
+   "name": "Source card",
+   "does": "Article, link or file with provenance",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "gallery",
+   "family": "read",
+   "name": "Gallery",
+   "does": "1–12 images",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "explainer",
+   "family": "read",
+   "name": "Explainer",
+   "does": "Foldable steps",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "checklist",
+   "family": "do",
+   "name": "Checklist",
+   "does": "Ticks, owner, due",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "timer",
+   "family": "do",
+   "name": "Timer",
+   "does": "Countdown or stopwatch",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "askFirstAction",
+   "family": "do",
+   "name": "Ask-first action",
+   "does": "pay/send/book/post/delete — always confirms",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": true,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "steps",
+   "family": "do",
+   "name": "Steps",
+   "does": "Ordered steps with progress",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "options",
+   "family": "choose",
+   "name": "Options",
+   "does": "2–4 cards; Kids max 3",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "compare",
+   "family": "choose",
+   "name": "Compare",
+   "does": "Side by side, same facts",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "rank",
+   "family": "choose",
+   "name": "Rank",
+   "does": "Drag to order",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "question",
+   "family": "choose",
+   "name": "Question",
+   "does": "One question, coach mode",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": "halo study",
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "sketch",
+   "family": "make",
+   "name": "Sketch",
+   "does": "Drawing area, brush engine (batch 2)",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": "halo canvas",
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "note",
+   "family": "make",
+   "name": "Note",
+   "does": "Write or dictate",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": "halo notes",
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "board",
+   "family": "make",
+   "name": "Board",
+   "does": "Boxes, arrows, stickies",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": "halo canvas",
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "image",
+   "family": "make",
+   "name": "Image",
+   "does": "Generate/edit — asks first",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": true,
+   "opensTool": "halo studio",
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "timeline",
+   "family": "see",
+   "name": "Timeline",
+   "does": "Day, week or plan",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": false,
+   "opensTool": "halo planner",
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "table",
+   "family": "see",
+   "name": "Table",
+   "does": "Rows/columns, sum, sort",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": false,
+   "opensTool": "halo sheets",
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "chart",
+   "family": "see",
+   "name": "Chart",
+   "does": "Bar/line/pie from data",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": false,
+   "opensTool": "halo sheets",
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "map",
+   "family": "see",
+   "name": "Map",
+   "does": "Place, route, leave-by",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": false,
+   "opensTool": "halo maps",
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "ask",
+   "family": "talk",
+   "name": "Ask",
+   "does": "Composer with voice",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "thread",
+   "family": "talk",
+   "name": "Thread",
+   "does": "Short chat inside page",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "listen",
+   "family": "talk",
+   "name": "Listen",
+   "does": "Read aloud, chapters",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": true,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  },
+  {
+   "type": "device",
+   "family": "talk",
+   "name": "Device",
+   "does": "Glasses/buds/buddy/ink controls",
+   "spans": {
+    "phone": [
+     2,
+     4
+    ],
+    "tablet": [
+     2,
+     8
+    ],
+    "glasses": [
+     1,
+     1
+    ],
+    "watch": [
+     1,
+     1
+    ]
+   },
+   "kids": false,
+   "needsConfirm": false,
+   "opensTool": null,
+   "states": [
+    "loading",
+    "ready",
+    "working",
+    "needsYou",
+    "offline",
+    "error"
+   ],
+   "maxActions": 2,
+   "hasWhy": true
+  }
+ ]
+}

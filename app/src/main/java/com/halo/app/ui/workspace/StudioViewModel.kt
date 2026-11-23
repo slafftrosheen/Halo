@@ -240,6 +240,16 @@ class StudioViewModel(val service: StudioService, private val files: WorkspaceFi
             mutable.value = mutable.value.copy(output = output, exportedSource = sourceReceipt)
         }
     }
+    internal fun exportProject(format: StudioProjectFormat) {
+        val project = mutable.value.project ?: return
+        operation(StudioOperation.EXPORT) {
+            val output = service.exportProject(project.id, project.revision, format)
+            val sourceReceipt = project.id + ":" + project.revision
+            savedState["studioExportedSource"] = sourceReceipt
+            mutable.value = mutable.value.copy(output = output, exportedSource = sourceReceipt)
+        }
+    }
+
     fun insertOutput(canvasId: String, output: WorkspaceFile, onInserted: (String) -> Unit) = operation(StudioOperation.INSERT) {
         val nodeId = service.insertOutput(canvasId, output.objectId.value, requireNotNull(output.version))
         onInserted(nodeId)

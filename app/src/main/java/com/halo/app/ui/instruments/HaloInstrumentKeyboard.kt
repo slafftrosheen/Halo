@@ -26,7 +26,8 @@ internal object HaloInstrumentKeyboard {
         if (event.action != KeyEvent.ACTION_DOWN || event.repeatCount != 0 ||
             !(event.isCtrlPressed || event.isAltPressed || event.keyCode in KeyEvent.KEYCODE_F1..KeyEvent.KEYCODE_F12)) return false
         val handler = owners[activity]?.values?.lastOrNull { it.active() } ?: return false
-        if (event.isCtrlPressed && !event.isAltPressed && event.keyCode == KeyEvent.KEYCODE_SLASH) {
+        if (event.isCtrlPressed && !event.isAltPressed && !event.isShiftPressed &&
+            event.keyCode in setOf(KeyEvent.KEYCODE_SLASH, KeyEvent.KEYCODE_K)) {
             handler.openHelp()
             return true
         }

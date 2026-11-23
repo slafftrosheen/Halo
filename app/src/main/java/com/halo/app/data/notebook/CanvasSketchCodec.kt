@@ -21,7 +21,7 @@ object CanvasSketchCodec {
 
     /** Read-only XY projection; editable InkCodec callers must retain the full InkDocument. */
     fun decode(value: String): List<List<CanvasSketchPoint>> {
-        if (value.startsWith("sketch:v2|") || value.startsWith("sketch:v3|")) return com.halo.sdk.runtime.ink.InkCodec.decode(value)
+        if (value.startsWith("sketch:v2|") || value.startsWith("sketch:v3|") || value.startsWith("sketch:v4|")) return com.halo.sdk.runtime.ink.InkCodec.decode(value)
             ?.strokes?.map { stroke -> stroke.points.map { CanvasSketchPoint(it.x, it.y) } }.orEmpty()
         if (!value.startsWith(PREFIX) || value.length > 200_000) return emptyList()
         val raw = value.removePrefix(PREFIX)

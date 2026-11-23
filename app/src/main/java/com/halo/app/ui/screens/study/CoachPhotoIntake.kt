@@ -67,6 +67,7 @@ internal fun CoachPhotoIntake(
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var reading by remember { mutableStateOf(false) }
     var acquiring by remember { mutableStateOf(false) }
+    var live by remember { mutableStateOf(false) }
     var issue by remember { mutableStateOf<Int?>(null) }
     var written by remember { mutableStateOf("") }
     var photoQuestions by remember { mutableStateOf<List<LocalCoachProblem>?>(null) }
@@ -221,6 +222,10 @@ internal fun CoachPhotoIntake(
         if (permitted && currentlyAllowed()) openCamera()
         else if (currentlyAllowed()) issue = R.string.halo11_coach_camera_unavailable
     }
+    val livePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { permitted ->
+        if (permitted && currentlyAllowed()) live = true
+        else if (currentlyAllowed()) issue = R.string.halo11_coach_camera_unavailable
+    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null && !child && currentlyAllowed()) prepare {
             val resolver = context.contentResolver
@@ -248,6 +253,11 @@ internal fun CoachPhotoIntake(
                 captured?.bytes?.fill(0)
             }
         }
+    }
+    if (live && child && currentlyAllowed()) {
+        com.halo.app.ui.screens.study.LiveWorksheetCamera(currentlyAllowed, admitsQuestion,
+            onChoose = { live = false; offer(listOf(it)) }, onClose = { live = false })
+        return
     }
     val photo = bitmap
     val recognized = photoQuestions
@@ -312,6 +322,15 @@ internal fun CoachPhotoIntake(
         }
     } else {
         Text(privacy, style = MaterialTheme.typography.bodySmall)
+        if (child) OutlinedButton(onClick = {
+            if (currentlyAllowed()) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+                    live = true
+                else livePermission.launch(Manifest.permission.CAMERA)
+            }
+        }, enabled = !reading && !acquiring, modifier = Modifier.heightIn(min = 56.dp)) {
+            Text(stringResource(R.string.coach_live_camera))
+        }
         OutlinedButton(onClick = ::requestCamera, enabled = !reading && !acquiring, modifier = Modifier.testTag("coach.capture")) {
             Text(stringResource(R.string.halo11_coach_take_photo))
         }

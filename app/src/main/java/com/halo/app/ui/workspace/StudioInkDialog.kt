@@ -55,6 +55,7 @@ internal fun StudioInkDialog(service: StudioService, session: StudioInkSession,
                     strokeColor = Color(layer.color), strokeWidthFraction = service.inkWidthFraction(project.session.current, layer),
                     initialMode = initialMode,
                     hardPencil = layer.pencil,
+                    showBrushes = true,
                     onSelectionChanged = { context ->
                         selectionJob?.cancel()
                         if (context == null) service.clearSelection(project.id, session.ownerToken)

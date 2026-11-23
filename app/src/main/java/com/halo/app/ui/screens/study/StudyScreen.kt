@@ -160,6 +160,16 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     var exportStudyCards by remember { mutableStateOf(false) }
     val acceptedCards = state.practiceItems.filter { it.accepted }
     var showHelp by rememberSaveable(state.session?.id) { mutableStateOf(false) }
+    var rehearsalRevision by remember(state.session?.id) { mutableStateOf<Long?>(null) }
+    val rehearsalFamily = com.halo.app.di.ManualDependencyGraph.kidsPreferences
+    val rehearsalKids by rehearsalFamily.enabled.collectAsStateWithLifecycle()
+    val rehearsalReady by rehearsalFamily.loadedState.collectAsStateWithLifecycle()
+    val canRehearse = rehearsalReady && !rehearsalKids && state.sources.any { !it.stale && !it.excerpt.isNullOrBlank() && it.version != null }
+    if (canRehearse) rehearsalRevision?.let { revision ->
+        StudyRehearsalSheet(state.sources, allowed = {
+            runCatching { rehearsalFamily.requireAdultAction(revision); com.halo.app.di.ManualDependencyGraph.haloPause.requireActive() }.isSuccess
+        }, onDismiss = { rehearsalRevision = null })
+    }
     var cardQuestion by rememberSaveable { mutableStateOf("") }
     var focusedReview by rememberSaveable { mutableStateOf(startInReview) }
     var skippedReviewIds by rememberSaveable { mutableStateOf(listOf<String>()) }
@@ -312,7 +322,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
         ))
     })
     val nextAction = rememberLearningNextAction(state, kids = false,
-        blocking = showComposer || showDetails || showMenu || showPresentation || showHelp || confirmDelete || focusedReview)
+        blocking = showComposer || showDetails || showMenu || showPresentation || showHelp || confirmDelete || focusedReview || rehearsalRevision != null)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, viewModel, activeTools) {
         var attachment: String? = null
@@ -541,6 +551,9 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
                 if (currentTurn != null) viewModel.readTurnAloud(currentTurn) else viewModel.readSourceAloud()
             }, canRead, working = state.reader?.speaking == true),
             "study.say_it" to com.halo.app.ui.instruments.HaloInstrumentAction(onStartVoiceMode, pageActionsReady),
+            "study.oral_rehearsal" to com.halo.app.ui.instruments.HaloInstrumentAction({
+                rehearsalRevision = runCatching { rehearsalFamily.adultActionRevision() }.getOrNull()
+            }, pageActionsReady && canRehearse),
             "study.make_cards" to com.halo.app.ui.instruments.HaloInstrumentAction(viewModel::createPracticeCards,
                 pageActionsReady && state.sources.isNotEmpty(), working = state.isGenerating),
             "study.dynamic_cards" to com.halo.app.ui.instruments.HaloInstrumentAction({

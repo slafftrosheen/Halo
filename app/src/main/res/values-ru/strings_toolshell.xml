@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo 12.0 batch 3 · tool shell -->
+<resources>
+    <string name="shell_menu_file">Файл</string>
+    <string name="shell_menu_edit">Правка</string>
+    <string name="shell_menu_insert">Вставка</string>
+    <string name="shell_menu_format">Формат</string>
+    <string name="shell_menu_view">Вид</string>
+    <string name="shell_menu_tools">Инструменты</string>
+    <string name="shell_menu_help">Справка</string>
+    <string name="shell_format_image">Изображение</string>
+    <string name="shell_format_path">Контур</string>
+    <string name="shell_format_data">Данные</string>
+    <string name="shell_format_event">Событие</string>
+    <string name="shell_find_action">Найти действие</string>
+    <string name="shell_saved_version">Сохранено · версия %1$d</string>
+    <string name="shell_versions">Версии</string>
+    <string name="shell_save_copy">Сохранить копию</string>
+    <string name="shell_export">Экспорт</string>
+    <string name="shell_split_view">Разделить экран</string>
+    <string name="shell_shortcuts">Сочетания клавиш</string>
+    <string name="shell_show_in_menus">Показывать в моих меню?</string>
+    <string name="shell_inspector">Свойства</string>
+    <string name="shell_layers">Слои</string>
+    <string name="shell_history">История</string>
+    <string name="shell_cant_undo">Это нельзя отменить</string>
+    <string name="notes_suggest_mode">Режим предложений</string>
+    <string name="notes_accept">Принять</string>
+    <string name="notes_reject">Отклонить</string>
+    <string name="notes_comment">Комментарий</string>
+    <string name="sheets_ask_table">Спросить таблицу</string>
+    <string name="sheets_show_formula">Показать формулу</string>
+    <string name="sheets_who_owes">Кто кому должен</string>
+    <string name="sheets_check_before">Проверьте перед отправкой.</string>
+    <string name="studio_fill_ai">Заполнить с ИИ</string>
+    <string name="studio_refine_edge">Уточнить край</string>
+    <string name="studio_select_subject">Выделить объект</string>
+    <string name="measure_check_it">проверьте</string>
+    <string name="translate_might_be_wrong">может быть неточно</string>
+    <string name="translate_both_sides">Обе стороны</string>
+    <string name="calc_add_function">Добавить функцию</string>
+    <string name="calc_to_notes">В заметки</string>
+    <string name="measure_make_plan">Сделать план</string>
+</resources>

@@ -1,0 +1,84 @@
+{
+ "version": "12.0-b4",
+ "stops": [
+  "LEARN",
+  "MAKE",
+  "FIND",
+  "TELL"
+ ],
+ "topics": [
+  {
+   "id": "animals",
+   "art": "🐱",
+   "source": "BUILT_IN",
+   "ageBands": [
+    "4-6",
+    "7-9",
+    "10-12"
+   ]
+  },
+  {
+   "id": "counting",
+   "art": "🍎",
+   "source": "BUILT_IN",
+   "ageBands": [
+    "4-6",
+    "7-9"
+   ]
+  },
+  {
+   "id": "nature",
+   "art": "🌻",
+   "source": "BUILT_IN",
+   "ageBands": [
+    "4-6",
+    "7-9",
+    "10-12"
+   ]
+  },
+  {
+   "id": "dinosaurs",
+   "art": "🦕",
+   "source": "APPROVED_REQUEST",
+   "approvedBy": "grown-up",
+   "ageBands": [
+    "4-6",
+    "7-9",
+    "10-12"
+   ],
+   "note": "example of a child request approved by a grown-up"
+  }
+ ],
+ "ageBands": {
+  "4-6": {
+   "choices": 2,
+   "targetDp": 72,
+   "readAloud": "always",
+   "stops": [
+    "LEARN",
+    "MAKE"
+   ]
+  },
+  "7-9": {
+   "choices": 3,
+   "targetDp": 56,
+   "readAloud": "on",
+   "stops": [
+    "LEARN",
+    "MAKE",
+    "FIND"
+   ]
+  },
+  "10-12": {
+   "choices": 3,
+   "targetDp": 48,
+   "readAloud": "tap",
+   "stops": [
+    "LEARN",
+    "MAKE",
+    "FIND",
+    "TELL"
+   ]
+  }
+ }
+}

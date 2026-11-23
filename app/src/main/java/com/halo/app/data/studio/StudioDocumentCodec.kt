@@ -12,6 +12,7 @@ object StudioDocumentCodec {
         document.requireValid()
         val recipe = document.recipe
         return JSONObject().put("schema", 1).put("width", document.width).put("height", document.height)
+            .apply { if (document.dpi != 96) put("dpi", document.dpi) }
             .put("background", document.background).put("selected", document.selectedLayerId ?: JSONObject.NULL)
             .put("recipe", JSONObject().put("turns", recipe.quarterTurns).put("mirror", recipe.mirrorHorizontal)
                 .put("square", recipe.squareCrop).put("edge", recipe.maxEdge).put("format", recipe.format.name)
@@ -22,7 +23,9 @@ object StudioDocumentCodec {
 
     fun decode(encoded: String): StudioDocument {
         require(encoded.length in 2..StudioDocument.MAX_ENCODED_CHARS)
-        val root = JSONObject(encoded).fields("schema", "width", "height", "background", "selected", "recipe", "layers")
+        val root = JSONObject(encoded)
+        root.fields(*(listOf("schema", "width", "height", "background", "selected", "recipe", "layers") +
+            listOf("dpi").filter(root::has)).toTypedArray())
         require(root.integer("schema") == 1)
         val recipe = root.getJSONObject("recipe").fields("turns", "mirror", "square", "edge", "format", "crop")
         val layers = root.getJSONArray("layers")
@@ -31,7 +34,8 @@ object StudioDocumentCodec {
             CanvasImageRecipe(recipe.integer("turns"), recipe.boolean("mirror"), recipe.boolean("square"),
                 recipe.integer("edge"), CanvasImageFormat.valueOf(recipe.string("format")),
                 if (recipe.isNull("crop")) null else readRect(recipe.getJSONObject("crop")).let { CanvasImageCrop(it.x, it.y, it.width, it.height) }),
-            (0 until layers.length()).map { readLayer(layers.getJSONObject(it)) }, root.nullableString("selected"))
+            (0 until layers.length()).map { readLayer(layers.getJSONObject(it)) }, root.nullableString("selected"),
+            if (root.has("dpi")) root.integer("dpi") else 96)
             .also(StudioDocument::requireValid)
     }
 
@@ -50,11 +54,12 @@ object StudioDocumentCodec {
         .put("mask", value.mask?.let(::rect) ?: JSONObject.NULL)
         .put("brightness", value.brightness).put("contrast", value.contrast).put("saturation", value.saturation)
         .apply { if (value.pencil) put("pencil", true) }
+        .apply { value.vector?.let { put("vector", encodeVector(it)) } }
         .apply { value.symmetry?.let { put("symmetry", JSONObject().put("axis", it.axis.name).put("repeats", it.repeats)) } }
     private fun readLayer(value: JSONObject): StudioLayer {
         val expected = arrayOf("id", "name", "kind", "bounds", "visible", "locked", "opacity", "rotation", "color", "text",
             "fontSize", "strokeWidth", "ink", "source", "mask", "brightness", "contrast", "saturation")
-        value.fields(*(expected + listOf("pencil", "symmetry").filter(value::has)))
+        value.fields(*(expected + listOf("pencil", "symmetry", "vector").filter(value::has)))
         val source = if (value.isNull("source")) null else value.getJSONObject("source").let {
             it.fields("id", "version"); StudioSource(it.string("id"), it.string("version"))
         }
@@ -67,8 +72,32 @@ object StudioDocumentCodec {
             value.has("pencil") && value.boolean("pencil"), value.optJSONObject("symmetry")?.let {
                 it.fields("axis", "repeats")
                 StudioSymmetry(StudioSymmetryAxis.valueOf(it.string("axis")), it.integer("repeats"))
-            }.also { require(it != null || !value.has("symmetry")) })
+            }.also { require(it != null || !value.has("symmetry")) },
+            if (value.has("vector")) decodeVector(value.getJSONObject("vector")) else null)
     }
+    private fun encodeVector(value: StudioVectorGeometry): JSONObject = JSONObject()
+        .put("shape", value.shape.name).put("corners", JSONArray(value.corners))
+        .put("sides", value.sides).put("inner", value.innerRadius.toDouble())
+        .put("start", value.startAngle.toDouble()).put("sweep", value.sweep.toDouble())
+        .put("stroke", value.stroke.toDouble()).put("dash", value.dash).put("closed", value.closed)
+        .put("nodes", JSONArray(value.nodes.map { node ->
+            JSONArray(listOf(node.x, node.y, node.incomingX, node.incomingY, node.outgoingX, node.outgoingY))
+        }))
+
+    private fun decodeVector(value: JSONObject): StudioVectorGeometry {
+        value.fields("shape", "corners", "sides", "inner", "start", "sweep", "stroke", "dash", "closed", "nodes")
+        val corners = value.getJSONArray("corners").also { require(it.length() == 4) }
+        val nodes = value.getJSONArray("nodes").also { require(it.length() <= 128) }
+        fun numeric(array: JSONArray, index: Int): Float = (array.get(index) as? Number)?.toFloat() ?: error("Invalid vector coordinate")
+        fun numeric(key: String): Float = (value.get(key) as? Number)?.toFloat() ?: error("Invalid vector quantity")
+        return StudioVectorGeometry(StudioShape.valueOf(value.string("shape")), List(4) { numeric(corners, it) },
+            value.integer("sides"), numeric("inner"), numeric("start"), numeric("sweep"), numeric("stroke"),
+            value.boolean("dash"), value.boolean("closed"), List(nodes.length()) { index ->
+                val item = nodes.getJSONArray(index).also { require(it.length() == 6) }
+                StudioPathNode(numeric(item, 0), numeric(item, 1), numeric(item, 2), numeric(item, 3), numeric(item, 4), numeric(item, 5))
+            })
+    }
+
     private fun JSONObject.fields(vararg expected: String): JSONObject = apply {
         require(keys().asSequence().toSet() == expected.toSet())
     }

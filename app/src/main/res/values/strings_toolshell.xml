@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo 12.0 batch 3 · tool shell -->
+<resources>
+    <string name="shell_menu_file">File</string>
+    <string name="shell_menu_edit">Edit</string>
+    <string name="shell_menu_insert">Insert</string>
+    <string name="shell_menu_format">Format</string>
+    <string name="shell_menu_view">View</string>
+    <string name="shell_menu_tools">Tools</string>
+    <string name="shell_menu_help">Help</string>
+    <string name="shell_format_image">Image</string>
+    <string name="shell_format_path">Path</string>
+    <string name="shell_format_data">Data</string>
+    <string name="shell_format_event">Event</string>
+    <string name="shell_find_action">Find any action</string>
+    <string name="shell_saved_version">Saved · version %1$d</string>
+    <string name="shell_versions">Versions</string>
+    <string name="shell_save_copy">Save a copy</string>
+    <string name="shell_export">Export</string>
+    <string name="shell_split_view">Split view</string>
+    <string name="shell_shortcuts">Shortcuts</string>
+    <string name="shell_show_in_menus">Show in my menus?</string>
+    <string name="shell_inspector">Inspector</string>
+    <string name="shell_layers">Layers</string>
+    <string name="shell_history">History</string>
+    <string name="shell_cant_undo">This can’t be undone</string>
+    <string name="notes_suggest_mode">Suggest mode</string>
+    <string name="notes_accept">Accept</string>
+    <string name="notes_reject">Reject</string>
+    <string name="notes_comment">Comment</string>
+    <string name="sheets_ask_table">Ask the table</string>
+    <string name="sheets_show_formula">Show formula</string>
+    <string name="sheets_who_owes">Who owes whom</string>
+    <string name="sheets_check_before">Check before sending.</string>
+    <string name="studio_fill_ai">Fill with AI</string>
+    <string name="studio_refine_edge">Refine edge</string>
+    <string name="studio_select_subject">Select subject</string>
+    <string name="measure_check_it">check it</string>
+    <string name="translate_might_be_wrong">might be wrong</string>
+    <string name="translate_both_sides">Both sides</string>
+    <string name="calc_add_function">Add function</string>
+    <string name="calc_to_notes">To notes</string>
+    <string name="measure_make_plan">Make plan</string>
+</resources>

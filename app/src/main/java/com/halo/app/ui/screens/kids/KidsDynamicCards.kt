@@ -248,7 +248,7 @@ private fun KidsCardReadButton(speaking: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-internal fun KidsCardSettings(owner: KidsCardShelf) {
+internal fun KidsCardSettings(owner: KidsCardShelf, verify: () -> Unit) {
     val state by owner.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var failure by remember { mutableStateOf(false) }
@@ -267,14 +267,33 @@ internal fun KidsCardSettings(owner: KidsCardShelf) {
     }
     Text(stringResource(R.string.kid_card_family_topics), style = MaterialTheme.typography.titleMedium)
     state?.let { current ->
-        KidsCardTopic.entries.forEach { topic ->
+        Text(uiText("Age"), style = MaterialTheme.typography.titleSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            KidsAgeBand.entries.forEach { age ->
+                FilterChip(selected = age == current.age, onClick = { change { owner.setAge(age, verify) } },
+                    enabled = !busy, label = { Text(age.label) })
+            }
+        }
+        if (current.dinosaurRequest) {
+            Text(stringResource(R.string.kids_dinosaurs_pending))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = { change { owner.decideDinosaurs(true, verify) } }, enabled = !busy) {
+                    Text(stringResource(R.string.grownup_allow))
+                }
+                TextButton(onClick = { change { owner.decideDinosaurs(false, verify) } }, enabled = !busy) {
+                    Text(stringResource(R.string.grownup_not_now))
+                }
+            }
+        }
+        KidsCardTopic.entries.filter { it != KidsCardTopic.DINOSAURS || it in current.topics }.forEach { topic ->
             val selected = topic in current.topics
             Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).toggleable(selected, enabled = !busy, role = Role.Switch,
-                onValueChange = { enabled -> change { owner.setTopic(topic, enabled) } }), verticalAlignment = Alignment.CenterVertically) {
+                onValueChange = { enabled -> change { owner.setTopic(topic, enabled, verify) } }), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(when (topic) {
                     KidsCardTopic.ANIMALS -> R.string.kid_card_topic_animals
                     KidsCardTopic.COUNTING -> R.string.kid_card_topic_counting
                     KidsCardTopic.NATURE -> R.string.kid_card_topic_nature
+                    KidsCardTopic.DINOSAURS -> R.string.kids_dinosaurs_title
                 }), Modifier.weight(1f))
                 Switch(selected, onCheckedChange = null, enabled = !busy)
             }

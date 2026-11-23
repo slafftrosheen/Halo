@@ -170,6 +170,7 @@ internal fun SettingsContent(
             SettingsMenuRow(HaloGlyph.LANGUAGE, "Language", language.nativeName, { page = "Language" }, listOf("interface", "default replies")),
         )),
         SettingsMenuGroup("privacy", "Privacy", listOf(
+            SettingsMenuRow(HaloGlyph.TOOL, "Pages halo made", "Review local layout preferences", { page = "Pages halo made" }),
             SettingsMenuRow(HaloGlyph.SECURITY, "Mode profiles", "Local and Power preferences", { onOpen(SettingsDestination.PRIVACY) }, listOf("context", "sharing")),
             SettingsMenuRow(HaloGlyph.CLOUD, "What left this phone", "Review what was shared", { onOpen(SettingsDestination.SHARED_REQUESTS) }),
             SettingsMenuRow(HaloGlyph.SECURITY, "Permissions", "Device and data access", { onOpen(SettingsDestination.PERMISSIONS) }),
@@ -248,6 +249,7 @@ internal fun SettingsContent(
             if (!shellHosted) HaloScreenHeader(pageTitle.orEmpty(), navigation = { page = null })
             else com.halo.app.ui.zone5.Zone5PageHeading(pageTitle.orEmpty())
                 when (page) {
+                    "Pages halo made" -> com.halo.app.ui.adaptive.AdaptiveLearningSettings()
                     "Vision" -> {
                         SettingsGroup("Vision", compactRows = true) {
                             SettingsLink(HaloGlyph.SEE, "Image understanding", "Choose an image-capable model", { onOpen(SettingsDestination.MODEL_ROLES) })

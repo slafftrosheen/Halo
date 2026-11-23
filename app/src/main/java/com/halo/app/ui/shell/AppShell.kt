@@ -791,6 +791,10 @@ fun AppShell(
                 composable(todayRoute) {
                     if (!kidsMode) com.halo.app.ui.screens.home.HaloTodayScreen(::navigateSafely)
                 }
+                composable("home/pages") {
+                    if (kidsReady && !kidsMode) com.halo.app.ui.screens.home.HaloTodayScreen(::navigateSafely,
+                        savedPages = true, onBack = { navController.popBackStack() })
+                }
                 composable("home/tools") {
                     if (kidsReady && !kidsMode) HaloHomeTools(::navigateSafely)
                 }

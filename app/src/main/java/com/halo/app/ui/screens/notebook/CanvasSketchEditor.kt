@@ -19,7 +19,8 @@ import com.halo.sdk.runtime.ink.InkSelectionContext
 @Composable
 internal fun CanvasSketchPreview(encoded: String, modifier: Modifier = Modifier,
     selection: InkSelectionContext? = null,
-    ephemeralStroke: com.halo.sdk.runtime.ink.InkStroke? = null) {
+    ephemeralStroke: com.halo.sdk.runtime.ink.InkStroke? = null, mirrorCopies: Int = 1,
+    strokeWidthFraction: Float? = null) {
     val document = remember(encoded, selection) {
         val source = InkCodec.decode(encoded) ?: return@remember null
         if (selection == null) source else {
@@ -30,7 +31,12 @@ internal fun CanvasSketchPreview(encoded: String, modifier: Modifier = Modifier,
     val ink = if (selection == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
     Canvas(modifier) {
         document?.let {
-            if (selection == null) drawInk(it, ink, inkBounds(size.width, size.height, it.aspectMilli))
+            if (selection == null) {
+                val rect = inkBounds(size.width, size.height, it.aspectMilli)
+                drawInkCopies(rect, mirrorCopies) {
+                    drawInk(it, ink, rect, strokeWidthFraction?.let { fraction -> rect.width * fraction })
+                }
+            }
             else {
                 val frame = inkSelectionFrame(size.width, size.height, it.aspectMilli, selection.bounds)
                 val source = inkSelectionSourceRect(frame, selection.bounds)
@@ -72,7 +78,7 @@ internal fun CanvasSketchPadDialog(
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 CanvasInkSurface(source, onChanged = { encoded -> onDraft(encoded); draft = encoded },
-                    selectionOwnerId = selectionOwnerId, selectionPageId = selectionPageId,
+                    selectionOwnerId = selectionOwnerId, selectionPageId = selectionPageId, showBrushes = true,
                     onSelectionChanged = onSelectionChanged, onSaveSelection = onSaveSelection)
                 Text(stringResource(R.string.ink_draft_help), style = MaterialTheme.typography.bodySmall)
             }

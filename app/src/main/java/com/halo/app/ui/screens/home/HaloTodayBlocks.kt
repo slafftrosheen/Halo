@@ -152,7 +152,7 @@ internal fun rememberHaloBlockChoices(page: String): HaloBlockChoices {
 }
 
 @Composable
-internal fun HaloTodayScreen(open: (String) -> Unit) {
+internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false, onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val choices = rememberHaloBlockChoices("today")
     val pinned = choices.pinned
@@ -169,6 +169,7 @@ internal fun HaloTodayScreen(open: (String) -> Unit) {
     val weatherSettingsState by weatherSettings.state.collectAsStateWithLifecycle()
     var chooseCity by rememberSaveable { mutableStateOf(false) }
     var addWidget by rememberSaveable { mutableStateOf(false) }
+    var adaptivePage by rememberSaveable { mutableStateOf(savedPages) }
     val plannerFlow = remember { Graph.organizerRepository.observe() }
     val records by plannerFlow.collectAsStateWithLifecycle(emptyList())
     val calendarChanges by PlannerCalendarPreferences.observeChanges.collectAsStateWithLifecycle()
@@ -318,7 +319,11 @@ internal fun HaloTodayScreen(open: (String) -> Unit) {
         newsEnabled = activeSources.any { it.source.kind == CollectorKind.FEED },
         phoneEvents = phoneEvents.takeIf { calendarGranted && PhoneCalendarAgenda.permitted(context) }.orEmpty(),
         connectCalendar = if (!calendarGranted) ({ requestCalendar.launch(android.Manifest.permission.READ_CALENDAR) }) else null,
-        onAddWidget = { addWidget = true })
+        onAddWidget = { addWidget = true }, onMakePage = { adaptivePage = true })
+    if (adaptivePage) com.halo.app.ui.adaptive.AdaptiveTodayPage(available, open, savedPages) {
+        adaptivePage = false
+        if (savedPages) onBack()
+    }
     if (addWidget) com.halo.app.nativeactions.EverydayWidgetPicker(
         initialKind = com.halo.app.everyday.presentation.EverydayCardKind.TODAY) { addWidget = false }
     if (chooseCity && !weatherSettingsState.kids) {
@@ -333,7 +338,7 @@ internal fun HaloTodayContent(hour: Int, available: List<HaloHomeBlock>, choices
     chooseWeatherCity: (() -> Unit)? = null, news: List<TodayNewsReport> = emptyList(), newsEnabled: Boolean = false,
     newsPictures: Boolean = true, liveArticles: Set<Pair<String, String>> = emptySet(),
     phoneEvents: List<PhoneCalendarEvent> = emptyList(), connectCalendar: (() -> Unit)? = null,
-    onAddWidget: (() -> Unit)? = null) {
+    onAddWidget: (() -> Unit)? = null, onMakePage: (() -> Unit)? = null) {
     val evening = hour >= 18
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
@@ -368,6 +373,11 @@ internal fun HaloTodayContent(hour: Int, available: List<HaloHomeBlock>, choices
             }
             TextButton(onClick = { open("home") }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.home_chat_title))
+            }
+        }
+        onMakePage?.let { make ->
+            TextButton(make, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.adaptive_made_for_you))
             }
         }
         chooseWeatherCity?.let { choose ->

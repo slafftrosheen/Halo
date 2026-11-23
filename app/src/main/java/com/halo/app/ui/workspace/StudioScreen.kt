@@ -111,6 +111,8 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     var transforms by remember(projectId) { mutableStateOf<StudioProject?>(null) }
     var cropOnly by remember(projectId) { mutableStateOf(false) }
     var choosingShape by remember(projectId) { mutableStateOf(false) }
+    var vectorExport by remember(projectId) { mutableStateOf(false) }
+    var vectorEditing by remember(projectId) { mutableStateOf<Triple<Long, StudioLayer?, StudioShape>?>(null) }
     var moveTarget by remember(projectId) { mutableStateOf<Pair<StudioProject, StudioLayer>?>(null) }
     var eyedropper by remember(projectId) { mutableStateOf<StudioProject?>(null) }
     var fillTarget by remember(projectId) { mutableStateOf<StudioProject?>(null) }
@@ -226,7 +228,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
         selectionIds = listOfNotNull(selectedLayerId),
         helpDescription = stringResource(R.string.zone5_help_studio),
         guidanceBlocked = lookDraft != null || discardTarget != null || busy || state.error || state.loading || naming != null || addingLayer || editing != null || importing ||
-            background != null || transforms != null || choosingShape || moveTarget != null || eyedropper != null ||
+            background != null || transforms != null || choosingShape || vectorExport || vectorEditing != null || moveTarget != null || eyedropper != null ||
             fillTarget != null || pixelTarget != null || eraseTarget != null || wheelOpen || symmetryOpen || paletteOpen ||
             referenceOpen || lightTarget != null || layers || removingLayer != null || historyOpen || activeInk != null || state.aiReview || state.output != null,
         completedGuideIds = buildSet {
@@ -353,7 +355,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     onDiscard = requestDiscard,
                     onExportPng = { viewModel.export(CanvasImageFormat.PNG) },
                     onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) },
-                    onCustomize = { if (studioLook != null) customize() })
+                    onVectorExport = { vectorExport = true }, onCustomize = { if (studioLook != null) customize() })
         }
     }
     Scaffold(containerColor = com.halo.app.ui.theme.haloWorkspaceBackground(), topBar = {
@@ -370,7 +372,7 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
                     onDiscard = requestDiscard,
                     onExportPng = { viewModel.export(CanvasImageFormat.PNG) },
                     onExportJpeg = { viewModel.export(CanvasImageFormat.JPEG) },
-                    onCustomize = { if (studioLook != null) customize() })
+                    onVectorExport = { vectorExport = true }, onCustomize = { if (studioLook != null) customize() })
                 if (project == null && !canvasLibrary) TextButton(onClick = ::customize,
                     enabled = !busy && studioLook != null) { Text(studioSettingsLabel) }
             })
@@ -505,10 +507,43 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
             title = if (mode == "rename") uiText("Rename") else stringResource(R.string.studio_project_name))
     }
     handoff?.let { (id, revision) -> WorkspaceContinueSheet(id, revision) { handoff = null } }
+    if (vectorExport && project != null) com.halo.app.ui.zone6.Zone6ButtonSheet(uiText("Export project"), { vectorExport = false }) {
+        Column(Modifier.padding(horizontal = 16.dp)) {
+            StudioProjectFormat.entries.forEach { format ->
+                TextButton(onClick = { vectorExport = false; viewModel.exportProject(format) },
+                    enabled = !busy && StudioProjectExport.allows(project.session.current, format)) {
+                    Text(format.name)
+                }
+            }
+            Text(uiText("SVG and DXF require a vector-only project. A Halo package can include ink and text."),
+                style = MaterialTheme.typography.bodySmall)
+        }
+    }
     if (choosingShape && project != null) com.halo.app.ui.zone6.Zone6ButtonSheet(uiText("Shapes"), { choosingShape = false }) {
         val ellipseName = stringResource(R.string.studio_ellipse)
         TextButton({ choosingShape = false; add(StudioLayerKind.RECTANGLE, rectangleName) }, enabled = !busy) { Text(rectangleName) }
         TextButton({ choosingShape = false; add(StudioLayerKind.ELLIPSE, ellipseName) }, enabled = !busy) { Text(ellipseName) }
+        TextButton(onClick = {
+            choosingShape = false
+            vectorEditing = Triple(project.revision, null, StudioShape.PATH)
+        }, enabled = !busy) { Text(uiText("Precision drawing")) }
+        val selectedShape = project.session.current.layers.firstOrNull {
+            it.id == project.session.current.selectedLayerId && !it.locked &&
+                it.kind in setOf(StudioLayerKind.RECTANGLE, StudioLayerKind.ELLIPSE)
+        }
+        if (selectedShape != null) TextButton(onClick = {
+            choosingShape = false
+            vectorEditing = Triple(project.revision, selectedShape,
+                selectedShape.vector?.shape ?: if (selectedShape.kind == StudioLayerKind.ELLIPSE) StudioShape.ARC else StudioShape.ROUNDED_RECT)
+        }, enabled = !busy) { Text(uiText("Edit selected shape")) }
+    }
+    vectorEditing?.let { (revision, layer, shape) ->
+        val current = project?.takeIf { it.revision == revision }
+        if (current != null) StudioVectorDialog(current.session.current, layer, shape, onApply = { updated ->
+            viewModel.command(revision, if (layer == null) StudioCommand.Add(updated) else StudioCommand.Replace(updated))
+            vectorEditing = null
+        }, onDismiss = { vectorEditing = null })
+        else LaunchedEffect(revision) { vectorEditing = null }
     }
     moveTarget?.let { (snapshot, layer) ->
         StudioMoveDialog(snapshot.session.current, layer, projectRevision == snapshot.revision && !busy,
@@ -743,7 +778,9 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     state.output?.let { output -> StudioAlertDialog(onDismissRequest = viewModel::dismissOutput,
         title = { Text(stringResource(R.string.studio_output_saved)) }, text = { Column { Text(output.displayName); WorkspaceExportButton(output); WorkspaceContinueButton(output.objectId.value, output.version) } },
         confirmButton = { TextButton(onClick = { viewModel.dismissOutput(); onOpenOutput(output) }) { Text(stringResource(R.string.studio_open_output)) } },
-        dismissButton = { TextButton(onClick = { viewModel.dismissOutput(); onInsertOutput(output) }) { Text(stringResource(R.string.studio_insert_canvas)) } }) }
+        dismissButton = { if (output.mimeType in setOf("image/png", "image/jpeg")) TextButton(onClick = {
+            viewModel.dismissOutput(); onInsertOutput(output)
+        }) { Text(stringResource(R.string.studio_insert_canvas)) } }) }
     activeInk?.let { session -> StudioInkDialog(viewModel.service, session, {
         viewModel.saveInkCopy(session, defaultName); activeInk = null; viewModel.finishInk()
     }, { activeInk = null; viewModel.finishInk() }, initialMode = inkMode, reference = {

@@ -1,0 +1,2054 @@
+{
+ "version": "12.0-b3",
+ "count": 121,
+ "instruments": [
+  {
+   "id": "studio.select-subject",
+   "tool": "studio",
+   "name": "Select subject",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Select subject"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.select-sky",
+   "tool": "studio",
+   "name": "Select sky",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Select sky"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.colour-range",
+   "tool": "studio",
+   "name": "Colour range",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Colour range"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.refine-edge",
+   "tool": "studio",
+   "name": "Refine edge",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Refine edge"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.curves-layer",
+   "tool": "studio",
+   "name": "Curves layer",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Curves layer"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.levels-layer",
+   "tool": "studio",
+   "name": "Levels layer",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Levels layer"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.hsl",
+   "tool": "studio",
+   "name": "HSL",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "HSL"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.gradient-map",
+   "tool": "studio",
+   "name": "Gradient map",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Gradient map"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.lut-import",
+   "tool": "studio",
+   "name": "LUT import",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "LUT import"
+   ],
+   "levels": [
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.patch",
+   "tool": "studio",
+   "name": "Patch",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Patch"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.liquify-gentle",
+   "tool": "studio",
+   "name": "Liquify (gentle)",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Liquify (gentle)"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "studio.frequency-soften",
+   "tool": "studio",
+   "name": "Frequency soften",
+   "menu": [
+    "TOOLS",
+    "Image",
+    "Frequency soften"
+   ],
+   "levels": [
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.artboards",
+   "tool": "canvas",
+   "name": "Artboards",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Artboards"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.stacks",
+   "tool": "canvas",
+   "name": "Stacks",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Stacks"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.constraints",
+   "tool": "canvas",
+   "name": "Constraints",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Constraints"
+   ],
+   "levels": [
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.shape-builder",
+   "tool": "canvas",
+   "name": "Shape builder",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Shape builder"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.brush-on-path",
+   "tool": "canvas",
+   "name": "Brush on path",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Brush on path"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.text-on-path",
+   "tool": "canvas",
+   "name": "Text on path",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Text on path"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.make-vector",
+   "tool": "canvas",
+   "name": "Make vector",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Make vector"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.dimension",
+   "tool": "canvas",
+   "name": "Dimension",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Dimension"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.typed-input",
+   "tool": "canvas",
+   "name": "Typed input",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Typed input"
+   ],
+   "levels": [
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "canvas.print-sets",
+   "tool": "canvas",
+   "name": "Print sets",
+   "menu": [
+    "TOOLS",
+    "Path",
+    "Print sets"
+   ],
+   "levels": [
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.styles-panel",
+   "tool": "notes",
+   "name": "Styles panel",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Styles panel"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.suggest-mode",
+   "tool": "notes",
+   "name": "Suggest mode",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Suggest mode"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.version-compare",
+   "tool": "notes",
+   "name": "Version compare",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Version compare"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.footnotes",
+   "tool": "notes",
+   "name": "Footnotes",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Footnotes"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.equations",
+   "tool": "notes",
+   "name": "Equations",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Equations"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.table-of-contents",
+   "tool": "notes",
+   "name": "Table of contents",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Table of contents"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.columns",
+   "tool": "notes",
+   "name": "Columns",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Columns"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.headers-footers",
+   "tool": "notes",
+   "name": "Headers & footers",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Headers & footers"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.focus-mode",
+   "tool": "notes",
+   "name": "Focus mode",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Focus mode"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.read-aloud-chapters",
+   "tool": "notes",
+   "name": "Read aloud chapters",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Read aloud chapters"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "notes.epub-export",
+   "tool": "notes",
+   "name": "EPUB export",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "EPUB export"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.pivot-table",
+   "tool": "sheets",
+   "name": "Pivot table",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Pivot table"
+   ],
+   "levels": [
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.conditional-colours",
+   "tool": "sheets",
+   "name": "Conditional colours",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Conditional colours"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.data-checks",
+   "tool": "sheets",
+   "name": "Data checks",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Data checks"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.remove-duplicates",
+   "tool": "sheets",
+   "name": "Remove duplicates",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Remove duplicates"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.split-text",
+   "tool": "sheets",
+   "name": "Split text",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Split text"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.named-ranges",
+   "tool": "sheets",
+   "name": "Named ranges",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Named ranges"
+   ],
+   "levels": [
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.sparklines",
+   "tool": "sheets",
+   "name": "Sparklines",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Sparklines"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.freeze-panes",
+   "tool": "sheets",
+   "name": "Freeze panes",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Freeze panes"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.ask-the-table",
+   "tool": "sheets",
+   "name": "Ask the table",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Ask the table"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.show-formula",
+   "tool": "sheets",
+   "name": "Show formula",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Show formula"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "sheets.who-owes-whom",
+   "tool": "sheets",
+   "name": "Who owes whom",
+   "menu": [
+    "TOOLS",
+    "Data",
+    "Who owes whom"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "planner.3-day-view",
+   "tool": "planner",
+   "name": "3-day view",
+   "menu": [
+    "TOOLS",
+    "Event",
+    "3-day view"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "planner.year-view",
+   "tool": "planner",
+   "name": "Year view",
+   "menu": [
+    "TOOLS",
+    "Event",
+    "Year view"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "planner.travel-time",
+   "tool": "planner",
+   "name": "Travel time",
+   "menu": [
+    "TOOLS",
+    "Event",
+    "Travel time"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "planner.time-zones",
+   "tool": "planner",
+   "name": "Time zones",
+   "menu": [
+    "TOOLS",
+    "Event",
+    "Time zones"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "planner.repeat-rules",
+   "tool": "planner",
+   "name": "Repeat rules",
+   "menu": [
+    "TOOLS",
+    "Event",
+    "Repeat rules"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "planner.subtasks",
+   "tool": "planner",
+   "name": "Subtasks",
+   "menu": [
+    "TOOLS",
+    "Event",
+    "Subtasks"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "record.chapters",
+   "tool": "record",
+   "name": "Chapters",
+   "menu": [
+    "TOOLS",
+    "Recording",
+    "Chapters"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "record.speaker-names",
+   "tool": "record",
+   "name": "Speaker names",
+   "menu": [
+    "TOOLS",
+    "Recording",
+    "Speaker names"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "record.quotes",
+   "tool": "record",
+   "name": "Quotes",
+   "menu": [
+    "TOOLS",
+    "Recording",
+    "Quotes"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "record.word-search",
+   "tool": "record",
+   "name": "Word search",
+   "menu": [
+    "TOOLS",
+    "Recording",
+    "Word search"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "record.trim",
+   "tool": "record",
+   "name": "Trim",
+   "menu": [
+    "TOOLS",
+    "Recording",
+    "Trim"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "record.speed-0-5-3",
+   "tool": "record",
+   "name": "Speed 0.5–3×",
+   "menu": [
+    "TOOLS",
+    "Recording",
+    "Speed 0.5–3×"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "scan.flatten-curves",
+   "tool": "scan",
+   "name": "Flatten curves",
+   "menu": [
+    "TOOLS",
+    "Page",
+    "Flatten curves"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "scan.fill-forms",
+   "tool": "scan",
+   "name": "Fill forms",
+   "menu": [
+    "TOOLS",
+    "Page",
+    "Fill forms"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "scan.sign",
+   "tool": "scan",
+   "name": "Sign",
+   "menu": [
+    "TOOLS",
+    "Page",
+    "Sign"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": "SEND",
+   "since": "12.0"
+  },
+  {
+   "id": "scan.redact",
+   "tool": "scan",
+   "name": "Redact",
+   "menu": [
+    "TOOLS",
+    "Page",
+    "Redact"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "scan.compress",
+   "tool": "scan",
+   "name": "Compress",
+   "menu": [
+    "TOOLS",
+    "Page",
+    "Compress"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "scan.pdf-a",
+   "tool": "scan",
+   "name": "PDF/A",
+   "menu": [
+    "TOOLS",
+    "Page",
+    "PDF/A"
+   ],
+   "levels": [
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "album.smart-search",
+   "tool": "album",
+   "name": "Smart search",
+   "menu": [
+    "TOOLS",
+    "Photo",
+    "Smart search"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "album.duplicates",
+   "tool": "album",
+   "name": "Duplicates",
+   "menu": [
+    "TOOLS",
+    "Photo",
+    "Duplicates"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "album.places-map",
+   "tool": "album",
+   "name": "Places map",
+   "menu": [
+    "TOOLS",
+    "Photo",
+    "Places map"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "album.people",
+   "tool": "album",
+   "name": "People",
+   "menu": [
+    "TOOLS",
+    "Photo",
+    "People"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "album.shared-sets",
+   "tool": "album",
+   "name": "Shared sets",
+   "menu": [
+    "TOOLS",
+    "Photo",
+    "Shared sets"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": "SEND",
+   "since": "12.0"
+  },
+  {
+   "id": "album.edit-in-studio",
+   "tool": "album",
+   "name": "Edit in studio",
+   "menu": [
+    "TOOLS",
+    "Photo",
+    "Edit in studio"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "lock.auto-lock-timer",
+   "tool": "lock",
+   "name": "Auto-lock timer",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Auto-lock timer"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "lock.hide-from-search",
+   "tool": "lock",
+   "name": "Hide from search",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Hide from search"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "lock.private-camera",
+   "tool": "lock",
+   "name": "Private camera",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Private camera"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "lock.key-backup-check",
+   "tool": "lock",
+   "name": "Key backup check",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Key backup check"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "memory.source-of-a-fact",
+   "tool": "memory",
+   "name": "Source of a fact",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Source of a fact"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "memory.forget-by-topic",
+   "tool": "memory",
+   "name": "Forget by topic",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Forget by topic"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "memory.pin-fact",
+   "tool": "memory",
+   "name": "Pin fact",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Pin fact"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "memory.export-memory",
+   "tool": "memory",
+   "name": "Export memory",
+   "menu": [
+    "TOOLS",
+    "Format",
+    "Export memory"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "study.spaced-review",
+   "tool": "study",
+   "name": "Spaced review",
+   "menu": [
+    "TOOLS",
+    "Learn",
+    "Spaced review"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "study.practice-sets",
+   "tool": "study",
+   "name": "Practice sets",
+   "menu": [
+    "TOOLS",
+    "Learn",
+    "Practice sets"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "study.exam-plan",
+   "tool": "study",
+   "name": "Exam plan",
+   "menu": [
+    "TOOLS",
+    "Learn",
+    "Exam plan"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "study.listen-mode",
+   "tool": "study",
+   "name": "Listen mode",
+   "menu": [
+    "TOOLS",
+    "Learn",
+    "Listen mode"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "study.source-cards",
+   "tool": "study",
+   "name": "Source cards",
+   "menu": [
+    "TOOLS",
+    "Learn",
+    "Source cards"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "study.coach-ladder-view",
+   "tool": "study",
+   "name": "Coach ladder view",
+   "menu": [
+    "TOOLS",
+    "Learn",
+    "Coach ladder view"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "maps.offline-areas",
+   "tool": "maps",
+   "name": "Offline areas",
+   "menu": [
+    "TOOLS",
+    "Route",
+    "Offline areas"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "maps.leave-by",
+   "tool": "maps",
+   "name": "Leave-by",
+   "menu": [
+    "TOOLS",
+    "Route",
+    "Leave-by"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "maps.saved-lists",
+   "tool": "maps",
+   "name": "Saved lists",
+   "menu": [
+    "TOOLS",
+    "Route",
+    "Saved lists"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "maps.glasses-steps",
+   "tool": "maps",
+   "name": "Glasses steps",
+   "menu": [
+    "TOOLS",
+    "Route",
+    "Glasses steps"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "maps.bike-routes",
+   "tool": "maps",
+   "name": "Bike routes",
+   "menu": [
+    "TOOLS",
+    "Route",
+    "Bike routes"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "maps.step-free-routes",
+   "tool": "maps",
+   "name": "Step-free routes",
+   "menu": [
+    "TOOLS",
+    "Route",
+    "Step-free routes"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "maps.share-arrival",
+   "tool": "maps",
+   "name": "Share arrival",
+   "menu": [
+    "TOOLS",
+    "Route",
+    "Share arrival"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": "SEND",
+   "since": "12.0"
+  },
+  {
+   "id": "coach.record-compare",
+   "tool": "coach",
+   "name": "Record & compare",
+   "menu": [
+    "TOOLS",
+    "Practice",
+    "Record & compare"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "coach.pitch-line",
+   "tool": "coach",
+   "name": "Pitch line",
+   "menu": [
+    "TOOLS",
+    "Practice",
+    "Pitch line"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "coach.tempo",
+   "tool": "coach",
+   "name": "Tempo",
+   "menu": [
+    "TOOLS",
+    "Practice",
+    "Tempo"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "coach.plan",
+   "tool": "coach",
+   "name": "Plan",
+   "menu": [
+    "TOOLS",
+    "Practice",
+    "Plan"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "coach.gentle-feedback",
+   "tool": "coach",
+   "name": "Gentle feedback",
+   "menu": [
+    "TOOLS",
+    "Practice",
+    "Gentle feedback"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "calc.scientific",
+   "tool": "calc",
+   "name": "Scientific",
+   "menu": [
+    "TOOLS",
+    "Mode",
+    "Scientific"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "calc.graphing",
+   "tool": "calc",
+   "name": "Graphing",
+   "menu": [
+    "TOOLS",
+    "Mode",
+    "Graphing"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "calc.units",
+   "tool": "calc",
+   "name": "Units",
+   "menu": [
+    "TOOLS",
+    "Mode",
+    "Units"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "calc.money-exact",
+   "tool": "calc",
+   "name": "Money (exact)",
+   "menu": [
+    "TOOLS",
+    "Mode",
+    "Money (exact)"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "calc.programmer",
+   "tool": "calc",
+   "name": "Programmer",
+   "menu": [
+    "TOOLS",
+    "Mode",
+    "Programmer"
+   ],
+   "levels": [
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "calc.date-maths",
+   "tool": "calc",
+   "name": "Date maths",
+   "menu": [
+    "TOOLS",
+    "Mode",
+    "Date maths"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "calc.show-steps",
+   "tool": "calc",
+   "name": "Show steps",
+   "menu": [
+    "TOOLS",
+    "Mode",
+    "Show steps"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "calc.history-tape",
+   "tool": "calc",
+   "name": "History tape",
+   "menu": [
+    "TOOLS",
+    "Mode",
+    "History tape"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "measure.room-to-plan",
+   "tool": "measure",
+   "name": "Room to plan",
+   "menu": [
+    "TOOLS",
+    "Measure",
+    "Room to plan"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "measure.level",
+   "tool": "measure",
+   "name": "Level",
+   "menu": [
+    "TOOLS",
+    "Measure",
+    "Level"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "measure.angle",
+   "tool": "measure",
+   "name": "Angle",
+   "menu": [
+    "TOOLS",
+    "Measure",
+    "Angle"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "measure.height",
+   "tool": "measure",
+   "name": "Height",
+   "menu": [
+    "TOOLS",
+    "Measure",
+    "Height"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "measure.screen-ruler",
+   "tool": "measure",
+   "name": "Screen ruler",
+   "menu": [
+    "TOOLS",
+    "Measure",
+    "Screen ruler"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "measure.check-marks",
+   "tool": "measure",
+   "name": "Check marks",
+   "menu": [
+    "TOOLS",
+    "Measure",
+    "Check marks"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "translate.conversation",
+   "tool": "translate",
+   "name": "Conversation",
+   "menu": [
+    "TOOLS",
+    "Language",
+    "Conversation"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "translate.camera",
+   "tool": "translate",
+   "name": "Camera",
+   "menu": [
+    "TOOLS",
+    "Language",
+    "Camera"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "translate.document-layout",
+   "tool": "translate",
+   "name": "Document layout",
+   "menu": [
+    "TOOLS",
+    "Language",
+    "Document layout"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "translate.phrasebook",
+   "tool": "translate",
+   "name": "Phrasebook",
+   "menu": [
+    "TOOLS",
+    "Language",
+    "Phrasebook"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "translate.offline-packs",
+   "tool": "translate",
+   "name": "Offline packs",
+   "menu": [
+    "TOOLS",
+    "Language",
+    "Offline packs"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "translate.picture-cards-kids",
+   "tool": "translate",
+   "name": "Picture cards (Kids)",
+   "menu": [
+    "TOOLS",
+    "Language",
+    "Picture cards (Kids)"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "translate.vocabulary-cards",
+   "tool": "translate",
+   "name": "Vocabulary cards",
+   "menu": [
+    "TOOLS",
+    "Language",
+    "Vocabulary cards"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "focus.goal",
+   "tool": "focus",
+   "name": "Goal",
+   "menu": [
+    "TOOLS",
+    "Session",
+    "Goal"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "focus.breaks",
+   "tool": "focus",
+   "name": "Breaks",
+   "menu": [
+    "TOOLS",
+    "Session",
+    "Breaks"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "focus.quiet-mode",
+   "tool": "focus",
+   "name": "Quiet mode",
+   "menu": [
+    "TOOLS",
+    "Session",
+    "Quiet mode"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "focus.ambient-sound",
+   "tool": "focus",
+   "name": "Ambient sound",
+   "menu": [
+    "TOOLS",
+    "Session",
+    "Ambient sound"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "SIMPLE",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "focus.done-log",
+   "tool": "focus",
+   "name": "Done log",
+   "menu": [
+    "TOOLS",
+    "Session",
+    "Done log"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "ASK_GROWN_UP",
+   "askFirst": null,
+   "since": "12.0"
+  },
+  {
+   "id": "study.oral-rehearsal",
+   "tool": "study",
+   "name": "Oral rehearsal",
+   "menu": [
+    "TOOLS",
+    "Practise",
+    "Oral rehearsal"
+   ],
+   "levels": [
+    "STANDARD",
+    "PRO"
+   ],
+   "kids": "HIDDEN",
+   "askFirst": null,
+   "since": "12.0"
+  }
+ ]
+}

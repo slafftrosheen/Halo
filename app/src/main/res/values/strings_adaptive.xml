@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo 12.0 batch 1 · adaptive pages -->
+<resources>
+    <string name="adaptive_made_for_you">made for you</string>
+    <string name="adaptive_made_for_name">made for %1$s</string>
+    <string name="adaptive_building">Building your page&#8230;</string>
+    <string name="adaptive_pin_page">Pin page</string>
+    <string name="adaptive_edit">Edit</string>
+    <string name="adaptive_done">Done</string>
+    <string name="adaptive_undo">Undo</string>
+    <string name="adaptive_reset_page">Reset page</string>
+    <string name="adaptive_bigger">Bigger</string>
+    <string name="adaptive_swap">Swap</string>
+    <string name="adaptive_less_like_this">Less like this</string>
+    <string name="adaptive_why">Why?</string>
+    <string name="adaptive_which_helps">Which helps more?</string>
+    <string name="adaptive_last_checked">Last checked %1$s</string>
+    <string name="adaptive_save_as">Save as</string>
+    <string name="adaptive_save_page">Page</string>
+    <string name="adaptive_save_widget">Widget</string>
+    <string name="adaptive_save_routine">Routine</string>
+    <string name="adaptive_pages_you_made">Pages you made</string>
+    <string name="adaptive_standard_layout">Standard layout</string>
+    <string name="adaptive_keep_layout">Keep this layout</string>
+    <string name="adaptive_all_tools">All tools</string>
+    <string name="adaptive_privacy_pages">Pages halo made</string>
+    <string name="adaptive_privacy_clear">Clear what halo learned about your pages</string>
+    <string name="adaptive_kids_tell_buddy">Tell buddy</string>
+    <string name="adaptive_study_coach_me">Coach me</string>
+    <string name="adaptive_study_show_answer">Show answer</string>
+    <string name="adaptive_study_easier">Easier</string>
+    <string name="adaptive_moved_tool">halo moved this forward for this task</string>
+</resources>

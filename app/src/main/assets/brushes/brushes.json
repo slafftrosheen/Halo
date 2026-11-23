@@ -1,0 +1,920 @@
+{
+ "version": "12.0-b2",
+ "count": 36,
+ "brushes": [
+  {
+   "id": "sketch.hb-pencil",
+   "v": 1,
+   "set": "sketch",
+   "name": "HB pencil",
+   "engine": "pencil",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.9
+   },
+   "grain": {
+    "tex": "paper-fine",
+    "mode": "page"
+   },
+   "spacing": 0.04,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "pressure.opacity": [
+     [
+      0,
+      0.2
+     ],
+     [
+      1,
+      0.9
+     ]
+    ],
+    "tilt.shading": true
+   },
+   "smoothing": 0.1,
+   "kids": false
+  },
+  {
+   "id": "sketch.6b-soft-pencil",
+   "v": 1,
+   "set": "sketch",
+   "name": "6B soft pencil",
+   "engine": "pencil",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.9
+   },
+   "grain": {
+    "tex": "paper-fine",
+    "mode": "page"
+   },
+   "spacing": 0.04,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "pressure.opacity": [
+     [
+      0,
+      0.2
+     ],
+     [
+      1,
+      0.9
+     ]
+    ],
+    "tilt.shading": true
+   },
+   "smoothing": 0.1,
+   "kids": false
+  },
+  {
+   "id": "sketch.mechanical-0-5",
+   "v": 1,
+   "set": "sketch",
+   "name": "Mechanical 0.5",
+   "engine": "fineliner",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {},
+   "smoothing": 0.35,
+   "kids": false
+  },
+  {
+   "id": "sketch.charcoal",
+   "v": 1,
+   "set": "sketch",
+   "name": "Charcoal",
+   "engine": "chalk",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.6
+   },
+   "grain": {
+    "tex": "paper-rough",
+    "mode": "page"
+   },
+   "spacing": 0.05,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.15,
+   "kids": false
+  },
+  {
+   "id": "sketch.blender",
+   "v": 1,
+   "set": "sketch",
+   "name": "Blender",
+   "engine": "smudge",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.3
+   },
+   "spacing": 0.06,
+   "blend": "smudge",
+   "pen": {
+    "pressure.strength": [
+     [
+      0,
+      0.2
+     ],
+     [
+      1,
+      0.9
+     ]
+    ]
+   },
+   "smoothing": 0.2,
+   "kids": false
+  },
+  {
+   "id": "sketch.kneaded-eraser",
+   "v": 1,
+   "set": "sketch",
+   "name": "Kneaded eraser",
+   "engine": "eraser",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.8
+   },
+   "spacing": 0.05,
+   "blend": "erase",
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.1,
+   "kids": false
+  },
+  {
+   "id": "ink.dip-pen",
+   "v": 1,
+   "set": "ink",
+   "name": "Dip pen",
+   "engine": "ink",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "speed.size": -0.2
+   },
+   "smoothing": 0.3,
+   "kids": false
+  },
+  {
+   "id": "ink.brush-pen",
+   "v": 1,
+   "set": "ink",
+   "name": "Brush pen",
+   "engine": "ink",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "speed.size": -0.2
+   },
+   "smoothing": 0.3,
+   "kids": false
+  },
+  {
+   "id": "ink.fineliner-0-3",
+   "v": 1,
+   "set": "ink",
+   "name": "Fineliner 0.3",
+   "engine": "fineliner",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {},
+   "smoothing": 0.35,
+   "kids": false
+  },
+  {
+   "id": "ink.fineliner-0-8",
+   "v": 1,
+   "set": "ink",
+   "name": "Fineliner 0.8",
+   "engine": "fineliner",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {},
+   "smoothing": 0.35,
+   "kids": false
+  },
+  {
+   "id": "ink.gel-pen",
+   "v": 1,
+   "set": "ink",
+   "name": "Gel pen",
+   "engine": "ink",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "speed.size": -0.2
+   },
+   "smoothing": 0.3,
+   "kids": false
+  },
+  {
+   "id": "ink.calligraphy-45",
+   "v": 1,
+   "set": "ink",
+   "name": "Calligraphy 45°",
+   "engine": "ink",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "speed.size": -0.2
+   },
+   "smoothing": 0.3,
+   "kids": false
+  },
+  {
+   "id": "marker.felt-marker",
+   "v": 1,
+   "set": "marker",
+   "name": "Felt marker",
+   "engine": "marker",
+   "tip": {
+    "shape": "chisel",
+    "hardness": 0.95,
+    "angle": 30
+   },
+   "spacing": 0.03,
+   "blend": "multiply",
+   "pen": {
+    "tilt.angle": true
+   },
+   "smoothing": 0.25,
+   "kids": false
+  },
+  {
+   "id": "marker.highlighter",
+   "v": 1,
+   "set": "marker",
+   "name": "Highlighter",
+   "engine": "marker",
+   "tip": {
+    "shape": "chisel",
+    "hardness": 0.95,
+    "angle": 30
+   },
+   "spacing": 0.03,
+   "blend": "multiply",
+   "pen": {
+    "tilt.angle": true
+   },
+   "smoothing": 0.25,
+   "kids": false
+  },
+  {
+   "id": "marker.alcohol-blend",
+   "v": 1,
+   "set": "marker",
+   "name": "Alcohol blend",
+   "engine": "marker",
+   "tip": {
+    "shape": "chisel",
+    "hardness": 0.95,
+    "angle": 30
+   },
+   "spacing": 0.03,
+   "blend": "multiply",
+   "pen": {
+    "tilt.angle": true
+   },
+   "smoothing": 0.25,
+   "kids": false
+  },
+  {
+   "id": "marker.chisel-marker",
+   "v": 1,
+   "set": "marker",
+   "name": "Chisel marker",
+   "engine": "marker",
+   "tip": {
+    "shape": "chisel",
+    "hardness": 0.95,
+    "angle": 30
+   },
+   "spacing": 0.03,
+   "blend": "multiply",
+   "pen": {
+    "tilt.angle": true
+   },
+   "smoothing": 0.25,
+   "kids": false
+  },
+  {
+   "id": "marker.fill-marker",
+   "v": 1,
+   "set": "marker",
+   "name": "Fill marker",
+   "engine": "marker",
+   "tip": {
+    "shape": "chisel",
+    "hardness": 0.95,
+    "angle": 30
+   },
+   "spacing": 0.03,
+   "blend": "multiply",
+   "pen": {
+    "tilt.angle": true
+   },
+   "smoothing": 0.25,
+   "kids": false
+  },
+  {
+   "id": "marker.neon",
+   "v": 1,
+   "set": "marker",
+   "name": "Neon",
+   "engine": "marker",
+   "tip": {
+    "shape": "chisel",
+    "hardness": 0.95,
+    "angle": 30
+   },
+   "spacing": 0.03,
+   "blend": "multiply",
+   "pen": {
+    "tilt.angle": true
+   },
+   "smoothing": 0.25,
+   "kids": false
+  },
+  {
+   "id": "paint.watercolour-wash",
+   "v": 1,
+   "set": "paint",
+   "name": "Watercolour wash",
+   "engine": "water",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.4
+   },
+   "grain": {
+    "tex": "cold-press",
+    "mode": "page"
+   },
+   "spacing": 0.08,
+   "wet": {
+    "wetness": 0.7,
+    "pull": 0.5,
+    "dryMs": 1800
+   },
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.5,
+      0.75
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.2,
+   "kids": false
+  },
+  {
+   "id": "paint.watercolour-round",
+   "v": 1,
+   "set": "paint",
+   "name": "Watercolour round",
+   "engine": "water",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.4
+   },
+   "grain": {
+    "tex": "cold-press",
+    "mode": "page"
+   },
+   "spacing": 0.08,
+   "wet": {
+    "wetness": 0.7,
+    "pull": 0.5,
+    "dryMs": 1800
+   },
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.5,
+      0.75
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.2,
+   "kids": false
+  },
+  {
+   "id": "paint.gouache-flat",
+   "v": 1,
+   "set": "paint",
+   "name": "Gouache flat",
+   "engine": "gouache",
+   "tip": {
+    "shape": "flat",
+    "hardness": 0.7
+   },
+   "grain": {
+    "tex": "canvas",
+    "mode": "stroke"
+   },
+   "spacing": 0.05,
+   "wet": {
+    "wetness": 0.3,
+    "pull": 0.3,
+    "dryMs": 900
+   },
+   "pen": {
+    "pressure.opacity": [
+     [
+      0,
+      0.6
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.15,
+   "kids": false
+  },
+  {
+   "id": "paint.oil-filbert",
+   "v": 1,
+   "set": "paint",
+   "name": "Oil filbert",
+   "engine": "oil",
+   "tip": {
+    "shape": "filbert",
+    "hardness": 0.8
+   },
+   "grain": {
+    "tex": "canvas",
+    "mode": "stroke"
+   },
+   "spacing": 0.04,
+   "wet": {
+    "wetness": 0.5,
+    "pull": 0.6,
+    "dryMs": 6000
+   },
+   "pen": {
+    "tilt.angle": true
+   },
+   "smoothing": 0.15,
+   "kids": false
+  },
+  {
+   "id": "paint.acrylic-dry",
+   "v": 1,
+   "set": "paint",
+   "name": "Acrylic dry",
+   "engine": "gouache",
+   "tip": {
+    "shape": "flat",
+    "hardness": 0.7
+   },
+   "grain": {
+    "tex": "canvas",
+    "mode": "stroke"
+   },
+   "spacing": 0.05,
+   "wet": {
+    "wetness": 0.3,
+    "pull": 0.3,
+    "dryMs": 900
+   },
+   "pen": {
+    "pressure.opacity": [
+     [
+      0,
+      0.6
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.15,
+   "kids": false
+  },
+  {
+   "id": "paint.palette-knife",
+   "v": 1,
+   "set": "paint",
+   "name": "Palette knife",
+   "engine": "oil",
+   "tip": {
+    "shape": "filbert",
+    "hardness": 0.8
+   },
+   "grain": {
+    "tex": "canvas",
+    "mode": "stroke"
+   },
+   "spacing": 0.04,
+   "wet": {
+    "wetness": 0.5,
+    "pull": 0.6,
+    "dryMs": 6000
+   },
+   "pen": {
+    "tilt.angle": true
+   },
+   "smoothing": 0.15,
+   "kids": false
+  },
+  {
+   "id": "air-texture.soft-airbrush",
+   "v": 1,
+   "set": "air-texture",
+   "name": "Soft airbrush",
+   "engine": "air",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.0
+   },
+   "spacing": 0.1,
+   "scatter": 0.05,
+   "pen": {
+    "pressure.flow": [
+     [
+      0,
+      0
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.1,
+   "kids": false
+  },
+  {
+   "id": "air-texture.hard-airbrush",
+   "v": 1,
+   "set": "air-texture",
+   "name": "Hard airbrush",
+   "engine": "air",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.0
+   },
+   "spacing": 0.1,
+   "scatter": 0.05,
+   "pen": {
+    "pressure.flow": [
+     [
+      0,
+      0
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.1,
+   "kids": false
+  },
+  {
+   "id": "air-texture.spray-can",
+   "v": 1,
+   "set": "air-texture",
+   "name": "Spray can",
+   "engine": "air",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.0
+   },
+   "spacing": 0.1,
+   "scatter": 0.05,
+   "pen": {
+    "pressure.flow": [
+     [
+      0,
+      0
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.1,
+   "kids": false
+  },
+  {
+   "id": "air-texture.pastel",
+   "v": 1,
+   "set": "air-texture",
+   "name": "Pastel",
+   "engine": "chalk",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.6
+   },
+   "grain": {
+    "tex": "paper-rough",
+    "mode": "page"
+   },
+   "spacing": 0.05,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.15,
+   "kids": false
+  },
+  {
+   "id": "air-texture.crayon-kids",
+   "v": 1,
+   "set": "air-texture",
+   "name": "Crayon (Kids)",
+   "engine": "chalk",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.6
+   },
+   "grain": {
+    "tex": "paper-rough",
+    "mode": "page"
+   },
+   "spacing": 0.05,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.15,
+   "kids": true
+  },
+  {
+   "id": "air-texture.paper-grain",
+   "v": 1,
+   "set": "air-texture",
+   "name": "Paper grain",
+   "engine": "chalk",
+   "tip": {
+    "shape": "round",
+    "hardness": 0.6
+   },
+   "grain": {
+    "tex": "paper-rough",
+    "mode": "page"
+   },
+   "spacing": 0.05,
+   "pen": {
+    "pressure.size": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   "smoothing": 0.15,
+   "kids": false
+  },
+  {
+   "id": "technical.cad-0-25",
+   "v": 1,
+   "set": "technical",
+   "name": "CAD 0.25",
+   "engine": "tech",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {},
+   "smoothing": 0.0,
+   "vectorOnly": true,
+   "kids": false
+  },
+  {
+   "id": "technical.cad-0-5",
+   "v": 1,
+   "set": "technical",
+   "name": "CAD 0.5",
+   "engine": "tech",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {},
+   "smoothing": 0.0,
+   "vectorOnly": true,
+   "kids": false
+  },
+  {
+   "id": "technical.hidden-line",
+   "v": 1,
+   "set": "technical",
+   "name": "Hidden line",
+   "engine": "tech",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {},
+   "smoothing": 0.0,
+   "vectorOnly": true,
+   "kids": false
+  },
+  {
+   "id": "technical.centre-line",
+   "v": 1,
+   "set": "technical",
+   "name": "Centre line",
+   "engine": "tech",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {},
+   "smoothing": 0.0,
+   "vectorOnly": true,
+   "kids": false
+  },
+  {
+   "id": "technical.hatching",
+   "v": 1,
+   "set": "technical",
+   "name": "Hatching",
+   "engine": "fineliner",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {},
+   "smoothing": 0.35,
+   "kids": false
+  },
+  {
+   "id": "technical.vector-pen",
+   "v": 1,
+   "set": "technical",
+   "name": "Vector pen",
+   "engine": "fineliner",
+   "tip": {
+    "shape": "round",
+    "hardness": 1
+   },
+   "spacing": 0.02,
+   "pen": {},
+   "smoothing": 0.35,
+   "kids": false
+  }
+ ]
+}

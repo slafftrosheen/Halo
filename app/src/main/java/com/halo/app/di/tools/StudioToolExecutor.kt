@@ -48,7 +48,15 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
         "strength" to percent, "radius" to mapOf("type" to "integer", "minimum" to 4, "maximum" to 120),
         "wetMix" to mapOf("type" to "boolean"),
     )
+    private val fraction = mapOf("type" to "number", "minimum" to 0, "maximum" to 1)
+    private val vector = schema(mapOf(
+        "kind" to mapOf("type" to "string", "enum" to StudioShape.entries.map { it.name }),
+        "closed" to mapOf("type" to "boolean"),
+        "nodes" to mapOf("type" to "array", "minItems" to 2, "maxItems" to 128, "items" to schema(
+            listOf("x", "y", "inX", "inY", "outX", "outY").associateWith { fraction }, listOf("x", "y"))),
+    ), listOf("kind"))
     private val fields = schema(changes + mapOf(
+        "vector" to vector, "dpi" to mapOf("type" to "integer", "minimum" to 36, "maximum" to 1200),
         "layerId" to mapOf("anyOf" to listOf(id, mapOf("type" to "null"))),
         "changes" to schema(changes, emptyList()),
         "ink" to mapOf("type" to "string", "maxLength" to 262144),
@@ -79,12 +87,13 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
             mapOf("projectId" to id, "revision" to revision, "operation" to mapOf("type" to "string", "enum" to listOf(
                 "add_text", "add_rectangle", "add_ellipse", "add_ink", "set_ink", "update_layer", "delete_layer", "move_layer", "select_layer",
                 "transform", "resize", "background", "undo", "redo", "restore_version", "import_image", "delete_selected_ink",
-                "select_pixels", "clear_pixel_selection", "copy_selected_pixels", "erase_selected_pixels", "smudge_pixels")), "fields" to fields)),
+                "select_pixels", "clear_pixel_selection", "copy_selected_pixels", "erase_selected_pixels", "smudge_pixels",
+                "add_shape", "edit_shape", "set_resolution")), "fields" to fields)),
         definition("halo_studio_save", "Save a local draft as a version, save a separate copy, rename, or discard draft changes. Copy/rename require title. Exact revision required.",
             mapOf("projectId" to id, "revision" to revision, "action" to mapOf("type" to "string", "enum" to listOf("save", "copy", "rename", "discard")),
                 "title" to text), listOf("projectId", "revision", "action")),
-        definition("halo_studio_export", "Render an exact local Studio draft into a new immutable Workspace PNG/JPEG with durable source/version metadata. Does not overwrite or automatically insert/share anything.",
-            mapOf("projectId" to id, "revision" to revision, "format" to mapOf("type" to "string", "enum" to listOf("PNG", "JPEG")))),
+        definition("halo_studio_export", "Save an exact Studio revision as a new Workspace file. PNG and JPEG render the artwork. SVG and DXF require supported vector-only artwork. HALO packages projects without external image sources.",
+            mapOf("projectId" to id, "revision" to revision, "format" to mapOf("type" to "string", "enum" to listOf("PNG", "JPEG", "SVG", "DXF", "HALO")))),
         definition("halo_studio_insert", "Insert a previously exported exact Studio image on an exact current Canvas revision as a new reference. The managed Workspace copy remains authoritative.",
             mapOf("canvasId" to id, "canvasVersion" to mapOf("type" to "string", "maxLength" to 30), "outputId" to id, "fileVersion" to mapOf("type" to "string", "maxLength" to 200)))
     )
@@ -199,7 +208,11 @@ class StudioToolExecutor(private val studio: StudioService) : ToolExecutor {
                 }
                 "halo_studio_export" -> {
                     exact(setOf("projectId", "revision", "format"))
-                    val output = studio.export(objectId("projectId"), number("revision"), CanvasImageFormat.valueOf(string("format")))
+                    val format = string("format")
+                    val projectId = objectId("projectId")
+                    val source = number("revision")
+                    val output = if (format in setOf("PNG", "JPEG")) studio.export(projectId, source, CanvasImageFormat.valueOf(format))
+                        else studio.exportProject(projectId, source, StudioProjectFormat.valueOf(format))
                     return success(JSONObject().put("outputId", output.objectId.value).put("fileVersion", output.version)
                         .put("mimeType", output.mimeType).put("bytes", output.sizeBytes).put("savedToWorkspace", true))
                 }

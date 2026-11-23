@@ -40,6 +40,7 @@ data class StudioLayer(
     val saturation: Int = 1000,
     val pencil: Boolean = false,
     val symmetry: StudioSymmetry? = null,
+    val vector: StudioVectorGeometry? = null,
 ) {
     fun requireValid() {
         require(id.matches(Regex("[A-Za-z0-9_-]{1,100}")))
@@ -54,6 +55,7 @@ data class StudioLayer(
         if (kind == StudioLayerKind.INK) require(InkCodec.decode(ink) != null) else require(ink.isEmpty())
         require(!pencil || kind == StudioLayerKind.INK)
         require(symmetry == null || kind == StudioLayerKind.INK)
+        require(vector == null || kind == StudioLayerKind.RECTANGLE || kind == StudioLayerKind.ELLIPSE)
         if (kind != StudioLayerKind.TEXT) require(text.isEmpty())
     }
 }
@@ -65,9 +67,11 @@ data class StudioDocument(
     val recipe: CanvasImageRecipe = CanvasImageRecipe(),
     val layers: List<StudioLayer> = emptyList(),
     val selectedLayerId: String? = null,
+    val dpi: Int = 96,
 ) {
     fun requireValid() {
         require(width in 1..4096 && height in 1..4096 && width.toLong() * height <= 12_000_000)
+        require(dpi in 36..1200)
         require(layers.size <= MAX_LAYERS && layers.map { it.id }.distinct().size == layers.size)
         require(selectedLayerId == null || layers.any { it.id == selectedLayerId })
         layers.forEach(StudioLayer::requireValid)
@@ -95,6 +99,7 @@ sealed interface StudioCommand {
     data class Transform(val recipe: CanvasImageRecipe) : StudioCommand
     data class Resize(val width: Int, val height: Int) : StudioCommand
     data class Background(val color: Int) : StudioCommand
+    data class SetResolution(val dpi: Int) : StudioCommand
 }
 
 fun StudioDocument.apply(command: StudioCommand): StudioDocument {
@@ -129,6 +134,7 @@ fun StudioDocument.apply(command: StudioCommand): StudioDocument {
         is StudioCommand.Transform -> copy(recipe = command.recipe)
         is StudioCommand.Resize -> copy(width = command.width, height = command.height)
         is StudioCommand.Background -> copy(background = command.color)
+        is StudioCommand.SetResolution -> copy(dpi = command.dpi)
     }
     return result.also(StudioDocument::requireValid)
 }

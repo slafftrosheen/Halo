@@ -72,6 +72,7 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
     var examDay by rememberSaveable { mutableStateOf<Long?>(null) }
     var minuteOfDay by rememberSaveable { mutableIntStateOf(18 * 60) }
     var days by rememberSaveable { mutableIntStateOf(5) }
+    var minutes by rememberSaveable { mutableIntStateOf(25) }
     var busy by remember { mutableStateOf(false) }
     var issue by remember { mutableIntStateOf(0) }
     var picker by remember { mutableStateOf<android.app.Dialog?>(null) }
@@ -137,6 +138,11 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
                 for (count in listOf(3, 5, 7)) FilterChip(days == count, onClick = { days = count; issue = 0 },
                     enabled = !busy, label = { Text(count.toString()) })
             }
+            Text(stringResource(R.string.study_rehearsal_session_length), style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (duration in listOf(15, 25, 40)) FilterChip(minutes == duration, onClick = { minutes = duration; issue = 0 },
+                    enabled = !busy, label = { Text(duration.toString()) })
+            }
             if (dates.isNotEmpty()) Text(stringResource(R.string.study_exam_preview,
                 dateFormat.format(dates.first()), dateFormat.format(dates.last())), style = MaterialTheme.typography.bodyMedium)
             else if (exam != null) Text(stringResource(R.string.study_exam_no_days), style = MaterialTheme.typography.bodyMedium)
@@ -162,7 +168,7 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
                 scope.launch {
                     try {
                         val start = dates.first().atTime(time)
-                        val end = start.atZone(reviewedNow.zone).plusMinutes(25)
+                        val end = start.atZone(reviewedNow.zone).plusMinutes(minutes.toLong())
                         val saved = EverydayWriteAuthority.run(authority) {
                             val references = course?.lessons.orEmpty().flatMap { it.sourceObjectIds }.distinct()
                             require(references.size <= 50)

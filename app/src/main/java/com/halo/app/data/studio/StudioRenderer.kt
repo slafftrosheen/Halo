@@ -41,7 +41,7 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
                 for (layer in document.layers) {
                     coroutineContext.ensureActive()
                     if (!layer.visible || layer.opacity == 0) continue
-                    drawLayer(canvas, layer, preview)
+                    drawLayer(canvas, layer, preview, document)
                 }
                 CanvasImageTools.transformOwnedBitmap(output, document.recipe, preview).also { owned = it }
             } }
@@ -90,7 +90,7 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
         return RectF(target.centerX() - width / 2, target.centerY() - height / 2,
             target.centerX() + width / 2, target.centerY() + height / 2)
     }
-    private suspend fun drawLayer(canvas: Canvas, layer: StudioLayer, preview: Boolean) {
+    private suspend fun drawLayer(canvas: Canvas, layer: StudioLayer, preview: Boolean, document: StudioDocument) {
         val bounds = layer.bounds.pixels(canvas.width, canvas.height)
         val transform = canvas.save()
         try {
@@ -113,8 +113,29 @@ class StudioRenderer(private val context: Context, private val files: WorkspaceF
                 val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = layer.color }
                 when (layer.kind) {
                     StudioLayerKind.IMAGE -> drawImage(canvas, layer, bounds, preview)
-                    StudioLayerKind.RECTANGLE -> canvas.drawRect(bounds, paint)
-                    StudioLayerKind.ELLIPSE -> canvas.drawOval(bounds, paint)
+                    StudioLayerKind.RECTANGLE, StudioLayerKind.ELLIPSE -> {
+                        val vector = layer.vector
+                        if (vector == null) {
+                            if (layer.kind == StudioLayerKind.RECTANGLE) canvas.drawRect(bounds, paint) else canvas.drawOval(bounds, paint)
+                        } else {
+                            if (vector.outlineOnly) {
+                                paint.style = Paint.Style.STROKE
+                                paint.strokeWidth = min(bounds.width(), bounds.height()) * vector.stroke
+                                paint.strokeCap = Paint.Cap.ROUND
+                                if (vector.dash) paint.pathEffect = DashPathEffect(floatArrayOf(paint.strokeWidth * 4, paint.strokeWidth * 3), 0f)
+                            }
+                            canvas.drawPath(vector.path(bounds), paint)
+                            if (vector.shape == StudioShape.DIMENSION) {
+                                paint.style = Paint.Style.FILL
+                                paint.pathEffect = null
+                                paint.textAlign = Paint.Align.CENTER
+                                paint.textSize = min(bounds.width(), bounds.height()) * .18f
+                                val mm = StudioLengthUnit.MM.fromPixels(layer.bounds.width * document.width * .0008, document.dpi)
+                                canvas.drawText(String.format(java.util.Locale.ROOT, "%.2f mm", mm),
+                                    bounds.centerX(), bounds.top + bounds.height() * .56f, paint)
+                            }
+                        }
+                    }
                     StudioLayerKind.TEXT -> {
                         val textPaint = TextPaint(paint).apply {
                             textSize = (layer.fontSize * canvas.width / 1000f).coerceAtLeast(1f)

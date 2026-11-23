@@ -1,0 +1,78 @@
+{
+ "id": "fox-5-steps",
+ "ageBand": "7-9",
+ "tools": [
+  "kids.fat-crayon",
+  "kids.felt-tip",
+  "kids.big-eraser"
+ ],
+ "mirror": null,
+ "steps": [
+  {
+   "n": 1,
+   "ghost": "M70 170C60 120 90 80 125 78C160 80 190 120 180 170",
+   "start": [
+    70,
+    170
+   ],
+   "say": {
+    "en": "Start with a big round head.",
+    "ru": "Начни с большой круглой головы."
+   }
+  },
+  {
+   "n": 2,
+   "ghost": "M92 92L80 48L112 80 M158 92L170 48L138 80",
+   "start": [
+    80,
+    48
+   ],
+   "say": {
+    "en": "Now the ears: two little triangles. Start at the purple dot!",
+    "ru": "Теперь уши: два маленьких треугольника. Начни с фиолетовой точки!"
+   }
+  },
+  {
+   "n": 3,
+   "ghost": "M105 130L125 150L145 130",
+   "start": [
+    105,
+    130
+   ],
+   "say": {
+    "en": "A pointy nose in the middle.",
+    "ru": "Острый носик посередине."
+   }
+  },
+  {
+   "n": 4,
+   "ghost": "M100 115h4 M146 115h4",
+   "start": [
+    100,
+    115
+   ],
+   "say": {
+    "en": "Two eyes. Make them happy or sleepy, you choose.",
+    "ru": "Два глаза. Весёлые или сонные, как захочешь."
+   }
+  },
+  {
+   "n": 5,
+   "ghost": "M180 170C230 150 235 200 200 215",
+   "start": [
+    180,
+    170
+   ],
+   "say": {
+    "en": "And a big fluffy tail! Colour it any way you like.",
+    "ru": "И большой пушистый хвост! Раскрась его как хочешь."
+   }
+  }
+ ],
+ "viewBox": [
+  0,
+  0,
+  250,
+  270
+ ]
+}

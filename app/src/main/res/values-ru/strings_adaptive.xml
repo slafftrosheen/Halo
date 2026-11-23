@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- halo 12.0 batch 1 · adaptive pages -->
+<resources>
+    <string name="adaptive_made_for_you">сделано для вас</string>
+    <string name="adaptive_made_for_name">сделано для %1$s</string>
+    <string name="adaptive_building">Собираю вашу страницу&#8230;</string>
+    <string name="adaptive_pin_page">Закрепить страницу</string>
+    <string name="adaptive_edit">Изменить</string>
+    <string name="adaptive_done">Готово</string>
+    <string name="adaptive_undo">Отменить</string>
+    <string name="adaptive_reset_page">Сбросить страницу</string>
+    <string name="adaptive_bigger">Крупнее</string>
+    <string name="adaptive_swap">Заменить</string>
+    <string name="adaptive_less_like_this">Реже такое</string>
+    <string name="adaptive_why">Почему?</string>
+    <string name="adaptive_which_helps">Что полезнее?</string>
+    <string name="adaptive_last_checked">Проверено в %1$s</string>
+    <string name="adaptive_save_as">Сохранить как</string>
+    <string name="adaptive_save_page">Страница</string>
+    <string name="adaptive_save_widget">Виджет</string>
+    <string name="adaptive_save_routine">Распорядок</string>
+    <string name="adaptive_pages_you_made">Ваши страницы</string>
+    <string name="adaptive_standard_layout">Обычная раскладка</string>
+    <string name="adaptive_keep_layout">Оставить так</string>
+    <string name="adaptive_all_tools">Все инструменты</string>
+    <string name="adaptive_privacy_pages">Страницы от halo</string>
+    <string name="adaptive_privacy_clear">Очистить, что halo узнал о ваших страницах</string>
+    <string name="adaptive_kids_tell_buddy">Скажи бадди</string>
+    <string name="adaptive_study_coach_me">Помоги мне разобраться</string>
+    <string name="adaptive_study_show_answer">Показать ответ</string>
+    <string name="adaptive_study_easier">Попроще</string>
+    <string name="adaptive_moved_tool">halo вынес это вперёд для этой задачи</string>
+</resources>

@@ -382,6 +382,17 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
                 }
             }
     }
+    suspend fun exportProject(id: String, expectedRevision: Long, format: StudioProjectFormat): WorkspaceFile {
+        val project = current(id, expectedRevision)
+        val bytes = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            StudioProjectExport.encode(project.session.current, format)
+        }
+        val metadata = JSONObject().put("operation", "studio-project-export").put("projectId", id)
+            .put("projectRevision", expectedRevision).put("format", format.name).toString()
+        return files.createManagedFile(project.title.take(100) + "." + format.extension, format.mime, bytes,
+            id, expectedRevision.toString(), metadata) { current(id, expectedRevision) }
+    }
+
     private suspend fun current(id: String, expectedRevision: Long): StudioProject = requireNotNull(projects.get(id)) {
         "Project unavailable"
     }.also { check(it.revision == expectedRevision) { "Project changed. Reopen it before continuing." } }

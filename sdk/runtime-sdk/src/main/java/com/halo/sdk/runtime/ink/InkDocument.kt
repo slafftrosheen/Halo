@@ -9,7 +9,12 @@ data class InkPoint(
 
 /** Erasing is an editing transaction, never a white stroke baked into a document. */
 enum class InkTool(val wire: String) { LEGACY("L"), FINGER("F"), STYLUS("S"), MOUSE("M") }
-data class InkStroke(val tool: InkTool, val points: List<InkPoint>, val strokeId: String = InkStrokeIds.create())
+data class InkStroke(
+    val tool: InkTool,
+    val points: List<InkPoint>,
+    val strokeId: String = InkStrokeIds.create(),
+    val brush: InkBrushStyle? = null,
+)
 internal object InkStrokeIds {
     fun create(): String = java.util.UUID.randomUUID().toString()
 }
