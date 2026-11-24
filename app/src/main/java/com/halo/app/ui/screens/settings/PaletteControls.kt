@@ -29,6 +29,9 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.icons.HaloGlyph
 import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.theme.*
+import com.halo.app.ui.theme.v13.Halo13Animation
+import com.halo.app.ui.theme.v13.Halo13Motion
+import com.halo.app.wallpaper.wallpaperLookSeed
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -61,7 +64,11 @@ import kotlinx.coroutines.launch
     var guidedStart by remember { mutableStateOf<Pair<AppearanceDraft, HaloVisualOptions?>?>(null) }
     val options = lookDraft ?: savedVisual
     var careReading by remember { mutableStateOf<Boolean?>(null) }
-    val changed = draft.changed || lookDraft?.let { it != savedVisual } == true || careReading != null
+    var presetFontScale by remember { mutableStateOf<Float?>(null) }
+    var tintPreview by remember { mutableIntStateOf(0) }
+    var tintUnavailable by remember { mutableStateOf(false) }
+    val changed = draft.changed || lookDraft?.let { it != savedVisual } == true || careReading != null ||
+        presetFontScale?.let { it != assistantState.fontScale } == true
     val previewOwner = remember { Any() }
     SideEffect {
         if (changed) HaloLookPreview.show(HaloLookPreview.Draft(previewOwner, dark, palette, options))
@@ -100,8 +107,10 @@ import kotlinx.coroutines.launch
                     motionLevel = requestedVisual.motionLevel, lessMotion = requestedVisual.lessMotion,
                     haptics = requestedVisual.haptics, edgeLight = requestedVisual.edgeLight,
                     buttonLabels = requestedVisual.buttonLabels, viewMode = requestedVisual.viewMode,
-                    guideLight = requestedVisual.guideLight, guidanceAmount = requestedVisual.guidanceAmount)
+                    guideLight = requestedVisual.guideLight, guidanceAmount = requestedVisual.guidanceAmount,
+                    higherContrast = requestedVisual.higherContrast)
             }
+            presetFontScale?.let { assistant.update(it, null) }
             HaloAppIconSwitcher.apply(context, requestedVisual.appIcon, dark, requested.palette(dark).accent)
             careReading?.let { read ->
                 val reader = ManualDependencyGraph.readAloud
@@ -113,12 +122,17 @@ import kotlinx.coroutines.launch
             careReading = null
             draft = AppearanceDraft(requested.mode, requested.palettes)
             lookDraft = null
+            presetFontScale = null
+            tintPreview = 0
         }
     }
     fun resetDraft() {
         draft = AppearanceDraft(mode, palettes)
         lookDraft = null
         careReading = null
+        presetFontScale = null
+        tintPreview = 0
+        tintUnavailable = false
         if (!rollbackUncertain) failure = false
     }
     guidedStart?.let { (originalDraft, originalVisual) ->
@@ -171,13 +185,18 @@ import kotlinx.coroutines.launch
         AppearanceLabel(stringResource(R.string.look_presets_label))
         FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            HaloLookPreset.entries.forEach { preset ->
+            HaloLookPreset.releaseLooks.forEach { preset ->
                 val scheme = haloColorScheme(preset.dark, preset.palette)
                 val name = stringResource(preset.label)
                 val selected = dark == preset.dark && palette == preset.palette
                 Surface(onClick = {
                     draft = draft.editPalette(preset.dark, preset.palette).copy(
                         mode = if (preset.dark) AppearanceMode.DARK else AppearanceMode.LIGHT)
+                    lookDraft = options.copy(motionLevel = preset.motion, lessMotion = preset.motion == HaloLookMotion.STILL,
+                        higherContrast = preset.clear || savedVisual.higherContrast)
+                    presetFontScale = if (preset.clear) maxOf(1.3f, assistantState.fontScale) else null
+                    tintPreview = 0
+                    tintUnavailable = false
                 }, enabled = !saving, shape = MaterialTheme.shapes.medium, color = scheme.surface,
                     contentColor = scheme.onSurface,
                     border = BorderStroke(1.dp, if (selected) scheme.primary else scheme.outlineVariant),
@@ -188,6 +207,26 @@ import kotlinx.coroutines.launch
                     }
                 }
             }
+        }
+        OutlinedButton(onClick = {
+            scope.launch {
+                save {
+                    val seed = wallpaperLookSeed(context)
+                    tintUnavailable = seed == null
+                    if (seed != null) {
+                        val match = HaloPalette(wallpaperSeed = seed)
+                        draft = draft.editPalette(false, match).editPalette(true, match)
+                        lookDraft = options.copy(motionLevel = HaloLookMotion.GENTLE, lessMotion = false)
+                        tintPreview++
+                    }
+                }
+            }
+        }, enabled = !saving, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+            Text(stringResource(R.string.f13_look_match))
+        }
+        if (tintUnavailable) Text(stringResource(R.string.f13_look_no_wallpaper), style = MaterialTheme.typography.bodySmall)
+        if (tintPreview > 0 && palette.wallpaperSeed != null) key(tintPreview) {
+            Halo13Animation(Halo13Motion.TINT_FROM_WALLPAPER, Modifier.fillMaxWidth().height(80.dp))
         }
         AppearanceLabel("Mode")
         BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -237,7 +276,8 @@ import kotlinx.coroutines.launch
                 val selected = accent == palette.accent
                 val fill = brandAccent(dark, accent)
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.widthIn(min = 48.dp)
-                    .selectable(selected, enabled = !saving, role = Role.RadioButton, onClick = { draft = draft.editPalette(dark, palette.copy(accent = accent)) })) {
+                    .selectable(selected, enabled = !saving, role = Role.RadioButton,
+                        onClick = { draft = draft.editPalette(dark, palette.copy(accent = accent, wallpaperSeed = null)) })) {
                     Surface(Modifier.size(52.dp), shape = CircleShape, color = Color.Transparent,
                         border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface) else null) {
                         Box(Modifier.padding(4.dp).background(fill.fill, CircleShape), contentAlignment = Alignment.Center) {

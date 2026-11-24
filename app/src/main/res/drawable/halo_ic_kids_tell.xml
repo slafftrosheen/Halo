@@ -1,0 +1,7 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24.0" android:viewportHeight="24.0">
+  <path android:pathData="M7 5H17A4 4 0 0 1 21 9V13A4 4 0 0 1 17 17H7A4 4 0 0 1 3 13V9A4 4 0 0 1 7 5Z" android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.75" android:strokeLineCap="round" android:strokeLineJoin="round" />
+  <path android:pathData="M7.2 11A0.8 0.8 0 1 0 8.8 11A0.8 0.8 0 1 0 7.2 11Z" android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.75" android:strokeLineCap="round" android:strokeLineJoin="round" />
+  <path android:pathData="M11.2 11A0.8 0.8 0 1 0 12.8 11A0.8 0.8 0 1 0 11.2 11Z" android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.75" android:strokeLineCap="round" android:strokeLineJoin="round" />
+  <path android:pathData="M15.2 11A0.8 0.8 0 1 0 16.8 11A0.8 0.8 0 1 0 15.2 11Z" android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.75" android:strokeLineCap="round" android:strokeLineJoin="round" />
+  <path android:pathData="M8 17L7 20.5L11.5 17" android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.75" android:strokeLineCap="round" android:strokeLineJoin="round" />
+</vector>

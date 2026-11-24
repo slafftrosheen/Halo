@@ -1,0 +1,289 @@
+{
+ "version": 13,
+ "maxChangesPerOpen": 2,
+ "levels": [
+  "SIMPLE",
+  "STANDARD",
+  "PRO"
+ ],
+ "surfaces": {
+  "today": {
+   "anchors": [
+    "TITLE",
+    "HALO_RING",
+    "DOCK"
+   ],
+   "simple": [
+    "next_thing",
+    "weather",
+    "one_ask"
+   ],
+   "standard": [
+    "+agenda",
+    "+reads",
+    "+tasks"
+   ],
+   "pro": [
+    "+routines_editor",
+    "+sources_health",
+    "+widgets_export"
+   ],
+   "rules": [
+    [
+     "EARLY|MORNING",
+     "promote",
+     "next_thing",
+     "Morning: what's first today"
+    ],
+    [
+     "EVENING",
+     "promote",
+     "tomorrow",
+     "Evening: tomorrow, then wind down"
+    ],
+    [
+     "ON_THE_MOVE",
+     "make_primary",
+     "leave_by",
+     "On the move: when to leave"
+    ]
+   ]
+  },
+  "canvas": {
+   "anchors": [
+    "BACK",
+    "TITLE",
+    "DOCK"
+   ],
+   "simple": [
+    "draw",
+    "undo",
+    "colour"
+   ],
+   "standard": [
+    "+brushes",
+    "+layers_peek",
+    "+shapes"
+   ],
+   "pro": [
+    "+paths",
+    "+snapping",
+    "+export_formats"
+   ],
+   "rules": [
+    [
+     "PEN",
+     "reveal",
+     "brushes",
+     "Pen detected: brushes up front"
+    ],
+    [
+     "TABLET",
+     "reveal",
+     "layers_panel",
+     "Tablet: layers on the side"
+    ]
+   ]
+  },
+  "studio": {
+   "anchors": [
+    "BACK",
+    "TITLE",
+    "DOCK"
+   ],
+   "simple": [
+    "adjust",
+    "crop",
+    "text"
+   ],
+   "standard": [
+    "+layers",
+    "+selection",
+    "+fill"
+   ],
+   "pro": [
+    "+bezier",
+    "+dxf",
+    "+units",
+    "+menus"
+   ],
+   "rules": [
+    [
+     "KEYBOARD",
+     "reveal",
+     "menus",
+     "Keyboard: menus and shortcuts"
+    ]
+   ]
+  },
+  "notes": {
+   "anchors": [
+    "BACK",
+    "TITLE",
+    "DOCK"
+   ],
+   "simple": [
+    "write",
+    "speak",
+    "photo"
+   ],
+   "standard": [
+    "+sketch",
+    "+lists",
+    "+links"
+   ],
+   "pro": [
+    "+markdown",
+    "+templates"
+   ],
+   "rules": [
+    [
+     "PEN",
+     "make_primary",
+     "sketch",
+     "Pen out: draw in the note"
+    ],
+    [
+     "STUDYING",
+     "promote",
+     "study_this",
+     "Studying: turn it into cards"
+    ]
+   ]
+  },
+  "planner": {
+   "anchors": [
+    "BACK",
+    "TITLE",
+    "DOCK"
+   ],
+   "simple": [
+    "today_list",
+    "add_by_voice"
+   ],
+   "standard": [
+    "+week",
+    "+leave_by",
+    "+routines"
+   ],
+   "pro": [
+    "+month",
+    "+calendars",
+    "+rules"
+   ],
+   "rules": [
+    [
+     "EVENING",
+     "promote",
+     "tomorrow",
+     "Evening: plan tomorrow"
+    ]
+   ]
+  },
+  "translate": {
+   "anchors": [
+    "BACK",
+    "TITLE",
+    "DOCK"
+   ],
+   "simple": [
+    "talk",
+    "point_camera"
+   ],
+   "standard": [
+    "+type",
+    "+phrasebook"
+   ],
+   "pro": [
+    "+offline_packs",
+    "+glossary"
+   ],
+   "rules": [
+    [
+     "ABROAD",
+     "make_primary",
+     "talk",
+     "Abroad: conversation first"
+    ],
+    [
+     "GLASSES",
+     "make_primary",
+     "signs",
+     "Glasses: read signs"
+    ]
+   ]
+  },
+  "scan": {
+   "anchors": [
+    "BACK",
+    "TITLE",
+    "DOCK"
+   ],
+   "simple": [
+    "scan"
+   ],
+   "standard": [
+    "+pages",
+    "+tidy",
+    "+file_to"
+   ],
+   "pro": [
+    "+ocr_layers",
+    "+pdf_options"
+   ],
+   "rules": []
+  },
+  "study": {
+   "anchors": [
+    "BACK",
+    "TITLE",
+    "DOCK"
+   ],
+   "simple": [
+    "today_step",
+    "ask_coach"
+   ],
+   "standard": [
+    "+plan",
+    "+cards",
+    "+sources"
+   ],
+   "pro": [
+    "+exam_plan_editor",
+    "+stats"
+   ],
+   "rules": [
+    [
+     "EVENING",
+     "promote",
+     "short_review",
+     "Evening: a 10-minute review"
+    ]
+   ]
+  },
+  "settings": {
+   "anchors": [
+    "BACK",
+    "TITLE"
+   ],
+   "simple": [
+    "look",
+    "text_size",
+    "voice",
+    "privacy_simple",
+    "help"
+   ],
+   "standard": [
+    "+devices",
+    "+sources",
+    "+notifications"
+   ],
+   "pro": [
+    "+ai_services",
+    "+check_up",
+    "+advanced"
+   ],
+   "rules": []
+  }
+ }
+}

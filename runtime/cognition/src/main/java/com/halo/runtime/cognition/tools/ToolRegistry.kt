@@ -108,6 +108,19 @@ class ToolRegistry(
 
     fun executorFor(toolName: String): ToolExecutor? = binding(toolName)?.executor
 
+    /** Normalize only declared enum choices before policy checks and durable argument identity. */
+    internal fun canonicalEnumArguments(call: ToolCall): ToolCall {
+        val properties = binding(call.functionName)?.definition?.parameters?.get("properties") as? Map<*, *> ?: return call
+        val updates = call.arguments.mapNotNull { (key, value) ->
+            val text = value as? String ?: return@mapNotNull null
+            val schema = properties[key] as? Map<*, *> ?: return@mapNotNull null
+            val choices = (schema["enum"] as? List<*>)?.filterIsInstance<String>() ?: return@mapNotNull null
+            if (text in choices) return@mapNotNull null
+            choices.singleOrNull { it.equals(text, ignoreCase = true) }?.let { key to it }
+        }
+        return if (updates.isEmpty()) call else call.copy(arguments = call.arguments + updates)
+    }
+
     /**
      * Validate a tool call without executing it.
      *

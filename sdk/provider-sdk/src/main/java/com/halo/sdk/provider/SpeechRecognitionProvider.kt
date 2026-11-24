@@ -41,6 +41,8 @@ interface BufferedSpeechRecognitionProvider : SpeechRecognitionProvider {
     /** Pin authority before collecting audio, including pre-roll. Never grant it at decode time. */
     fun captureContext(): RecognitionCaptureContext = RecognitionCaptureContext(metadata.id)
     suspend fun recognize(audio: AudioBuffer): RecognitionResult
+    suspend fun recognizeInLanguage(audio: AudioBuffer, language: String): RecognitionResult =
+        throw UnsupportedOperationException("This speech model uses its configured language")
     /** Wait until native stream destruction completes before reuse or another model. */
     suspend fun awaitQuiescent() = Unit
 }

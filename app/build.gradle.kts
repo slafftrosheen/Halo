@@ -268,7 +268,10 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.androidx.appsearch.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
-  debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
+  // LeakCanary requests notification permission on first launch. Keep onboarding permission-free by default.
+  if (providers.gradleProperty("haloLeakCanary").orNull == "true") {
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
+  }
 }
 dependencies {
     implementation(project(":engines:ai"))

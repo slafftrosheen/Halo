@@ -26,11 +26,15 @@ internal fun StudioCreateDialog(service: StudioService, initial: String,
         Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(title, { title = it.take(120) }, label = { Text(stringResource(R.string.studio_project_name)) },
                 modifier = Modifier.fillMaxWidth(), singleLine = true)
-            Text(stringResource(R.string.studio_presets), style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.mk13_studio_what), style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StudioPreset.entries.forEach { choice ->
-                    val label = when (choice) { StudioPreset.BLANK -> R.string.studio_blank; StudioPreset.SQUARE -> R.string.studio_square
-                        StudioPreset.POSTCARD -> R.string.studio_postcard; StudioPreset.PORTRAIT -> R.string.studio_portrait }
+                    val label = when (choice) {
+                        StudioPreset.BLANK -> R.string.mk13_studio_blank
+                        StudioPreset.SQUARE -> R.string.mk13_studio_square
+                        StudioPreset.POSTCARD -> R.string.mk13_studio_postcard
+                        StudioPreset.PORTRAIT -> R.string.mk13_studio_tall
+                    }
                     FilterChip(choice == preset, { preset = choice }, label = { Text(stringResource(label)) })
                 }
             }

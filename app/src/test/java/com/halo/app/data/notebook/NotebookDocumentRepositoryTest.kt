@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.halo.app.data.AppDatabase
+import com.halo.app.ui.notes.v13.NoteDrawing
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -77,6 +79,47 @@ class NotebookDocumentRepositoryTest {
     private suspend fun openDocument(note: NotebookNote): NotebookDocument {
         documents.ensureDocument(note.id, note.body)
         return requireNotNull(documents.load(note.id))
+    }
+
+    @Test fun linkedDrawingKeepsItsWorkspaceAndNodeIdentityAcrossSourceAndCanvasEdits() = runTest {
+        val note = openDocument(createNote("Meeting sketch"))
+        val canvases = NotebookCanvasRepository(database, database.notebookCanvasDao(), database.notebookDao())
+        val links = NotebookDrawingLinks(database, documents, canvases)
+        val first = "sketch:v1|10,20;20,30"
+        val second = "sketch:v1|20,30;30,40"
+        val changed = "sketch:v1|30,40;40,50"
+
+        val saved = links.create(note.noteId, note.revision, note.blocks.last().id, "Drawing", listOf(first, second)) {}
+        val reference = saved.blocks.last()
+        val (boardId, nodeId) = requireNotNull(NoteDrawing.target(reference))
+        assertEquals(boardId, reference.refObjectId)
+        assertEquals(listOf(first, second), links.observe(boardId, nodeId).first())
+        val roundTrip = NotebookDocumentCodec.parse(NotebookDocumentCodec.serialize(saved.blocks)) { "roundtrip-${nextId++}" }.blocks.last()
+        assertEquals(boardId to nodeId, NoteDrawing.target(roundTrip))
+
+        assertTrue(canvases.updateText(boardId, nodeId, changed, first))
+        assertEquals(listOf(changed, second), links.observe(boardId, nodeId).first())
+        val alsoLinked = links.insert(note.noteId, saved.revision, null, boardId, nodeId, "Another reference") {}
+        assertEquals(boardId to nodeId, NoteDrawing.target(alsoLinked.blocks.last()))
+        canvases.deleteNode(boardId, nodeId)
+        assertTrue(links.observe(boardId, nodeId).first().isEmpty())
+    }
+
+    @Test fun drawingAndReferenceRollBackTogetherWhenAdmissionChangesBeforeCommit() = runTest {
+        val note = openDocument(createNote("Original"))
+        val canvases = NotebookCanvasRepository(database, database.notebookCanvasDao(), database.notebookDao())
+        val links = NotebookDrawingLinks(database, documents, canvases)
+        var checks = 0
+        val rejected = runCatching {
+            links.create(note.noteId, note.revision, null, "Drawing", listOf("sketch:v1|10,20;20,30")) {
+                check(++checks < 3)
+            }
+        }
+        assertEquals(3, checks)
+        assertTrue(rejected.isFailure)
+        assertEquals(note.blocks, documents.load(note.noteId)?.blocks)
+        assertTrue(database.notebookDao().observeWorkspaceObjects("", "ACTIVE", false).first()
+            .none { it.type == WorkspaceObjectType.CANVAS.name })
     }
 
     @Test fun unappliedSourceIsRecoveredExactlyWithoutChangingTheCommittedBlocks() = runTest {

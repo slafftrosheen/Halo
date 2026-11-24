@@ -75,6 +75,8 @@ internal fun nearbyBackground(width: Int, height: Int, density: Float, colour: I
 object MiniHaloEntry {
     const val EXTRA_DRAFT = "com.halo.app.extra.MINI_DRAFT"
     val pendingDraft = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    internal data class SavedArticle(val title: String, val arguments: String)
+    internal val pendingArticle = kotlinx.coroutines.flow.MutableStateFlow<Pair<String, SavedArticle>?>(null)
     fun intent(context: Context, screen: String = "mini_halo", draft: String? = null): Intent =
         Intent(context, if (screen == "mini_halo") MiniHaloActivity::class.java else MainActivity::class.java).putExtra(HaloScreenCatalog.EXTRA_SCREEN, screen)
             .apply { draft?.let { putExtra(EXTRA_DRAFT, it.take(2048)) } }

@@ -400,6 +400,17 @@
    "name": "halo notes",
    "instruments": [
     {
+     "id": "notes.draw",
+     "name": "Draw in the note",
+     "icon": "sketch",
+     "group": "Insert",
+     "does": "Add an ink drawing linked to an editable Canvas.",
+     "params": "Use a finger or pen.",
+     "levels": ["S", "P"],
+     "states": [],
+     "hardStop": false
+    },
+    {
      "id": "notes.paragraph_styles",
      "name": "Paragraph styles",
      "icon": "heading",
@@ -1151,6 +1162,7 @@
      "does": "Freehand drawing.",
      "params": "Width 1–24 · smoothing",
      "levels": [
+      "E",
       "S",
       "P"
      ],
@@ -1239,6 +1251,18 @@
      "states": [
       "—"
      ],
+     "hardStop": false
+    },
+    {
+     "id": "canvas.layers_panel",
+     "name": "Layers",
+     "icon": "fit_all",
+     "shortcut": null,
+     "group": "View",
+     "does": "Opens the board’s layer list beside the canvas. Select an item to find it on the board.",
+     "params": "—",
+     "levels": ["P"],
+     "states": ["—"],
      "hardStop": false
     },
     {
@@ -1874,6 +1898,18 @@
       "open",
       "done"
      ],
+     "hardStop": false
+    },
+    {
+     "id": "planner.tomorrow",
+     "name": "Tomorrow",
+     "icon": "calendar",
+     "shortcut": null,
+     "group": "View",
+     "does": "Opens tomorrow in the planner.",
+     "params": "—",
+     "levels": ["P"],
+     "states": ["—"],
      "hardStop": false
     },
     {

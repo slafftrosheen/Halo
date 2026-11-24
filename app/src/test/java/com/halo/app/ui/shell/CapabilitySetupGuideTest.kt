@@ -33,6 +33,23 @@ class CapabilitySetupGuideTest {
     @get:Rule val compose = createComposeRule()
     private val registry = RecordingRegistry()
 
+    @Test fun welcomeCardsWaitUntilDayTwoAndStopAfterTwoDismissals() {
+        val firstDay = java.time.LocalDate.of(2026, 11, 23)
+        val memory = MemoryStorage().apply { putString("welcome_13_date", firstDay.toString()) }
+        val progress = SetupProgressStore(memory)
+        val choices = listOf("hear_you", "calendar")
+        assertNull(progress.setupCard(firstDay, choices))
+        for (offset in 1L..2L) {
+            val date = firstDay.plusDays(offset)
+            assertEquals("hear_you", progress.setupCard(date, choices))
+            progress.noteSetupCard(date, "hear_you")
+            assertNull(progress.setupCard(date, listOf("calendar")))
+            progress.respondToSetupCard(date, "hear_you", opened = false)
+            assertNull(progress.setupCard(date, choices))
+        }
+        assertEquals("calendar", SetupProgressStore(memory).setupCard(firstDay.plusDays(3), choices))
+    }
+
     private fun show(store: SetupProgressStore) {
         val app = ApplicationProvider.getApplicationContext<Application>()
         Shadows.shadowOf(app.packageManager).setSystemFeature(PackageManager.FEATURE_MICROPHONE, true)

@@ -1,6 +1,7 @@
 package com.halo.app.ui.onboarding
 
 import com.halo.sdk.runtime.Storage
+import com.halo.app.ui.onboarding.v13.Thinking
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -49,6 +50,86 @@ class SetupProgressStore(private val storage: Storage) {
     private val mutable = MutableStateFlow(read())
     val state = mutable.asStateFlow()
     val diagnosticsEnabled = MutableStateFlow(storage.getBoolean("setup_diagnostics_enabled_v1"))
+    private val firstTry = MutableStateFlow(storage.getString("welcome_13_first_try"))
+    val welcomeFirstTry = firstTry.asStateFlow()
+    private val thinkingSetup = MutableStateFlow(Thinking.entries.firstOrNull {
+        it.name == storage.getString("welcome_13_thinking_setup")
+    })
+    val welcomeThinkingSetup = thinkingSetup.asStateFlow()
+
+    fun shouldOpenWelcome13(): Boolean = !storage.getBoolean("welcome_13_finished") && shouldAutoLaunch()
+
+    @Synchronized fun finishWelcome13(state: com.halo.app.ui.onboarding.v13.OnboardingState) {
+        require(state.finished)
+        val suggestion = com.halo.app.ui.onboarding.v13.Onboarding.firstTry(state)
+        val thinking = state.thinking?.takeUnless { it == Thinking.DECIDE_LATER }
+        storage.putBatch(
+            strings = mapOf("welcome_13_first_try" to suggestion, "welcome_13_thinking_setup" to thinking?.name,
+                "welcome_13_who" to state.whoFor.joinToString(",") { it.name },
+                "welcome_13_date" to java.time.LocalDate.now().toString()),
+            booleans = mapOf("welcome_13_finished" to true, "setup_auto_dismissed_v1" to true),
+        )
+        firstTry.value = suggestion
+        thinkingSetup.value = thinking
+    }
+
+    @Synchronized fun dismissWelcomeFirstTry() {
+        storage.remove("welcome_13_first_try")
+        firstTry.value = null
+    }
+
+    @Synchronized fun dismissWelcomeThinkingSetup() {
+        storage.remove("welcome_13_thinking_setup")
+        thinkingSetup.value = null
+    }
+
+    fun offerWelcomeVoice(date: java.time.LocalDate): Boolean {
+        val started = storage.getString("welcome_13_date") ?: return false
+        val onboarded = runCatching { java.time.LocalDate.parse(started) }.getOrNull() ?: return false
+        val dismissals = storage.getString("welcome_13_voice_dismissals")?.toIntOrNull() ?: 0
+        return date > onboarded && storage.getString("welcome_13_voice_hidden") != date.toString() &&
+            dismissals < com.halo.app.ui.onboarding.v13.SetupCards.DISMISS_FOREVER_AFTER
+    }
+
+    @Synchronized fun dismissWelcomeVoice(date: java.time.LocalDate) {
+        if (!offerWelcomeVoice(date)) return
+        val count = storage.getString("welcome_13_voice_dismissals")?.toIntOrNull() ?: 0
+        storage.putBatch(strings = mapOf(
+            "welcome_13_voice_dismissals" to (count + 1).toString(),
+            "welcome_13_voice_hidden" to date.toString(),
+        ))
+    }
+
+    internal fun welcomeAudience(): Set<String> =
+        storage.getString("welcome_13_who").orEmpty().split(',').filter(String::isNotBlank).toSet().ifEmpty { setOf("ME") }
+
+    @Synchronized internal fun setupCard(date: java.time.LocalDate, eligible: List<String>): String? {
+        val onboarded = runCatching { java.time.LocalDate.parse(storage.getString("welcome_13_date") ?: return null) }.getOrNull()
+            ?: return null
+        if (date <= onboarded || storage.getString("welcome_13_card_hidden") == date.toString()) return null
+        if (storage.getString("welcome_13_card_day") == date.toString())
+            return storage.getString("welcome_13_card_id")?.takeIf { it in eligible }
+        return eligible.firstOrNull { id ->
+            !storage.getBoolean("welcome_13_card_opened_$id") &&
+                (storage.getString("welcome_13_card_dismissals_$id")?.toIntOrNull() ?: 0) < 2 &&
+                (id != "hear_you" || offerWelcomeVoice(date))
+        }
+    }
+
+    @Synchronized internal fun noteSetupCard(date: java.time.LocalDate, id: String) {
+        if (storage.getString("welcome_13_card_day") != date.toString())
+            storage.putBatch(strings = mapOf("welcome_13_card_day" to date.toString(), "welcome_13_card_id" to id))
+    }
+
+    @Synchronized internal fun respondToSetupCard(date: java.time.LocalDate, id: String, opened: Boolean) {
+        if (storage.getString("welcome_13_card_day") != date.toString() ||
+            storage.getString("welcome_13_card_id") != id || storage.getString("welcome_13_card_hidden") == date.toString()) return
+        val key = "welcome_13_card_dismissals_$id"
+        val count = storage.getString(key)?.toIntOrNull() ?: 0
+        storage.putBatch(strings = mapOf("welcome_13_card_hidden" to date.toString(),
+            key to (count + if (opened) 0 else 1).toString()),
+            booleans = mapOf("welcome_13_card_opened_$id" to opened))
+    }
     /**
      * A saved-incomplete wizard is not permission to force navigation forever.
      * Once the user explicitly chooses Explore Halo, setup becomes opt-in from Settings

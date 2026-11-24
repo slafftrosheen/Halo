@@ -21,6 +21,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -107,6 +108,19 @@ internal fun CapabilitySetupGuide(store: SetupProgressStore, onAccessChanged: ()
     var running by remember { mutableStateOf(false) }
     var unavailableId by remember { mutableStateOf<String?>(null) }
     val inventory = platform.inventory
+    val russian = LocalConfiguration.current.locales[0].language == "ru"
+    val alternatives = remember(context.assets, russian) {
+        runCatching {
+            val contents = context.assets.open("onboarding/ask-when-needed.json").bufferedReader().use { it.readText() }
+            val rows = org.json.JSONObject(contents).getJSONArray("access")
+            (0 until rows.length()).associate { index ->
+                val row = rows.getJSONObject(index)
+                row.getString("id") to row.getString(if (russian) "ifNoRu" else "ifNo")
+            }
+        }.getOrDefault(emptyMap())
+    }
+    var moreAccess by remember { mutableStateOf(false) }
+    val everyday = setOf("microphone", "camera", "calendar_read", "notifications", "location", "bluetooth")
 
     fun next(after: String?): String? = nextGuidedCapability(inventory, after,
         inventory.filter(platform::granted).map { it.id }.toSet(), store.capabilityGuide.attemptedIds +
@@ -169,6 +183,7 @@ internal fun CapabilitySetupGuide(store: SetupProgressStore, onAccessChanged: ()
             HaloWorkspaceCard {
                 Text(stringResource(capabilityCopy(current.id).first), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(capabilityCopy(current.id).second))
+                alternatives[current.id]?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 if (!running) HaloWorkspaceButton(stringResource(if (current.special)
                     R.string.capability_guide_open_settings else R.string.capability_guide_continue), onClick = {
                     // A persisted pending request is a receipt, never an instruction to replay it.
@@ -189,12 +204,17 @@ internal fun CapabilitySetupGuide(store: SetupProgressStore, onAccessChanged: ()
         }
         // Reads Android again on every lifecycle return, including revocations made outside Halo.
         key(revision) {
-            inventory.forEach { request ->
+            TextButton(onClick = { moreAccess = !moreAccess }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(if (moreAccess) R.string.f13_show_less else R.string.f13_show_more))
+            }
+            inventory.filter { moreAccess || it.id in everyday }.forEach { request ->
                 val status = if (unavailableId == request.id) CapabilityAccessState.UNAVAILABLE
                     else platform.status(request, request.id in progress.attemptedIds)
                 HaloWorkspaceCard {
                     Text(stringResource(capabilityCopy(request.id).first), style = MaterialTheme.typography.titleSmall)
                     Text(stringResource(capabilityCopy(request.id).second), style = MaterialTheme.typography.bodySmall)
+                    if (status != CapabilityAccessState.ALLOWED)
+                        alternatives[request.id]?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                     Text(stringResource(when (status) {
                         CapabilityAccessState.ALLOWED -> R.string.capability_state_allowed
                         CapabilityAccessState.LIMITED -> R.string.capability_state_approximate

@@ -348,7 +348,7 @@ class HomeComposerInteractionTest {
         compose.runOnIdle { drafts.value = ComposerDraftState("", drafts.value.revision + 1) }
         editor.assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.EditableText,
             androidx.compose.ui.text.AnnotatedString("")))
-        compose.onNodeWithContentDescription("Send").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Send").assertIsNotEnabled()
         compose.runOnIdle { drafts.value = ComposerDraftState("Recovered failed draft", drafts.value.revision + 1) }
         editor.assertTextEquals("Recovered failed draft")
     }

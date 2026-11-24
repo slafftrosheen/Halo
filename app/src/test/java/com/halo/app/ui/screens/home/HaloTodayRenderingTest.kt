@@ -42,6 +42,7 @@ class HaloTodayRenderingTest {
     @Test fun eventMapAndChatOpenFromTheirOwnTargets() {
         val storage = ApplicationProvider.getApplicationContext<Context>()
             .getSharedPreferences("today-rendering-test", Context.MODE_PRIVATE)
+        storage.edit().putBoolean("autoAdvance", false).commit()
         val choices = HaloBlockChoices(storage)
         val routeHistory = mutableListOf<String>()
         val cards = listOf(
@@ -76,7 +77,22 @@ class HaloTodayRenderingTest {
         compose.onNodeWithText("Less like this").performClick()
         compose.onNodeWithText("Coffee with Anna · 10:30").assertDoesNotExist()
         compose.onNodeWithText("Show hidden blocks again").performClick()
-        compose.onNodeWithText("Coffee with Anna · 10:30").assertIsDisplayed()
+        compose.onNodeWithText("Next").performScrollTo().assertIsEnabled().performClick()
+        compose.onNodeWithText("Coffee with Anna · 10:30").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = "ru-rRU-w320dp-h800dp")
+    fun chatIsAVisibleRootAlongsideOtherTabsAtLargeTextSize() {
+        var route: String? = null
+        compose.setContent {
+            HostlessHaloTheme(darkTheme = true, fontScale = 2f) {
+                HaloHomeTabs(HaloHomeTab.CHAT) { route = it }
+            }
+        }
+        compose.onNodeWithText("Чат").assertIsDisplayed().assertIsSelected().assertHeightIsAtLeast(48.dp)
+        compose.onNodeWithText("Сегодня").assertIsDisplayed().performClick()
+        compose.runOnIdle { assertEquals(HaloHomeTab.TODAY.route, route) }
     }
 
     @Test

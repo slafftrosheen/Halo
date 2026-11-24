@@ -17,6 +17,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.halo.app.ai.PrivacyMode
+import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.collectors.*
 import com.halo.app.language.uiText
@@ -31,6 +32,12 @@ import com.halo.app.ui.screens.home.HaloHomeBlockDeck
 import com.halo.app.ui.screens.home.rememberHaloBlockChoices
 import com.halo.app.ui.zone5.*
 import com.halo.app.ui.screens.notebook.ToolZoneHeader
+import com.halo.app.ui.sources.v13.SourceGroup
+import com.halo.app.ui.sources.v13.SourceManager
+import com.halo.app.ui.sources.v13.SourceStatus
+import com.halo.app.ui.sources.v13.label
+import com.halo.app.ui.workspace.WorkspaceNoteDestination
+import com.halo.app.ui.workspace.prepareWorkspaceNoteHandoff
 import kotlinx.coroutines.*
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -63,9 +70,10 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
     var adding by rememberSaveable { mutableStateOf(false) }
     var addingWidget by rememberSaveable { mutableStateOf(false) }
     var showingKnowledge by rememberSaveable { mutableStateOf(false) }
+    var showingMix by rememberSaveable { mutableStateOf(false) }
     val addWidgetLabel = androidx.compose.ui.res.stringResource(com.halo.app.R.string.alive_widget_title)
     val heading = if (readsOnly) androidx.compose.ui.res.stringResource(com.halo.app.R.string.halo11_home_reads)
-        else uiText("Widgets & sources")
+        else stringResource(R.string.sp13_sources_title)
     var cityKind by rememberSaveable { mutableStateOf<String?>(null) }
     var removing by remember { mutableStateOf<CollectorSource?>(null) }
     var clearing by remember { mutableStateOf<CollectorSource?>(null) }
@@ -85,18 +93,57 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
             }?.let { row.source to it }
         }.sortedByDescending { it.second.publishedAt ?: Instant.MIN }.take(6).toList()
     }
-    LaunchedEffect(kids) { if (kids) { adding = false; addingWidget = false; showingKnowledge = false; cityKind = null; removing = null; clearing = null; article = null } }
+    LaunchedEffect(kids) { if (kids) { adding = false; addingWidget = false; showingKnowledge = false; showingMix = false; cityKind = null; removing = null; clearing = null; article = null } }
     val savedArticle = (current?.snapshot?.payload as? CollectorPayload.Articles)?.items?.firstOrNull { it.id == itemId }
     val fullArticle by produceState<ArticleContent?>(null, savedArticle?.contentKey) {
         value = savedArticle?.let { withContext(Dispatchers.IO) { Graph.articleContentStore.read(it.contentKey) } }
     }
-    val articleDraftPrompt = uiText("About this saved article:") + " "
+    val articleDraftPrompt = uiText("Summarize this saved article using Sources.")
     var articleReading by remember(itemId) { mutableStateOf(false) }
+    val articleScope = rememberCoroutineScope()
+    var workspaceArticle by remember(sourceId, itemId) { mutableStateOf<SavedArticleIdentity?>(null) }
+    var sendingArticle by remember(sourceId, itemId) { mutableStateOf(false) }
+    var articleHandoffFailed by remember(sourceId, itemId) { mutableStateOf(false) }
+    val articleIdentity = current?.let { row ->
+        val snapshot = row.snapshot
+        if (savedArticle != null && snapshot != null && snapshot.sourceVersion == row.source.version &&
+            row.source.selected && row.source.enabled && !row.source.muted
+        ) SavedArticleIdentity(row.source.id, row.source.version, snapshot.contentRevision, savedArticle.id) else null
+    }
+    fun openHandoff() {
+        if (!kids && !sendingArticle) {
+            articleHandoffFailed = false
+            workspaceArticle = articleIdentity
+        }
+    }
+    fun sendArticle(identity: SavedArticleIdentity, destination: WorkspaceNoteDestination) {
+        if (sendingArticle) return
+        sendingArticle = true
+        articleHandoffFailed = false
+        articleScope.launch {
+            try {
+                val family = com.halo.app.ui.toolkit.requireAdultToolkit(context)
+                fun verify() {
+                    check(!Graph.haloPause.isPaused())
+                    com.halo.app.ui.toolkit.requireAdultToolkit(context, family)
+                }
+                val route = prepareWorkspaceNoteHandoff(destination, ::verify) {
+                    Graph.articleWorkspace.keep(identity, ::verify)
+                }
+                verify()
+                workspaceArticle = null
+                onWidgetsDestination(route)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { articleHandoffFailed = true }
+            finally { sendingArticle = false }
+        }
+    }
     val owner = ShellPageOwner(if (sourceId == null) "everyday_sources" else "everyday_source", objectId = sourceId,
         sourceIdentity = "${current?.source?.version}:${current?.snapshot?.contentRevision}:$itemId:${state.busy}:$kids:${state.draft != null}",
         canonicalToolIds = if (sourceId == null && !kids) listOf("halo_source_query", "halo_source_save",
             "halo_knowledge_catalogue", "halo_knowledge_search", "halo_knowledge_download")
-            else listOf("halo_source_query", "halo_source_get", "halo_source_image"),
+            else listOf("halo_source_query", "halo_source_get", "halo_source_image") +
+                listOfNotNull("halo_source_keep_article".takeIf { articleIdentity != null && !kids }),
         statusLabel = current?.snapshot?.retrievedAt?.let { uiText("Retrieved %1\$s", time(it)) }
             ?: uiText(if (power) "Power" else "Local"), guidanceBlocked = state.busy || state.loading || state.draft != null,
         helpDescription = uiText("Choose sources on this phone. Only selected, enabled sources refresh in Power. Saved snapshots remain readable in Local."),
@@ -113,9 +160,16 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
         }
         if (savedArticle != null) {
             add(ShellPageAction("page.sources.read", uiText("Read aloud"), HaloGlyph.SPEAK) { articleReading = true })
-            if (!kids) add(ShellPageAction("page.sources.ask", uiText("Ask halo"), HaloGlyph.HALO) {
-                val draft = articleDraftPrompt + savedArticle.title.take(240)
-                context.startActivity(com.halo.app.ui.mini.MiniHaloEntry.intent(context, "mini_halo", draft))
+            val snapshot = current?.snapshot
+            val source = current?.source
+            if (!kids && source != null && snapshot != null && source.selected && source.enabled && !source.muted &&
+                snapshot.sourceVersion == source.version
+            ) add(ShellPageAction("page.sources.ask", uiText("Ask halo"), HaloGlyph.HALO) {
+                val target = org.json.JSONObject().put("id", source.id).put("version", source.version)
+                    .put("contentRevision", snapshot.contentRevision).put("articleId", savedArticle.id)
+                val mini = com.halo.app.ui.mini.MiniHaloEntry
+                mini.pendingArticle.value = articleDraftPrompt to com.halo.app.ui.mini.MiniHaloEntry.SavedArticle(savedArticle.title, target.toString())
+                context.startActivity(mini.intent(context, "mini_halo", articleDraftPrompt))
             })
         }
         addAll(listOf(
@@ -128,6 +182,21 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
         ShellPageAction("page.sources.stop", uiText("Cancel refresh"), HaloGlyph.STOP, current?.attempt?.state == CollectorAttemptState.FETCHING && !kids) { sourceId?.let(model::cancelRefresh) },
     ))
     })
+    workspaceArticle?.takeUnless { kids }?.let { identity ->
+        AlertDialog(onDismissRequest = { if (!sendingArticle) workspaceArticle = null },
+            title = { Text(uiText("Send to workspace")) }, text = {
+                Column {
+                    if (articleHandoffFailed) Text(uiText("The article could not be saved. Reopen it and try again."),
+                        color = MaterialTheme.colorScheme.error)
+                    if (sendingArticle) LinearProgressIndicator(Modifier.fillMaxWidth())
+                    WorkspaceNoteDestination.entries.forEach { destination ->
+                        TextButton(onClick = { sendArticle(identity, destination) }, enabled = !sendingArticle) {
+                            Text(uiText(destination.label))
+                        }
+                    }
+                }
+            }, confirmButton = { TextButton(onClick = { workspaceArticle = null }, enabled = !sendingArticle) { Text(uiText("Cancel")) } })
+    }
     if (addingWidget && canShow && !kids) com.halo.app.nativeactions.EverydayWidgetPicker { addingWidget = false }
     if (articleReading && savedArticle != null) com.halo.app.ui.zone6.Zone6ButtonSheet(
         uiText("Read aloud"), { articleReading = false }) {
@@ -146,9 +215,12 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
         return externalError == null
     }
     if (showingKnowledge && canShow && !kids) OfflineKnowledgeSheet(power, { showingKnowledge = false }, ::external)
+    if (showingMix && canShow && !kids) SourceMixSheet(state.sources, dismiss = { showingMix = false })
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (savedArticle == null) item {
-            Zone5PageHeading(current?.source?.title ?: heading, uiText("Saved information with clear sources and timestamps."))
+            Zone5PageHeading(current?.source?.title ?: heading,
+                if (current == null && !readsOnly) stringResource(R.string.sp13_sources_sub)
+                else uiText("Saved information with clear sources and timestamps."))
             Text(uiText(if (power) "Power · Only selected and enabled sources may refresh." else "Local · No internet refresh. Saved external information may be out of date."), style = MaterialTheme.typography.bodySmall)
             if (!LocalShellHaloOrb.current) TextButton(onBack) { Text(uiText("Back")) }
         }
@@ -191,22 +263,34 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                     Text(uiText("Retrieved %1\$s", time(snapshot.retrievedAt)), style = MaterialTheme.typography.bodySmall)
                     Text(uiText("Last verified %1\$s", time(snapshot.verifiedAt)), style = MaterialTheme.typography.bodySmall)
                 }
-                Text(uiText(attemptLabel(current.attempt.state)), style = MaterialTheme.typography.bodySmall)
+                SourceStatus(current, stale = current.snapshot?.stale(now, source.external, power) == true)
                 current.attempt.at?.let { Text(uiText("Latest attempt %1\$s", time(it)), style = MaterialTheme.typography.bodySmall) }
                 current.attempt.nextAllowedAt?.takeIf { it > now }?.let { Text(uiText("Next eligible refresh %1\$s", time(it)), style = MaterialTheme.typography.bodySmall) }
                 source.attributionUrl?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 if (!kids) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton({ model.select(source, !source.selected) }, enabled = !state.busy) { Text(uiText(if (source.selected) "Deselect source" else "Select source")) }
+                    TextButton({ model.setEnabled(source, !source.enabled) }, enabled = !state.busy) {
+                        Text(stringResource(if (source.enabled) R.string.sp13_pause else R.string.sp13_resume))
+                    }
                     TextButton({ clearing = source }, enabled = !state.busy && current.snapshot != null) { Text(uiText("Clear cached information")) }
                     TextButton({ removing = source }, enabled = !state.busy) { Text(uiText("Remove source")) }
                 }
                 if (itemId != null) TextButton({ onSource(source.id, null) }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Back to saved source")) }
+                if (!kids && articleIdentity != null) TextButton(onClick = ::openHandoff, enabled = !sendingArticle,
+                    modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Send to workspace")) }
             }
             collectorContent(current, itemId, now, locale, kids, { onSource(source.id, it) }, { external(it) }, { entry ->
                 current.snapshot?.let { article = ArticleReminderReview(source.id, source.version, it.contentRevision, entry) }
             }, onLocal, picturesVisible)
         } else if (sourceId == null && canShow) {
             item {
+                if (!kids && !readsOnly) Button({ adding = true }, enabled = !state.busy,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+                    Text(stringResource(R.string.sp13_add_source))
+                }
+                if (!kids && !readsOnly) TextButton({ showingMix = true }, Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.sp13_mix_title))
+                }
                 if (!readsOnly) Text(uiText("On your home screen"), style = MaterialTheme.typography.titleMedium)
                 if (!kids) FilledTonalButton(onClick = { if (readsOnly) adding = true else addingWidget = true },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(if (readsOnly) uiText("Add feed") else addWidgetLabel) }
@@ -252,7 +336,12 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                     ),
                 ) else Text(uiText("No matching sources. Change the filters or add a feed."))
             }
-            items(sources, key = { it.source.id }) { row ->
+            val grouped = sources.groupBy { if (kids) SourceGroup.KIDS_SAFE else SourceManager.group(it.source) }
+            grouped.toSortedMap().forEach { (group, rows) ->
+                if (!readsOnly) item("source-group:${group.name}") {
+                    Text(stringResource(group.label), style = MaterialTheme.typography.titleMedium)
+                }
+                items(rows, key = { it.source.id }) { row ->
                 Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(row.source.title, style = MaterialTheme.typography.titleMedium)
@@ -267,9 +356,11 @@ fun SourcesScreen(model: SourcesViewModel, sourceId: String?, itemId: String?, o
                         Text(uiText(sourceCategoryLabel(row.source.category)), style = MaterialTheme.typography.labelLarge)
                         if (!kids) EverydayToggle(uiText("Include in selected sources"), row.source.selected, !state.busy) { model.select(row.source, it) }
                         Text(uiText(if (row.snapshot == null) "No saved snapshot" else if (row.snapshot.stale(now, row.source.external, power)) "Cached · may be out of date" else "Saved snapshot is current"), style = MaterialTheme.typography.bodySmall)
+                        SourceStatus(row, stale = row.snapshot?.stale(now, row.source.external, power) == true)
                         TextButton({ onSource(row.source.id, null) }, Modifier.heightIn(min = 56.dp)) { Text(uiText("Open source")) }
                     }
                 }
+            }
             }
         }
     }
@@ -322,6 +413,7 @@ private fun AddFeedSheet(model: SourcesViewModel, state: SourcesPageState, power
     var url by rememberSaveable { mutableStateOf("") }; var title by rememberSaveable { mutableStateOf("") }
     var language by rememberSaveable { mutableStateOf("en") }; var type by rememberSaveable { mutableStateOf(CollectorKind.FEED.name) }
     var selected by rememberSaveable { mutableStateOf(false) }
+    var browsing by rememberSaveable { mutableStateOf(false) }
     var discard by remember { mutableStateOf(false) }
     fun close() {
         if (!state.busy) {
@@ -332,7 +424,24 @@ private fun AddFeedSheet(model: SourcesViewModel, state: SourcesPageState, power
     LaunchedEffect(state.addedSourceId, draftId) { if (state.addedSourceId == draftId) dismiss() }
     EverydaySheet(::close) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(uiText("Add feed"), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.sp13_add_source), style = MaterialTheme.typography.headlineSmall)
+            com.halo.app.ui.theme.v13.Halo13Animation(com.halo.app.ui.theme.v13.Halo13Motion.ADD_SOURCE,
+                Modifier.fillMaxWidth().height(76.dp))
+            TextButton({ browsing = !browsing }, enabled = !state.busy, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(if (browsing) R.string.sp13_add_link else R.string.sp13_add_browse))
+            }
+            if (browsing) {
+                state.error?.let { EverydayMessage(it, true) }
+                com.halo.app.everyday.collectors.StarterSourceCatalogue.external().forEach { starter ->
+                    val registered = state.sources.firstOrNull { it.source.id == starter.id }?.source
+                    EverydayToggle(starter.title, registered?.selected == true, !state.busy) { checked ->
+                        if (registered != null) model.select(registered, checked)
+                        else if (checked) model.addStarter(starter.id)
+                    }
+                }
+                TextButton(::close, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) { Text(uiText("Done")) }
+                return@Column
+            }
             Text(uiText("A source can be saved in Local without fetching it. Preview checks real feed contents in Power."))
             state.error?.let { EverydayMessage(it, true) }
             OutlinedTextField(title, { title = it.take(200) }, label = { Text(uiText("Source name")) }, modifier = Modifier.fillMaxWidth())
@@ -347,21 +456,29 @@ private fun AddFeedSheet(model: SourcesViewModel, state: SourcesPageState, power
             EverydayToggle(uiText("Include in selected sources"), selected, !state.busy) { selected = it }
             Button({ model.preview(url, CollectorKind.valueOf(type), language) }, enabled = power && !state.busy && url.isNotBlank()) { Text(uiText("Preview feed")) }
             if (!power) Text(uiText("Preview is unavailable in Local. You can save the address now and check it later in Power."), style = MaterialTheme.typography.bodySmall)
-            state.preview?.takeIf { it.candidate.endpoint == url && it.candidate.kind.name == type && it.candidate.language == language }?.let { preview ->
+            val currentPreview = state.preview?.takeIf { it.matches(url, CollectorKind.valueOf(type), language) }
+            currentPreview?.let { preview ->
                 when (val result = preview.result) {
                     is CollectorFetchResult.Updated -> {
+                        if (preview.discoveredFeed) {
+                            Text(stringResource(R.string.sp13_link_found))
+                            preview.candidate.endpoint?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                        }
                         Text(uiText("Preview received. It is not saved as a source snapshot."))
                         when (val payload = result.payload) {
-                            is CollectorPayload.Articles -> payload.items.take(5).forEach { Text(it.title) }
+                            is CollectorPayload.Articles -> payload.items.take(3).forEach { Text(it.title) }
                             is CollectorPayload.Calendar -> payload.preview.records.take(5).forEach { Text(it.title) }
                             is CollectorPayload.Warnings -> payload.items.take(5).forEach { Text(it.title) }
                             else -> Unit
                         }
                     }
-                    else -> EverydayMessage("No usable preview was received. Check the address or try again after the refresh delay.", true)
+                    is CollectorFetchResult.Unavailable -> EverydayMessage(result.reason, true)
+                    CollectorFetchResult.NotModified -> EverydayMessage("No new preview was received.", true)
                 }
             }
-            Button({ model.addUrl(draftId, url, title, CollectorKind.valueOf(type), language, selected) }, enabled = !state.busy && title.isNotBlank() && url.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text(uiText("Save source")) }
+            Button({ model.addUrl(draftId, url, title, CollectorKind.valueOf(type), language, selected) },
+                enabled = !state.busy && title.isNotBlank() && url.isNotBlank() && currentPreview?.websiteWithoutFeed != true,
+                modifier = Modifier.fillMaxWidth()) { Text(uiText("Save source")) }
             TextButton(::close, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) { Text(uiText("Cancel")) }
         }
     }
@@ -369,6 +486,27 @@ private fun AddFeedSheet(model: SourcesViewModel, state: SourcesPageState, power
         text = { Text(uiText("The source has not been added. The details in this form will be discarded.")) },
         confirmButton = { TextButton({ discard = false; dismiss() }) { Text(uiText("Discard")) } },
         dismissButton = { TextButton({ discard = false }) { Text(uiText("Keep editing")) } })
+}
+
+@Composable
+private fun SourceMixSheet(sources: List<CollectorState>, dismiss: () -> Unit) {
+    val selected = sources.map { it.source }.filter { it.selected && it.enabled && it.kind == CollectorKind.FEED }
+    EverydaySheet(dismiss) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.sp13_mix_title), style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.sp13_mix_body))
+            if (selected.isEmpty()) Text(uiText("No matching sources. Change the filters or add a feed."))
+            for ((category, rows) in selected.groupBy { it.category }.toSortedMap()) {
+                Text(uiText(sourceCategoryLabel(category)), style = MaterialTheme.typography.titleMedium)
+                for ((language, group) in rows.groupBy { it.language }.toSortedMap()) {
+                    val label = java.util.Locale.forLanguageTag(language).getDisplayLanguage(LocalConfiguration.current.locales[0])
+                    Text("$label · ${group.size}")
+                }
+            }
+            TextButton(dismiss, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Done")) }
+        }
+    }
 }
 
 internal fun attemptLabel(state: CollectorAttemptState) = when (state) {

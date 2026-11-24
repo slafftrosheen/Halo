@@ -54,10 +54,10 @@ data class StudioVectorGeometry(
             StudioShape.ROUNDED_RECT, StudioShape.FRAME -> {
                 val scale = minOf(box.width(), box.height())
                 val radii = corners.flatMap { listOf(it * scale, it * scale) }.toFloatArray()
-                addRoundRect(box, radii, Direction.CW)
+                addRoundRect(box, radii, Path.Direction.CW)
             }
             StudioShape.ARC -> arcTo(box, startAngle, sweep, true)
-            StudioShape.ELLIPSE -> addOval(box, Direction.CW)
+            StudioShape.ELLIPSE -> addOval(box, Path.Direction.CW)
             StudioShape.POLYGON, StudioShape.STAR -> {
                 val count = if (shape == StudioShape.STAR) sides * 2 else sides
                 repeat(count) { index ->
@@ -83,7 +83,7 @@ data class StudioVectorGeometry(
                 }
             }
             StudioShape.PATH -> {
-                if (additionalContours.isNotEmpty()) fillType = FillType.EVEN_ODD
+                if (additionalContours.isNotEmpty()) fillType = Path.FillType.EVEN_ODD
                 fun connect(a: StudioPathNode, b: StudioPathNode) {
                     if (a.outgoingX == a.x && a.outgoingY == a.y && b.incomingX == b.x && b.incomingY == b.y)
                         lineTo(x(b.x), y(b.y))

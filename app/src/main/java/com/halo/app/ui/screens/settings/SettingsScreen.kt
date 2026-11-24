@@ -237,11 +237,19 @@ internal fun SettingsContent(
         group.copy(rows = rows).takeIf { rows.isNotEmpty() }
     }
     val easyOverview = easyView && !advanced && !allEasySettings && !searchOpen
-    val visibleGroups = when {
+    val matchingGroups = when {
         advanced -> safeAdvancedGroups
         easyOverview -> emptyList()
         else -> filtered(everydayGroups)
     }
+    val settingsLayout = com.halo.app.ui.adaptive.rememberAdaptiveSurfaceLayout("settings", matchingGroups.map {
+        com.halo.app.ui.adaptive.v13.Block(it.key, com.halo.app.ui.adaptive.v13.Slot.MAIN)
+    }, mapOf("look" to "personal", "voice" to "companion", "privacy_simple" to "privacy", "help" to "help",
+        "devices" to "actions", "sources" to "daily", "ai_services" to "runtime", "advanced" to "advanced_essentials"),
+        com.halo.app.ui.adaptive.v13.ExperienceLevel.entries[if (advanced) 2 else if (easyView) 0 else 1],
+        com.halo.app.ui.theme.rememberHaloLayoutLocked() || searchOpen || advanced)
+    val groupsByKey = matchingGroups.associateBy(SettingsMenuGroup::key)
+    val visibleGroups = settingsLayout.result.visible.mapNotNull { groupsByKey[it.id] }
     if (page != null) {
         if (page == "Language") LanguagePickerPage(language, onLanguage, { page = null }, { page = null; onOpen(SettingsDestination.VOICE) })
         else Column(Modifier.fillMaxSize().imePadding().verticalScroll(androidx.compose.foundation.rememberScrollState())
@@ -275,6 +283,53 @@ internal fun SettingsContent(
                         val enabled by kidsPreferences.enabled.collectAsStateWithLifecycle()
                         val scope = rememberCoroutineScope()
                         var failure by remember { mutableStateOf(false) }
+                        var handover by remember { mutableStateOf(false) }
+                        val shelf by kidsPreferences.cards.state.collectAsStateWithLifecycle()
+                        LaunchedEffect(kidsPreferences.cards) { kidsPreferences.cards.load() }
+                        var handoverAge by remember { mutableStateOf<com.halo.app.ui.screens.kids.KidsAgeBand?>(null) }
+                        var handoverRevision by remember { mutableStateOf<Long?>(null) }
+                        var changing by remember { mutableStateOf(false) }
+                        fun changeKids(value: Boolean) {
+                            if (changing) return
+                            changing = true
+                            scope.launch {
+                                try {
+                                    if (value) {
+                                        val revision = requireNotNull(handoverRevision)
+                                        kidsPreferences.cards.setAge(requireNotNull(handoverAge)) {
+                                            kidsPreferences.requireAdultAction(revision)
+                                        }
+                                        kidsPreferences.requireAdultAction(revision)
+                                    }
+                                    kidsPreferences.setEnabled(value)
+                                    failure = false
+                                }
+                                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                catch (_: Exception) { failure = true }
+                                finally { changing = false; handover = false }
+                            }
+                        }
+                        val openHandover = com.halo.app.ui.screens.kids.rememberKidsGrownUpGate(
+                            onVerified = {
+                                handoverRevision = runCatching { kidsPreferences.adultActionRevision() }.getOrNull()
+                                handoverAge = shelf?.age
+                                handover = handoverRevision != null
+                            }, onUnavailable = { failure = true })
+                        if (handover && !enabled) AlertDialog(
+                            onDismissRequest = { if (!changing) handover = false },
+                            icon = { com.halo.app.ui.theme.v13.Halo13Animation(
+                                com.halo.app.ui.theme.v13.Halo13Motion.HANDOVER, Modifier.size(84.dp)) },
+                            title = { Text(androidx.compose.ui.res.stringResource(R.string.ob13_kids_handover)) },
+                            text = { Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(androidx.compose.ui.res.stringResource(R.string.ob13_kids_age))
+                                com.halo.app.ui.screens.kids.KidsAgeBand.entries.forEach { age ->
+                                    FilterChip(selected = handoverAge == age, onClick = { handoverAge = age },
+                                        enabled = !changing, label = { Text(age.label) })
+                                }
+                            } },
+                            confirmButton = { TextButton(onClick = { changeKids(true) }, enabled = !changing && handoverAge != null) { Text(uiText("Continue")) } },
+                            dismissButton = { TextButton(onClick = { handover = false }, enabled = !changing) { Text(uiText("Cancel")) } },
+                        )
                         SettingsGroup("Kids mode") {
                             Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -285,11 +340,9 @@ internal fun SettingsContent(
                                 }
                                 val label = uiText("Kids mode")
                                 Switch(modifier = Modifier.semantics { contentDescription = label }, checked = enabled,
-                                    onCheckedChange = { value -> scope.launch {
-                                        try { kidsPreferences.setEnabled(value); failure = false }
-                                        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                                        catch (_: Exception) { failure = true }
-                                    } })
+                                    enabled = !changing, onCheckedChange = { value ->
+                                        if (value) openHandover() else changeKids(false)
+                                    })
                             }
                             if (failure) Text(uiText("Could not save your change. Try again."), color = MaterialTheme.colorScheme.error)
                             com.halo.app.ui.screens.kids.GrownUpHomeworkSettings(kidsPreferences)

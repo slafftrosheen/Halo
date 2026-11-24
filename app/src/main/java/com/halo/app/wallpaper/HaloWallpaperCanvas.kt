@@ -56,9 +56,10 @@ internal fun HaloWallpaperCanvas(
     var clock by remember { mutableFloatStateOf(haloWallpaperTime()) }
     val latch = remember(options.schedule) { WallpaperPeriodLatch(wallpaperPeriod(haloWallpaperTime())) }
     var period by remember(latch) { mutableStateOf(latch.period) }
-    val wall = if (useSchedule) options.wallpaperAt(period) else options.wallpaper
+    val wall = if (useSchedule || options.followSky) options.wallpaperAt(period) else options.wallpaper
+    var skyRefresh by remember { mutableIntStateOf(0) }
     val powerAllowsMotion = rememberWallpaperMotionPermission(animate)
-    if (animate || useSchedule) DisposableEffect(context, lifecycle, useSchedule, latch) {
+    if (animate || useSchedule || options.followSky) DisposableEffect(context, lifecycle, useSchedule, latch, motion) {
         fun updateClock(visible: Boolean) {
             clock = haloWallpaperTime()
             if (useSchedule) period = latch.update(wallpaperPeriod(clock), visible, SystemClock.elapsedRealtime())
@@ -68,10 +69,11 @@ internal fun HaloWallpaperCanvas(
                 val visible = lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
                     intent?.action != Intent.ACTION_SCREEN_OFF
                 updateClock(visible)
+                if (motion == HaloLookMotion.FULL || intent?.action == Intent.ACTION_SCREEN_ON) skyRefresh++
             }
         }
         val observer = LifecycleEventObserver { _, event -> when (event) {
-            Lifecycle.Event.ON_RESUME -> updateClock(true)
+            Lifecycle.Event.ON_RESUME -> { updateClock(true); skyRefresh++ }
             Lifecycle.Event.ON_PAUSE -> updateClock(false)
             else -> Unit
         } }
@@ -88,14 +90,14 @@ internal fun HaloWallpaperCanvas(
     val renderedTime = previewTime ?: clock
     val night = options.calmerAtNight && wallpaperQuietTime(renderedTime)
     val paused = LocalHaloDecorationPaused.current
-    val moving = !wall.nearStill && !paused &&
+    val moving = !wall.nearStill && !paused && (!options.followSky || motion == HaloLookMotion.FULL) &&
         (sharedPreview?.moving ?: (animate && powerAllowsMotion && motion != HaloLookMotion.STILL))
     val speed = wallpaperMotionSpeed(motion, night) * motionScale
     val ownClock = rememberWallpaperFrames(moving && sharedPreview == null, speed, WALLPAPER_FRAME_NS)
     val elapsed = sharedPreview?.elapsed ?: ownClock
     var ambientStart by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(ambient) { ambientStart = elapsed.value }
-    val weather = (animate || useSchedule || kidsSky) && wall.usesEnvironment && wall != HaloWallpaper.LUMEN_GARDEN
+    val weather = options.followSky || (animate || useSchedule || kidsSky) && wall.usesEnvironment && wall != HaloWallpaper.LUMEN_GARDEN
     val garden = (animate || useSchedule || kidsSky) && wall == HaloWallpaper.LUMEN_GARDEN
     val environment by produceState(WallpaperEnvironment(), lifecycle, weather, garden, kidsSky) {
         value = WallpaperEnvironment()
@@ -110,13 +112,17 @@ internal fun HaloWallpaperCanvas(
         value = photoStore.render(stylePhoto)
     }
     val painter = remember { HaloWallpaperPainter() }
+    val sky = remember(options.followSky, environment, previewTime, skyRefresh) {
+        if (options.followSky) environment.skyState(previewTime) else null
+    }
     Canvas(modifier) {
         drawIntoCanvas { canvas ->
             painter.paint(canvas.nativeCanvas, wall, if (wall.nearStill) 0f else elapsed.value, renderedTime, accent,
                 if (options.reactsToHalo) ambient else HaloAmbient.IDLE, 1f,
                 ripples = moving && sharedPreview == null, dim = if (night) .25f else 0f,
                 width = size.width, height = size.height, environment = environment, photo = photo,
-                ring = stylePhoto?.ring ?: WallpaperRing.CENTER, ambientTime = (elapsed.value - ambientStart).coerceAtLeast(0f))
+                ring = stylePhoto?.ring ?: WallpaperRing.CENTER, ambientTime = (elapsed.value - ambientStart).coerceAtLeast(0f),
+                sky = sky)
         }
     }
 }

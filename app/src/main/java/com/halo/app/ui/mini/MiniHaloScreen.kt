@@ -28,7 +28,10 @@ import com.halo.app.language.uiText
 import com.halo.app.ui.presence.HaloSignalFace
 import com.halo.app.ui.presence.HaloSignalPresentation
 import com.halo.app.ui.screens.home.HomeViewModel
+import com.halo.app.ui.screens.home.HomeTaskProgress
 import com.halo.app.ui.state.toSignalPresentation
+import com.halo.runtime.cognition.interaction.PresentationNode
+import com.halo.runtime.cognition.interaction.StructuredPresentation
 
 /** Same conversation, runtime and durable approvals as the full Home screen. */
 @Composable
@@ -41,10 +44,21 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
     val ui by home.uiState.collectAsStateWithLifecycle()
     val submission by home.textSubmission.collectAsStateWithLifecycle()
     val listeningRequested by home.listeningRequested.collectAsStateWithLifecycle()
-    val kids by com.halo.app.di.ManualDependencyGraph.kidsPreferences.enabled.collectAsStateWithLifecycle()
+    val family = com.halo.app.di.ManualDependencyGraph.kidsPreferences
+    val kids by family.enabled.collectAsStateWithLifecycle()
+    val familyReady by family.loadedState.collectAsStateWithLifecycle()
     var draft by rememberSaveable { mutableStateOf("") }
+    var article by remember { mutableStateOf<MiniHaloEntry.SavedArticle?>(null) }
     val incoming by MiniHaloEntry.pendingDraft.collectAsStateWithLifecycle()
-    LaunchedEffect(incoming) { incoming?.let { draft = it; MiniHaloEntry.pendingDraft.compareAndSet(it, null) } }
+    LaunchedEffect(incoming) {
+        incoming?.let {
+            draft = it
+            val pending = MiniHaloEntry.pendingArticle.value
+            article = pending?.second?.takeIf { _ -> pending.first == it }
+            if (pending != null) MiniHaloEntry.pendingArticle.compareAndSet(pending, null)
+            MiniHaloEntry.pendingDraft.compareAndSet(it, null)
+        }
+    }
     // Clear only an accepted completed draft, never text the user has since edited.
     LaunchedEffect(submission.phase, submission.interactionId) {
         if (submission.phase == com.halo.app.ui.screens.home.TextSubmissionPhase.COMPLETED &&
@@ -78,13 +92,19 @@ fun MiniHaloScreen(home: HomeViewModel, onMicrophone: () -> Unit, onOpen: (Strin
             !ui.speechReady -> onOpen("voice_settings")
             else -> home.startListening()
         } },
-        onSend = { home.submitText(draft) }, onStop = home::stopOrbInteraction,
+        onSend = {
+            val attached = article
+            if (attached == null || kids) home.submitText(draft) else home.askSavedArticle(draft, attached.arguments)
+        }, onStop = home::stopOrbInteraction,
         onOpen = { screen ->
             if (screen == "home" && draft.isNotBlank()) home.captureQuestionDraft.value = draft
             onOpen(screen)
         }, onClose = { home.cancelVoiceInput(); onClose() }, sharedTransitionScope = sharedTransitionScope,
         animatedVisibilityScope = animatedVisibilityScope,
         allowSharedOrb = allowSharedOrb,
+        attachedTitle = article?.title?.takeUnless { kids },
+        onRemoveAttachment = { article = null },
+        taskProgress = ui.longTaskProgress.takeIf { active && familyReady && !kids },
         customize = if (kids) null else ({ MiniAppearanceEntry(iconOnly = true, enabled = !active) }),
         orbControl = { size -> com.halo.app.ui.presence.HomeOrbControl(home, onMicrophone,
             onOpen = { route ->
@@ -109,6 +129,9 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
     allowSharedOrb: Boolean = false,
     orbControl: (@Composable (androidx.compose.ui.unit.Dp) -> Unit)? = null,
     customize: (@Composable () -> Unit)? = null,
+    attachedTitle: String? = null,
+    onRemoveAttachment: () -> Unit = {},
+    taskProgress: StructuredPresentation? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     val active = busy || signal.state in setOf(HaloSignalState.LISTENING, HaloSignalState.CAPTURING,
@@ -141,13 +164,18 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                         uiText("Close"), Modifier.size(24.dp))
                 }
             }
+            if (attachedTitle != null) Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(attachedTitle, Modifier.weight(1f), style = MaterialTheme.typography.labelLarge,
+                    maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                TextButton(onClick = onRemoveAttachment, enabled = !active) { Text(uiText("Remove")) }
+            }
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)) {
             val status: @Composable () -> Unit = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(uiText(if (reviewRequired) "Needs your review" else signal.label),
                         style = MaterialTheme.typography.titleMedium, color = scheme.onBackground)
-                    Text(uiText(if (reviewRequired) "Open Activity to review the next step." else "A little space for a quick question."),
+                    if (reviewRequired) Text(uiText("Open Activity to review the next step."),
                         style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
                 }
             }
@@ -157,6 +185,15 @@ internal fun MiniHaloContent(signal: HaloSignalPresentation, draft: String, onDr
                 Column(Modifier.padding(12.dp)) { status() }
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth(), color = scheme.primary, trackColor = scheme.surfaceContainer)
+            taskProgress?.let { progress ->
+                val checklist = progress.root as? PresentationNode.Checklist
+                if (checklist != null && checklist.items.isNotEmpty()) {
+                    HomeTaskProgress(progress.copy(root = checklist.copy(items = checklist.items.takeLast(3))))
+                    if (!reviewRequired) TextButton(onClick = { onOpen("activity") }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(uiText("Open Activity"))
+                    }
+                }
+            }
             notice?.let { Text(uiText(it), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant) }
             if (!response.isNullOrBlank()) Surface(Modifier.fillMaxWidth(), shape = com.halo.app.ui.design.HaloShapes.card,
                 color = scheme.surfaceContainerLow) {

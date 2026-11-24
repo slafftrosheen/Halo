@@ -75,6 +75,7 @@ internal fun CanvasInkSurface(
     showBrushes: Boolean = false,
     ghostGuide: (DrawScope.(Rect) -> Unit)? = null,
     mirrorCopies: Int = 1,
+    continueOnNewSheet: ((String) -> Boolean)? = null,
 ) {
     val sourceAspect = background?.let { (it.width * 1000f / it.height).roundToInt() } ?: aspectMilli
     val parsed = remember(initial, sourceAspect) {
@@ -83,8 +84,12 @@ internal fun CanvasInkSurface(
         }
     }
     val readable = parsed != null
-    val editor = remember(initial, sourceAspect) {
-        InkEditor(parsed ?: InkDocument(), sourceAspect.takeIf { it in 125..8000 })
+    val continuation by rememberUpdatedState(continueOnNewSheet)
+    val multiSheet = continueOnNewSheet != null
+    val editor = remember(initial, sourceAspect, multiSheet) {
+        InkEditor(parsed ?: InkDocument(), sourceAspect.takeIf { it in 125..8000 }).apply {
+            if (multiSheet) this.continueOnNewSheet = { next -> continuation?.invoke(InkCodec.encode(next)) == true }
+        }
     }
     val committedCallback by rememberUpdatedState(onChanged)
     var revision by remember(initial) { mutableIntStateOf(0) }
@@ -456,7 +461,10 @@ internal fun CanvasInkSurface(
             Text(stringResource(R.string.ink_selection_help), style = MaterialTheme.typography.bodySmall)
         }
         Text(stringResource(R.string.ink_input_help), style = MaterialTheme.typography.bodySmall)
-        if (editor.limitReached) Text(stringResource(R.string.ink_capacity), color = MaterialTheme.colorScheme.error)
+        if (editor.limitReached) {
+            Text(stringResource(if (multiSheet) R.string.mk13_sheets_calm else R.string.ink_capacity),
+                color = if (multiSheet) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
+        }
         if (rejectedChange) Text(stringResource(R.string.ink_draft_rejected), color = MaterialTheme.colorScheme.error)
     }
 }

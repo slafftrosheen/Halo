@@ -49,8 +49,9 @@ class EverydayToolExecutorTest {
         {if(child) BriefAudience.KIDS else BriefAudience.EVERYDAY},{emptySet()},{true},clock,{ZoneOffset.UTC})
     private var opened: EverydayTarget?=null
     private fun executorFor(records: OrganizerUseCases=useCases,sourceReader: CollectorRepository=sources,
-        imageReader: suspend (ArticleImage,String)->JSONObject = {_,_->error("Not configured")},onAdmission: ()->Unit = {})=EverydayToolExecutor(records,RoomWorldClockRepository(db,clock),OfflineCityCatalogue {error("Not needed")},sourceReader,
-        CollectorCoordinator(sources,registry,policy,clock),CollectorPreview(sources,registry,policy,clock),briefs,briefService,{}, {},
+        imageReader: suspend (ArticleImage,String)->JSONObject = {_,_->error("Not configured")},onAdmission: ()->Unit = {},
+        preview: CollectorPreview = CollectorPreview(sources,registry,policy,clock))=EverydayToolExecutor(records,RoomWorldClockRepository(db,clock),OfflineCityCatalogue {error("Not needed")},sourceReader,
+        CollectorCoordinator(sources,registry,policy,clock),preview,briefs,briefService,{}, {},
         {id,version -> sources.clearSnapshot(id,version)}, {_,_ -> JSONObject()}, {opened=it;true}, {allowed},{child},
         {val family=child;onAdmission();{check(allowed && child==family)}},{1000},{"boot"},clock,readState={EverydayDisclosureSnapshot.capture(db)},inspectImage=imageReader)
     private val executor=executorFor()
@@ -92,6 +93,69 @@ class EverydayToolExecutorTest {
         val source=sources.save(StarterSourceCatalogue.external().first().copy(selected=true),null)
         val result=json(call("halo_source_action",mapOf("id" to source.id,"version" to source.version,"action" to "REFRESH")))
         assertEquals("LOCAL_ONLY",result.getString("attempt"));assertEquals(0,networkCalls);assertFalse(result.getBoolean("admitted"))
+    }
+    @Test fun sourcePreviewFindsTheDeclaredFeedAndReturnsItsReviewedEndpointWithoutSaving() = runBlocking {
+        val website = "https://example.org/news"
+        val base = "https://example.org/world/index.html"
+        val endpoint = "https://example.org/world/feed.xml?a=1&b=2"
+        val requests = mutableListOf<String>()
+        val permits = object : RemoteDispatchPolicy {
+            override val revision = 0L
+            override fun acquire(request: RemoteDispatchRequest, expectedRevision: Long, recordActivity: Boolean,
+                cancel: () -> Unit): RemoteDispatchLease {
+                assertEquals(RemoteOperation.CONNECTED_SERVICE, request.operation)
+                return object : RemoteDispatchLease {
+                    override fun requireCurrent() = Unit
+                    override fun finish(outcome: RemoteDispatchOutcome, providerReportedCostUsd: String?) = Unit
+                }
+            }
+        }
+        val preview = CollectorPreview(sources, registry, permits, clock, downloadFeedPreview = { url ->
+            requests += url
+            when (url) {
+                website -> ArticleDownload(("""
+                    <html><head>
+                    <link rel="alternate" type="application/rss+xml" href="http://example.net/unsafe.xml">
+                    <link type="application/atom+xml" href="https://localhost/private" rel="alternate">
+                    <link href="feed.xml?a=1&amp;b=2#feed" type="application/rss+xml" rel="alternate">
+                    </head></html>
+                """).trimIndent().toByteArray(), "text/html", base)
+                endpoint -> ArticleDownload(
+                    "<rss version=\"2.0\"><channel><item><guid>1</guid><title>Report</title><link>/report</link></item></channel></rss>".toByteArray(),
+                    "application/rss+xml", endpoint)
+                else -> error("Unexpected endpoint: $url")
+            }
+        })
+        val args = mapOf("url" to website, "kind" to "FEED", "language" to "en")
+        val result = json(executorFor(preview = preview).execute(ToolCall("link", "halo_source_preview", args),
+            ToolExecutionContext(interactionId = "preview")))
+        assertTrue(result.getBoolean("validated"))
+        assertTrue(result.getBoolean("discoveredFeed"))
+        assertFalse(result.getBoolean("saved"))
+        assertEquals(endpoint, result.getString("endpoint"))
+        assertEquals("Report", result.getJSONArray("sample").getString(0))
+        assertEquals(listOf(website, endpoint), requests)
+        assertTrue(sources.states().isEmpty())
+        assertTrue(executorFor(preview = preview).execute(ToolCall("no-context", "halo_source_preview", args)) is ToolExecutionResult.Rejected)
+        child = true
+        assertTrue(executorFor(preview = preview).execute(ToolCall("kids", "halo_source_preview", args),
+            ToolExecutionContext(interactionId = "kids")) is ToolExecutionResult.Rejected)
+        assertEquals(2, requests.size)
+    }
+    @Test fun freeTimesUseSavedEventsAndNeverBook() = runBlocking {
+        val event = useCases.create(OrganizerKind.EVENT, "Lunch", time = OrganizerTime(
+            LocalDateTime.parse("2026-11-03T12:30"), LocalDateTime.parse("2026-11-03T13:30"), "UTC",
+        ))
+        val arguments = mapOf("freeMinutes" to 30, "freeDays" to 3, "zoneId" to "UTC")
+        val result = json(call("halo_organizer_query", arguments))
+        val slots = result.getJSONArray("availableSlots")
+        assertEquals(3, slots.length())
+        assertEquals("2026-11-03T13:45", slots.getJSONObject(0).getString("start"))
+        assertEquals(listOf(event.id), organizer.records().map { it.id })
+        assertEquals(0, networkCalls)
+        assertTrue(call("halo_organizer_query", arguments + ("query" to "Lunch")) is ToolExecutionResult.Rejected)
+        child = true
+        assertTrue(call("halo_organizer_query", arguments) is ToolExecutionResult.Rejected)
     }
     @Test fun kidsReadOnlyExplicitlySharedOrganizerAndCannotMutateOrReadAdultSources()=runBlocking {
         val adult=useCases.create(OrganizerKind.TASK,"Adult-only")
@@ -181,6 +245,10 @@ class EverydayToolExecutorTest {
         val descriptors = EverydayToolContracts.definitions.map { requireNotNull(HaloToolDescriptors.assistant(it)) }
         val registry = ToolRegistry(listOf(executor), descriptors)
         assertTrue(registry.operabilityReport(listOf(ToolFeatureOperability("today", setOf("halo_today_overview", "halo_today_weather_city")))).isEmpty())
+        assertEquals(emptyList<ToolOperabilityProblem>(),
+            registry.operabilityReport(listOf(ToolFeatureOperability("planner-free-times", setOf("halo_organizer_query")))))
+        assertEquals(emptyList<ToolOperabilityProblem>(),
+            registry.operabilityReport(listOf(ToolFeatureOperability("source-feed-discovery", setOf("halo_source_preview", "halo_source_save")))))
         EverydayToolContracts.definitions.forEach {definition ->
             val descriptor=HaloToolDescriptors.assistant(definition)
             assertNotNull(definition.name,descriptor)

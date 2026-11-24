@@ -11,7 +11,6 @@ import com.halo.app.data.notebook.NotebookCanvasRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -40,18 +39,21 @@ class WorkspaceSearchEngineTest {
 
     @Test
     fun indexAndSearchWorkspaceObject() = runTest {
-        val id = WorkspaceObjectId("note-123")
+        val title = "Halo UI Redesign"
+        val content = "Detailed specifications for paper-like soft pastel interface"
+        val note = RoomNotebookRepository(db.notebookDao()).createNote(content, title = title)
+        val id = WorkspaceObjectId(note.id)
         searchEngine.indexObject(
             objectId = id,
             type = WorkspaceObjectType.NOTE,
-            title = "Halo UI Redesign",
-            content = "Detailed specifications for paper-like soft pastel interface",
+            title = title,
+            content = content,
             updatedAt = System.currentTimeMillis()
         )
 
         val result = searchEngine.search(WorkspaceSearchQuery("Halo"))
-        assertNotNull(result)
         assertEquals("Halo", result.query)
+        assertEquals(listOf(id), result.hits.map { it.objectId })
     }
 
     @Test fun searchesLongMultilingualContentBeyondFirstPageAndExcludesCredentialsAnywhere() = runTest {

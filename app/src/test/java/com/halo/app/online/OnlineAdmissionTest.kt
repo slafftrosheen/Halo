@@ -211,9 +211,19 @@ class OnlineAdmissionTest {
         val answer = f.search.search("public question", "en", approval.challenge, BigDecimal("0.01"), true)
         assertEquals("openai", answer.providerId)
         assertEquals("api.openai.com", f.requestHost)
-        assertEquals("web_search", f.request.getJSONArray("tools").getJSONObject(0).getString("type"))
+        val tool = f.request.getJSONArray("tools").getJSONObject(0)
+        assertEquals("web_search", tool.getString("type"))
+        assertTrue(tool.getBoolean("external_web_access"))
         assertFalse(f.request.getBoolean("store"))
         assertNull(OnlineOperationLedger(f.storage).snapshot().records.single().reportedUsd)
+    }
+    @Test fun openAiChatModelWithoutSearchFallsBackToAnExplicitlyReviewedSearchModel() = runTest {
+        val f = Fixture(providerId = "openai")
+        f.router.selectModel("gpt-4")
+        val approval = f.search.prepareReview("public question", "en")
+        assertEquals("openai", approval.providerId)
+        assertEquals("gpt-5.4-mini", approval.model)
+        assertEquals(0, f.calls)
     }
     @Test fun revokedAccessDuringReservationStopsImageBeforeProvider() = runTest {
         val f = Fixture(); val service = WorkspaceImageService(f.router, f.storage, { f.allowed },privacyModes=f.modes.mode)

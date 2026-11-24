@@ -29,7 +29,7 @@ class ActivityPlanProgressTest {
         val run = AgentRun(id, InteractionId("interaction"), "Private user request", AgentRunState.COMPLETED,
             createdAt = at, updatedAt = at, steps = steps)
         val story = run.toStory()
-        assertEquals(ActivityPlanProgress(3, 3, false), story.typedPlanProgress)
+        assertEquals(ActivityPlanProgress(2, 3, false), story.typedPlanProgress)
         assertEquals("Plan", story.planTitleKey)
         assertTrue(story.steps.all { it.hostOwnedCopy })
         assertFalse(story.steps.last().hostOwnedMessageCopy)
@@ -37,7 +37,7 @@ class ActivityPlanProgressTest {
         assertEquals(steps, run.steps)
         val items = (story.planPresentation!!.root as PresentationNode.Card).children
             .filterIsInstance<PresentationNode.Checklist>().single().items
-        assertEquals("Triggered private source; 0 conditions, 1 sequential actions", items.first().text)
+        assertEquals("Plan recorded: Triggered private source; 0 conditions, 1 sequential actions", items.first().text)
         assertEquals(listOf("halo_routine_message: completed", "halo_routine_message: completed"), items.drop(1).map { it.text })
         assertFalse(ActivityStep("external", "Updated your task", "Updated your task").hostOwnedCopy)
     }

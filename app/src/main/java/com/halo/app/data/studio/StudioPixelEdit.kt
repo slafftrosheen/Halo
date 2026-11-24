@@ -25,7 +25,7 @@ internal sealed interface StudioPixelEdit {
     ) : StudioPixelEdit {
         init {
             require(if (operation == StudioPixelOperation.COPY) name != null && name.isNotBlank() && name.length <= 120 else name == null)
-            require(if (operation == StudioPixelOperation.SMUDGE) strokes.size in 1..12 else strokes.isEmpty())
+            require(if (operation == StudioPixelOperation.SMUDGE) strokes.size in 1..STUDIO_SMUDGE_DRAFT_LIMIT else strokes.isEmpty())
         }
     }
 }

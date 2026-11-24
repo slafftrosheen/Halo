@@ -13,10 +13,12 @@ data class ArticleDownload(val bytes: ByteArray, val mimeType: String, val url: 
 
 /** Article and image GETs use the same mode, redirect, DNS and cancellation boundary as feeds. */
 class ArticleDownloader(private val policy: RemoteDispatchPolicy,
-    baseClient: OkHttpClient = OkHttpClient.Builder().callTimeout(20, TimeUnit.SECONDS).build()) {
+    baseClient: OkHttpClient = OkHttpClient.Builder().callTimeout(20, TimeUnit.SECONDS).build(),
+    allowPublicHttp: Boolean = true) {
     private val requestScope = RemoteDispatchRequest(PUBLIC_COLLECTOR_OWNER, RemoteOperation.CONNECTED_SERVICE,
         setOf(RemoteDataCategory.ACCOUNT_METADATA))
-    private val client = baseClient.withRemoteDispatchPolicy(policy, publicGetRedirects = true, allowPublicCollectorHttp = true) { requestScope }
+    private val client = baseClient.withRemoteDispatchPolicy(policy, publicGetRedirects = true,
+        allowPublicCollectorHttp = allowPublicHttp) { requestScope }
     suspend fun fetch(url: String, maxBytes: Int = CollectorRefreshPolicy.MAX_BODY_BYTES,
         accept: String = "text/html,application/xhtml+xml,image/jpeg,image/png,image/webp,image/gif,image/avif"): ArticleDownload = coroutineScope {
         require(maxBytes in 1..CollectorRefreshPolicy.MAX_BODY_BYTES)

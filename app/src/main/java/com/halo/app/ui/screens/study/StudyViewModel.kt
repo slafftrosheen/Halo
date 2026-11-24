@@ -650,7 +650,7 @@ class StudyViewModel(
     fun requestGuidance(stage: TutorStage) {
         val state = mutableUiState.value
         if (state.loading || state.isGenerating || state.isSubmitting || state.isFinished) return
-        if (stage in setOf(TutorStage.ASK, TutorStage.HINT, TutorStage.PARTIAL_SOLUTION, TutorStage.ANALOGY))
+        if (stage in setOf(TutorStage.ASK, TutorStage.HINT, TutorStage.EXPLAIN, TutorStage.PARTIAL_SOLUTION, TutorStage.ANALOGY))
             moveTo(stage, solutionExplicitlyRequested = false, guidanceExplicitlyRequested = true)
     }
 
@@ -1623,7 +1623,8 @@ class StudyViewModel(
             mutableUiState.value = mutableUiState.value.copy(
                 cardResults = mutableUiState.value.cardResults + (itemId to CardReviewResult(itemId = itemId, verdict = known.takeIf { outcome != null },
                     diff = mutableUiState.value.cardResults[itemId]?.diff,
-                    message = if (outcome == null) "The review could not be saved" else if (known) "Recorded as remembered" else if (rating == com.halo.app.study.StudyRecallRating.ALMOST) "Recorded as almost remembered" else "Recorded for an earlier review")),
+                    message = if (outcome == null) "The review could not be saved" else if (known) "Recorded as remembered" else if (rating == com.halo.app.study.StudyRecallRating.ALMOST) "Recorded as almost remembered" else "Recorded for an earlier review",
+                    nextReviewIntervalDays = outcome?.decision?.takeUnless { it.mastered }?.intervalDays)),
                 revealedAnswers = if (outcome != null) mutableUiState.value.revealedAnswers - itemId else mutableUiState.value.revealedAnswers,
                 notice = outcome?.let { "Next review in ${it.decision.intervalDays} day(s)" } ?: "Could not update this card's schedule",
                 dueReviewItems = if (outcome != null) mutableUiState.value.dueReviewItems.filterNot { it.id == itemId } else mutableUiState.value.dueReviewItems,

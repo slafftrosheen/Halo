@@ -63,6 +63,23 @@ class StudioPixelInstrumentsTest {
         } finally { bitmap.recycle() }
     }
 
+    @Test fun longSmudgeDraftAppliesTheStrokesAfterTheFirstBatch() = runTest {
+        val bitmap = Bitmap.createBitmap(64, 24, Bitmap.Config.ARGB_8888)
+        try {
+            bitmap.eraseColor(Color.BLUE)
+            for (y in 0 until bitmap.height) for (x in 0..31) bitmap.setPixel(x, y, Color.RED)
+            val stroke = StudioSmudgeStroke(listOf(StudioArtPoint(.33f, .5f), StudioArtPoint(.75f, .5f)), 100, 8, true)
+            val previous = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+            try {
+                smudgeStudioPixels(previous, List(STUDIO_SMUDGE_BATCH) { stroke }, null, 64)
+                val draft = List(STUDIO_SMUDGE_BATCH + 2) { stroke }
+                val extra = StudioSmudgeStroke(listOf(StudioArtPoint(.48f, .3f), StudioArtPoint(.75f, .85f)), 95, 12, true)
+                assertTrue(smudgeStudioBatches(bitmap, draft + extra, null, 64))
+                assertFalse(previous.pixels().contentEquals(bitmap.pixels()))
+            } finally { previous.recycle() }
+        } finally { bitmap.recycle() }
+    }
+
     @Test fun smudgeBlendsPigmentInsideTheSelectionOnly() = runTest {
         val bitmap = Bitmap.createBitmap(64, 24, Bitmap.Config.ARGB_8888)
         try {

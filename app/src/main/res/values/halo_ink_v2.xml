@@ -18,6 +18,6 @@
     <string name="ink_input_help">Finger, mouse or pen. Pen pressure is used when reported by the device. The eraser removes whole strokes.</string>
     <string name="ink_unreadable">This drawing or recovery draft cannot be read safely. It will not be overwritten. Close and keep the original.</string>
     <string name="ink_capacity">Drawing limit reached. Lift the pen; undo or erase strokes to make room.</string>
-    <string name="ink_draft_rejected">This change is too large or could not be saved. The previous draft is kept. Undo or erase some strokes.</string>
-    <string name="ink_draft_help">Finished strokes form a local recovery draft. Cancel discards this draft without changing the saved drawing.</string>
+    <string name="ink_draft_rejected">This change could not be saved. Review the drawing and try again.</string>
+    <string name="ink_draft_help">Save applies the drawing. Cancel discards these changes.</string>
 </resources>

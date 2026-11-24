@@ -1,0 +1,78 @@
+{
+ "version": 13,
+ "perDay": 1,
+ "dismissForeverAfter": 2,
+ "quietDaysAfterOnboarding": 1,
+ "cards": [
+  {
+   "id": "hear_you",
+   "title": "Let halo hear you",
+   "titleRu": "Пусть halo вас услышит",
+   "body": "Talk instead of typing. Works without the internet.",
+   "bodyRu": "Говорите вместо того, чтобы печатать. Работает без интернета.",
+   "priority": 1,
+   "forWho": []
+  },
+  {
+   "id": "brain_download",
+   "title": "Make halo work offline",
+   "titleRu": "Настройте работу halo без интернета",
+   "body": "One download, on Wi-Fi.",
+   "bodyRu": "Достаточно одной загрузки по Wi-Fi.",
+   "priority": 2,
+   "forWho": []
+  },
+  {
+   "id": "calendar",
+   "title": "See your plans in one place",
+   "titleRu": "Все планы в одном месте",
+   "body": "Show your calendar in Planner.",
+   "bodyRu": "Покажите свой календарь в Планировщике.",
+   "priority": 3,
+   "forWho": [
+    "ME",
+    "FAMILY"
+   ]
+  },
+  {
+   "id": "look",
+   "title": "Make it yours",
+   "titleRu": "Настройте halo под себя",
+   "body": "Pick a look and a sky.",
+   "bodyRu": "Выберите оформление и небо.",
+   "priority": 4,
+   "forWho": []
+  },
+  {
+   "id": "glasses",
+   "title": "Use halo on your glasses",
+   "titleRu": "Пользуйтесь halo в очках",
+   "body": "Connect them in a minute.",
+   "bodyRu": "Подключите свои очки.",
+   "priority": 5,
+   "forWho": []
+  },
+  {
+   "id": "kids",
+   "title": "Set up halo for your child",
+   "titleRu": "Настройте halo для ребёнка",
+   "body": "A safe space with no points or ads.",
+   "bodyRu": "Безопасное пространство без баллов и рекламы.",
+   "priority": 3,
+   "forWho": [
+    "FAMILY"
+   ]
+  },
+  {
+   "id": "study_sources",
+   "title": "Add your course books",
+   "titleRu": "Добавьте учебники",
+   "body": "halo answers from them.",
+   "bodyRu": "halo сможет отвечать по вашим учебникам.",
+   "priority": 3,
+   "forWho": [
+    "STUDYING"
+   ]
+  }
+ ]
+}

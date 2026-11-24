@@ -177,6 +177,7 @@ fun AssistantSurface(
                                     showReadAction = false,
                                     appendDictation = false,
                                     maxChars = 32,
+                                    reviewBeforeApply = true,
                                     dictationRequest = 1L,
                                     spokenTransform = { utterance ->
                                         spokenOption(utterance, optionCount)?.plus(1)?.toString()

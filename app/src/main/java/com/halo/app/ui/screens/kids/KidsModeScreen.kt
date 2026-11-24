@@ -77,6 +77,8 @@ import kotlinx.coroutines.launch
     val project: KidsProjectViewModel = viewModel()
     val projectState by project.state.collectAsStateWithLifecycle()
     val family = ManualDependencyGraph.kidsPreferences
+    val cardsShelf by family.cards.state.collectAsStateWithLifecycle()
+    LaunchedEffect(family) { family.cards.load() }
     val homework = family.homework
     val schedule by homework.settings.collectAsStateWithLifecycle()
     val homeworkTime = rememberKidsHomeworkTime(homework)
@@ -458,6 +460,7 @@ import kotlinx.coroutines.launch
                     onIdentify = onOpenTool?.let { open -> { stopActions(); open("kids_scan") } },
                     onPlay = { stopActions(); playOpen = true },
                     playEnabled = !homeworkTime && !pause.paused,
+                    age = cardsShelf?.age ?: KidsAgeBand.PRIMARY,
                 ) { selected ->
                     if (selected == KidsDestination.ASK) {
                         activeLesson = null
@@ -553,9 +556,17 @@ import kotlinx.coroutines.launch
     var options by remember { mutableStateOf(false) }
     var gateNotice by remember { mutableStateOf(false) }
     var credentialOpen by remember { mutableStateOf(false) }
+    var handBack by remember { mutableStateOf(false) }
     val disclosure by rememberUpdatedState(onDisclosureChanged)
-    SideEffect { disclosure(options || gateNotice || credentialOpen) }
+    SideEffect { disclosure(options || gateNotice || credentialOpen || handBack) }
     DisposableEffect(Unit) { onDispose { disclosure(false) } }
+    LaunchedEffect(options || handBack) {
+        if (options || handBack) {
+            delay(120_000)
+            options = false
+            handBack = false
+        }
+    }
     val openOptions = rememberKidsGrownUpGate({ options = true }, { gateNotice = true }, { credentialOpen = it })
     if (gateNotice) AlertDialog(onDismissRequest = { gateNotice = false },
         title = { Text(uiText("Grown-up space")) },
@@ -566,12 +577,28 @@ import kotlinx.coroutines.launch
             .verticalScroll(androidx.compose.foundation.rememberScrollState())
             .navigationBarsPadding().padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(uiText("Kids options"), style = MaterialTheme.typography.titleLarge)
-            OutlinedButton(onClick = { options = false; onExit() },
+            Text(stringResource(R.string.kd13_grown_up_space), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.kd13_grown_up_locks), style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = { options = false; handBack = true },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                 Text(uiText("Full halo"))
             }
             val preferences = ManualDependencyGraph.kidsPreferences
+            val cards by preferences.cards.state.collectAsStateWithLifecycle()
+            LaunchedEffect(preferences.cards) { preferences.cards.load() }
+            val today = java.time.LocalDate.now()
+            val topics = cards?.adventures.orEmpty().filter { page ->
+                page.day in today.minusDays(6)..today && page.done.isNotEmpty()
+            }.groupBy { it.topic }
+            if (topics.isNotEmpty()) {
+                Text(stringResource(R.string.kd13_past_week), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.kd13_week_sub), style = MaterialTheme.typography.bodySmall)
+                for ((topic, pages) in topics) {
+                    Text(stringResource(adventureTitle(topic)), style = MaterialTheme.typography.labelLarge)
+                    if (pages.any { it.drawing.isNotEmpty() }) Text(stringResource(R.string.kd13_week_made),
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            }
             val appearance by preferences.appearance.collectAsStateWithLifecycle()
             KidsAppearanceControls(appearance, preferences::applyGrownUpAppearance)
             com.halo.app.ui.toolkit.KidsPictureToolSettings(preferences.pictureTools)
@@ -592,6 +619,14 @@ import kotlinx.coroutines.launch
             Spacer(Modifier.height(20.dp))
         }
     }
+    if (handBack) AlertDialog(
+        onDismissRequest = { handBack = false },
+        icon = { com.halo.app.ui.theme.v13.Halo13Animation(
+            com.halo.app.ui.theme.v13.Halo13Motion.HAND_BACK, Modifier.size(84.dp)) },
+        title = { Text(uiText("Full halo")) },
+        confirmButton = { TextButton(onClick = { handBack = false; onExit() }) { Text(uiText("Continue")) } },
+        dismissButton = { TextButton(onClick = { handBack = false }) { Text(uiText("Cancel")) } },
+    )
     return openOptions
 }
 

@@ -31,4 +31,4 @@ data object ListWatchesIntent : Intent
 
 /** Positive action evidence outside the host ownership table; never an unknown fallback. */
 data class ToolActionIntent(val reason: ToolActionReason) : Intent
-enum class ToolActionReason { ACTION_INTENT, EXPLICIT_TOOL_REQUEST, WORKSPACE_LOOKUP, SCREEN_OPERATION }
+enum class ToolActionReason { ACTION_INTENT, EXPLICIT_TOOL_REQUEST, WORKSPACE_LOOKUP, SOURCE_LOOKUP, WEB_LOOKUP, SCREEN_OPERATION }

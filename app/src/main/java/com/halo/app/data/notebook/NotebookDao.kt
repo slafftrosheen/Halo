@@ -93,6 +93,12 @@ interface NotebookDao {
     @Query("SELECT * FROM note_drafts WHERE objectId = :id LIMIT 1")
     suspend fun getDraft(id: String): NoteDraftEntity?
 
+    @Query("SELECT length(structureJson) FROM note_drafts WHERE objectId = :id AND sequence = 0")
+    suspend fun canvasDraftLength(id: String): Int?
+
+    @Query("SELECT substr(structureJson, :start, :count) FROM note_drafts WHERE objectId = :id AND sequence = 0")
+    suspend fun canvasDraftSlice(id: String, start: Int, count: Int): String?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkspaceObject(entity: WorkspaceObjectEntity)
 

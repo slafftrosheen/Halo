@@ -43,9 +43,11 @@ class AppSearchWorkspaceSearchEngine(
 
     private var session: AppSearchSession? = null
     private val sessionMutex = Mutex()
+    private var nativeIndexUnavailable = false
 
     private suspend fun ensureSession(): AppSearchSession? = sessionMutex.withLock {
         if (session != null) return@withLock session
+        if (nativeIndexUnavailable) return@withLock null
         try {
             val future = LocalStorage.createSearchSessionAsync(
                 LocalStorage.SearchContext.Builder(context, "halo_workspace").build()
@@ -61,6 +63,10 @@ class AppSearchWorkspaceSearchEngine(
             s
         } catch (cancelled: CancellationException) {
             throw cancelled
+        } catch (unavailable: LinkageError) {
+            nativeIndexUnavailable = true
+            Log.w("AppSearch", "Native ranking is unavailable. Using local workspace search.", unavailable)
+            null
         } catch (e: Exception) {
             Log.w("AppSearch", "Failed to initialize AppSearch session", e)
             null

@@ -18,6 +18,8 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
     private var activeStrokeId: String? = null
     /** The input owner sets this before contact; changes during contact apply to the next stroke. */
     var nextBrush: InkBrushStyle? = null
+    /** Opt-in for editors that own multiple sheets. The callback receives the complete stroke. */
+    var continueOnNewSheet: ((InkDocument) -> Boolean)? = null
     private var activeBrush: InkBrushStyle? = null
     private var erasing = false
     private var previousErase: InkPoint? = null
@@ -31,7 +33,7 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
     fun begin(tool: InkTool, erasing: Boolean = false): Boolean {
         cancel()
         limitReached = false
-        if (!erasing && (document.strokes.size >= InkLimits.MAX_STROKES ||
+        if (continueOnNewSheet == null && !erasing && (document.strokes.size >= InkLimits.MAX_STROKES ||
                 document.strokes.sumOf { it.points.size } >= InkLimits.MAX_TOTAL_POINTS)) {
             limitReached = true
             return false
@@ -57,7 +59,7 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
         val last = points.lastOrNull()
         if (last != null && point.timeMs < last.timeMs) return false
         if (last != null && last.copy(timeMs = point.timeMs) == point) return false
-        if (points.size >= InkLimits.MAX_POINTS_PER_STROKE ||
+        if (points.size >= InkLimits.MAX_POINTS_PER_STROKE || continueOnNewSheet == null &&
             points.size + document.strokes.sumOf { it.points.size } >= InkLimits.MAX_TOTAL_POINTS) {
             limitReached = true
             return false
@@ -73,7 +75,16 @@ class InkEditor(initial: InkDocument, private val editAspectMilli: Int? = null) 
     fun finish(): Boolean {
         if (!active) return false
         val next = preview()
+        val ongoingStroke = points.isNotEmpty() && !erasing
         cancel()
+        val nextSheet = continueOnNewSheet
+        if (ongoingStroke && nextSheet != null &&
+            (next.strokes.size > InkLimits.MAX_STROKES || next.strokes.sumOf { it.points.size } > InkLimits.MAX_TOTAL_POINTS ||
+                InkCodec.encodedLength(next) > InkLimits.MAX_ENCODED_CHARS)) {
+            val newSheet = InkDocument(listOf(next.strokes.last()), editAspectMilli ?: next.aspectMilli)
+            limitReached = !nextSheet(newSheet)
+            return false
+        }
         return commit(next)
     }
 

@@ -1,0 +1,65 @@
+{
+ "version": 13,
+ "steps": [
+  {
+   "id": "HELLO",
+   "title": "Hi, I'm halo",
+   "comfort": [
+    "LARGER_TEXT",
+    "READ_ALOUD",
+    "HIGH_CONTRAST",
+    "LESS_MOTION"
+   ],
+   "secondary": "I've used halo before"
+  },
+  {
+   "id": "WHO",
+   "title": "Who is halo for?",
+   "multi": true,
+   "options": [
+    "ME",
+    "MY_CHILD",
+    "FAMILY",
+    "STUDYING",
+    "CREATING"
+   ]
+  },
+  {
+   "id": "DEPTH",
+   "title": "How much do you want to see?",
+   "options": [
+    "KEEP_IT_SIMPLE",
+    "A_BIT_OF_EVERYTHING",
+    "SHOW_ME_EVERYTHING"
+   ],
+   "preview": "live"
+  },
+  {
+   "id": "THINKING",
+   "title": "Where should halo think?",
+   "options": [
+    "ON_THIS_PHONE",
+    "ONLINE_SERVICE",
+    "DECIDE_LATER"
+   ],
+   "privacyLine": true
+  }
+ ],
+ "everyStep": {
+  "skip": "Just open halo",
+  "back": true,
+  "progress": "dots"
+ },
+ "firstTry": {
+  "ME": "try_plan_today",
+  "STUDYING": "try_explain_photo",
+  "CREATING": "try_first_drawing",
+  "MY_CHILD": "kids_handover",
+  "FAMILY": "try_plan_today"
+ },
+ "targets": {
+  "timeToHomeSec": 60,
+  "maxSteps": 4,
+  "maxWordsPerSentence": 22
+ }
+}

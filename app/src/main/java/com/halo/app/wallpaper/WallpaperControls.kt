@@ -197,12 +197,24 @@ internal fun WallpaperControls() {
                     onCheckedChange = { if (!saving) draft = draft.copy(reactsToHalo = it) })
                 HaloWorkspaceToggleRow(title = stringResource(R.string.alive_wallpaper_calm), checked = draft.calmerAtNight,
                     onCheckedChange = { if (!saving) draft = draft.copy(calmerAtNight = it) })
+                HaloWorkspaceToggleRow(title = stringResource(R.string.f13_sky_follow), checked = draft.followSky,
+                    onCheckedChange = { enabled -> if (!saving) {
+                        previewScheduled = false
+                        draft = draft.copy(followSky = enabled, inApp = draft.inApp || enabled)
+                    } })
+                if (draft.followSky) {
+                    Text(stringResource(R.string.f13_sky_follow_sub), style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.f13_sky_no_location), style = MaterialTheme.typography.bodySmall)
+                    com.halo.app.ui.theme.v13.Halo13Animation(com.halo.app.ui.theme.v13.Halo13Motion.SKY_CYCLE,
+                        Modifier.fillMaxWidth().height(96.dp))
+                }
                 HaloWorkspaceToggleRow(title = stringResource(R.string.wallpaper_schedule), checked = draft.schedule.enabled,
                     onCheckedChange = { if (!saving) {
                         previewScheduled = it
-                        draft = draft.copy(schedule = draft.schedule.copy(enabled = it), inApp = draft.inApp || it)
+                        draft = draft.copy(schedule = draft.schedule.copy(enabled = it), inApp = draft.inApp || it,
+                            followSky = draft.followSky && !it)
                     } })
-                if (draft.schedule.enabled) {
+                if (draft.schedule.enabled && !draft.followSky) {
                     Text(stringResource(R.string.wallpaper_schedule_explanation), style = MaterialTheme.typography.bodySmall)
                     WallpaperPeriod.entries.forEach { period ->
                         WallpaperScheduleChoice(period, draft.schedule[period], !saving) { wallpaper ->

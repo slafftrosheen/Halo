@@ -1,0 +1,90 @@
+{
+ "version": 13,
+ "views": [
+  {
+   "id": "TODAY",
+   "maps": "EASY",
+   "depth": "SIMPLE"
+  },
+  {
+   "id": "DAY",
+   "maps": "DAY",
+   "timeline": true
+  },
+  {
+   "id": "WEEK",
+   "maps": "WEEK",
+   "lanes": [
+    "PERSONAL",
+    "FAMILY",
+    "OTHERS"
+   ]
+  },
+  {
+   "id": "MONTH",
+   "maps": "MONTH",
+   "depth": "STANDARD"
+  },
+  {
+   "id": "AGENDA",
+   "maps": "AGENDA",
+   "depth": "PRO"
+  }
+ ],
+ "add": {
+  "naturalLanguage": true,
+  "alwaysPreview": true,
+  "unsureWordsTone": "NEEDS_YOU"
+ },
+ "timeline": {
+  "snapMinutes": 15,
+  "fixedFromOtherCalendars": true,
+  "dragTaskMakesTimeBlock": true,
+  "leaveByRibbon": true
+ },
+ "findTime": {
+  "options": 3,
+  "dayStart": "08:00",
+  "dayEnd": "21:00",
+  "bufferMinutes": 15,
+  "onePerDay": true,
+  "autoBook": false
+ },
+ "tooMuch": {
+  "gentleAt": 0.9,
+  "neverMoveMustToday": true,
+  "autoMove": false
+ },
+ "priorities": {
+  "URGENT": [
+   "Must do today",
+   "Обязательно сегодня"
+  ],
+  "HIGH": [
+   "Important",
+   "Важно"
+  ],
+  "NORMAL": [
+   "Normal",
+   "Обычно"
+  ],
+  "LOW": [
+   "Some day",
+   "Когда-нибудь"
+  ]
+ },
+ "calendars": {
+  "PERSONAL": [
+   "Me",
+   "Я"
+  ],
+  "FAMILY": [
+   "Family",
+   "Семья"
+  ],
+  "OTHERS": [
+   "Other calendars",
+   "Другие календари"
+  ]
+ }
+}

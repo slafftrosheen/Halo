@@ -40,7 +40,7 @@ private fun adventureArt(topic: KidsCardTopic): AdventureArt = when (topic) {
     KidsCardTopic.DINOSAURS -> AdventureArt("🦖", "🦕", "🦴")
 }
 
-@StringRes private fun adventureTitle(topic: KidsCardTopic): Int = when (topic) {
+@StringRes internal fun adventureTitle(topic: KidsCardTopic): Int = when (topic) {
     KidsCardTopic.ANIMALS -> R.string.halo11_coach_adventure_animals
     KidsCardTopic.COUNTING -> R.string.halo11_coach_adventure_counts
     KidsCardTopic.NATURE -> R.string.halo11_coach_adventure_nature
@@ -200,6 +200,9 @@ internal fun KidsAdventureHome(owner: KidsCardShelf, readAloud: Boolean, still: 
                     Text(stringResource(R.string.halo11_coach_adventure_book))
                 }
             } else {
+                if (!still) com.halo.app.ui.theme.v13.Halo13Animation(
+                    com.halo.app.ui.theme.v13.Halo13Motion.KIDS_ADVENTURE, Modifier.size(72.dp),
+                )
                 Text(stringResource(adventureTitle(current.topic)), style = MaterialTheme.typography.headlineSmall)
                 Text(
                     when (current.age) {

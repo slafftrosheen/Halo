@@ -16,11 +16,24 @@ internal data class StudioSmudgeStroke(
 
 private data class Dab(val x: Float, val y: Float)
 
+internal const val STUDIO_SMUDGE_BATCH = 12
+internal const val STUDIO_SMUDGE_DRAFT_LIMIT = 192
+
+internal suspend fun smudgeStudioBatches(canvas: Bitmap, strokes: List<StudioSmudgeStroke>,
+    selection: StudioPixelMask?, artboardEdge: Int): Boolean {
+    require(strokes.size <= STUDIO_SMUDGE_DRAFT_LIMIT)
+    var changed = false
+    for (batch in strokes.chunked(STUDIO_SMUDGE_BATCH)) {
+        if (smudgeStudioPixels(canvas, batch, selection, artboardEdge)) changed = true
+    }
+    return changed
+}
+
 /** A smudge drags neighbouring pixels along its path. Wet mix also carries pigment between dabs. */
 internal suspend fun smudgeStudioPixels(
     canvas: Bitmap, strokes: List<StudioSmudgeStroke>, selection: StudioPixelMask?, artboardEdge: Int,
 ): Boolean {
-    require(!canvas.isRecycled && canvas.isMutable && strokes.size in 1..12 && artboardEdge > 0)
+    require(!canvas.isRecycled && canvas.isMutable && strokes.size in 1..STUDIO_SMUDGE_BATCH && artboardEdge > 0)
     val width = canvas.width
     val height = canvas.height
     val scale = maxOf(width, height).toFloat() / artboardEdge

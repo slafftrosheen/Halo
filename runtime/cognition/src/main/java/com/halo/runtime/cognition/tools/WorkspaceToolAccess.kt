@@ -26,10 +26,10 @@ object PersonalConfigurationToolAccess {
         "halo_procedure_set_enabled", "halo_procedure_delete")
     val activeStudy = setOf("halo_study_current", "halo_study_session_action")
     val speechInventory = setOf("halo_speech_inventory", "halo_speech_model_action")
-    val everyday=setOf("halo_knowledge_catalogue","halo_knowledge_search","halo_knowledge_download",
+    val everyday=setOf("halo_knowledge_catalogue","halo_knowledge_search","halo_knowledge_download", "halo_library_receipt_totals",
         "halo_today_overview","halo_today_weather_city","halo_day_context","halo_organizer_query","halo_organizer_get","halo_organizer_create","halo_organizer_edit","halo_organizer_action","halo_organizer_occurrence","halo_organizer_delivery",
         "halo_planner_reschedule", "halo_planner_calendars", "halo_planner_calendar_appearance",
-        "halo_clock_query","halo_clock_save","halo_clock_action","halo_source_query","halo_source_get","halo_source_image","halo_source_preview","halo_source_save","halo_source_action",
+        "halo_clock_query","halo_clock_save","halo_clock_action","halo_source_query","halo_source_get","halo_source_image","halo_source_preview","halo_source_save","halo_source_action","halo_source_keep_article",
         "halo_brief_query","halo_brief_action","halo_brief_settings","halo_everyday_open","halo_widget_query","halo_widget_configure","halo_widget_pin")
     val all = everyday + currentScreen + library + savedChats + mcpSettings + localRoles + preferences + screenLayout + savedDevices + notificationSettings + voice + learning + providers + routines + procedures + activeStudy + speechInventory
 }
@@ -52,6 +52,7 @@ object WorkspaceToolAccess {
         "halo_study_sessions", "halo_study_state", "halo_study_select_exercise", "halo_study_submit_attempt", "halo_study_set_preferences", "halo_study_complete", "halo_study_delete",
         "halo_study_card_get", "halo_study_card_create", "halo_study_card_edit", "halo_study_card_accept", "halo_study_card_review", "halo_study_card_delete",
         "halo_file_tool_capabilities", "halo_file_tools_open", "halo_text_create", "halo_text_import", "halo_text_get", "halo_text_edit", "halo_text_export", "halo_image_transform", "halo_image_batch", "halo_image_collage", "halo_file_batch_status", "halo_pdf_page_info", "halo_pdf_extract_page_image", "halo_pdf_annotation_create", "halo_pdf_annotation_get", "halo_pdf_annotation_edit", "halo_pdf_annotation_export_page_image", "halo_file_attach_canvas",
+        "halo_sheets_analyze", "halo_sheets_delete",
         "halo_studio_list", "halo_studio_get", "halo_studio_current", "halo_studio_create", "halo_studio_edit", "halo_studio_save", "halo_studio_export", "halo_studio_insert", "halo_studio_open", "halo_studio_ai_draft", "halo_studio_status",
         "halo_canvas_current", "halo_context_used_sources") + remoteInkTools + PersonalConfigurationToolAccess.all + canvasWorkflowTools +
         noteReviewTools + canvasReviewTools + setOf("halo_routine_snapshot")

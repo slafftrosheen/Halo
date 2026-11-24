@@ -54,6 +54,27 @@ class CanvasEditorPersistenceTest {
         withTimeout(5_000) { vm.uiState.first { !it.loading } }
         return vm
     }
+
+    @Test fun savedDrawingSheetsShareOneGroupAndUndoTheAppendTogether() = onEditorMain {
+        val board = repository.create()
+        val firstInk = "sketch:v1|10,20;20,30"
+        val secondInk = "sketch:v1|20,30;30,40"
+        val thirdInk = "sketch:v1|30,40;40,50"
+        val (first, _) = repository.saveDrawingSheets(board, null, null, 18f, 28f, listOf(firstInk, secondInk))
+        val before = requireNotNull(repository.observe(board).first())
+        val second = before.edges.single { it.label == "continues" && it.fromNodeId == first }.toNodeId
+        val group = before.nodes.single { it.type.name == "GROUP" }.id
+        val (_, undo) = repository.saveDrawingSheets(board, second, secondInk, 0f, 0f, listOf(secondInk, thirdInk))
+        val after = requireNotNull(repository.observe(board).first())
+        val third = after.edges.single { it.label == "continues" && it.fromNodeId == second }.toNodeId
+        assertEquals(group, after.nodes.single { it.type.name == "GROUP" }.id)
+        assertEquals(setOf(first, second, third), after.edges.filter { it.fromNodeId == group && it.label == "group" }.map { it.toNodeId }.toSet())
+        assertEquals(thirdInk, after.nodes.single { it.id == third }.text)
+        repository.undo(board, undo)
+        val restored = requireNotNull(repository.observe(board).first())
+        assertEquals(before.nodes.map { it.id to it.text }.toSet(), restored.nodes.map { it.id to it.text }.toSet())
+        assertEquals(before.edges.toSet(), restored.edges.toSet())
+    }
     @Test fun directTextAndDragCannotWriteWhileAddOperationOwnsTheBoard() = onEditorMain {
         val board = repository.create(); val card = repository.addTextNode(board, 2f, 3f, "keep original")
         val started = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()

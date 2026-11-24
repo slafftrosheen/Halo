@@ -56,6 +56,7 @@ data class OrganizerPageState(
     val selectedOccurrence: OrganizerOccurrence? = null, val occurrenceMissing: Boolean = false,
     val linkChoices: List<OrganizerLinkChoice> = emptyList(),
     val leaveBy: PlannerLeaveByReview? = null,
+    val freeSlots: List<com.halo.app.ui.planner.v13.Slot>? = null,
 )
 
 class OrganizerViewModel(private val app: HaloApplication, private val saved: SavedStateHandle, initialId: String?, private val initialKind: OrganizerKind? = null,
@@ -235,10 +236,75 @@ class OrganizerViewModel(private val app: HaloApplication, private val saved: Sa
         draft(OrganizerDraft(record, true, title = candidate.title, spokenReview = true,
             spokenTimeGuess = candidate.timeGuess, spokenDateGuess = candidate.dateGuess))
     }
+
+    internal fun previewNaturalAdd(text: String, now: LocalDateTime = LocalDateTime.now()) {
+        if (state.value.kids || state.value.busy || state.value.draft != null) return
+        val proposed = com.halo.app.ui.planner.v13.NaturalAdd.parse(text, now.toLocalDate())
+        val title = proposed.title.ifBlank { text.trim() }.take(200)
+        if (title.isBlank()) return
+        val startDate = proposed.date ?: now.toLocalDate()
+        val allDay = proposed.isTask && proposed.date != null
+        val start = startDate.atTime(proposed.time ?: LocalTime.MIDNIGHT)
+        val kind = if (proposed.isTask) OrganizerKind.TASK else OrganizerKind.EVENT
+        val end = if (kind == OrganizerKind.EVENT) start.plusHours(1) else null
+        val record = OrganizerRecord(
+            java.util.UUID.randomUUID().toString(), kind, title,
+            time = if (proposed.date != null || proposed.time != null) OrganizerTime(start, end, ZoneId.systemDefault().id, allDay) else null,
+            repeat = proposed.weekly?.let { RepeatRule(RepeatFrequency.WEEKLY, 1, setOf(it)) },
+            calendar = if (proposed.family) OrganizerCalendar.FAMILY else OrganizerCalendar.PERSONAL,
+            createdAt = Instant.now(),
+        )
+        draft(OrganizerDraft(record, true, spokenTimeGuess = proposed.unsure.firstOrNull(),
+            spokenDateGuess = proposed.date == null && proposed.time != null))
+    }
+
+    internal fun findFreeTime(minutes: Long, days: Int, zone: ZoneId) {
+        if (state.value.kids || minutes !in 15..240 || days !in 1..7) return
+        work {
+            val slots = Graph.organizerUseCases.freeTimes(minutes, days, zone)
+            mutable.update { it.copy(freeSlots = slots) }
+        }
+    }
+
+    internal fun clearFreeTime() { mutable.update { it.copy(freeSlots = null) } }
+
+    internal fun previewFreeTime(title: String, slot: com.halo.app.ui.planner.v13.Slot, zone: ZoneId) {
+        val page = state.value
+        if (page.kids || page.busy || page.draft != null || slot !in page.freeSlots.orEmpty()) return
+        val record = OrganizerRecord(
+            java.util.UUID.randomUUID().toString(), OrganizerKind.EVENT, title.trim().ifBlank { "New item" }.take(200),
+            time = OrganizerTime(slot.start, slot.end, zone.id), createdAt = Instant.now(),
+        )
+        clearFreeTime()
+        draft(OrganizerDraft(record, true))
+    }
     fun edit(record: OrganizerRecord, occurrence: OrganizerOccurrence? = null) = work {
         val base = Graph.organizerUseCases.requireCurrent(record.id, record.version)
         val override = occurrence?.let { Graph.organizerRepository.overrides(base.id).find { entry -> entry.originalStart == it.originalStart } }
         draft(if (occurrence == null) OrganizerDraft(base, false) else OrganizerDraft.forOccurrence(base, occurrence, override))
+    }
+
+    internal fun moveReviewedTasks(rows: List<OrganizerOccurrence>, date: LocalDate, displayZone: ZoneId) = work {
+        require(rows.isNotEmpty() && rows.distinctBy { it.record.id }.size == rows.size)
+        require(LocalDate.now(displayZone) == date)
+        Graph.appDatabase.withTransaction {
+            rows.forEach { row ->
+                val current = Graph.organizerUseCases.requireCurrent(row.record.id, row.record.version)
+                val time = requireNotNull(current.time)
+                require(current.kind == OrganizerKind.TASK && current.priority != TaskPriority.URGENT &&
+                    current.repeat == null && current.status == OrganizerStatus.ACTIVE &&
+                    current.calendar == OrganizerCalendar.PERSONAL && current.calendarUid == null &&
+                    !time.allDay && time.instant(displayZone).atZone(displayZone).toLocalDate() == date &&
+                    time.endInstant(displayZone)?.isAfter(Instant.now()) == true)
+                val zone = time.zone(displayZone)
+                val start = time.start.plusDays(1).atZone(zone)
+                val end = start.plus(java.time.Duration.between(time.instant(displayZone), requireNotNull(time.endInstant(displayZone))))
+                val target = time.copy(start = start.toLocalDateTime(), end = end.toLocalDateTime(),
+                    startOffset = start.offset.takeUnless { time.followDeviceZone },
+                    endOffset = end.offset.takeUnless { time.followDeviceZone })
+                Graph.organizerRepository.save(current.copy(time = target), current.version)
+            }
+        }
     }
 
     internal fun reschedule(row: OrganizerOccurrence, operation: OrganizerScheduleEdit, steps: Int) = work {

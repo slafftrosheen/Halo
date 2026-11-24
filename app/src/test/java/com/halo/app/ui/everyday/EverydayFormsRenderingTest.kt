@@ -36,6 +36,9 @@ import java.time.*
 class EverydayFormsRenderingTest {
     @get:Rule val compose = createComposeRule()
     @Test @Config(qualifiers = "ru-rRU-w360dp-h800dp") fun widgetDashboardOrderIsReachableAt200PercentAndSurvivesRestoration() {
+        val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<Application>()
+        com.halo.app.di.initializeUnitTestWorkManager(context)
+        com.halo.app.di.ManualDependencyGraph.init(context)
         val restoration=StateRestorationTester(compose)
         val instance=EverydayWidgetInstance(81,3,EverydayCardConfig(EverydayCardKind.DASHBOARD,
             sections=listOf(EverydayCardKind.TASKS,EverydayCardKind.WEATHER,EverydayCardKind.BRIEF)))

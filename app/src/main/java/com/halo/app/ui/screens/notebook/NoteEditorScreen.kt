@@ -234,6 +234,11 @@ fun NoteEditorScreen(
     var dictationSelection by remember(viewModel.noteId) { mutableStateOf<DocumentSelection?>(null) }
     var insertTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
     var captureTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
+    var drawingTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
+    var existingDrawingTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
+    var drawingBoard by remember(viewModel.noteId) { mutableStateOf<WorkspaceObject?>(null) }
+    var savingDrawing by remember(viewModel.noteId) { mutableStateOf(false) }
+    var failedDrawing by remember(viewModel.noteId) { mutableStateOf(false) }
     var imageTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
     var scanTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
     var linkTarget by remember(viewModel.noteId) { mutableStateOf<Pair<String?, Int>?>(null) }
@@ -258,6 +263,9 @@ fun NoteEditorScreen(
         else viewModel.setMode(mode)
     }
     val insertEnabled = state.isEditable && state.mode == EditorMode.EDIT && literalFileFormat == null && !state.isGenerating && !insertingFile
+    val familyReady by com.halo.app.di.ManualDependencyGraph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
+    val childDrawing by com.halo.app.di.ManualDependencyGraph.kidsPreferences.enabled.collectAsStateWithLifecycle()
+    val canDraw = insertEnabled && familyReady && !childDrawing
     fun canInsertAt(target: Pair<String?, Int>): Boolean = viewModel.uiState.value.let {
         it.isEditable && it.mode == EditorMode.EDIT && !it.isGenerating && noteInsertSignature(it) == target.second
     }
@@ -267,7 +275,7 @@ fun NoteEditorScreen(
         helpDescription = stringResource(R.string.zone5_help_note),
         guidanceBlocked = pendingMode != null || noteReview != null || state.isGenerating || exporting || exportDialog || pdfExportReview ||
             exported != null || state.status in setOf(SaveStatus.LOADING, SaveStatus.FAILED, SaveStatus.CONFLICT, SaveStatus.MISSING, SaveStatus.TRASHED) ||
-            insertTarget != null || captureTarget != null || linkTarget != null || tableTarget != null || showTemplates || insertingFile || insertFeedback != null || showRename || toolsExpanded || showHaloSheet || showAssistMenu || showReferencePicker || showFindBar || showImageStudio || showNoteAppearance,
+            insertTarget != null || captureTarget != null || drawingTarget != null || existingDrawingTarget != null || linkTarget != null || tableTarget != null || showTemplates || insertingFile || insertFeedback != null || showRename || toolsExpanded || showHaloSheet || showAssistMenu || showReferencePicker || showFindBar || showImageStudio || showNoteAppearance,
         completedGuideIds = if (state.displayBody.isNotBlank() && (state.draftKept || state.status == SaveStatus.SAVED)) setOf("note-insert.v1", "library-new.v1") else emptySet(),
         helpSteps = listOf(
             com.halo.app.ui.presence.ShellGuideStep("note-insert.v1", "page.note.insert", stringResource(R.string.zone5_guide_note), state.displayBody.isNotBlank() && (state.draftKept || state.status == SaveStatus.SAVED)),
@@ -406,6 +414,53 @@ fun NoteEditorScreen(
     fun currentInsertTarget(): Pair<String?, Int> = viewModel.uiState.value.let { current ->
         (current.selection?.blockId ?: current.blocks.lastOrNull()?.id) to noteInsertSignature(current)
     }
+    val drawingLabel = stringResource(R.string.mk13_block_drawing)
+    fun saveDrawing(target: Pair<String?, Int>, save: suspend () -> Boolean, close: () -> Unit) {
+        if (savingDrawing) return
+        if (!canInsertAt(target)) {
+            failedDrawing = true
+            return
+        }
+        savingDrawing = true
+        failedDrawing = false
+        scope.launch {
+            try {
+                if (save()) close() else failedDrawing = true
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                failedDrawing = true
+            } finally {
+                savingDrawing = false
+            }
+        }
+    }
+    LaunchedEffect(familyReady, childDrawing) {
+        if (!familyReady || childDrawing) {
+            drawingTarget = null
+            existingDrawingTarget = null
+            drawingBoard = null
+        }
+    }
+    drawingTarget?.takeIf { familyReady && !childDrawing }?.let { target ->
+        CanvasSketchPadDialog(onSave = {}, sheetLimit = com.halo.app.ui.canvas.v13.InkSheets.MAX_SHEETS,
+            saving = savingDrawing, saveFailed = failedDrawing, onDismiss = { drawingTarget = null },
+            onSaveSheets = { sheets ->
+                saveDrawing(target, { viewModel.addLinkedDrawing(target.first, drawingLabel, sheets) }) { drawingTarget = null }
+            })
+    }
+    existingDrawingTarget?.takeIf { familyReady && !childDrawing }?.let { target ->
+        val board = drawingBoard
+        if (board == null) com.halo.app.ui.workspace.WorkspaceObjectPicker(
+            candidates = referenceCandidates.filter { it.type == com.halo.app.data.notebook.WorkspaceObjectType.CANVAS },
+            title = "Choose a board", onPick = { drawingBoard = it }, onDismiss = { existingDrawingTarget = null },
+        ) else NoteDrawingPicker(board.id.value, savingDrawing, failedDrawing, onPick = { node ->
+            saveDrawing(target, { viewModel.linkDrawing(target.first, board.id.value, node, drawingLabel) }) {
+                existingDrawingTarget = null
+                drawingBoard = null
+            }
+        }, onBack = { drawingBoard = null; failedDrawing = false })
+    }
     tableTarget?.let { target ->
         NoteInstrumentTableDialog(insertEnabled && canInsertAt(target), onInsert = { table ->
             if (canInsertAt(target)) viewModel.insertBlock(target.first, NoteBlockType.PARAGRAPH, table)
@@ -517,7 +572,18 @@ fun NoteEditorScreen(
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Zone5ActionButton(uiText("Checklist"), "action_add", valid) { insert(NoteBlockType.CHECKLIST) }
                     Zone5ActionButton(uiText("Table"), "action_add", valid) {
-                        insert(NoteBlockType.PARAGRAPH, "| Column 1 | Column 2 |\n| --- | --- |\n|     |     |")
+                        insertTarget = null
+                        tableTarget = target
+                    }
+                    if (canDraw) Zone5ActionButton(drawingLabel, "action_add", valid) {
+                        insertTarget = null
+                        failedDrawing = false
+                        drawingTarget = target
+                    }
+                    if (canDraw) Zone5ActionButton(stringResource(R.string.mk13_link_drawing), "action_link", valid) {
+                        insertTarget = null
+                        failedDrawing = false
+                        existingDrawingTarget = target
                     }
                     Zone5ActionButton(uiText("Image"), "action_attach", valid) {
                         insertTarget = null
@@ -804,6 +870,10 @@ fun NoteEditorScreen(
             val canRead = noteAppearance.readBack && state.mode != EditorMode.SOURCE && state.displayBody.isNotBlank()
             val canExport = onExportCopy != null && state.status == SaveStatus.SAVED && state.mode != EditorMode.SOURCE && !state.isGenerating && !exporting
             HaloInstrumentBar("notes", mapOf(
+                "notes.draw" to HaloInstrumentAction({
+                    failedDrawing = false
+                    drawingTarget = currentInsertTarget()
+                }, canDraw),
                 "notes.font_size" to HaloInstrumentAction({ openNoteReview(NoteReviewInstrument.FONT, null) },
                     insertEnabled && noteTarget?.selection?.isEmpty == false),
                 "notes.align_spacing" to HaloInstrumentAction({ openNoteReview(NoteReviewInstrument.PARAGRAPH, null) },
@@ -895,7 +965,7 @@ fun NoteEditorScreen(
 
         CompositionLocalProvider(LocalNotePresentation provides noteAppearance) { when (state.mode) {
             EditorMode.SOURCE -> SourceModeEditor(state, viewModel) { requestMode(EditorMode.EDIT) }
-            EditorMode.READ -> ReadModeView(state, readScroll, viewModel.noteId, Modifier.weight(1f)) {
+            EditorMode.READ -> ReadModeView(state, readScroll, viewModel.noteId, Modifier.weight(1f), onOpenCanvas) {
                 openNoteReview(NoteReviewInstrument.COMMENTS, it)
             }
             EditorMode.EDIT -> EditModeView(
@@ -1346,10 +1416,11 @@ private fun ColumnScope.EditModeView(
                 onRemove = { viewModel.removeBlock(block.id) },
                 onDuplicate = { viewModel.duplicateBlock(block.id) },
                 onAddBelow = { viewModel.insertBlock(block.id) },
-                unlinkedReference = block.id in state.unlinkedReferenceIds,
+                unlinkedReference = block.id in state.unlinkedReferenceIds && com.halo.app.ui.notes.v13.NoteDrawing.target(block) == null,
                 onRelink = { onPickExistingReference(block.id) },
             )
             }
+            if (!block.isPendingDeletion()) LinkedNoteDrawing(block, onOpenCanvas)
             NoteAnchoredCommentMarkers(block) { onOpenComments(block.id) }
             }
         }
@@ -1701,7 +1772,7 @@ private fun ColumnScope.SourceModeEditor(state: NoteEditorUiState, viewModel: No
 
 @Composable
 private fun ReadModeView(state: NoteEditorUiState, scrollState: androidx.compose.foundation.ScrollState,
-    noteId: String, modifier: Modifier = Modifier, onOpenComments: (String) -> Unit) {
+    noteId: String, modifier: Modifier = Modifier, onOpenCanvas: (String, String) -> Unit, onOpenComments: (String) -> Unit) {
     val appearance = LocalNotePresentation.current
     Column(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)
         .notePaper(appearance.paper, MaterialTheme.colorScheme.outline.copy(alpha = .22f))
@@ -1729,7 +1800,10 @@ private fun ReadModeView(state: NoteEditorUiState, scrollState: androidx.compose
         if (appearance.readBack) NoteReadBack(noteId, state.displayBody)
         NotePageFurniture(state.pageSettings, top = true)
         state.blocks.forEach { block ->
-            if (!block.isPendingDeletion()) ReadBlock(block)
+            if (!block.isPendingDeletion()) {
+                ReadBlock(block)
+                LinkedNoteDrawing(block, onOpenCanvas)
+            }
             NoteAnchoredCommentMarkers(block) { onOpenComments(block.id) }
         }
         NotePageFurniture(state.pageSettings, top = false)

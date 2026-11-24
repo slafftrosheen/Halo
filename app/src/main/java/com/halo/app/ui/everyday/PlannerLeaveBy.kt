@@ -57,6 +57,8 @@ internal fun PlannerLeaveBySheet(review: PlannerLeaveByReview, now: Instant, zon
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(uiText("Leave-by time"), style = MaterialTheme.typography.headlineSmall)
+            com.halo.app.ui.theme.v13.Halo13Animation(com.halo.app.ui.theme.v13.Halo13Motion.LEAVE_BY,
+                Modifier.fillMaxWidth().height(68.dp))
             Text(review.title, style = MaterialTheme.typography.titleMedium)
             Text(uiText("Event starts %s", timestamp.format(review.start)), style = MaterialTheme.typography.bodyMedium)
             if (review.location.isNotBlank()) Text(review.location, style = MaterialTheme.typography.bodyMedium)

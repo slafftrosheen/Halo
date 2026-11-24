@@ -3,7 +3,6 @@ package com.halo.app.ui.screens.notebook
 import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
-import com.halo.app.ui.zone5.Zone5InstrumentHeading
 import com.halo.app.ui.zone5.Zone5ActionButton
 import com.halo.app.ui.instruments.HaloInstrumentAction
 import com.halo.app.ui.instruments.HaloInstrumentBar
@@ -109,8 +108,15 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     var toolsExpanded by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var requestedList by rememberSaveable(viewModel.canvasId) { mutableStateOf<Boolean?>(null) }
+    var showLayers by rememberSaveable(viewModel.canvasId) { mutableStateOf(false) }
     val touchExploration = canvasTouchExplorationEnabled()
-    val easyView = com.halo.app.ui.theme.rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
+    val viewMode = com.halo.app.ui.theme.rememberVisualPreferences().viewMode
+    val easyView = viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
+    val depth = when (viewMode) {
+        com.halo.app.ui.theme.HaloViewMode.EASY -> com.halo.app.ui.canvas.v13.Depth.SIMPLE
+        com.halo.app.ui.theme.HaloViewMode.STANDARD -> com.halo.app.ui.canvas.v13.Depth.STANDARD
+        com.halo.app.ui.theme.HaloViewMode.COMPACT -> com.halo.app.ui.canvas.v13.Depth.PRO
+    }
     val context = LocalContext.current
     val guidance = LocalHaloPageGuidance.current
     val currentGuidance by rememberUpdatedState(guidance)
@@ -641,6 +647,13 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
         val target = state.nodes.firstOrNull { it.id == sketchTarget && it.type == CanvasNodeType.SKETCH }
         val recovery = state.drawingDraft?.takeIf { it.matchesSource(sketchTarget, "sketch", sketchOriginal) }
         var observedDraft by remember(sketchTarget, sketchOriginal) { mutableStateOf(recovery) }
+        val continues = com.halo.app.ui.canvas.v13.InkSheets.CONTINUES_LABEL
+        val predecessors = state.edges.filter { it.label == continues }.associate { it.toNodeId to it.fromNodeId }
+        val earlier = mutableSetOf<String>()
+        var parentSheet = predecessors[sketchTarget]
+        while (parentSheet != null && earlier.add(parentSheet)) parentSheet = predecessors[parentSheet]
+        val isTail = state.edges.none { it.label == continues && it.fromNodeId == sketchTarget }
+        val sheetLimit = if (isTail) (com.halo.app.ui.canvas.v13.InkSheets.MAX_SHEETS - earlier.size).coerceAtLeast(1) else 1
         CanvasSketchPadDialog(
             initial = sketchOriginal,
             editingExisting = target != null,
@@ -649,13 +662,18 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
             selectionPageId = target?.id,
             onSelectionChanged = viewModel::setInkSelection,
             onSaveSelection = viewModel::saveInkSelection,
-            onDraft = { encoded ->
-                val draft = com.halo.app.data.notebook.CanvasDrawingDraft(sketchTarget, "sketch", sketchOriginal, sketch = encoded)
+            sheetLimit = sheetLimit,
+            sheetNumber = earlier.size + 1,
+            recoveredSheets = recovery?.pages?.toSortedMap()?.values?.take(sheetLimit - 1).orEmpty(),
+            onSheetDraft = { sheets ->
+                val draft = com.halo.app.data.notebook.CanvasDrawingDraft(sketchTarget, "sketch", sketchOriginal,
+                    sketch = sheets.first(), pages = sheets.drop(1).mapIndexed { index, ink -> index + 2 to ink }.toMap())
                 observedDraft = draft
                 viewModel.keepDrawingDraft(draft)
             },
-            onSave = { encoded ->
-                viewModel.addSketch(encoded, sketchTarget, sketchOriginal.takeIf { sketchTarget != null }, expectedDraft = observedDraft)
+            onSave = {},
+            onSaveSheets = { sheets ->
+                viewModel.addDrawingSheets(sheets, sketchTarget, sketchOriginal.takeIf { sketchTarget != null }, observedDraft)
                 sketchOpen = false
                 sketchTarget = null
             },
@@ -1147,8 +1165,6 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
     }
 
     Column(Modifier.fillMaxSize().background(com.halo.app.ui.theme.haloWorkspaceBackground()).then(if (shellOwnsOrb) Modifier else Modifier.imePadding())) {
-        if (shellOwnsOrb) Zone5InstrumentHeading(uiText("Canvas"), "tool_canvas", state.title,
-            modifier = Modifier.padding(horizontal = 20.dp))
         if (!shellOwnsOrb) EditorWorkspaceHeader(state.title, menu,
             onToggle = { menu = true }, onBack = { viewModel.leave(onBack) },
             onHalo = if (com.halo.app.ui.presence.LocalShellHaloOrb.current) null else ({ showAi = true }),
@@ -1162,7 +1178,7 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 if (state.selectionMode) viewModel.toggleSelectionMode()
                 viewModel.addTextNode(sticky) { id -> autoFocusNewText = id }
             }
-            HaloInstrumentBar("canvas", mapOf(
+            val instrumentActions = mapOf(
                 "canvas.select" to HaloInstrumentAction({ handMode = false; viewModel.toggleSelectionMode() }, canAct, selected = state.selectionMode && !handMode),
                 "canvas.hand_pan" to HaloInstrumentAction({
                     requestedList = false
@@ -1189,8 +1205,30 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     }
                 }, canAct && state.selectedNodeIds.size <= 1 && selected?.let { it.type == CanvasNodeType.SHAPE || it.canEditListText() } == true),
                 "canvas.minimap" to HaloInstrumentAction({ minimapOpen = true }, state.nodes.isNotEmpty() && !connecting),
+                "canvas.layers_panel" to HaloInstrumentAction({ showLayers = !showLayers }, !connecting && !kidsMode,
+                    selected = showLayers),
                 "canvas.present" to HaloInstrumentAction({ presenting = true }, !connecting && state.nodes.any { it.type == CanvasNodeType.FRAME }, selected = presenting),
-            ), primary = "canvas.sticky_note")
+            )
+            val verbs = com.halo.app.ui.canvas.v13.CanvasPlain.bar(depth, kidsMode)
+            if (kidsMode) FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                verbs.forEach { verb ->
+                    val (label, instrument) = when (verb) {
+                        com.halo.app.ui.canvas.v13.CanvasVerb.WRITE -> R.string.mk13_canvas_write to "canvas.text"
+                        com.halo.app.ui.canvas.v13.CanvasVerb.DRAW -> R.string.mk13_canvas_draw to "canvas.pen_highlighter"
+                        com.halo.app.ui.canvas.v13.CanvasVerb.PICTURE -> R.string.mk13_canvas_picture to "canvas.picture_file"
+                        com.halo.app.ui.canvas.v13.CanvasVerb.SHAPE -> R.string.mk13_canvas_shape to "canvas.shape"
+                        com.halo.app.ui.canvas.v13.CanvasVerb.CONNECT -> R.string.mk13_canvas_connect to "canvas.connector"
+                    }
+                    val action = instrumentActions.getValue(instrument)
+                    TextButton(action.run, enabled = action.enabled && !action.working, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(stringResource(label))
+                    }
+                }
+            }
+            if (!kidsMode) {
+                HaloInstrumentBar("canvas", instrumentActions, primary = "canvas.pen_highlighter")
+            }
         }
         if (!shellOwnsOrb && !showAsList) Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -1288,7 +1326,8 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                     modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Done")) }
             }
         }
-        Box(Modifier.weight(1f).fillMaxWidth().clipToBounds()) {
+        Row(Modifier.weight(1f).fillMaxWidth()) {
+        Box(Modifier.weight(1f).fillMaxHeight().clipToBounds()) {
         if (showAsList && !state.loading && !state.missing) {
             if (state.nodes.isEmpty()) CanvasEmptyStarter(
                 modifier = Modifier.align(Alignment.Center).padding(24.dp),
@@ -1662,6 +1701,34 @@ fun CanvasEditorScreen(viewModel: CanvasEditorViewModel, focusNodeId: String? = 
                 onKeep = viewModel::applyAi,
                 onDiscard = viewModel::discardAiDraft,
             )
+        }
+        }
+        if (showLayers && !kidsMode && !connecting && !state.loading && !state.missing) {
+            val panelWidth = if (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600) 216.dp else 132.dp
+            Surface(Modifier.width(panelWidth).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                LazyColumn(contentPadding = PaddingValues(8.dp)) {
+                    item {
+                        Text(stringResource(com.halo.app.R.string.f13_canvas_layers), style = MaterialTheme.typography.titleSmall)
+                        TextButton(onClick = { showLayers = false }) { Text(uiText("Close")) }
+                    }
+                    if (state.nodes.isEmpty()) item { Text(stringResource(com.halo.app.R.string.f13_canvas_layers_empty)) }
+                    items(state.nodes.sortedByDescending { it.zIndex }, key = { it.id }) { node ->
+                        val label = when (node.type) {
+                            CanvasNodeType.SKETCH -> uiText("Sketch")
+                            CanvasNodeType.INK_SELECTION -> uiText("Ink selection")
+                            else -> node.readableText().take(80).ifBlank { uiText("Untitled card") }
+                        }
+                        TextButton(onClick = {
+                            if (node.type == CanvasNodeType.COMMENT) reviewPinId = node.id
+                            else if (showAsList) viewModel.selectNode(node.id)
+                            else viewModel.focusNode(node.id)
+                        }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                            Text(label, maxLines = 2, color = if (node.id in state.selectedNodeIds)
+                                MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
+                }
+            }
         }
         }
         if (selected != null && state.edges.any { it.fromNodeId == selected.id || it.toNodeId == selected.id }) {

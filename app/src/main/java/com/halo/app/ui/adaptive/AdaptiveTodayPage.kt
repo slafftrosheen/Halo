@@ -290,6 +290,10 @@ internal fun AdaptiveTodayPage(
             }
             Text(if (showLibrary) savedTitle else draft.title.ifBlank { newTitle },
                 Modifier.semantics { heading() }, style = MaterialTheme.typography.headlineSmall)
+            if (!showLibrary && animatePlan && !editing) key(generation) {
+                com.halo.app.ui.theme.v13.Halo13Animation(com.halo.app.ui.theme.v13.Halo13Motion.PAGE_ASSEMBLES,
+                    Modifier.fillMaxWidth().height(64.dp))
+            }
 
             if (showLibrary) {
                 TextButton(onClick = { leaveDraft { showPlan(emptyList()); request = "" } }, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.adaptive_page_new)) }

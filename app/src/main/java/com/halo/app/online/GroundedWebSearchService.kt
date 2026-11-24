@@ -130,9 +130,10 @@ class GroundedWebSearchService(
         val remoteRevision = router.remoteDispatchRevision
         val providers = router.getAllProviders()
         if (revision != router.configurationRevision) throw OnlineOperationRejected(OnlineProblem.CONSENT_EXPIRED)
-        if (provider == "openai" && model != null && openAi != null && OpenAiWebSearchClient.supports(model) &&
-            providers.any { it.id == "openai" } && configuredKey("openai") != null) {
-            return Route("openai", model, revision, remoteRevision)
+        val openAiAvailable = openAi != null && providers.any { it.id == "openai" } && configuredKey("openai") != null
+        if (openAiAvailable && (provider == "openai" || configuredKey("openrouter") == null)) {
+            val searchModel = model?.takeIf { provider == "openai" && OpenAiWebSearchClient.supports(it) } ?: "gpt-5.4-mini"
+            return Route("openai", searchModel, revision, remoteRevision)
         }
         if (providers.none { it.id == "openrouter" }) throw OnlineOperationRejected(OnlineProblem.UNAVAILABLE)
         val openRouterModel = model?.removeSuffix(":online")

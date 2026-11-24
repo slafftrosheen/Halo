@@ -20,7 +20,7 @@ import com.halo.app.ui.icons.HaloIcon
 /** Every input declares its privacy and speech semantics at the call site. */
 enum class VoiceFieldKind { TEXT, SEARCH, SHORT, NUMBER, CODE, URL_ID, SECRET, STRUCTURED }
 
-/** The shared v1.4 field delegates capture, preview and routed playback to the existing owner. */
+/** Shared capture, editable dictation and routed playback. */
 @Composable
 fun HaloTextField(
     value: String,
@@ -53,6 +53,8 @@ fun HaloTextField(
     readText: String? = value,
     inputContentDescription: String? = null,
     onFinalSpeech: ((String) -> Unit)? = null,
+    holdToTalk: Boolean = false,
+    recognitionLanguage: String? = null,
 ) {
     val secret = kind == VoiceFieldKind.SECRET || visualTransformation is PasswordVisualTransformation ||
         keyboardOptions.keyboardType in setOf(androidx.compose.ui.text.input.KeyboardType.Password,
@@ -82,14 +84,14 @@ fun HaloTextField(
         // Secrets never instantiate the speech owner or pass their value to a speech callback.
         if (!secret && kind != VoiceFieldKind.STRUCTURED) {
             HaloVoiceTextActions(text = value, onText = onValueChange,
-                enabled = voiceEnabled, maxChars = maxChars, language = language,
+                enabled = voiceEnabled, maxChars = maxChars, language = language, recognitionLanguage = recognitionLanguage,
                 allowDictation = !readOnly && kind != VoiceFieldKind.URL_ID,
-                allowLongDictation = kind == VoiceFieldKind.TEXT,
+                allowLongDictation = kind == VoiceFieldKind.TEXT && !holdToTalk,
+                holdToTalk = holdToTalk,
                 guideDictation = guideDictation,
                 onCommand = onFinalSpeech,
                 dictationRequest = dictationRequest, onRequestConsumed = onRequestConsumed,
                 appendDictation = kind == VoiceFieldKind.TEXT,
-                applySearchImmediately = kind == VoiceFieldKind.SEARCH,
                 previewIsValid = { spoken -> when (kind) {
                     VoiceFieldKind.NUMBER -> spoken.matches(Regex("[+-]?[0-9]+([.,][0-9]+)?"))
                     VoiceFieldKind.CODE -> spoken.matches(Regex("[0-9]+"))

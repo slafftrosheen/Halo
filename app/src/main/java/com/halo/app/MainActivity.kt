@@ -656,8 +656,16 @@ open class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean =
-        com.halo.app.ui.instruments.HaloInstrumentKeyboard.dispatch(this, event) || super.dispatchKeyEvent(event)
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        com.halo.app.ui.adaptive.AdaptiveInputState.key(event)
+        return com.halo.app.ui.instruments.HaloInstrumentKeyboard.dispatch(this, event) || super.dispatchKeyEvent(event)
+    }
+
+    override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean {
+        val consumed = super.dispatchTouchEvent(event)
+        com.halo.app.ui.adaptive.AdaptiveInputState.touch(event)
+        return consumed
+    }
 
     override fun onResume() {
         super.onResume()

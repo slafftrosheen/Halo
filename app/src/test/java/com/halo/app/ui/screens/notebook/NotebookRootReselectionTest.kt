@@ -139,7 +139,10 @@ class NotebookRootReselectionTest {
         renderWorkspace()
         compose.onNodeWithText("Tools").performClick()
         restoration.emulateSavedInstanceStateRestore()
-        compose.runOnIdle { assertEquals("tools", actions.value!!.owner.activeToolId); assertTrue(actions.value!!.actions.map { it.id }.toSet() == setOf("page.notebook.view-library", "page.notebook.view-tools")) }
+        compose.runOnIdle {
+            assertEquals("tools", actions.value!!.owner.activeToolId)
+            assertEquals(toolShelfActionIds, actions.value!!.actions.map { it.id }.toSet())
+        }
         compose.onNodeWithText("HaloNotes", ignoreCase = true).assertIsDisplayed()
     }
 
@@ -203,7 +206,7 @@ class NotebookRootReselectionTest {
         compose.onNodeWithText("Tools").performClick()
         compose.runOnIdle {
             assertEquals("tools", actions.value!!.owner.activeToolId)
-            assertTrue(actions.value!!.actions.map { it.id }.toSet() == setOf("page.notebook.view-library", "page.notebook.view-tools"))
+            assertEquals(toolShelfActionIds, actions.value!!.actions.map { it.id }.toSet())
             assertNull("Hidden Library cannot remain an assistant target", library.read())
         }
         compose.onNodeWithText("HaloStudy").performClick()
@@ -278,6 +281,10 @@ class NotebookRootReselectionTest {
     }
 
     companion object {
+        private val toolShelfActionIds = setOf(
+            "page.notebook.scan", "page.notebook.find-tool", "page.notebook.edit-shelf",
+            "page.notebook.layout", "page.notebook.view-library", "page.notebook.view-tools",
+        )
         private const val QUERY = "root-fixture"
         private const val NOTE_TITLE = "root-fixture note"
         private const val CANVAS_TITLE = "root-fixture canvas"

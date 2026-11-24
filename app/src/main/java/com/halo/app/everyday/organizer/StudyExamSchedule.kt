@@ -1,9 +1,9 @@
 package com.halo.app.everyday.organizer
 
 import java.time.Instant
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 
 data class StudyExamLesson(val sessionId: String, val title: String, val version: Long) {
     init {
@@ -13,10 +13,20 @@ data class StudyExamLesson(val sessionId: String, val title: String, val version
     }
 }
 
-data class StudyExamSchedule(val examDate: LocalDate, val lessons: List<StudyExamLesson>) {
+data class StudyExamSchedule(val examDate: LocalDate, val lessons: List<StudyExamLesson>,
+    val restDays: Set<DayOfWeek> = emptySet(), val quickReview: Boolean = false) {
     init {
         require(examDate.year in 1970..2199)
         require(lessons.size <= 50 && lessons.distinctBy(StudyExamLesson::sessionId).size == lessons.size)
+        require(restDays.size < DayOfWeek.entries.size)
+    }
+
+    fun isRest(date: LocalDate) = date.dayOfWeek in restDays
+    fun isLight(date: LocalDate) = quickReview && date == examDate.minusDays(1) && !isRest(date)
+
+    fun lessonsOn(date: LocalDate, dates: List<LocalDate>): List<StudyExamLesson> {
+        val learning = dates.filterNot { isRest(it) || isLight(it) }
+        return lessonsOn(learning.indexOf(date), learning.size)
     }
 
     fun lessonsOn(index: Int, days: Int): List<StudyExamLesson> {
@@ -31,7 +41,7 @@ internal fun OrganizerRecord.examLessonsFor(originalStart: Instant): List<StudyE
     val plan = studyExam ?: return emptyList()
     val time = requireNotNull(time)
     val date = originalStart.atZone(ZoneId.of(time.zoneId)).toLocalDate()
-    return plan.lessonsOn(ChronoUnit.DAYS.between(time.start.toLocalDate(), date).toInt(), repeat?.count ?: 1)
+    return plan.lessonsOn(date, List(repeat?.count ?: 1) { time.start.toLocalDate().plusDays(it.toLong()) })
 }
 
 /** Keep the moved lesson anchored and make room on either side without changing nominal occurrence IDs. */
@@ -57,11 +67,18 @@ internal fun reflowStudyExam(record: OrganizerRecord, current: List<OccurrenceOv
         } ?: base.onDate(slot.identity.atZone(zone).toLocalDate(), zone)
     }
     require(originalTimes[selected].instant(zone) > now && replacement.instant(zone) > now) { "Choose a future study session" }
-    require(replacement.start.toLocalDate() < exam.examDate) { "Study sessions must stay before the exam" }
+    require(replacement.start.toLocalDate() < exam.examDate && !exam.isRest(replacement.start.toLocalDate())) {
+        "Choose a study day before the exam"
+    }
+    fun findDay(start: LocalDate, step: Long): LocalDate {
+        var day = start
+        while (exam.isRest(day)) day = day.plusDays(step)
+        return day
+    }
     val dates = originalTimes.map { it.start.toLocalDate() }.toMutableList()
     dates[selected] = replacement.start.toLocalDate()
-    for (index in selected - 1 downTo 0) dates[index] = minOf(dates[index], dates[index + 1].minusDays(1))
-    for (index in selected + 1 until dates.size) dates[index] = maxOf(dates[index], dates[index - 1].plusDays(1))
+    for (index in selected - 1 downTo 0) dates[index] = findDay(minOf(dates[index], dates[index + 1].minusDays(1)), -1)
+    for (index in selected + 1 until dates.size) dates[index] = findDay(maxOf(dates[index], dates[index - 1].plusDays(1)), 1)
     require(dates.last() < exam.examDate) { "There is no room for the remaining lessons before the exam" }
     return slots.mapIndexedNotNull { index, slot ->
         if (index == selected) return@mapIndexedNotNull move

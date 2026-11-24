@@ -33,7 +33,8 @@ import com.halo.app.data.studio.StudioPixelMask
 import com.halo.app.data.studio.StudioPixelOperation
 import com.halo.app.data.studio.StudioService
 import com.halo.app.data.studio.StudioSmudgeStroke
-import com.halo.app.data.studio.smudgeStudioPixels
+import com.halo.app.data.studio.STUDIO_SMUDGE_DRAFT_LIMIT
+import com.halo.app.data.studio.smudgeStudioBatches
 import com.halo.app.language.uiText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +48,7 @@ private class StudioSmudgeDraft {
     var strokes by mutableStateOf<List<StudioSmudgeStroke>>(emptyList())
     var trace by mutableStateOf<List<StudioArtPoint>>(emptyList())
         private set
-    val canDraw get() = strength > 0 && strokes.size < 12
+    val canDraw get() = strength > 0 && strokes.size < STUDIO_SMUDGE_DRAFT_LIMIT
 
     fun input() = StudioArtworkInput(
         StudioArtGesture.DRAG,
@@ -63,7 +64,8 @@ private class StudioSmudgeDraft {
 }
 
 private data class StudioSmudgePreview(
-    val strokes: List<StudioSmudgeStroke>, val selection: StudioPixelMask?, val bitmap: Bitmap?, val changed: Boolean = false,
+    val source: Bitmap, val strokes: List<StudioSmudgeStroke>, val selection: StudioPixelMask?, val bitmap: Bitmap?,
+    val changed: Boolean = false,
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -79,21 +81,25 @@ internal fun StudioSmudgeDialog(
     val result by produceState<StudioSmudgePreview?>(null, source, strokes, selection) {
         if (source == null || strokes.isEmpty()) return@produceState
         val edge = maxOf(document.width, document.height)
+        val prior = value?.takeIf { it.source === source && it.selection === selection && it.bitmap != null &&
+            strokes.size > it.strokes.size && strokes.subList(0, it.strokes.size) == it.strokes }
         value = withContext(Dispatchers.Default) {
-            val canvas = source.copy(Bitmap.Config.ARGB_8888, true)
-            if (canvas == null) StudioSmudgePreview(strokes, selection, null)
+            val canvas = (prior?.bitmap ?: source).copy(Bitmap.Config.ARGB_8888, true)
+            if (canvas == null) StudioSmudgePreview(source, strokes, selection, null)
             else try {
-                StudioSmudgePreview(strokes, selection, canvas, smudgeStudioPixels(canvas, strokes, selection, edge))
+                val newStrokes = strokes.drop(prior?.strokes?.size ?: 0)
+                val changed = smudgeStudioBatches(canvas, newStrokes, selection, edge)
+                StudioSmudgePreview(source, strokes, selection, canvas, changed || prior?.changed == true)
             } catch (cancelled: CancellationException) {
                 canvas.recycle()
                 throw cancelled
             } catch (_: Exception) {
                 canvas.recycle()
-                StudioSmudgePreview(strokes, selection, null)
+                StudioSmudgePreview(source, strokes, selection, null)
             }
         }
     }
-    val matching = result?.takeIf { it.selection === selection }
+    val matching = result?.takeIf { it.source === source && it.selection === selection }
     val finish = matching?.takeIf { it.strokes == strokes }
     val picture = if (strokes.isEmpty()) source else matching?.bitmap ?: source
     StudioAlertDialog(onDismissRequest = onDismiss, title = { Text(uiText("Smudge / blend")) }, text = {
@@ -118,7 +124,7 @@ internal fun StudioSmudgeDialog(
                     Text(uiText("Undo stroke"))
                 }
             }
-            if (strokes.size == 12) Text(uiText("Apply these strokes before adding more."))
+            if (strokes.size == STUDIO_SMUDGE_DRAFT_LIMIT) Text(uiText("Apply these strokes before adding more."))
             if (!ready) Text(stringResource(R.string.zone5_document_changed))
         }
     }, confirmButton = {

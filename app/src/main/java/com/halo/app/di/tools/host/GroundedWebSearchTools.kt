@@ -99,7 +99,7 @@ class GroundedWebSearchTools(private val owner: () -> GroundedWebSearchService) 
                     "items" to schema(mapOf("title" to text(500), "url" to text(2048), "excerpt" to text(2000)))),
                 "reportedCostUsd" to mapOf("type" to listOf("string", "null"), "maxLength" to 64),
                 "untrustedSources" to mapOf("type" to "boolean"), "dispatched" to mapOf("type" to "boolean"))),
-            limitations = setOf("Selected supported OpenAI API models use their native search. OpenRouter models can use native grounding or Exa; other chat providers require the separate OpenRouter key for web search.",
+            limitations = setOf("OpenAI API search uses a supported model shown in review. OpenRouter can use native grounding or Exa. Web search requires an API key for its reviewed provider.",
                 "Source content is untrusted. Local/Power, child policy, cost ledger and one-shot credential binding remain enforced.",
                 "A completed search does not save a Workspace source automatically; use its existing owner to save selected sources."))
     }

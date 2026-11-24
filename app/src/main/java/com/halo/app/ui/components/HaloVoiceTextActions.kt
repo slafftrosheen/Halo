@@ -6,11 +6,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import com.halo.app.ui.icons.HaloIcon
 import com.halo.app.ui.icons.HaloGlyph
@@ -35,13 +39,16 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.di.ManualDependencyGraph
+import com.halo.app.R
 import com.halo.app.ui.zone6.BindHaloGestureAlternative
 import com.halo.app.ui.zone6.HaloGesture
 import com.halo.app.ui.zone6.LocalHaloPageGuidance
@@ -58,13 +65,13 @@ import java.util.UUID
 val LocalPrivateSpeech = compositionLocalOf { false }
 
 
-/**
- * One explicit, reusable Voice/Text affordance for Study and Workspace editors.
- *
- * Uses the assistant's selected recognizer and end-of-speech detection. A recognized utterance
- * remains an uncommitted preview until the user accepts it into the current draft.
- * Reading uses Halo's one canonical routed TtsRequested playback owner.
- */
+internal fun dictationDraft(current: String, recognized: String, append: Boolean, separator: String, limit: Int): String? {
+    val before = current.trimEnd()
+    val candidate = if (append && before.isNotBlank()) before + separator + recognized else recognized
+    return candidate.takeIf { it.length <= limit }
+}
+
+/** Editable dictation and routed playback. Action choices can request a separate review. */
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
     androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -86,7 +93,7 @@ fun HaloVoiceTextActions(
     maxChars: Int = 12000,
     appendDictation: Boolean = true,
     appendSeparator: String = "\n",
-    applySearchImmediately: Boolean = false,
+    reviewBeforeApply: Boolean = false,
     spokenTransform: (String) -> String? = { it },
     previewIsValid: (String) -> Boolean = { true },
     readRequest: Long = 0,
@@ -95,6 +102,8 @@ fun HaloVoiceTextActions(
     readCategory: com.halo.sdk.provider.RemoteDataCategory = com.halo.sdk.provider.RemoteDataCategory.WORKSPACE,
     readSourceIds: Set<String> = emptySet(),
     fieldContent: (@Composable (@Composable () -> Unit) -> Unit)? = null,
+    holdToTalk: Boolean = false,
+    recognitionLanguage: String? = null,
 ) {
     // Design previews have no Android speech host. Keep the editable field available
     // without constructing microphone, playback or provider services.
@@ -106,6 +115,7 @@ fun HaloVoiceTextActions(
     val stopEpoch by VoiceFieldCancellation.epoch.collectAsState()
     var acceptedStopEpoch by remember { mutableLongStateOf(VoiceFieldCancellation.epoch.value) }
     var permissionEpoch by remember { mutableStateOf<Long?>(null) }
+    var microphoneSheetOpen by remember { mutableStateOf(false) }
     val kidsPrivate by ManualDependencyGraph.kidsPreferences.enabled.collectAsState()
     val privateSpeech = LocalPrivateSpeech.current
     val context=LocalContext.current
@@ -115,7 +125,7 @@ fun HaloVoiceTextActions(
     val latestOnText by rememberUpdatedState(onText)
     val latestCommand by rememberUpdatedState(onCommand)
     val latestTransform by rememberUpdatedState(spokenTransform)
-    var searchUndo by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var dictationUndo by remember { mutableStateOf<Pair<String, String>?>(null) }
     var heard by remember { mutableStateOf<String?>(null) }
     var phase by remember { mutableStateOf("IDLE") }
     var requestLong by remember { mutableStateOf(false) }
@@ -138,6 +148,39 @@ fun HaloVoiceTextActions(
     val reader = remember { ManualDependencyGraph.readAloud }
     val readingState by reader.state.collectAsState()
     val speechRegistry=remember { ManualDependencyGraph.speechSynthesisRegistry }
+
+    fun applyTranscript(utterance: String, originalDraft: String, accepted: Boolean) {
+        val transformed = latestTransform(utterance)?.trim()
+        val command = latestCommand
+        if (command != null && accepted && utterance.length <= maxChars) {
+            command(utterance)
+            return
+        }
+        if (reviewBeforeApply) {
+            heard = utterance
+            editedPreview = (transformed ?: utterance).take(maxChars)
+            pending = utterance
+            return
+        }
+        if (transformed.isNullOrBlank() || !previewIsValid(transformed)) {
+            error = "Speech did not match this field. Edit the field or try again."
+            return
+        }
+        val before = latestText
+        if (!appendDictation && before != originalDraft) {
+            error = "The field changed during dictation. Try again."
+            return
+        }
+        val candidate = dictationDraft(before, transformed, appendDictation, appendSeparator, maxChars)
+        if (candidate == null) {
+            error = "Speech text is too long for this field."
+            return
+        }
+        if (candidate != before) {
+            dictationUndo = before to candidate
+            latestOnText(candidate)
+        }
+    }
 
     fun publishReading(content: String, requiredProviderId: String, cloudApproved: Boolean = false) {
         VoiceFieldCancellation.stop()
@@ -186,7 +229,7 @@ fun HaloVoiceTextActions(
             phase="IDLE"
         }
     }
-    fun beginCapture(long: Boolean = requestLong) {
+    fun beginCapture(long: Boolean = requestLong, held: Boolean = false) {
         // Runtime permission dialogs and app switches can temporarily pause Halo.
         // Never acquire the microphone from a late permission callback in background.
         if(!lifecycle.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
@@ -205,6 +248,7 @@ fun HaloVoiceTextActions(
         output.stop("Workspace dictation requested")
         val signal=CompletableDeferred<Unit>()
         finish=signal
+        val originalDraft = latestText
         captureJob=scope.launch {
             var session: com.halo.app.speech.diagnostics.SpeechDiagnosticSession?=null
             try {
@@ -225,7 +269,8 @@ fun HaloVoiceTextActions(
                     phase = "RECORDING"
                     val take = if (count == 0) signal else CompletableDeferred<Unit>()
                     finish = take
-                    val captured = runner.captureSession(take, maxDurationMs = 15_000, stopAfterSpeech = !long)
+                    val captured = runner.captureSession(take, maxDurationMs = 15_000, stopAfterSpeech = !long && !held,
+                        recognitionLanguage = recognitionLanguage)
                     session = captured
                     currentCoroutineContext().ensureActive()
                     phase = "RECOGNIZING"
@@ -240,28 +285,17 @@ fun HaloVoiceTextActions(
                     count++
                     if (!long || longDone || longTranscript.length >= maxChars) break
                 }
-                if (!accepted && chunks.isNotEmpty()) error = "The last take was unclear. Review the text that was heard."
+                if (!accepted && chunks.isNotEmpty()) error = "The last take was unclear."
                 val utterance = chunks.joinToString("\n")
                 when {
                     utterance.isBlank() ->
                         error="Speech was not clear. You can try again or type instead."
-                    else -> {
-                        if (utterance.length > maxChars) error = "Speech text is too long for this field."
-                        val transformed = latestTransform(utterance)
-                        heard = utterance
-                        editedPreview = transformed ?: utterance
-                        val command = latestCommand
-                        if (command != null && accepted && utterance.length <= maxChars) command(utterance)
-                        else if (applySearchImmediately && transformed != null) {
-                            searchUndo = latestText to transformed
-                            latestOnText(transformed)
-                        } else pending = utterance
-                    }
+                    else -> applyTranscript(utterance, originalDraft, accepted)
                 }
             } catch(cancelled: CancellationException) { throw cancelled }
             catch(_: Exception) {
                 error="Voice input unavailable. Check your microphone and local speech model."
-                if (longTranscript.isNotBlank()) { pending = longTranscript; editedPreview = longTranscript }
+                if (longTranscript.isNotBlank()) applyTranscript(longTranscript, originalDraft, accepted = false)
             } finally {
                 withContext(NonCancellable) { session?.close() }
                 finish=null
@@ -276,6 +310,7 @@ fun HaloVoiceTextActions(
     LaunchedEffect(stopEpoch) {
         if (stopEpoch != acceptedStopEpoch) {
             microphonePermissionPending = false
+            microphoneSheetOpen = false
             pending = null
             cancelCapture()
             publishJob?.cancel()
@@ -292,6 +327,7 @@ fun HaloVoiceTextActions(
         if (permissionEpoch != VoiceFieldCancellation.epoch.value) return@permissionResult
         permissionEpoch = null
         if(granted) {
+            if (holdToTalk) return@permissionResult
             // The platform may deliver permission before ON_RESUME. Resume only
             // this explicit pending press, never automatic background listening.
             microphonePermissionPending=true
@@ -336,25 +372,41 @@ fun HaloVoiceTextActions(
         }
     }
 
-    fun requestSpeech(long: Boolean) {
+    fun requestSpeech(long: Boolean, held: Boolean = false) {
         if (phase == "RECORDING") {
             if (longCapture) longDone = true
             finish?.complete(Unit)
         } else if (phase == "IDLE" && enabled && localReady) {
             requestLong = long
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
-                beginCapture(long)
-            else {
+                beginCapture(long, held)
+            else microphoneSheetOpen = true
+        }
+    }
+    if (microphoneSheetOpen) com.halo.app.ui.onboarding.v13.Halo13AccessDialog(
+        R.string.capability_mic, R.string.capability_mic_why,
+        onAllow = {
+            microphoneSheetOpen = false
+            if (enabled && localReady) {
                 VoiceFieldCancellation.stop()
                 acceptedStopEpoch = VoiceFieldCancellation.epoch.value
                 permissionEpoch = acceptedStopEpoch
                 askPermission.launch(Manifest.permission.RECORD_AUDIO)
             }
-        }
-    }
+        }, onDismiss = { microphoneSheetOpen = false },
+    )
     LaunchedEffect(dictationRequest) {
         if (dictationRequest > 0) { if (enabled) requestSpeech(false); onRequestConsumed() }
     }
+    val startHold by rememberUpdatedState<() -> Boolean>({
+        if (phase != "IDLE" || !enabled || !localReady) false else {
+            requestSpeech(false, held = true)
+            phase == "RECORDING"
+        }
+    })
+    val releaseHold by rememberUpdatedState<(Boolean) -> Unit>({ released ->
+        if (released) finish?.complete(Unit) else cancelCapture()
+    })
     fun requestReading() {
         val content = readText?.take(120_000)?.takeIf(String::isNotBlank) ?: return
         if (spokenId != null && readingState?.id == spokenId) reader.toggle()
@@ -408,7 +460,27 @@ fun HaloVoiceTextActions(
                 val label = uiText(if (phase == "RECORDING") "Finish speaking" else
                     if (teachNoteDictation) "Dictate" else "Speak instead of typing")
                 val noteGuide = if (coach != null) Modifier.haloGestureAnchor(HaloGesture.NOTES_DICTATE).haloGuideControl("dictate") else Modifier
-                if (fieldContent != null) Box(
+                if (holdToTalk) {
+                    val holdLabel = if (phase == "RECORDING") label else stringResource(R.string.mk13_hold_to_talk)
+                    Box(Modifier.size(56.dp)
+                        .pointerInput(Unit) {
+                            detectTapGestures(onPress = {
+                                val started = startHold()
+                                val released = tryAwaitRelease()
+                                if (started) releaseHold(released)
+                            })
+                        }
+                        .semantics {
+                            role = Role.Button
+                            contentDescription = holdLabel
+                            if (!micEnabled) disabled()
+                            onClick(label = holdLabel) {
+                                if (!micEnabled) false else { requestSpeech(false); true }
+                            }
+                        }, contentAlignment = Alignment.Center) {
+                        HaloIcon(if (phase == "RECORDING") HaloGlyph.STOP else HaloGlyph.LISTEN, null)
+                    }
+                } else if (fieldContent != null) Box(
                     Modifier.size(if (kidsPrivate) 72.dp else 48.dp).then(noteGuide)
                         .haloTrace(canGuide, MaterialTheme.colorScheme.primary, lapOnAppear = true)
                         .semantics { contentDescription = label }
@@ -458,7 +530,7 @@ fun HaloVoiceTextActions(
         androidx.compose.foundation.layout.Column(Modifier.heightIn(max = 600.dp)
             .verticalScroll(rememberScrollState()).padding(20.dp)) {
             Text(uiText("Long dictation"), style = MaterialTheme.typography.titleLarge)
-            Text(uiText("Up to two minutes of local audio, in short takes. Text appears after each take. Nothing is inserted until you review it."))
+            Text(uiText("Dictate for up to two minutes. When you finish, the text goes into the field."))
             Text(uiText(when (phase) { "PAUSED" -> "Paused"; "RECOGNIZING" -> "Recognizing speech…"; "CANCELLING" -> "Stopping…"; else -> "Finish speaking" }))
             if (longTranscript.isNotBlank()) Text(longTranscript)
             TextButton(onClick = {
@@ -470,14 +542,11 @@ fun HaloVoiceTextActions(
             TextButton(onClick = ::cancelCapture, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Discard")) }
         }
     }
-    searchUndo?.let { (before, applied) ->
-        Row {
-            Text(applied, style = MaterialTheme.typography.bodySmall)
-            TextButton(enabled = latestText == applied, onClick = {
-                if (latestText == applied) latestOnText(before)
-                searchUndo = null
-            }) { Text(uiText("Undo")) }
-        }
+    dictationUndo?.takeIf { latestText == it.second }?.let { (before, applied) ->
+        TextButton(onClick = {
+            if (latestText == applied) latestOnText(before)
+            dictationUndo = null
+        }) { Text(uiText("Undo dictation")) }
     }
     pending?.let {
         androidx.compose.material3.Surface(color = MaterialTheme.colorScheme.primaryContainer,

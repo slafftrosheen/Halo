@@ -19,15 +19,17 @@ class HaloInstrumentCatalogueTest {
     private val resources get() = ApplicationProvider.getApplicationContext<Application>().resources
 
     @Test fun suppliedCatalogueResolvesEveryIconAndBilingualName() {
-        val tools = mapOf("studio" to 22, "notes" to 20, "sheets" to 16, "canvas" to 15,
-            "scan" to 12, "record" to 12, "planner" to 11, "study" to 10, "memory" to 9,
-            "album" to 11, "vault" to 9)
+        val tools = mapOf("studio" to 33, "notes" to 32, "sheets" to 26, "canvas" to 26,
+            "scan" to 17, "record" to 16, "planner" to 18, "study" to 17, "memory" to 13,
+            "album" to 17, "vault" to 13, "coach" to 15, "maps" to 15, "calc" to 13,
+            "translate" to 10, "measure" to 9, "focus" to 9)
         val specs = tools.flatMap { (tool, count) ->
-            HaloInstrumentCatalogue.entries(resources, tool).also { assertEquals(count, it.size) }
+            HaloInstrumentCatalogue.entries(resources, tool).also { assertEquals(tool, count, it.size) }
         }
-        assertEquals(147, specs.map(InstrumentSpec::id).toSet().size)
+        assertEquals(specs.size, specs.map(InstrumentSpec::id).toSet().size)
         assertTrue(specs.all { it.icon != 0 && it.russianName.isNotBlank() && it.isVisible(InstrumentLevel.PRO) })
-        assertEquals(setOf("sheets.remove_duplicates", "album.share", "vault.share_a_copy"),
+        assertEquals(setOf("sheets.remove_duplicates", "album.share", "album.shared_sets", "maps.share_arrival",
+            "scan.sign", "vault.share_a_copy"),
             specs.filter(InstrumentSpec::hardStop).map(InstrumentSpec::id).toSet())
         assertTrue(specs.single { it.id == "studio.brush" }.matches("кисть"))
         assertFalse(specs.single { it.id == "studio.lasso" }.isVisible(InstrumentLevel.EASY))

@@ -17,7 +17,8 @@ data class SpeechDiagnosticSession(val capture: DiagnosticAudioCapture, val lang
     val reference: String = "", val id: String = UUID.randomUUID().toString(),
     val timestamp: Long = System.currentTimeMillis(), val activity: SpeechActivityEstimate,
     val rms: Double, val warnings: List<String>, val results: MutableList<SpeechDiagnosticResult> = mutableListOf(),
-    val recognitionCapture: RecognitionCaptureContext = RecognitionCaptureContext("unavailable")) : AutoCloseable {
+    val recognitionCapture: RecognitionCaptureContext = RecognitionCaptureContext("unavailable"),
+    val recognitionLanguage: String? = null) : AutoCloseable {
     override fun close() { capture.close(); results.clear() }
     fun summary(includeTranscripts: Boolean = false): String = buildString {
         appendLine("Speech session $id @ $timestamp; source=${capture.source}; language=$language")
@@ -53,7 +54,7 @@ class SpeechDiagnosticRunner(
     private val transaction = Mutex()
     suspend fun selectedHealth() = selected.healthDetails()
     suspend fun captureSession(finish: Deferred<Unit>? = null, reference: String = "", maxDurationMs: Long = 15_000,
-        stopAfterSpeech: Boolean = false): SpeechDiagnosticSession {
+        stopAfterSpeech: Boolean = false, recognitionLanguage: String? = null): SpeechDiagnosticSession {
         if (!transaction.tryLock()) throw SpeechDiagnosticException(SpeechDiagnosticStage.CAPTURE, IllegalStateException("Diagnostic transaction busy"))
         var sample: DiagnosticAudioCapture? = null
         var stage = SpeechDiagnosticStage.CAPTURE
@@ -67,8 +68,8 @@ class SpeechDiagnosticRunner(
             val frames = sample.audio.frames
             val count = frames.sumOf { it.samples.size }
             val rms = sqrt(frames.sumOf { frame -> frame.samples.sumOf { it.toDouble() * it } } / count.coerceAtLeast(1))
-            return SpeechDiagnosticSession(sample, language(), reference, activity = activity, rms = rms,
-                recognitionCapture = recognitionCapture, warnings = buildList {
+            return SpeechDiagnosticSession(sample, recognitionLanguage ?: language(), reference, activity = activity, rms = rms,
+                recognitionCapture = recognitionCapture, recognitionLanguage = recognitionLanguage, warnings = buildList {
                     if (activity.peakAmplitude < 1000) add("Low amplitude")
                     if (frames.any { f -> f.samples.any { kotlin.math.abs(it.toInt()) >= 32760 } }) add("Possible clipping")
                     if (activity.voicedDurationMs < 120) add("Little detected voice")
@@ -81,7 +82,8 @@ class SpeechDiagnosticRunner(
         } finally { transaction.unlock() }
     }
     suspend fun recognizeSelected(session: SpeechDiagnosticSession): SpeechDiagnosticResult = withTransaction {
-        decode(session, selected, SpeechDiagnosticTarget(selected.metadata.id, selected.metadata.displayName, session.language), "selected", 1)
+        decode(session, selected, SpeechDiagnosticTarget(selected.metadata.id, selected.metadata.displayName, session.language),
+            "selected", 1, session.recognitionLanguage)
     }
     suspend fun benchmark(session: SpeechDiagnosticSession, targets: List<SpeechDiagnosticTarget>, warmRepetitions: Int = 1) = withTransaction {
         require(warmRepetitions == 1 || warmRepetitions == 3)
@@ -115,13 +117,16 @@ class SpeechDiagnosticRunner(
         finally { transaction.unlock() }
     }
     private suspend fun decode(session: SpeechDiagnosticSession, provider: BufferedSpeechRecognitionProvider,
-        target: SpeechDiagnosticTarget, temperature: String, repetition: Int): SpeechDiagnosticResult {
+        target: SpeechDiagnosticTarget, temperature: String, repetition: Int, recognitionLanguage: String? = null): SpeechDiagnosticResult {
         var stage = SpeechDiagnosticStage.MODEL_RESOLVE
         try {
             check(provider.health()) { provider.healthDetails().message ?: "Verified model unavailable" }
             stage = SpeechDiagnosticStage.DECODE
             // JNI cannot be interrupted. Do not free native state or PCM until this returns.
-            val result = withContext(Dispatchers.Default + session.recognitionCapture.context) { provider.recognize(session.capture.audio) }
+            val result = withContext(Dispatchers.Default + session.recognitionCapture.context) {
+                if (recognitionLanguage == null) provider.recognize(session.capture.audio)
+                else provider.recognizeInLanguage(session.capture.audio, recognitionLanguage)
+            }
             currentCoroutineContext().ensureActive()
             stage = SpeechDiagnosticStage.TRANSCRIPT_GATE
             val a = session.activity

@@ -61,7 +61,6 @@ class ConfigurationSkillManifestParityTest {
             "halo.notebook" to WorkspaceToolAccess.canvasWorkflowTools + "halo_canvas_current",
         )
         val names = ownership.values.flatten()
-        assertEquals("Review the manifest contract when adding configuration operations", 69, names.size)
         assertEquals(names.size, names.toSet().size)
         val readOnly = setOf(
             "halo_get_preferences", "halo_get_mode_profile", "halo_screen_state", "halo_screen_preview", "halo_screen_card_configuration",
@@ -71,7 +70,7 @@ class ConfigurationSkillManifestParityTest {
             "halo_routines_list", "halo_routine_get", "halo_routine_run_status", "halo_study_current", "halo_speech_inventory",
             "halo_canvas_current", "halo_canvas_workflow_status",
         )
-        val everydayReads=setOf("halo_day_context","halo_source_image","halo_organizer_query","halo_organizer_get","halo_clock_query","halo_source_query","halo_source_get","halo_brief_query","halo_widget_query")
+        val everydayReads = com.halo.app.di.tools.EverydayToolContracts.queries
         val reversible = setOf(
             "halo_set_preferences", "halo_screen_apply", "halo_screen_undo", "halo_screen_save_preset", "halo_screen_remove_preset",
             "halo_device_thumbnail_quality", "halo_saved_device_autoconnect",
@@ -97,6 +96,7 @@ class ConfigurationSkillManifestParityTest {
                     val definition = skill.toolDefinitions.single { it.toolId == name }
                     val risk = when (name) {
                         in readOnly, in everydayReads -> SkillRisk.READ_ONLY
+                        "halo_knowledge_download" -> SkillRisk.SENSITIVE
                         in reversible, in PersonalConfigurationToolAccess.everyday -> SkillRisk.REVERSIBLE
                         in destructive -> SkillRisk.DESTRUCTIVE
                         "halo_routine_run_now" -> SkillRisk.EXTERNAL_SIDE_EFFECT

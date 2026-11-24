@@ -16,13 +16,26 @@ enum class HaloAppIconMode { MATCH_LOOK, CLASSIC, LIGHT, SYSTEM }
 enum class HaloButtonLabels { ALWAYS, SELECTED_ONLY }
 enum class HaloLookMotion(val damping: Float) { FULL(.62f), GENTLE(.90f), STILL(1f) }
 
-internal enum class HaloLookPreset(val dark: Boolean, val palette: HaloPalette, @StringRes val label: Int) {
+internal enum class HaloLookPreset(val dark: Boolean, val palette: HaloPalette, @StringRes val label: Int,
+    val motion: HaloLookMotion = HaloLookMotion.GENTLE, val clear: Boolean = false) {
     NIGHT_MINT(true, HaloPalette(HaloAccent.MINT, HaloTone.NATURAL, HaloBackgroundStyle.HALO), R.string.look_preset_night_mint),
     PAPER_SAGE(true, HaloPalette(HaloAccent.SAGE, HaloTone.PAPER, HaloBackgroundStyle.STILL), R.string.look_preset_paper_sage),
     SLATE_BLUE(true, HaloPalette(HaloAccent.BLUE, HaloTone.SLATE, HaloBackgroundStyle.MIST), R.string.look_preset_slate_blue),
     WARM_ROSE(false, HaloPalette(HaloAccent.ROSE, HaloTone.WARM, HaloBackgroundStyle.HALO), R.string.look_preset_warm_rose),
     COOL_LILAC(false, HaloPalette(HaloAccent.LILAC, HaloTone.COOL, HaloBackgroundStyle.MIST), R.string.look_preset_cool_lilac),
     CORAL_DAY(false, HaloPalette(HaloAccent.CORAL, HaloTone.NATURAL, HaloBackgroundStyle.STILL), R.string.look_preset_coral_day),
+    CALM_NIGHT(true, HaloPalette(), R.string.f13_look_calm_night),
+    PAPER_MORNING(false, HaloPalette(HaloAccent.SAGE, HaloTone.PAPER, HaloBackgroundStyle.STILL), R.string.f13_look_paper_morning),
+    LIVELY(true, HaloPalette(HaloAccent.CORAL, HaloTone.WARM, HaloBackgroundStyle.HALO), R.string.f13_look_lively, HaloLookMotion.FULL),
+    WORLD(false, HaloPalette(HaloAccent.BLUE, HaloTone.COOL, HaloBackgroundStyle.MIST), R.string.f13_look_world),
+    CLEAR(false, HaloPalette(HaloAccent.BLUE, HaloTone.SLATE, HaloBackgroundStyle.STILL), R.string.f13_look_clear,
+        HaloLookMotion.STILL, clear = true),
+    NIGHT_GARDEN(true, HaloPalette(HaloAccent.SAGE, HaloTone.NATURAL, HaloBackgroundStyle.MIST), R.string.f13_look_night_garden),
+    SUNRISE(false, HaloPalette(HaloAccent.ROSE, HaloTone.WARM, HaloBackgroundStyle.HALO), R.string.f13_look_sunrise);
+
+    companion object {
+        val releaseLooks = listOf(CALM_NIGHT, PAPER_MORNING, LIVELY, WORLD, CLEAR, NIGHT_GARDEN, SUNRISE)
+    }
 }
 
 /** The override lives only while the Appearance page owns a draft. */

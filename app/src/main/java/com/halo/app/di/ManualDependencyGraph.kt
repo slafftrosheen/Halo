@@ -185,6 +185,9 @@ object ManualDependencyGraph {
             enrich = articleContentCollector::enrich, allowRefresh = { !haloPause.isPaused() })
     }
     val articleContentStore by lazy { com.halo.app.everyday.collectors.ArticleContentStore(java.io.File(applicationContext.filesDir, "source-content")) }
+    val articleWorkspace by lazy {
+        com.halo.app.everyday.collectors.ArticleWorkspace(appDatabase, collectorRepository, articleContentStore::read, notebookUseCases)
+    }
     val offlineKnowledge by lazy {
         val downloader = com.halo.app.everyday.collectors.ArticleDownloader(remoteDispatchPolicy)
         com.halo.app.everyday.collectors.OfflineKnowledge(
@@ -213,7 +216,12 @@ object ManualDependencyGraph {
     val collectorCoordinator: com.halo.app.everyday.collectors.CollectorCoordinator get() = collectorCoordinatorOwner.value
     val collectorBootstrap by lazy { com.halo.app.everyday.collectors.android.CollectorBootstrap(applicationContext, collectorRepository) }
     internal val todayNews by lazy { com.halo.app.everyday.briefing.TodayNewsReportService(applicationContext) }
-    val collectorPreview by lazy { com.halo.app.everyday.collectors.CollectorPreview(collectorRepository, collectorRegistry, remoteDispatchPolicy) }
+    val collectorPreview by lazy {
+        val download = com.halo.app.everyday.collectors.ArticleDownloader(remoteDispatchPolicy, allowPublicHttp = false)
+        com.halo.app.everyday.collectors.CollectorPreview(collectorRepository, collectorRegistry, remoteDispatchPolicy,
+            downloadFeedPreview = { url -> download.fetch(url,
+                accept = "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html, application/xhtml+xml") })
+    }
     val offlineCities: com.halo.app.everyday.collectors.OfflineCityCatalogue by lazy {
         com.halo.app.everyday.collectors.OfflineCityCatalogue { applicationContext.assets.open("everyday/everyday-cities.bin") }
     }
@@ -429,6 +437,9 @@ object ManualDependencyGraph {
             appDatabase, appDatabase.notebookCanvasDao(), appDatabase.notebookDao(),
             remoteInkActivation = inkActivation,
         )
+    }
+    val notebookDrawingLinks by lazy {
+        com.halo.app.data.notebook.NotebookDrawingLinks(appDatabase, notebookDocumentRepository, notebookCanvasRepository)
     }
     val captures by lazy { com.halo.app.capture.LocalCaptureStore(applicationContext, appDatabase, notebookRepository, eventBus).also { recentCaptureProjection } }
 
@@ -1194,7 +1205,8 @@ object ManualDependencyGraph {
             canvas = com.halo.app.di.tools.WorkspaceCanvasActions(appDatabase, notebookCanvasRepository, currentCanvasContext),
             exactStudyStarter = { sourceId, sourceVersion -> studyUseCases.startExactMaterial(sourceId, sourceVersion, workspaceContext::versionFor) },
             studyActions = com.halo.app.di.tools.WorkspaceStudyActions(appDatabase, studyRepository, studyUseCases),
-            noteActions = com.halo.app.di.tools.WorkspaceNoteActions(appDatabase, notebookDocumentRepository, notebookUseCases, workspaceContext),
+            noteActions = com.halo.app.di.tools.WorkspaceNoteActions(appDatabase, notebookDocumentRepository, notebookUseCases, workspaceContext,
+                drawings = notebookDrawingLinks),
             notePurgeActions = com.halo.app.di.tools.WorkspaceNotePurgeActions(notebookUseCases),
             noteAttachmentActions = com.halo.app.di.tools.WorkspaceNoteAttachmentActions(notebookAssetRepository),
             remoteInk = com.halo.app.di.tools.RemoteInkActions(crossDeviceInk),
@@ -1352,6 +1364,10 @@ object ManualDependencyGraph {
                     power={privacyModes.mode.value==com.halo.app.ai.PrivacyMode.CLOUD},
                     ready={(applicationContext as com.halo.app.HaloApplication).awaitOrganizerBootstrap();collectorBootstrap.ensureInitialized()},readState=::everydayDisclosureState,
                     articleContent = articleContentStore::read, knowledge = { offlineKnowledge },
+                    keepArticle = { identity ->
+                        articleWorkspace.keep(identity, com.halo.app.everyday.EverydayWriteAuthority::requireCurrent)
+                            .let { note -> workspaceContinuity.describe(note.id) }
+                    },
                     inspectImage = com.halo.app.everyday.collectors.SourceImageReader(articleContentStore, aiProviderRouter,
                         power = { privacyModes.mode.value == com.halo.app.ai.PrivacyMode.CLOUD },
                         permitted = { image -> articlePictureSettings.visible.value && image.fromArticle &&

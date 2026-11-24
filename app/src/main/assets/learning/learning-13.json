@@ -1,0 +1,170 @@
+{
+ "version": 13,
+ "study": {
+  "starts": [
+   "PHOTO",
+   "FILE",
+   "TOPIC",
+   "TEST"
+  ],
+  "path": {
+   "LOOK": [
+    "START",
+    "DISCOVER",
+    "EXPLAIN",
+    "EXPLORE"
+   ],
+   "TRY": [
+    "PRACTICE"
+   ],
+   "CHECK": [
+    "REFLECT"
+   ],
+   "DONE": [
+    "CONTINUE"
+   ]
+  },
+  "help": {
+   "rungs": [
+    "ASK",
+    "HINT",
+    "EXPLAIN",
+    "ANALOGY",
+    "CHECK_ATTEMPT",
+    "PARTIAL_SOLUTION",
+    "SOLUTION"
+   ],
+   "gatedByPointsOrTime": false,
+   "askFirst": [
+    "SOLUTION"
+   ]
+  },
+  "verdicts": {
+   "CHECKS_OUT": "MINT",
+   "NEEDS_WORK": "APRICOT",
+   "INSUFFICIENT_EVIDENCE": "NEUTRAL",
+   "UNVERIFIED": "LILAC"
+  },
+  "redAllowed": false,
+  "review": {
+   "stepsDays": [
+    1,
+    2,
+    4,
+    7,
+    15,
+    30
+   ],
+   "ratings": {
+    "AGAIN": "Again",
+    "ALMOST": "Almost",
+    "KNOWN": "Got it"
+   },
+   "showWhenItComesBack": true,
+   "showStreaks": false,
+   "secondsPerCard": 40
+  },
+  "testPlan": {
+   "restDaysDefault": [
+    "SATURDAY",
+    "SUNDAY"
+   ],
+   "lastDayLight": true,
+   "autoBook": false
+  },
+  "recordings": {
+   "rehearsal": "DELETE_ON_CLOSE_UNLESS_KEPT",
+   "explainBack": "DELETE_AFTER_TIPS_UNLESS_KEPT",
+   "homeworkPhoto": "NO_BACKUP_DIR"
+  },
+  "depth": {
+   "SIMPLE": [
+    "STARTS",
+    "PATH",
+    "READ_ALOUD"
+   ],
+   "STANDARD": [
+    "SETUP",
+    "CARDS",
+    "TEST_PLAN"
+   ],
+   "PRO": [
+    "COURSE_OUTLINE",
+    "CITATIONS",
+    "CUSTOM_STEPS",
+    "EXPORT"
+   ]
+  }
+ },
+ "kids": {
+  "bands": {
+   "EARLY": {
+    "ages": "4–6",
+    "dp": 72,
+    "choices": 2,
+    "stops": 2,
+    "readAloud": "ALWAYS"
+   },
+   "PRIMARY": {
+    "ages": "7–9",
+    "dp": 56,
+    "choices": 3,
+    "stops": 3,
+    "readAloud": "ON_TAP"
+   },
+   "OLDER": {
+    "ages": "10–12",
+    "dp": 48,
+    "choices": 3,
+    "stops": 4,
+    "readAloud": "BUDDY_ON_TAP"
+   }
+  },
+  "home": [
+   "ASK",
+   "LEARN",
+   "CREATE"
+  ],
+  "adventureStops": [
+   "LEARN",
+   "MAKE",
+   "FIND",
+   "TELL"
+  ],
+  "topics": [
+   "ANIMALS",
+   "COUNTING",
+   "NATURE",
+   "DINOSAURS"
+  ],
+  "skies": [
+   "STARS",
+   "SEA",
+   "GARDEN",
+   "MOON",
+   "LUMEN_GARDEN",
+   "SEASONS"
+  ],
+  "noPointsScoresStreaks": true,
+  "depth": "SIMPLE",
+  "homework": {
+   "windowDefault": "16:00-18:00",
+   "answers": false,
+   "hints": true
+  },
+  "focusMinutes": [
+   5,
+   10,
+   25
+  ],
+  "grownUp": {
+   "gate": "DEVICE_SCREEN_LOCK",
+   "idleLockSeconds": 120,
+   "week": {
+    "onDeviceOnly": true,
+    "scores": false
+   },
+   "onlineLookup": "APPROVED_KIDS_SAFE_ONLY"
+  }
+ }
+}

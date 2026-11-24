@@ -455,7 +455,11 @@ fun HomeScreen(
         onSelect = { showHistory = false; viewModel.openConversation(it) },
         onNew = { showHistory = false; viewModel.newConversation() }, onDismiss = { showHistory = false },
         onMakePrivate = offerPrivateChat?.takeUnless { changingConversation })
-    webSearchDraft?.let { query -> com.halo.app.ui.online.GroundedWebSearchDialog(query) { webSearchDraft = null } }
+    webSearchDraft?.let { query ->
+        com.halo.app.ui.online.GroundedWebSearchDialog(query, onOpenWorkspace = onOpenZone6HomeDestination) {
+            webSearchDraft = null
+        }
+    }
     if (showToday) androidx.compose.material3.ModalBottomSheet(onDismissRequest = { showToday = false }) {
         Column(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 12.dp)) {
@@ -671,7 +675,7 @@ fun HomeScreen(
                 composerContext()
                 ComposerDraftNotice(viewModel, draftKey)
             }
-            HaloComposer(
+            val composer: @Composable ((@Composable () -> Unit)?) -> Unit = { dictation -> HaloComposer(
                 draftIdentity = draftKey, draftRevision = drafts[draftKey]?.revision ?: 0L,
                 readAcknowledgedDraft = { viewModel.composerDrafts.value[draftKey] },
                 surfaceSwitcher = if (shellOwnsOrb) surfaceSwitcher else null,
@@ -705,7 +709,15 @@ fun HomeScreen(
                     else ({ focusManager.clearFocus(); showContext = true }),
                 onTools = { focusManager.clearFocus(); toolGroup = HomeToolGroup.CREATE.name; toolEntry = null
                     viewModel.refreshToolCatalog(); showActions = true },
-            )
+                dictation = dictation,
+            ) }
+            if (uiState.speechReady) {
+                com.halo.app.ui.components.HaloVoiceTextActions(
+                    text = textInput, onText = ::updateDraft, maxChars = 12_000, appendSeparator = " ",
+                    enabled = canSend && !voiceModeActive && !presentation.needsReview,
+                    fieldContent = { mic -> composer(mic) },
+                )
+            } else composer(null)
             // The field must be attached before a navigation event requests focus.
             LaunchedEffect(composerFocus) { if (composerFocus > 0) composerFocusRequester.requestFocus() }
         }
@@ -801,7 +813,10 @@ fun HomeScreen(
             Box(Modifier.padding(horizontal = 16.dp)) {
                 HomeChatActions(canStartNew = !changingConversation, canClear = canClearChat,
                     onNew = viewModel::newConversation, onClear = ::requestClearChat,
-                    onHistory = { showHistory = true })
+                    onHistory = { showHistory = true },
+                    onVoiceMode = viewModel::requestVoiceModeStart
+                        .takeIf { !voiceModeActive && !changingConversation && !isActiveSession &&
+                            !isListening && !isSpeechProcessing && !presentation.needsReview })
             }
             if (layoutKept) Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.layout_kept),
                 Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.bodySmall,

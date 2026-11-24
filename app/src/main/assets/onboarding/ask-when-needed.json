@@ -1,0 +1,142 @@
+{
+ "version": 13,
+ "rule": "Ask only when the person starts the feature. halo sheet first, then Android. Never re-prompt automatically.",
+ "access": [
+  {
+   "id": "microphone",
+   "feature": "Talk to halo",
+   "why": "So halo can hear you when you tap the ring.",
+   "whyRu": "Чтобы halo слышал вас, когда вы нажимаете на кольцо.",
+   "ifNo": "You can still type.",
+   "ifNoRu": "Можно по-прежнему писать."
+  },
+  {
+   "id": "camera",
+   "feature": "Scan, translate signs, homework photos",
+   "why": "To see what you point at. Photos stay on this phone unless you share them.",
+   "whyRu": "Чтобы видеть то, на что вы наводите. Фото остаются на телефоне, пока вы ими не поделитесь.",
+   "ifNo": "You can pick a photo from your gallery instead.",
+   "ifNoRu": "Можно выбрать фото из галереи."
+  },
+  {
+   "id": "notifications",
+   "feature": "Reminders and Leave by",
+   "why": "To remind you in time. You choose which ones.",
+   "whyRu": "Чтобы напоминать вовремя. Вы выбираете, о чём.",
+   "ifNo": "Reminders show only when halo is open.",
+   "ifNoRu": "Напоминания появятся, только когда halo открыт."
+  },
+  {
+   "id": "calendar_read",
+   "feature": "Planner",
+   "why": "To show your plans next to halo's.",
+   "whyRu": "Чтобы показывать ваши планы рядом с планами halo.",
+   "ifNo": "Planner shows only what you add in halo.",
+   "ifNoRu": "В планировщике будет только то, что вы добавите в halo."
+  },
+  {
+   "id": "calendar_write",
+   "feature": "Add to your calendar",
+   "why": "To save plans to the calendar you already use.",
+   "whyRu": "Чтобы сохранять планы в календарь, которым вы уже пользуетесь.",
+   "ifNo": "Plans stay in halo.",
+   "ifNoRu": "Планы останутся в halo."
+  },
+  {
+   "id": "contacts",
+   "feature": "Call or message someone",
+   "why": "To find the person you name.",
+   "whyRu": "Чтобы найти человека, которого вы назвали.",
+   "ifNo": "You can type the number.",
+   "ifNoRu": "Можно ввести номер."
+  },
+  {
+   "id": "location",
+   "feature": "Weather, Leave by, maps",
+   "why": "To know where you are when you ask. Not tracked in the background.",
+   "whyRu": "Чтобы знать, где вы, когда спрашиваете. Без слежки в фоне.",
+   "ifNo": "Type a city instead.",
+   "ifNoRu": "Укажите город вручную."
+  },
+  {
+   "id": "bluetooth",
+   "feature": "Glasses, headphones, watch",
+   "why": "To find and connect your devices.",
+   "whyRu": "Чтобы находить и подключать ваши устройства.",
+   "ifNo": "Devices won't connect.",
+   "ifNoRu": "Устройства не подключатся."
+  },
+  {
+   "id": "nearby_wifi",
+   "feature": "Tablet and computer",
+   "why": "To find your other screens nearby.",
+   "whyRu": "Чтобы находить другие ваши экраны поблизости.",
+   "ifNo": "Use a code instead.",
+   "ifNoRu": "Используйте код."
+  },
+  {
+   "id": "local_network",
+   "feature": "Tablet and computer",
+   "why": "To talk to your other screens on this Wi-Fi.",
+   "whyRu": "Чтобы связываться с другими экранами в этой сети Wi-Fi.",
+   "ifNo": "Use a code instead.",
+   "ifNoRu": "Используйте код."
+  },
+  {
+   "id": "notification_access",
+   "feature": "Read my notifications aloud",
+   "why": "To read and sum up notifications you choose.",
+   "whyRu": "Чтобы читать и пересказывать выбранные уведомления.",
+   "ifNo": "halo won't read them.",
+   "ifNoRu": "halo не будет их читать."
+  },
+  {
+   "id": "accessibility",
+   "feature": "Do things in other apps",
+   "why": "To tap and type in other apps when you ask. Pro only.",
+   "whyRu": "Чтобы нажимать и печатать в других приложениях по вашей просьбе. Только Pro.",
+   "ifNo": "halo will show you the steps.",
+   "ifNoRu": "halo покажет шаги."
+  },
+  {
+   "id": "write_settings",
+   "feature": "Change brightness and sound",
+   "why": "To change phone settings you ask for.",
+   "whyRu": "Чтобы менять настройки телефона по вашей просьбе.",
+   "ifNo": "halo opens the setting for you.",
+   "ifNoRu": "halo откроет нужную настройку."
+  },
+  {
+   "id": "notification_policy",
+   "feature": "Do not disturb",
+   "why": "To turn on quiet time when you ask.",
+   "whyRu": "Чтобы включать тишину по вашей просьбе.",
+   "ifNo": "halo opens the setting for you.",
+   "ifNoRu": "halo откроет нужную настройку."
+  },
+  {
+   "id": "overlay",
+   "feature": "halo over other apps",
+   "why": "To show the small halo ring on top of other apps.",
+   "whyRu": "Чтобы показывать маленькое кольцо halo поверх других приложений.",
+   "ifNo": "Open halo from its icon.",
+   "ifNoRu": "Открывайте halo по значку."
+  },
+  {
+   "id": "assistant",
+   "feature": "Hold the button for halo",
+   "why": "To open halo when you hold the side or home button.",
+   "whyRu": "Чтобы открывать halo долгим нажатием кнопки.",
+   "ifNo": "Open halo from its icon.",
+   "ifNoRu": "Открывайте halo по значку."
+  },
+  {
+   "id": "exact_alarm",
+   "feature": "Timers and alarms on time",
+   "why": "To ring at the exact minute.",
+   "whyRu": "Чтобы звонить ровно в нужную минуту.",
+   "ifNo": "Timers may be a little late.",
+   "ifNoRu": "Таймеры могут немного опаздывать."
+  }
+ ]
+}

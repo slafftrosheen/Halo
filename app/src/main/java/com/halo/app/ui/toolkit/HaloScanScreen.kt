@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -46,6 +47,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.room.withTransaction
 import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.language.uiText
@@ -55,6 +57,10 @@ import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
 import com.halo.app.ui.screens.notebook.ToolZoneHeader
+import com.halo.app.ui.scan.v13.ScanAction
+import com.halo.app.ui.scan.v13.ScanNext
+import com.halo.app.ui.theme.v13.Halo13Animation
+import com.halo.app.ui.theme.v13.Halo13Motion
 import com.halo.app.ui.zone6.rememberZone6PageSetting
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
@@ -85,6 +91,7 @@ fun HaloScanScreen(
     initialTo: String? = null,
 ) {
     val context = LocalContext.current
+    var cameraRationale by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val route = if (kidsMode) "kids_scan" else if (magnifier) "magnifier" else if (initialMode == HaloScanMode.TRANSLATE) "translate" else "scan"
     val appearance = rememberZone6PageSetting("$route.appearance")
@@ -252,7 +259,7 @@ fun HaloScanScreen(
     fun capture(fromCloudConfirmation: Boolean = false) {
         if (busy != null) return
         if (!permission) {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
+            if (kidsMode) permissionLauncher.launch(Manifest.permission.CAMERA) else cameraRationale = true
             return
         }
         if (kidsMode && childSource == null) {
@@ -427,6 +434,7 @@ fun HaloScanScreen(
     }
     val canUseCamera = !kidsMode || childSource != null
     val scanText = lines.groupBy(HaloScanLine::paragraph).values.joinToString("\n\n") { paragraph -> paragraph.joinToString(" ") { it.text } }
+    val pageKind = remember(lines) { ScanNext.kind(lines.joinToString("\n") { it.text }) }
     val nativeChildLabel = if (kidsMode && label != null) uiText(label.orEmpty()) else null
     val childSentence = if (nativeChildLabel != null) uiText(kidsObjectClue(label.orEmpty())) else null
     val childTitle = nativeChildLabel?.let { uiText("It looks like %s!", it) }
@@ -460,7 +468,9 @@ fun HaloScanScreen(
     val primaryEnabled = scanEnabled && canUseCamera && (!permission || frame != null || available)
     val primary: () -> Unit = {
         when {
-            !permission && frame == null -> permissionLauncher.launch(Manifest.permission.CAMERA)
+            !permission && frame == null -> {
+                if (kidsMode) permissionLauncher.launch(Manifest.permission.CAMERA) else cameraRationale = true
+            }
             mode == HaloScanMode.DOCUMENT && savedId != null -> onOpen("notebook/file/${android.net.Uri.encode(savedId.orEmpty())}")
             mode == HaloScanMode.DOCUMENT && frame != null -> keepPaper()
             kidsMode && label != null && ownedReader?.notice == null && ownedReader != null -> reader.toggle()
@@ -478,6 +488,7 @@ fun HaloScanScreen(
     }
     val pageActions = buildList {
         add(ShellPageAction("page.$route.primary", primaryTitle, HaloGlyph.CAMERA, primaryEnabled && !easy, primary))
+        add(ShellPageAction("page.$route.guide", uiText("Show me"), HaloGlyph.QUESTION) { showGuide = true })
         if (!kidsMode) add(ShellPageAction("page.$route.appearance", uiText("Customize"), HaloGlyph.SETTINGS, scanEnabled) { showOptions = true })
     }
     BindShellPageActions(ShellPageOwner(route, statusLabel = uiText(sourceLabel), guidanceBlocked = !scanEnabled,
@@ -487,7 +498,7 @@ fun HaloScanScreen(
 
     Column(Modifier.fillMaxSize()) {
         ToolZoneHeader(title, onBack, onTitleLongClick = if (kidsMode) null else ({ showOptions = true })) {
-            TextButton(onClick = { showGuide = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Show me")) }
+            if (kidsMode || magnifier) TextButton(onClick = { showGuide = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Show me")) }
         }
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp),
@@ -517,6 +528,69 @@ fun HaloScanScreen(
                     "scan.save_pdf" to com.halo.app.ui.instruments.HaloInstrumentAction(::keepPaper,
                         frame != null && scanEnabled && savedId == null, working = busy == "Keeping the paper"),
                 ), primary = "scan.capture")
+                if (!magnifier && frame != null && busy == null && (lines.isNotEmpty() || mode == HaloScanMode.IDENTIFY)) {
+                    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+                    val options = ScanNext.offers(pageKind, kids = false, approvedKidsSource = false)
+                        .filterNot { it == ScanAction.DATE_TO_PLANNER && reminderCandidates.isEmpty() }
+                        .filterNot { it == ScanAction.WHAT_IS_THIS && label != null }
+                        .filterNot { it == ScanAction.SAVE_PDF && pageKind == com.halo.app.ui.scan.v13.PageKind.RECEIPT }
+                    if (options.isNotEmpty()) {
+                        Text(stringResource(R.string.mk13_scan_what), style = MaterialTheme.typography.titleMedium)
+                        options.forEach { option ->
+                            val (text, icon) = when (option) {
+                                ScanAction.READ_IT_TO_ME -> R.string.mk13_scan_read to R.drawable.halo_ic_read_mode
+                                ScanAction.TRANSLATE -> R.string.mk13_scan_translate to R.drawable.halo_ic_language
+                                ScanAction.SAVE_NOTE -> R.string.mk13_scan_note to R.drawable.halo_ic_new_note
+                                ScanAction.SAVE_PDF -> R.string.mk13_scan_pdf to R.drawable.halo_ic_backup
+                                ScanAction.SAVE_TO_INBOX -> R.string.mk13_scan_inbox to R.drawable.halo_ic_backup
+                                ScanAction.COPY_TEXT -> R.string.mk13_scan_copy to R.drawable.halo_ic_text_size
+                                ScanAction.FILL_FORM -> R.string.mk13_scan_fill_form to R.drawable.halo_ic_text_size
+                                ScanAction.SIGN -> R.string.mk13_scan_sign to R.drawable.halo_ic_sketch
+                                ScanAction.DATE_TO_PLANNER -> R.string.halo_scan_to_planner to R.drawable.halo_ic_calendar
+                                ScanAction.WHAT_IS_THIS -> R.string.mk13_scan_identify to R.drawable.halo_ic_ask_mode
+                                ScanAction.FIX_PAGE -> R.string.mk13_scan_fix to R.drawable.halo_ic_scan_auto
+                            }
+                            OutlinedButton(enabled = scanEnabled && (option !in setOf(ScanAction.SAVE_PDF, ScanAction.SAVE_TO_INBOX) || savedId == null),
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), onClick = {
+                                    when (option) {
+                                        ScanAction.READ_IT_TO_ME -> read(scanText)
+                                        ScanAction.TRANSLATE -> { mode = HaloScanMode.TRANSLATE; translate(false) }
+                                        ScanAction.SAVE_NOTE -> {
+                                            val authority = runCatching { requireAdultToolkit(context) }.getOrNull()
+                                            if (authority != null) {
+                                                val reviewed = scanText.take(16_000)
+                                                busy = "Keeping the paper"
+                                                error = null
+                                                scope.launch {
+                                                    try {
+                                                        val note = Graph.appDatabase.withTransaction {
+                                                            requireAdultToolkit(context, authority)
+                                                            Graph.notebookRepository.createNote(reviewed, com.halo.app.data.notebook.WorkspaceSource.DEVICE_CAPTURE)
+                                                                .also { requireAdultToolkit(context, authority) }
+                                                        }
+                                                        onOpen("notebook/note/${android.net.Uri.encode(note.id)}")
+                                                    } catch (cancelled: CancellationException) { throw cancelled }
+                                                    catch (_: Exception) { error = "Could not keep the paper. Try again." }
+                                                    finally { busy = null }
+                                                }
+                                            }
+                                        }
+                                        ScanAction.SAVE_PDF, ScanAction.SAVE_TO_INBOX -> keepPaper()
+                                        ScanAction.COPY_TEXT -> clipboard.setText(androidx.compose.ui.text.AnnotatedString(scanText))
+                                        ScanAction.FILL_FORM -> prepareForm()
+                                        ScanAction.SIGN -> signTools = true
+                                        ScanAction.DATE_TO_PLANNER -> handoff = true
+                                        ScanAction.WHAT_IS_THIS -> { reset(); mode = HaloScanMode.IDENTIFY }
+                                        ScanAction.FIX_PAGE -> cropTools = true
+                                    }
+                                }) {
+                                Icon(painterResource(icon), null, Modifier.size(22.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(text))
+                            }
+                        }
+                    }
+                }
                 if (pdfWasLimited) Text(stringResource(R.string.halo_scan_pdf_limit), style = MaterialTheme.typography.bodySmall)
                 if (mode == HaloScanMode.DOCUMENT && frame != null && scanEnabled) TextButton(onClick = {
                     val snapshot = frame ?: return@TextButton
@@ -673,6 +747,14 @@ fun HaloScanScreen(
         } else TextButton(onClick = { easy = false }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(uiText("Standard controls")) }
     }
 
+    if (cameraRationale && !permission && !kidsMode) com.halo.app.ui.onboarding.v13.Halo13AccessDialog(
+        R.string.ob13_access_camera_title, R.string.ob13_access_camera_body,
+        onAllow = {
+            cameraRationale = false
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }, onDismiss = { cameraRationale = false },
+    )
+
     if (!kidsMode) {
         if (chooseImport) AlertDialog(onDismissRequest = { chooseImport = false },
             title = { Text(stringResource(R.string.halo_scan_import)) },
@@ -705,7 +787,9 @@ fun HaloScanScreen(
         if (source != null) { paperSource = source; updatePhoto(filter.render(source), keepSource = true) }
         filterTools = false
     }
-    if (cropTools && !kidsMode) ScanCropDialog(onClose = { cropTools = false }) { inset ->
+    if (cropTools && !kidsMode) ScanCropDialog(onClose = { cropTools = false }, preview = {
+        Halo13Animation(Halo13Motion.SCAN_EDGES, Modifier.fillMaxWidth().height(68.dp))
+    }) { inset ->
         val bitmap = frame
         if (bitmap != null) {
             val x = (bitmap.width * inset).toInt()

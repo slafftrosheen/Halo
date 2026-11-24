@@ -1,0 +1,102 @@
+{
+ "version": 13,
+ "note": "Extends HaloLookPreset. dark=null follows the sky (SkyTimeline). Meaning colours are never changed by a look.",
+ "looks": [
+  {
+   "id": "calm_night",
+   "name": "Calm night",
+   "nameRu": "Спокойная ночь",
+   "dark": true,
+   "accent": "MINT",
+   "tone": "NATURAL",
+   "background": "HALO",
+   "wallpaper": "CALM",
+   "motion": "GENTLE",
+   "text": "standard"
+  },
+  {
+   "id": "paper_morning",
+   "name": "Paper morning",
+   "nameRu": "Бумажное утро",
+   "dark": false,
+   "accent": "SAGE",
+   "tone": "PAPER",
+   "background": "STILL",
+   "wallpaper": "CALM",
+   "motion": "GENTLE",
+   "text": "standard"
+  },
+  {
+   "id": "lively",
+   "name": "Lively",
+   "nameRu": "Живой",
+   "dark": true,
+   "accent": "CORAL",
+   "tone": "WARM",
+   "background": "HALO",
+   "wallpaper": "LIVELY",
+   "motion": "FULL",
+   "text": "standard"
+  },
+  {
+   "id": "world",
+   "name": "World",
+   "nameRu": "Мир",
+   "dark": false,
+   "accent": "BLUE",
+   "tone": "COOL",
+   "background": "MIST",
+   "wallpaper": "WORLD",
+   "motion": "GENTLE",
+   "text": "standard"
+  },
+  {
+   "id": "match_wallpaper",
+   "name": "Match my wallpaper",
+   "nameRu": "Как мои обои",
+   "dark": null,
+   "accent": "FROM_WALLPAPER",
+   "tone": "NATURAL",
+   "background": "HALO",
+   "wallpaper": "ANY",
+   "motion": "GENTLE",
+   "text": "standard"
+  },
+  {
+   "id": "clear",
+   "name": "Clear & big",
+   "nameRu": "Чётко и крупно",
+   "dark": false,
+   "accent": "BLUE",
+   "tone": "SLATE",
+   "background": "STILL",
+   "wallpaper": "CALM",
+   "motion": "STILL",
+   "text": "large"
+  },
+  {
+   "id": "night_garden",
+   "name": "Night garden",
+   "nameRu": "Ночной сад",
+   "dark": true,
+   "accent": "SAGE",
+   "tone": "NATURAL",
+   "background": "MIST",
+   "wallpaper": "CALM",
+   "motion": "GENTLE",
+   "text": "standard"
+  },
+  {
+   "id": "sunrise",
+   "name": "Sunrise",
+   "nameRu": "Рассвет",
+   "dark": false,
+   "accent": "ROSE",
+   "tone": "WARM",
+   "background": "HALO",
+   "wallpaper": "LIVELY",
+   "motion": "GENTLE",
+   "text": "standard"
+  }
+ ]
+}

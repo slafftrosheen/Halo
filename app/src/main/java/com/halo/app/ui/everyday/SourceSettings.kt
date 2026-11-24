@@ -25,7 +25,8 @@ internal fun SourceSettings(model: SourcesViewModel, state: SourcesPageState, so
     var selected by rememberSaveable(source.id, source.version) { mutableStateOf(source.selected) }
     var enabled by rememberSaveable(source.id, source.version) { mutableStateOf(source.enabled) }
     var muted by rememberSaveable(source.id, source.version) { mutableStateOf(source.muted) }
-    var child by rememberSaveable(source.id, source.version) { mutableStateOf(source.childApproved) }
+    var child by remember(source.id, source.version) { mutableStateOf(source.childApproved) }
+    var pendingKidsSave by remember(source.id, source.version) { mutableStateOf<CollectorSource?>(null) }
     var category by rememberSaveable(source.id, source.version) { mutableStateOf(source.category.name) }
     var cityName by rememberSaveable(source.id, source.version) { mutableStateOf(source.place?.name) }
     var latitude by rememberSaveable(source.id, source.version) { mutableStateOf(source.place?.latitude) }
@@ -34,6 +35,11 @@ internal fun SourceSettings(model: SourcesViewModel, state: SourcesPageState, so
     var picker by rememberSaveable { mutableStateOf(false) }
     var invalid by remember { mutableStateOf(false) }
     var discard by remember { mutableStateOf(false) }
+    val verifyKidsSave = com.halo.app.ui.screens.kids.rememberKidsGrownUpGate(onVerified = {
+        val draft = pendingKidsSave
+        pendingKidsSave = null
+        if (draft != null) model.save(draft, state.draftNew, kidsVerified = true)
+    }, onUnavailable = { pendingKidsSave = null; invalid = true })
     EverydaySheet({ if (!state.busy) discard = true }) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText("Source settings"), style = MaterialTheme.typography.headlineSmall)
@@ -50,14 +56,17 @@ internal fun SourceSettings(model: SourcesViewModel, state: SourcesPageState, so
                 TextButton({ picker = true }, enabled = !state.busy) { Text(uiText(if (air) "Choose air & pollen city" else "Choose weather city")) }
                 Text(uiText("City coordinates are sent to Open-Meteo only when this selected source refreshes in Power."), style = MaterialTheme.typography.bodySmall)
             }
-            EverydayToggle(uiText("Include in selected sources"), selected, !state.busy) { selected = it }
+            EverydayToggle(stringResource(R.string.sp13_use_answers), selected, !state.busy) { selected = it }
+            EverydayToggle(stringResource(R.string.sp13_use_today), selected && !muted, !state.busy) {
+                if (it) selected = true
+                muted = !it
+            }
             EverydayToggle(uiText("Enable refresh"), enabled, !state.busy) { enabled = it }
-            EverydayToggle(uiText("Mute in briefs and proactive suggestions"), muted, !state.busy) { muted = it }
-            Text(uiText("Muted sources may still refresh when selected. Disable refresh to stop updates."), style = MaterialTheme.typography.bodySmall)
             if (source.external) {
                 OutlinedTextField(language, { language = it.take(20) }, enabled = !state.busy, label = { Text(uiText("Source language · en, ru, lv or another code")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 OutlinedTextField(cadence, { cadence = it.take(4) }, enabled = !state.busy, label = { Text(uiText("Refresh interval in minutes · 15–1440")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                EverydayToggle(uiText("Approve this public source for Kids"), child, !state.busy) { child = it }
+                EverydayToggle(stringResource(R.string.sp13_use_kids), child, !state.busy) { child = it }
+                Text(stringResource(R.string.sp13_kids_pin), style = MaterialTheme.typography.bodySmall)
                 Text(uiText("Approval covers this public source. It does not share your private tasks, notes or activity."), style = MaterialTheme.typography.bodySmall)
             }
             Text(uiText("Category"), style = MaterialTheme.typography.titleMedium)
@@ -79,7 +88,12 @@ internal fun SourceSettings(model: SourcesViewModel, state: SourcesPageState, so
                         childApproved = child, category = SourceCategory.valueOf(category))
                 }.getOrNull()
                 invalid = value == null
-                value?.let { model.save(it, state.draftNew) }
+                value?.let {
+                    if (it.childApproved && (!source.childApproved || state.draftNew || it.endpoint != source.endpoint)) {
+                        pendingKidsSave = it
+                        verifyKidsSave()
+                    } else model.save(it, state.draftNew)
+                }
             }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(uiText("Save")) }
             TextButton({ discard = true }, enabled = !state.busy, modifier = Modifier.fillMaxWidth()) { Text(uiText("Cancel")) }
         }

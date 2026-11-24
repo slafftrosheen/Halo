@@ -67,7 +67,19 @@ class SourcesViewModel(private val app: HaloApplication, private val saved: Save
         mutable.update { it.copy(draft = source, draftNew = creating, error = null, preview = null) }
     }
     fun select(source: CollectorSource, selected: Boolean) = work { Graph.collectorRepository.save(source.copy(selected = selected), source.version) }
-    fun save(source: CollectorSource, creating: Boolean) = work {
+    fun addStarter(id: String) = work {
+        val starter = StarterSourceCatalogue.external().firstOrNull { it.id == id } ?: return@work
+        val current = Graph.collectorRepository.state(id)?.source
+        Graph.collectorRepository.save((current ?: starter.copy(childApproved = false)).copy(selected = true), current?.version)
+    }
+    fun setEnabled(source: CollectorSource, enabled: Boolean) = work {
+        Graph.collectorRepository.save(source.copy(enabled = enabled), source.version)
+    }
+    fun save(source: CollectorSource, creating: Boolean, kidsVerified: Boolean = false) = work {
+        val previous = if (creating) null else Graph.collectorRepository.state(source.id)?.source
+        val needsKidsApproval = source.childApproved &&
+            (previous?.childApproved != true || previous.endpoint != source.endpoint || previous.kind != source.kind)
+        check(!needsKidsApproval || kidsVerified)
         Graph.collectorRepository.save(source, if (creating) null else source.version)
         saved.remove<String>("sources.draft"); saved.remove<Boolean>("sources.draftNew")
         mutable.update { it.copy(draft = null, preview = null, notice = "Source settings saved. Selection does not fetch in Local.") }
@@ -107,9 +119,14 @@ class SourcesViewModel(private val app: HaloApplication, private val saved: Save
     fun addUrl(draftId: String, url: String, title: String, type: CollectorKind, language: String, selected: Boolean) = work {
         require(draftId.matches(Regex("custom:[a-f0-9-]{36}")))
         val endpoint = CollectorUrlPolicy.validate(url)
-        Graph.collectorRepository.saveDraft(CollectorSource(draftId, title.trim(), endpoint.host, type,
+        val review = state.value.preview?.takeIf { it.matches(url, type, language) }
+        require(review?.websiteWithoutFeed != true)
+        val discovered = review?.takeIf { it.discoveredFeed && it.result is CollectorFetchResult.Updated }?.candidate
+        val source = discovered?.copy(id = draftId, title = title.trim(), selected = selected)
+            ?: CollectorSource(draftId, title.trim(), endpoint.host, type,
             if (type == CollectorKind.PUBLIC_CALENDAR) SourceCategory.CALENDAR else SourceCategory.CUSTOM, language,
-            endpoint.toString(), endpoint.newBuilder().encodedPath("/").query(null).fragment(null).build().toString(), selected = selected))
+            endpoint.toString(), endpoint.newBuilder().encodedPath("/").query(null).fragment(null).build().toString(), selected = selected)
+        Graph.collectorRepository.saveDraft(source)
         saved["sources.addedId"] = draftId
         mutable.update { it.copy(preview = null, addedSourceId = draftId, notice = "Source added. A successful refresh is required before its contents are available.") }
     }

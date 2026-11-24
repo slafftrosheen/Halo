@@ -1,0 +1,216 @@
+{
+ "version": 13,
+ "rule": "Simple and Standard screens use 'plain'. Pro may use 'tech' but long-press always shows 'explain'.",
+ "entries": [
+  {
+   "tech": "provider",
+   "plain": "AI service",
+   "plainRu": "ИИ-сервис",
+   "explain": "The company or app that writes halo's answers when it isn't done on this phone.",
+   "explainRu": "Компания или приложение, которое пишет ответы, когда halo работает не на телефоне."
+  },
+  {
+   "tech": "model",
+   "plain": "brain",
+   "plainRu": "«мозг» halo",
+   "explain": "The part of halo that understands and writes. Some live on this phone, some online.",
+   "explainRu": "Часть halo, которая понимает и пишет. Одни живут на телефоне, другие — в интернете."
+  },
+  {
+   "tech": "on-device",
+   "plain": "on this phone",
+   "plainRu": "на этом телефоне",
+   "explain": "Nothing leaves your phone.",
+   "explainRu": "Ничего не уходит с телефона."
+  },
+  {
+   "tech": "runtime",
+   "plain": "how halo runs",
+   "plainRu": "как работает halo",
+   "explain": "Pro only.",
+   "explainRu": "Только в режиме Pro."
+  },
+  {
+   "tech": "diagnostics",
+   "plain": "check-up",
+   "plainRu": "проверка",
+   "explain": "A list of what works and what doesn't, to share with support if you want.",
+   "explainRu": "Список того, что работает и что нет — можно отправить в поддержку."
+  },
+  {
+   "tech": "endpoint",
+   "plain": "address",
+   "plainRu": "адрес",
+   "explain": "Where halo sends a request.",
+   "explainRu": "Куда halo отправляет запрос."
+  },
+  {
+   "tech": "receipt",
+   "plain": "what halo used",
+   "plainRu": "что использовал halo",
+   "explain": "The sources and steps behind an answer.",
+   "explainRu": "Источники и шаги, из которых сложился ответ."
+  },
+  {
+   "tech": "inference",
+   "plain": "thinking",
+   "plainRu": "обдумывание",
+   "explain": "When halo works out an answer.",
+   "explainRu": "Когда halo готовит ответ."
+  },
+  {
+   "tech": "token",
+   "plain": "word piece",
+   "plainRu": "кусочек текста",
+   "explain": "AI services count text in small pieces. Pro only.",
+   "explainRu": "ИИ-сервисы считают текст маленькими кусочками. Только в Pro."
+  },
+  {
+   "tech": "context",
+   "plain": "what halo knows right now",
+   "plainRu": "что halo знает сейчас",
+   "explain": "What you shared for this answer: the page, the photo, the chat.",
+   "explainRu": "То, чем вы поделились для этого ответа: страница, фото, чат."
+  },
+  {
+   "tech": "grounded",
+   "plain": "based on your sources",
+   "plainRu": "по вашим источникам",
+   "explain": "The answer quotes sources you can open.",
+   "explainRu": "Ответ ссылается на источники, которые можно открыть."
+  },
+  {
+   "tech": "permission",
+   "plain": "access",
+   "plainRu": "доступ",
+   "explain": "What halo may use: camera, microphone, files.",
+   "explainRu": "Чем halo может пользоваться: камерой, микрофоном, файлами."
+  },
+  {
+   "tech": "configure",
+   "plain": "set up",
+   "plainRu": "настроить",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "capability",
+   "plain": "what halo can do",
+   "plainRu": "что умеет halo",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "fallback",
+   "plain": "backup plan",
+   "plainRu": "запасной вариант",
+   "explain": "What halo does if the first way doesn't work.",
+   "explainRu": "Что halo делает, если первый способ не сработал."
+  },
+  {
+   "tech": "latency",
+   "plain": "wait",
+   "plainRu": "ожидание",
+   "explain": "How long you wait for an answer.",
+   "explainRu": "Сколько ждать ответа."
+  },
+  {
+   "tech": "policy",
+   "plain": "rule",
+   "plainRu": "правило",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "authority",
+   "plain": "who decides",
+   "plainRu": "кто решает",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "verified",
+   "plain": "checked",
+   "plainRu": "проверено",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "sync",
+   "plain": "keep in step",
+   "plainRu": "синхронизация → «держать вместе»",
+   "explain": "Your phone, tablet and glasses show the same things.",
+   "explainRu": "Телефон, планшет и очки показывают одно и то же."
+  },
+  {
+   "tech": "listening model",
+   "plain": "voice download",
+   "plainRu": "загрузка голоса",
+   "explain": "A free download so halo can hear you without the internet.",
+   "explainRu": "Бесплатная загрузка, чтобы halo слышал вас без интернета."
+  },
+  {
+   "tech": "speech-to-text",
+   "plain": "writing what you say",
+   "plainRu": "запись того, что вы говорите",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "OCR",
+   "plain": "reading text in photos",
+   "plainRu": "чтение текста на фото",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "API key",
+   "plain": "service key",
+   "plainRu": "ключ сервиса",
+   "explain": "A password from the AI service. Pro only.",
+   "explainRu": "Пароль от ИИ-сервиса. Только в Pro."
+  },
+  {
+   "tech": "payload",
+   "plain": "what's sent",
+   "plainRu": "что отправляется",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "cache",
+   "plain": "saved copy",
+   "plainRu": "сохранённая копия",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "export",
+   "plain": "save as / send",
+   "plainRu": "сохранить как / отправить",
+   "explain": "",
+   "explainRu": ""
+  },
+  {
+   "tech": "vector",
+   "plain": "shapes you can edit",
+   "plainRu": "редактируемые фигуры",
+   "explain": "Lines and shapes that stay sharp at any size.",
+   "explainRu": "Линии и фигуры, которые остаются чёткими при любом размере."
+  },
+  {
+   "tech": "layer",
+   "plain": "layer (stack)",
+   "plainRu": "слой",
+   "explain": "Pieces of a drawing stacked like sheets of paper.",
+   "explainRu": "Части рисунка, сложенные как листы бумаги."
+  },
+  {
+   "tech": "feed",
+   "plain": "news source",
+   "plainRu": "источник новостей",
+   "explain": "",
+   "explainRu": ""
+  }
+ ]
+}

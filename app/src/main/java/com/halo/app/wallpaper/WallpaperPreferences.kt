@@ -18,6 +18,7 @@ internal data class WallpaperOptions(
     val calmerAtNight: Boolean = true,
     val schedule: WallpaperSchedule = WallpaperSchedule(),
     val photo: WallpaperPhoto? = null,
+    val followSky: Boolean = false,
 )
 
 internal enum class WallpaperPeriod { MORNING, DAY, NIGHT }
@@ -56,11 +57,11 @@ internal fun wallpaperPeriod(time: Float): WallpaperPeriod = when (time) {
 }
 
 internal fun WallpaperOptions.wallpaperAt(period: WallpaperPeriod): HaloWallpaper =
-    if (schedule.enabled) schedule[period] ?: wallpaper else wallpaper
+    if (followSky) HaloWallpaper.DAY_ARC else if (schedule.enabled) schedule[period] ?: wallpaper else wallpaper
 
 internal fun WallpaperOptions.chooseGalleryScene(style: HaloWallpaper, currentPeriod: WallpaperPeriod): WallpaperOptions =
-    if (schedule.enabled) copy(schedule = schedule.with(currentPeriod, style), inApp = true)
-    else copy(wallpaper = style, inApp = true)
+    if (schedule.enabled) copy(schedule = schedule.with(currentPeriod, style), inApp = true, followSky = false)
+    else copy(wallpaper = style, inApp = true, followSky = false)
 
 /** Keep the current period while the surface is visible, even across a clock boundary. */
 internal class WallpaperPeriodLatch(initial: WallpaperPeriod) {
@@ -134,11 +135,11 @@ internal class WallpaperPreferences private constructor(private val context: Con
         listOf(option.wallpaper.name, option.inApp, option.reactsToHalo, option.calmerAtNight,
             option.schedule.enabled, option.schedule.morning?.name.orEmpty(), option.schedule.day?.name.orEmpty(),
             option.schedule.night?.name.orEmpty(), option.photo?.id.orEmpty(), option.photo?.blur?.name.orEmpty(),
-            option.photo?.ring?.name.orEmpty()).joinToString("|")
+            option.photo?.ring?.name.orEmpty(), option.followSky).joinToString("|")
 
     private fun decode(value: String?): WallpaperOptions? {
         val fields = value?.split('|') ?: return null
-        if (fields.size !in setOf(4, 11)) return null
+        if (fields.size !in setOf(4, 11, 12)) return null
         val wallpaper = HaloWallpaper.entries.firstOrNull { it.name == fields[0] } ?: return null
         fun style(index: Int) = HaloWallpaper.entries.firstOrNull { it.name == fields.getOrNull(index) }
         val schedule = WallpaperSchedule(fields.getOrNull(4) == "true", style(5), style(6), style(7))
@@ -147,7 +148,8 @@ internal class WallpaperPreferences private constructor(private val context: Con
                 WallpaperRing.entries.firstOrNull { it.name == fields[10] } ?: WallpaperRing.CENTER)
         }
         return WallpaperOptions(wallpaper, fields[1].toBooleanStrictOrNull() ?: return null,
-            fields[2].toBooleanStrictOrNull() ?: return null, fields[3].toBooleanStrictOrNull() ?: return null, schedule, photo)
+            fields[2].toBooleanStrictOrNull() ?: return null, fields[3].toBooleanStrictOrNull() ?: return null,
+            schedule, photo, fields.getOrNull(11) == "true")
     }
 
     companion object {

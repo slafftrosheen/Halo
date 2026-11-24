@@ -109,6 +109,31 @@ class OrganizerUseCases(
             words.all { word -> word in "${record.title}\n${record.details}".lowercase(Locale.ROOT) } }
             .sortedWith(compareBy<OrganizerRecord> { it.status != OrganizerStatus.ACTIVE }.thenByDescending { it.priority }.thenByDescending { it.updatedAt }.thenBy { it.id })
     }
+
+    /** Suggestions use saved Halo events, including all-day and recurring occurrences. */
+    suspend fun freeTimes(
+        minutes: Long,
+        days: Int,
+        displayZone: ZoneId,
+    ): List<com.halo.app.ui.planner.v13.Slot> {
+        require(minutes in 15..240 && days in 1..7)
+        val now = clock.instant().atZone(displayZone).toLocalDateTime()
+        val from = now.withSecond(0).withNano(0).plusMinutes(15L - now.minute % 15L)
+        val until = now.toLocalDate().plusDays((days - 1).toLong()).atTime(21, 0)
+        if (from >= until) return emptyList()
+        val busy = agenda(from.minusMinutes(15).atZone(displayZone).toInstant(),
+            until.plusMinutes(15).atZone(displayZone).toInstant(), setOf(OrganizerKind.EVENT))
+            .filterNot { it.completed }
+            .mapNotNull { event ->
+                val end = event.end ?: return@mapNotNull null
+                com.halo.app.ui.planner.v13.Busy(
+                    event.start.atZone(displayZone).toLocalDateTime(),
+                    end.atZone(displayZone).toLocalDateTime(),
+                )
+            }
+        val remaining = java.time.temporal.ChronoUnit.DAYS.between(from.toLocalDate(), until.toLocalDate()).toInt() + 1
+        return com.halo.app.ui.planner.v13.FindTime.options(busy, from, remaining, Duration.ofMinutes(minutes))
+    }
 }
 
 data class PlannedDelivery(val occurrenceKey: String, val recordId: String, val recordVersion: Long,

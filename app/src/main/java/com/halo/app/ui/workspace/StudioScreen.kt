@@ -395,8 +395,6 @@ fun StudioScreen(viewModel: StudioViewModel, onBack: () -> Unit, onOpenOutput: (
     }) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
             if (project != null) Column(Modifier.fillMaxSize().padding(16.dp).testTag("studio-content")) {
-                if (shellOwnsOrb) Zone5InstrumentHeading(stringResource(R.string.zone5_tool_studio), "tool_studio", project.title,
-                    state = stringResource(if (project.hasUnsavedChanges) R.string.studio_local_draft else R.string.studio_saved))
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 StudioRecoveryNotice(state, viewModel::retry, viewModel::dismissError)
                 val document = project.session.current

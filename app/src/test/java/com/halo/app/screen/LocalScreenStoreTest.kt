@@ -37,9 +37,11 @@ class LocalScreenStoreTest {
 
         assertFalse(restored.layout.value!!.cards.single().archived)
     }
-    @Test fun morningLayoutIncludesNativeStudyResumeCard() {
+    @Test fun morningLayoutUsesSupportedWidgetsAndStudyRemainsAvailable() {
         assertTrue(ScreenWidgets.types.contains("study"))
-        assertTrue(ScreenWidgets.starter("Morning").cards.any { it.widgetType == "study" })
+        val morning = ScreenWidgets.starter("Morning").cards.map { it.widgetType }
+        assertTrue(morning.containsAll(listOf("clock", "upcoming", "organizer_tasks", "briefing")))
+        assertTrue(morning.all { it in ScreenWidgets.types })
     }
     @Test fun researchTimestampIncludesLocalizedDateAndTime() {
         val timestamp = formatScreenTimestamp(Instant.parse("2026-10-22T10:00:00Z"), true, Locale.US, ZoneId.of("UTC"))

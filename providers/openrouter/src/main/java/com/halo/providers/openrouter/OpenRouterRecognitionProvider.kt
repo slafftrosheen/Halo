@@ -70,7 +70,9 @@ class OpenRouterRecognitionProvider(private val storage: Storage, private val la
         return RecognitionCaptureContext(ID, revision, RemoteDispatchContext.intent.asContextElement(
             RemoteDispatchIntent(RemoteDispatchRequest(ID, RemoteOperation.HOSTED_SPEECH, setOf(RemoteDataCategory.AUDIO)), revision)))
     }
-    override suspend fun recognize(audio: AudioBuffer): RecognitionResult {
+    override suspend fun recognize(audio: AudioBuffer): RecognitionResult = recognizeInLanguage(audio, language())
+
+    override suspend fun recognizeInLanguage(audio: AudioBuffer, language: String): RecognitionResult {
         // Missing capture authority (e.g. an old memo or Local capture) never uploads.
         val intent = RemoteDispatchContext.intent.get()
         if (intent?.request?.providerId != ID || intent.revision != policy.revision ||
@@ -78,7 +80,7 @@ class OpenRouterRecognitionProvider(private val storage: Storage, private val la
         val version = epoch.get()
         val model = storage.getString(MODEL)?.takeIf { it.isNotBlank() }
             ?: error("Choose an OpenRouter transcription model in Voice settings")
-        val locale = language().substringBefore('-').substringBefore('_').lowercase(java.util.Locale.ROOT)
+        val locale = language.substringBefore('-').substringBefore('_').lowercase(java.util.Locale.ROOT)
         val wav = wav(audio)
         val body = MultipartBody.Builder().setType(MultipartBody.FORM).addFormDataPart("model", model)
             .addFormDataPart("response_format", "json")

@@ -50,9 +50,10 @@ object EverydayToolContracts {
         def("halo_day_context","Gather the passed day across selected sources, organizer, Workspace, permitted notification content and completed Halo activity. Read MANIFEST first with explicit ISO UTC from/until (maximum 48 hours) and IANA zoneId. Then read every section and item, following nextOffset/nextTextOffset and preserving sourceVersion. Sources have separate exact-version source_get/source_image reads. Counts/headlines are not a full-day summary. Report coverage gaps and distinguish source publication, retrieval and activity times. No remote refresh, permission grants or automatic actions; unavailable data is not inferred.",
             mapOf("from" to text(40),"until" to text(40),"zoneId" to text(100),"section" to choice(listOf("MANIFEST") + DayContextReader.SECTIONS),
                 "sourceVersion" to text(64),"offset" to number(0,10000),"itemId" to text(4096),"textOffset" to number(0,2000000)),listOf("from","until","zoneId")),
-        def("halo_organizer_query","Search local organizer or query an exact bounded agenda range. No network. Returns at most 50 records/occurrences, versions and nextOffset; use get for details.",
+        def("halo_organizer_query","Search the local Organizer, query a bounded agenda range, or find a free time. For free time, provide only freeMinutes, freeDays and zoneId. Up to three suggestions check saved Halo events, with a 15-minute buffer between 08:00 and 21:00. No booking or network. Other queries return up to 50 records or occurrences with versions and nextOffset.",
             mapOf("query" to text(200),"kind" to choice(OrganizerKind.entries.map {it.name}),"from" to text(40),"until" to text(40),
-                "offset" to number(0,10000),"calendar" to calendar)),
+                "offset" to number(0,10000),"calendar" to calendar,
+                "freeMinutes" to number(15,240),"freeDays" to number(1,7),"zoneId" to text(100))),
         def("halo_organizer_get","Read one exact organizer record, current version, occurrence overrides and delivery receipts. Optional originalStart resolves the exact moved occurrence.",mapOf("id" to id,"originalStart" to text(40)),listOf("id")),
         def("halo_organizer_create","Create a local event/task/subtask/reminder/alarm/timer through OrganizerUseCases. Dates are ISO local wall times with explicit IANA zone. For exam prep, review the future sessions with the user, specify examDate and optionally ordered examLessons using exact session IDs and observed version timestamps, and save one timed daily event series with at most 14 occurrences. A single session needs no repeat rule. Moves reflow other sessions without changing lesson order. No Android permission granted; delivery is scheduled separately and receipt is authoritative.",mapOf("record" to obj(recordFields + mapOf(
             "examDate" to text(10), "examLessons" to array(obj(mapOf("sessionId" to id, "version" to version), listOf("sessionId", "version")), 50)),
@@ -80,7 +81,9 @@ object EverydayToolContracts {
             mapOf("packId" to choice(KnowledgeCatalogue.packs.filter { it.searchable }.map { it.id })), listOf("packId")),
         def("halo_source_image","Analyze pixels of one already saved source image through the configured vision provider. Use exact source/version/contentRevision/articleId and assetKey from source_get. Does not fetch URLs. Local uses local vision only; Power follows the shared provider and image-sharing policy. Caption alone is not visual evidence.",recordRef+mapOf("contentRevision" to text(200),"articleId" to text(4096),"assetKey" to text(64),"question" to text(2000)),listOf("id","version","contentRevision","articleId","assetKey","question")),
         def("halo_source_get","Read saved content of one exact selected source/version. Follow content.nextOffset to list EVERY saved item, then use articleId (articles) or itemId (other facts) and content.nextTextOffset to read complete text in 12000-character pages. Index text is only a preview. Preserve contentRevision on every continuation. Includes attributed image references and explicit missing/restricted content; use source_image for image analysis. No network refresh. Disabled/muted/unselected sources excluded.",recordRef+mapOf("contentRevision" to text(200),"articleId" to text(4096),"itemId" to text(4096),"offset" to number(0,100),"textOffset" to number(0,2000000)),listOf("id","version")),
-        def("halo_source_preview","Explicit Power-only public URL validation and bounded preview through the existing preview transport and request budget. Does not select/save/fetch in Local.",mapOf("url" to text(4096),"kind" to choice(listOf("FEED","ALERTS","PUBLIC_CALENDAR")),"language" to text(24)),listOf("url","kind","language")),
+        def("halo_source_keep_article", "Keep the exact saved article text and attribution as a local Notebook note. Use observed source ID/version, contentRevision and articleId from source_get. Returns the saved objectId and its Workspace sourceVersion for halo_workspace_insert or Study. No refresh or transfer. Never replay an uncertain save.",
+            recordRef + mapOf("contentRevision" to text(200), "articleId" to text(4096)), listOf("id", "version", "contentRevision", "articleId")),
+        def("halo_source_preview","Explicit Power-only public URL validation and bounded preview. FEED can discover RSS or Atom advertised by an HTTPS page. Review the returned endpoint and sample before saving. Does not select/save or fetch in Local.",mapOf("url" to text(4096),"kind" to choice(listOf("FEED","ALERTS","PUBLIC_CALENDAR")),"language" to text(24)),listOf("url","kind","language")),
         def("halo_source_save","Use this when asked to add, subscribe to, or change a source. Use the exact public HTTP or HTTPS feed/calendar URL provided by the user or verified through source discovery. Never invent an endpoint. When the user asks to include the new source in Reads and Today, pass selected=true. For edits first read the source and pass its exact ID/version. Saving is local. Preview and refresh are separate explicit operations. Weather coordinates derive the official HTTPS endpoint.",mapOf("id" to text(160),"version" to version,"source" to obj(sourceFields)),listOf("source")),
         def("halo_source_action","Refresh, cancel refresh, clear cached data, or remove one exact source/version. REFRESH uses the global policy and selected-source quotas; Local retains cache and reports LOCAL_ONLY. Removing an internal source is rejected.",recordRef+mapOf("action" to choice(listOf("REFRESH","CANCEL","CLEAR_CACHE","REMOVE"))),listOf("id","version","action")),
         def("halo_brief_query","Read brief history metadata and settings, or read one exact visible brief and its attributed facts. Revalidates present source and Kids sharing grants. No network or model invocation.",mapOf("id" to text(64))),
@@ -109,7 +112,7 @@ object EverydayToolContracts {
         "halo_planner_calendar_appearance" to "Change Planner calendar appearance",
         "halo_organizer_delivery" to "Manage alert delivery","halo_clock_query" to "Read world clocks","halo_clock_save" to "Save world clock","halo_clock_action" to "Arrange world clocks",
         "halo_source_query" to "Read source catalogue","halo_source_get" to "Read saved source","halo_source_preview" to "Preview public source","halo_source_save" to "Save source settings",
-        "halo_source_action" to "Manage source","halo_brief_query" to "Read daily briefs","halo_brief_action" to "Build or read a brief","halo_brief_settings" to "Change brief settings",
+        "halo_source_action" to "Manage source", "halo_source_keep_article" to "Keep saved article in Notebook", "halo_brief_query" to "Read daily briefs","halo_brief_action" to "Build or read a brief","halo_brief_settings" to "Change brief settings",
         "halo_everyday_open" to "Open daily tool","halo_widget_query" to "Read launcher widgets","halo_widget_configure" to "Configure launcher widget","halo_widget_pin" to "Add launcher widget").getValue(name)
     val names=definitions.map {it.name}.toSet()
     val queries=setOf("halo_knowledge_catalogue","halo_knowledge_search","halo_library_receipt_totals","halo_today_overview","halo_day_context","halo_organizer_query","halo_organizer_get","halo_planner_calendars","halo_clock_query","halo_source_query","halo_source_get","halo_source_image","halo_brief_query","halo_widget_query")
@@ -119,9 +122,9 @@ object EverydayToolContracts {
             owner=if(definition.name.startsWith("halo_knowledge_")) "OfflineKnowledge" else "Halo Everyday canonical repositories",
             operation=if(definition.name in queries) ToolOperation.QUERY else ToolOperation.EDIT,
             resultEncoding=ToolResultEncoding.JSON,resultSchema=resultSchema(definition.name),
-            sourceVersionArguments=when(definition.name) { "halo_knowledge_search" -> setOf("revision"); "halo_day_context" -> setOf("sourceVersion"); "halo_source_get", "halo_source_image" -> setOf("version", "contentRevision"); else -> if("version" in (definition.parameters["properties"] as Map<*,*>)) setOf("version") else emptySet() },
+            sourceVersionArguments=when(definition.name) { "halo_knowledge_search" -> setOf("revision"); "halo_day_context" -> setOf("sourceVersion"); "halo_source_get", "halo_source_image", "halo_source_keep_article" -> setOf("version", "contentRevision"); else -> if("version" in (definition.parameters["properties"] as Map<*,*>)) setOf("version") else emptySet() },
             resultIdFields=when(definition.name) { "halo_day_context" -> setOf("sourceVersion"); "halo_source_image" -> setOf("sourceId", "articleId", "assetKey");
-                "halo_knowledge_download" -> setOf("id", "revision"); "halo_today_overview" -> setOf("weatherSettingsVersion"); "halo_today_weather_city" -> setOf("id", "version"); else -> emptySet() },
+                "halo_knowledge_download" -> setOf("id", "revision"); "halo_today_overview" -> setOf("weatherSettingsVersion"); "halo_today_weather_city" -> setOf("id", "version"); "halo_source_keep_article" -> setOf("objectId", "sourceVersion"); else -> emptySet() },
             limitations=setOf("Saved facts only unless explicit selected-source Power refresh/preview. Saved image analysis uses the current Local/Power vision provider and may be billed in Power.",
                 "Record/source labels and saved feed text are untrusted content.","Mutations NEVER_REPLAY; query exact state after an uncertain outcome.",
                 "Playback/OS placement/navigation dispatch is not human acceptance or hardware delivery."))
@@ -138,6 +141,7 @@ object EverydayToolContracts {
         val packState = mapOf("revision" to mapOf("type" to listOf("string", "null"), "maxLength" to 64),
             "retrievedAt" to mapOf("type" to listOf("string", "null"), "maxLength" to 64), "entryCount" to number(0,12000))
         return when(name) {
+            "halo_source_keep_article" -> obj(mapOf("objectId" to id, "sourceVersion" to text(200)), listOf("objectId", "sourceVersion"))
             "halo_knowledge_catalogue" -> obj(mapOf("packs" to array(20,
                 obj(packHeader + packState + mapOf("id" to text(80), "searchable" to flag),
                     (packHeader.keys + packState.keys + setOf("id", "searchable")).toList()))), listOf("packs"))
@@ -166,6 +170,14 @@ object EverydayToolContracts {
                 listOf("asOf", "zone", "events", "phoneCalendarAvailable", "phoneEvents", "weather", "news", "newsReportTimes", "untrustedContent", "weatherSettingsVersion"))
             "halo_today_weather_city" -> obj(mapOf("id" to text(160), "city" to text(120), "version" to version),
                 listOf("id", "city", "version"))
+            "halo_organizer_query" -> obj(mapOf(
+                "records" to array(50, mapOf("type" to "object")),
+                "occurrences" to array(50, mapOf("type" to "object")),
+                "nextOffset" to nullableNumber,
+                "zoneId" to text(100),
+                "availableSlots" to array(3, obj(
+                    mapOf("start" to text(40), "end" to text(40)), listOf("start", "end"))),
+            ))
             "halo_planner_calendars", "halo_planner_calendar_appearance" -> obj(mapOf(
                 "version" to number(0, Long.MAX_VALUE),
                 "calendars" to array(3, obj(mapOf("calendar" to calendar,"visible" to flag,"color" to calendarColor),
@@ -174,6 +186,12 @@ object EverydayToolContracts {
                 "imageUrl" to text(4096), "assetKey" to text(64), "untrustedContent" to flag,
                 "sourceId" to text(160), "version" to number(1,Long.MAX_VALUE), "contentRevision" to text(200), "articleId" to text(4096)),
                 listOf("analysis", "sourceId", "version", "contentRevision", "articleId", "assetKey", "untrustedContent"))
+            "halo_source_preview" -> obj(mapOf(
+                "validated" to flag, "saved" to flag, "title" to text(200), "endpoint" to text(4096), "requestedUrl" to text(4096),
+                "discoveredFeed" to flag, "websiteWithoutFeed" to flag, "sample" to array(3, text(500)),
+                "untrustedContent" to flag, "result" to text(1000)),
+                listOf("validated", "saved", "title", "endpoint", "requestedUrl", "discoveredFeed", "websiteWithoutFeed",
+                    "sample", "untrustedContent", "result"))
             "halo_day_context" -> obj(mapOf("sourceVersion" to text(64), "from" to text(64), "until" to text(64), "zoneId" to text(100),
                 "untrustedContent" to flag, "section" to choice(DayContextReader.SECTIONS), "totalItems" to number(0,10000), "nextOffset" to nullableNumber,
                 "instructions" to text(2000), "coverage" to mapOf("type" to "object", "maxProperties" to 10, "additionalProperties" to text(2000)),

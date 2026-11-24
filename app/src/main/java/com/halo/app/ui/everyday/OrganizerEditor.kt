@@ -8,7 +8,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.halo.app.R
 import com.halo.app.everyday.organizer.*
 import com.halo.app.language.uiText
 import com.halo.app.ui.components.HaloAlertDialog
@@ -39,6 +41,11 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(uiText(if (draft.spokenReview) "Check your reminder" else if (draft.creating) "Add item" else if (draft.occurrence != null) "Edit this occurrence" else if (draft.base.repeat != null) "Edit entire series" else "Edit item"), style = MaterialTheme.typography.headlineSmall)
             state.error?.let { EverydayMessage(it, true) }
+            if (!draft.spokenReview && draft.spokenTimeGuess != null) Text(
+                stringResource(R.string.sp13_time_guess, draft.spokenTimeGuess, draft.time),
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+            if (!draft.spokenReview && draft.spokenDateGuess) Text(stringResource(R.string.sp13_date_guess, draft.date))
             if (draft.spokenReview && !advanced) {
                 PlannerReminderReview(draft, locale, !state.busy, change)
                 TextButton({ advanced = true }, enabled = !state.busy, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -73,8 +80,8 @@ internal fun OrganizerEditorForm(state: OrganizerPageState, draft: OrganizerDraf
                     change(draft.copy(allDay = allDay, endDate = if (allDay && draft.hasEnd && first != null &&
                         (end == null || end <= first)) first.plusDays(1).toString() else draft.endDate))
                 }
-                EverydayDateField(uiText("Start date"), draft.date, !state.busy) { change(draft.copy(date = it)) }
-                if (!draft.allDay) OutlinedTextField(draft.time, { change(draft.copy(time = it.take(8))) }, enabled = !state.busy,
+                EverydayDateField(uiText("Start date"), draft.date, !state.busy) { change(draft.copy(date = it, spokenDateGuess = false)) }
+                if (!draft.allDay) OutlinedTextField(draft.time, { change(draft.copy(time = it.take(8), spokenTimeGuess = null)) }, enabled = !state.busy,
                     label = { Text(uiText("Time · HH:mm")) }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 if (!draft.allDay && draft.base.kind == OrganizerKind.EVENT && draft.occurrence == null) {
                     OutlinedTextField(draft.leaveLead, { change(draft.copy(leaveLead = it.filter(Char::isDigit).take(5))) },

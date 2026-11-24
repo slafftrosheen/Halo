@@ -352,7 +352,7 @@ class DefaultToolTurnExecutor(
         }
 
         for ((index, incomingCall) in toolCalls.withIndex()) {
-            var toolCall = incomingCall
+            var toolCall = toolRegistry?.canonicalEnumArguments(incomingCall) ?: incomingCall
             toolCall = (toolRegistry?.executorFor(toolCall.functionName) as? ToolPreflightProvider)?.restoreTransientCall(toolCall) ?: toolCall
             if (toolCall.functionName == "halo_ui_set_text" && toolCall.arguments["text"] !is String && toolCall.arguments["textDigest"] != null) {
                 toolMessages.add(persistAndPublishToolRejection(runId, interactionId, requestId, toolCall,

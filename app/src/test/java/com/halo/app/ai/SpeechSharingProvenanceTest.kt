@@ -24,9 +24,9 @@ class SpeechSharingProvenanceTest {
             speechEventProvenance(event.copy(remoteDataCategories = setOf("WORKSPACE"), remoteDispatchRevision = 7)))
     }
 
-    @Test fun locallyDerivedWorkspaceAnswerUsesOfflineSpeechWhenCloudWorkspaceIsDisabled() {
+    @Test fun locallyDerivedWorkspaceAnswerUsesOfflineSpeechWhenWorkspaceContextIsDisabled() {
         val store = owner()
-        store.edit(PrivacyMode.CLOUD) { it.copy(booleans = it.booleans + (KEY_CLOUD_WORKSPACE to false)) }
+        store.edit(PrivacyMode.CLOUD) { it.copy(booleans = it.booleans + (KEY_WORKSPACE to false)) }
         val registry = registry(store.storage)
         val request = SpeechRequest("synthetic derived answer", remoteProvenance =
             RemoteDispatchProvenance(setOf(RemoteDataCategory.WORKSPACE), store.revision))

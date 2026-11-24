@@ -48,6 +48,7 @@ internal fun HaloComposer(
     draftIdentity: String? = null,
     draftRevision: Long? = null,
     readAcknowledgedDraft: (() -> ComposerDraftState?)? = null,
+    dictation: (@Composable () -> Unit)? = null,
 ) {
     // The relocated child may recompose before its page's captured text updates.
     // Read text and revision together from the same canonical snapshot; accepting
@@ -143,6 +144,7 @@ internal fun HaloComposer(
             }
         }
         if (!compact) Spacer(Modifier.weight(1f))
+        dictation?.invoke()
         val label = when (primary) {
             HomeComposerAction.STOP -> uiText("Stop")
             HomeComposerAction.SEND -> sendLabel

@@ -237,8 +237,18 @@ class NotebookCanvasRepository(
     private val newId: () -> String = { UUID.randomUUID().toString() },
     private val remoteInkActivation: com.halo.sdk.runtime.ink.InkActivationPolicy = com.halo.sdk.runtime.ink.InkActivationPolicy.QUALIFICATION_PENDING,
 ) {
-    suspend fun drawingDraft(canvasId: String): CanvasDrawingDraft? = notebookDao.getDraft(canvasId)?.structureJson?.let(CanvasDrawingDraft::decode)
-    suspend fun saveDrawingDraft(canvasId: String, draft: CanvasDrawingDraft) {
+    suspend fun drawingDraft(canvasId: String): CanvasDrawingDraft? = database.withTransaction {
+        val size = notebookDao.canvasDraftLength(canvasId) ?: return@withTransaction null
+        if (size !in 1..CanvasDrawingDraft.MAX_STORED_CHARS) return@withTransaction null
+        // The row stays atomic. Read bounded slices so a full drawing fits Android's CursorWindow.
+        val encoded = StringBuilder(size)
+        val chunkSize = 128 * 1024
+        for (start in 1..size step chunkSize) {
+            encoded.append(notebookDao.canvasDraftSlice(canvasId, start, chunkSize) ?: return@withTransaction null)
+        }
+        CanvasDrawingDraft.decode(encoded.toString())
+    }
+    suspend fun saveDrawingDraft(canvasId: String, draft: CanvasDrawingDraft) = database.withTransaction {
         requireWritable(canvasId)
         notebookDao.upsertDraft(NoteDraftEntity(canvasId, "", now(), structureJson = draft.encode()))
     }
@@ -466,7 +476,7 @@ class NotebookCanvasRepository(
 
     fun observeImageSearchSources(): Flow<List<CanvasImageSearchSource>> = canvasDao.observeImageSearchSources()
 
-    suspend fun create(title: String = "Untitled canvas"): String {
+    suspend fun create(title: String = "Untitled canvas", inInbox: Boolean = true): String {
         val id = newId()
         val timestamp = now()
         database.withTransaction {
@@ -475,7 +485,7 @@ class NotebookCanvasRepository(
                 title = title, createdAt = timestamp, updatedAt = timestamp,
                 source = WorkspaceObjectSource.USER_CREATED.name,
                 lifecycle = WorkspaceObjectLifecycle.ACTIVE.name,
-                inInbox = true, indexingState = "READY", contentRef = "canvas:$id",
+                inInbox = inInbox, indexingState = "READY", contentRef = "canvas:$id",
             ))
             canvasDao.insertDocument(CanvasDocumentEntity(id, 0f, 0f, 1f, 1))
         }
@@ -543,6 +553,55 @@ class NotebookCanvasRepository(
     suspend fun addSketchNode(canvasId: String, x: Float, y: Float, strokes: String): String {
         require(CanvasSketchCodec.decode(strokes).isNotEmpty())
         return addNode(canvasId, CanvasNodeType.SKETCH, null, strokes, x, y)
+    }
+
+    /** Append ordinary sketch cards in a single board edit and preserve the existing board undo. */
+    internal suspend fun saveDrawingSheets(canvasId: String, anchor: String?, original: String?, x: Float, y: Float,
+        sheets: List<String>): Pair<String, CanvasUndoSnapshot> = database.withTransaction {
+        requireWritable(canvasId)
+        val (nodes, edges) = snapshot(canvasId)
+        val label = com.halo.app.ui.canvas.v13.InkSheets.CONTINUES_LABEL
+        val maxSheets = com.halo.app.ui.canvas.v13.InkSheets.MAX_SHEETS
+        require(sheets.size in 2..maxSheets)
+        val existing = anchor?.let { id ->
+            requireNotNull(nodes.firstOrNull { it.id == id && it.type == CanvasNodeType.SKETCH.name }).also {
+                check(it.text == original && it.id !in lockedIds(nodes, edges)) { "Sketch changed" }
+                check(edges.none { edge -> edge.label == label && edge.fromNodeId == id })
+            }
+        }
+        val chain = mutableSetOf<String>()
+        var previousId = existing?.id
+        while (previousId != null) {
+            val currentId = previousId
+            check(chain.add(currentId))
+            previousId = edges.firstOrNull { it.label == label && it.toNodeId == currentId }?.fromNodeId
+        }
+        require(chain.size + sheets.size - (if (existing == null) 0 else 1) <= maxSheets)
+        val first = if (existing == null) addSketchNode(canvasId, x, y, sheets.first()) else {
+            check(updateText(canvasId, existing.id, sheets.first(), original))
+            existing.id
+        }
+        var last = first
+        val added = sheets.drop(1).mapIndexed { index, ink ->
+            val next = addSketchNode(canvasId, existing?.x ?: x,
+                (existing?.y ?: y) + (existing?.height ?: 280f) + 32f + index * 312f, ink)
+            connect(canvasId, last, next, label)
+            last = next
+            next
+        }
+        val existingGroup = edges.firstOrNull { it.label == "group" && it.toNodeId == first }?.let { membership ->
+            nodes.firstOrNull { it.id == membership.fromNodeId && it.type == CanvasNodeType.GROUP.name }
+        }
+        if (existingGroup == null) manualEdit(canvasId, (listOf(first) + added).toSet(), "Group selection")
+        else {
+            added.forEach { connect(canvasId, existingGroup.id, it, "group") }
+            val members = canvasDao.getNodes(canvasId).filter { it.id in added }
+            val width = maxOf(existingGroup.width, members.maxOf { it.x + it.width } - existingGroup.x + 22f)
+            val height = maxOf(existingGroup.height, members.maxOf { it.y + it.height } - existingGroup.y + 22f)
+            canvasDao.resizeNode(canvasId, existingGroup.id, width, height)
+            touch(canvasId)
+        }
+        first to CanvasUndoSnapshot(nodes, edges, boardFingerprint(canvasDao.getNodes(canvasId), canvasDao.getEdges(canvasId)))
     }
 
     /** Persist only the explicit selection reference; source strokes remain in their original card. */

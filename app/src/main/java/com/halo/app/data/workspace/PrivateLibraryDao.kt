@@ -57,6 +57,9 @@ interface PrivateLibraryDao {
     @Query("SELECT fingerprint FROM private_library_claims WHERE fingerprint IN (:hashes)")
     suspend fun claims(hashes: List<String>): List<String>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM private_library_claims WHERE fingerprint = :hash)")
+    fun observeClaim(hash: String): kotlinx.coroutines.flow.Flow<Boolean>
+
     @Query("DELETE FROM private_library_claims WHERE envelopeId = :id")
     suspend fun removeClaims(id: String): Int
 

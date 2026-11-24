@@ -1021,6 +1021,23 @@ class CanvasEditorViewModel(
         mutableState.value = mutableState.value.copy(undoAvailable = true)
     }
 
+    internal fun addDrawingSheets(sheets: List<String>, nodeId: String?, expectedText: String?,
+        expectedDraft: com.halo.app.data.notebook.CanvasDrawingDraft?) {
+        if (sheets.size <= 1) {
+            sheets.firstOrNull()?.let { addSketch(it, nodeId, expectedText, expectedDraft) }
+            return
+        }
+        command {
+            flushPendingEdits()
+            val (x, y) = insertionPoint()
+            val (id, undo) = repository.saveDrawingSheets(canvasId, nodeId, expectedText, x, y, sheets)
+            undoSnapshot = undo
+            selectNode(id)
+            mutableState.value = mutableState.value.copy(undoAvailable = true)
+            clearSavedDrawingDraft(expectedDraft)
+        }
+    }
+
     fun addSketch(strokes: String, nodeId: String? = null, expectedText: String? = null,
         expectedDraft: com.halo.app.data.notebook.CanvasDrawingDraft? = null) = command {
         val document = com.halo.sdk.runtime.ink.InkCodec.decode(strokes) ?: return@command

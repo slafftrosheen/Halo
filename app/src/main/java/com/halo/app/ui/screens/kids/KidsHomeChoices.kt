@@ -41,6 +41,7 @@ internal fun kidsHomeChoicesStacked(fontScale: Float, widthDp: Int): Boolean =
     fontScale >= 1.3f || widthDp < 480
 
 /** K01: three stable choices; resume belongs to its activity, not a fourth card. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun KidsHomeChoices(
     recentLessonTitle: String? = null,
@@ -48,66 +49,40 @@ internal fun KidsHomeChoices(
     onIdentify: (() -> Unit)? = null,
     onPlay: (() -> Unit)? = null,
     playEnabled: Boolean = true,
+    age: KidsAgeBand? = null,
     onSelect: (KidsDestination) -> Unit,
 ) {
-    if (onIdentify != null && onPlay != null) {
-        val colors = MaterialTheme.colorScheme
-        val choices = listOf(
-            KidsHomeTile(R.string.halo11_kids_learn, R.drawable.halo_ic_study, colors.secondaryContainer,
-                colors.onSecondaryContainer) { onSelect(KidsDestination.LEARN) },
-            KidsHomeTile(R.string.halo11_kids_make, R.drawable.halo_ic_sketch, colors.tertiaryContainer,
-                colors.onTertiaryContainer) { onSelect(KidsDestination.CREATE) },
-            KidsHomeTile(R.string.halo11_kids_identify, R.drawable.halo_ic_ask_mode, colors.primaryContainer,
-                colors.onPrimaryContainer, onOpen = onIdentify),
-            KidsHomeTile(R.string.halo11_kids_play, R.drawable.halo_ic_ask_mode, colors.surfaceContainerHighest,
-                colors.onSurface, enabled = playEnabled, onOpen = onPlay),
-        )
-        val columns = if (LocalDensity.current.fontScale >= 1.4f || LocalConfiguration.current.screenWidthDp < 300) 1 else 2
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            choices.chunked(columns).forEach { row ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    row.forEach { item -> KidsHomeTileCard(item, Modifier.weight(1f)) }
-                }
-            }
-        }
-        return
-    }
+    val layout = age?.let { com.halo.app.ui.kids.v13.KidsAgeLayout.forBand(it.name) }
+    val textSize = layout?.textSp?.sp ?: 19.sp
+    val target = layout?.targetDp?.dp ?: 76.dp
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        KidsChoice("Ask a question", R.drawable.halo_ic_ask_mode, Modifier.fillMaxWidth()) {
+        KidsChoice(if (age == null) "Ask a question" else stringResource(R.string.kd13_ask),
+            R.drawable.halo_ic_ask_mode, Modifier.fillMaxWidth(), minTarget = target, titleSize = textSize) {
             onSelect(KidsDestination.ASK)
         }
-        KidsChoice("Learn something", R.drawable.halo_ic_study, Modifier.fillMaxWidth(),
+        KidsChoice(if (age == null) "Learn something" else stringResource(R.string.kd13_learn),
+            R.drawable.halo_ic_study, Modifier.fillMaxWidth(), minTarget = target, titleSize = textSize,
             subtitle = recentLessonTitle?.let { uiText("Keep going: %1\$s", it) },
             highlighted = recentLessonTitle != null) {
             onSelect(KidsDestination.LEARN)
         }
-        KidsChoice("Make something", R.drawable.halo_ic_sketch, Modifier.fillMaxWidth(),
+        KidsChoice(if (age == null) "Make something" else stringResource(R.string.kd13_make),
+            R.drawable.halo_ic_sketch, Modifier.fillMaxWidth(), minTarget = target, titleSize = textSize,
             subtitle = projectTitle?.let { uiText("Keep going: %1\$s", it) },
             highlighted = recentLessonTitle == null && projectTitle != null) {
             onSelect(KidsDestination.CREATE)
         }
-    }
-}
-
-private data class KidsHomeTile(val title: Int, val icon: Int, val color: Color, val ink: Color,
-    val enabled: Boolean = true, val onOpen: () -> Unit)
-
-@Composable
-private fun KidsHomeTileCard(item: KidsHomeTile, modifier: Modifier) {
-    val title = stringResource(item.title)
-    val spoken = rememberKidsSpokenChoice(title, onChoose = item.onOpen)
-    val confirm = stringResource(R.string.kids_choice_tap_again)
-    Surface(onClick = spoken.onClick, enabled = item.enabled, modifier = modifier.heightIn(min = 104.dp)
-        .semantics { if (spoken.heard) stateDescription = confirm },
-        shape = RoundedCornerShape(22.dp), color = item.color, contentColor = item.ink) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = .7f),
-                modifier = Modifier.size(40.dp)) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(painterResource(item.icon), null, Modifier.size(23.dp), tint = item.ink)
-                }
+        if (onIdentify != null || onPlay != null) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            onIdentify?.let { action ->
+                val label = stringResource(R.string.halo11_kids_identify)
+                val spoken = rememberKidsSpokenChoice(label, onChoose = action)
+                TextButton(spoken.onClick, modifier = Modifier.heightIn(min = target)) { Text(label) }
             }
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            onPlay?.let { action ->
+                val label = stringResource(R.string.halo11_kids_play)
+                val spoken = rememberKidsSpokenChoice(label, onChoose = action)
+                TextButton(spoken.onClick, enabled = playEnabled, modifier = Modifier.heightIn(min = target)) { Text(label) }
+            }
         }
     }
 }
@@ -115,10 +90,11 @@ private fun KidsHomeTileCard(item: KidsHomeTile, modifier: Modifier) {
 @Composable
 internal fun KidsChoice(title: String, icon: Int, modifier: Modifier = Modifier,
     subtitle: String? = null, highlighted: Boolean = false, enabled: Boolean = true,
+    minTarget: androidx.compose.ui.unit.Dp = 76.dp, titleSize: androidx.compose.ui.unit.TextUnit = 19.sp,
     onClick: () -> Unit) {
     val choice = rememberKidsSpokenChoice(uiText(title), onChoose = onClick)
     val confirm = stringResource(R.string.kids_choice_tap_again)
-    Surface(onClick = choice.onClick, enabled = enabled, modifier = modifier.heightIn(min = 76.dp)
+    Surface(onClick = choice.onClick, enabled = enabled, modifier = modifier.heightIn(min = minTarget)
         .semantics { if (choice.heard) stateDescription = confirm }
         .haloTrace(highlighted, MaterialTheme.colorScheme.primary, corner = 26.dp, lapOnAppear = true),
         shape = HaloShapes.hero,
@@ -141,7 +117,7 @@ internal fun KidsChoice(title: String, icon: Int, modifier: Modifier = Modifier,
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(uiText(title), style = MaterialTheme.typography.titleMedium.copy(
-                    fontSize = 19.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold))
+                    fontSize = titleSize, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold))
                 subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 14.sp, lineHeight = 20.sp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }

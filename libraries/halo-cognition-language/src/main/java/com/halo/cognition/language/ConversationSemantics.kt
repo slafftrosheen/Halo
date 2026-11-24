@@ -12,6 +12,22 @@ object ConversationSemantics {
         RegexOption.IGNORE_CASE
     )
     private val workspace = Regex("^(?:find|search|use|read|look up) my (?:notes?|notebook|documents?|files?|memories)\\b", RegexOption.IGNORE_CASE)
+    private val liveWeb = Regex(
+        "^(?:(?:search|check|browse) (?:the )?(?:web|internet)\\b|(?:search|look up|check|find)(?:\\s+[^\\r\\n?]{1,160})?\\s+online\\b|" +
+            "(?:поищи|найди|проверь)\\s+(?:в интернете|онлайн)\\b|" +
+            "(?:meklē|atrodi|pārbaudi)\\s+(?:internetā|tīmeklī)\\b|" +
+            "(?:wyszukaj|znajdź|sprawdź)\\s+(?:w internecie|w sieci|online)\\b)", RegexOption.IGNORE_CASE)
+    private val sourceLookup = Regex(
+        "^(?:(?:find|search|use|read|check|list|review|summari[sz]e|compare|analy[sz]e|show(?:\\s+me)?)\\s+" +
+            "(?:(?:in|through)\\s+)?(?:all\\s+)?(?:my|saved|selected|followed)\\s+" +
+            "(?:(?:saved|selected|followed|news)\\s+){0,2}(?:sources|feeds|articles)\\b|" +
+            "(?:find|search for|look for)\\s+[^\\r\\n]{1,160}\\s+(?:in|within)\\s+my\\s+(?:saved\\s+|selected\\s+)?(?:sources|feeds|articles)\\b|" +
+            "(?:what(?:['’]s| is) new in|what (?:do|did))\\s+my\\s+(?:(?:saved|selected|news)\\s+){0,2}(?:sources|feeds)\\b|" +
+            "(?:прочитай|найди|поищи|обобщи|суммируй|сравни|покажи)\\s+(?:мои|в моих|сохранённые|сохраненные|выбранные)\\s+(?:источники|источниках|статьи)\\b|" +
+            "(?:izlasi|meklē|apkopo|salīdzini)\\s+(?:manus|manos|saglabātos|atlasītos)\\s+(?:avotus|avotos|rakstus)\\b|" +
+            "(?:przeczytaj|przeszukaj|podsumuj|porównaj)\\s+(?:moje|zapisane|wybrane)\\s+(?:źródła|artykuły)\\b)",
+        RegexOption.IGNORE_CASE,
+    )
     // Explicit requests for saved personal context need owner reads before a summary.
     // These cues only select the tool route; they never grant access or supply action slots.
     private val dayContext = Regex(
@@ -45,7 +61,7 @@ object ConversationSemantics {
         RegexOption.IGNORE_CASE,
     )
     private fun needsSavedContext(text: String): Boolean = commandText(text).let {
-        dayContext.containsMatchIn(it) || savedContext.containsMatchIn(it) || todayContext.containsMatchIn(it)
+        sourceLookup.containsMatchIn(it) || dayContext.containsMatchIn(it) || savedContext.containsMatchIn(it) || todayContext.containsMatchIn(it)
     }
     // Explicit domain writes still route through the normal tool authorizer when
     // the optional local intent classifier is absent. These cues supply no slots.
@@ -118,6 +134,8 @@ object ConversationSemantics {
         val command = commandText(text)
         return when {
             explicitTool.containsMatchIn(command) -> ToolActionReason.EXPLICIT_TOOL_REQUEST
+            sourceLookup.containsMatchIn(command) -> ToolActionReason.SOURCE_LOOKUP
+            liveWeb.containsMatchIn(command) -> ToolActionReason.WEB_LOOKUP
             needsSavedContext(command) -> ToolActionReason.WORKSPACE_LOOKUP
             workspaceWrite.containsMatchIn(command) || personalSettingsAction.containsMatchIn(command) -> ToolActionReason.ACTION_INTENT
             appWorkflow.containsMatchIn(command) -> ToolActionReason.SCREEN_OPERATION

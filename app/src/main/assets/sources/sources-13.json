@@ -1,0 +1,191 @@
+{
+ "version": 13,
+ "groups": [
+  {
+   "id": "YOUR_OWN",
+   "name": "Your own things",
+   "nameRu": "Ваше личное",
+   "about": "Notes, Planner, files and photos on this phone.",
+   "aboutRu": "Заметки, планировщик, файлы и фото на этом телефоне.",
+   "icon": "src_own"
+  },
+  {
+   "id": "NEWS_AND_READING",
+   "name": "News & reading",
+   "nameRu": "Новости и чтение",
+   "about": "Sites and feeds you follow.",
+   "aboutRu": "Сайты и ленты, на которые вы подписаны.",
+   "icon": "src_news"
+  },
+  {
+   "id": "WEATHER_AND_ALERTS",
+   "name": "Weather & warnings",
+   "nameRu": "Погода и предупреждения",
+   "about": "Forecasts, air, pollen and official warnings.",
+   "aboutRu": "Прогнозы, воздух, пыльца и официальные предупреждения.",
+   "icon": "weather_mood"
+  },
+  {
+   "id": "CALENDARS",
+   "name": "Calendars",
+   "nameRu": "Календари",
+   "about": "Your calendars and public ones, like holidays.",
+   "aboutRu": "Ваши календари и общие, например праздники.",
+   "icon": "calendar"
+  },
+  {
+   "id": "STUDY",
+   "name": "Study books & files",
+   "nameRu": "Учебники и файлы",
+   "about": "Books, PDFs and notes halo answers from in Study.",
+   "aboutRu": "Книги, PDF и заметки, по которым halo отвечает в учёбе.",
+   "icon": "src_book"
+  },
+  {
+   "id": "KIDS_SAFE",
+   "name": "Kids-safe",
+   "nameRu": "Для детей",
+   "about": "Only sources a grown-up approved for the kids.",
+   "aboutRu": "Только источники, одобренные взрослым для детей.",
+   "icon": "kid_safe"
+  }
+ ],
+ "states": [
+  {
+   "id": "UP_TO_DATE",
+   "label": "Up to date",
+   "labelRu": "Актуально",
+   "tone": "DONE"
+  },
+  {
+   "id": "UPDATING",
+   "label": "Updating…",
+   "labelRu": "Обновляется…",
+   "tone": "NEUTRAL"
+  },
+  {
+   "id": "ON_THIS_PHONE",
+   "label": "On this phone",
+   "labelRu": "На телефоне",
+   "tone": "DONE"
+  },
+  {
+   "id": "WAITING_FOR_INTERNET",
+   "label": "Waiting for internet",
+   "labelRu": "Ждёт интернета",
+   "tone": "NEUTRAL"
+  },
+  {
+   "id": "TAKING_A_BREAK",
+   "label": "Taking a break · tries again at %1$s",
+   "labelRu": "Перерыв · снова в %1$s",
+   "tone": "NEUTRAL"
+  },
+  {
+   "id": "NEEDS_YOU",
+   "label": "Needs you · can't reach it for a while",
+   "labelRu": "Нужно ваше внимание · давно недоступно",
+   "tone": "NEEDS_YOU"
+  },
+  {
+   "id": "CANT_REACH",
+   "label": "Can't reach it right now",
+   "labelRu": "Сейчас недоступно",
+   "tone": "ERROR"
+  },
+  {
+   "id": "PAUSED",
+   "label": "Paused",
+   "labelRu": "На паузе",
+   "tone": "NEUTRAL"
+  },
+  {
+   "id": "NEW",
+   "label": "New · first update soon",
+   "labelRu": "Новый · скоро первое обновление",
+   "tone": "NEUTRAL"
+  }
+ ],
+ "kinds": [
+  {
+   "id": "OFFICIAL",
+   "label": "Official",
+   "labelRu": "Официальный",
+   "about": "Run by a government or public body."
+  },
+  {
+   "id": "PUBLIC_NEWS",
+   "label": "Public news",
+   "labelRu": "Новости",
+   "about": "A newsroom or publisher."
+  },
+  {
+   "id": "SCIENCE",
+   "label": "Science",
+   "labelRu": "Наука",
+   "about": "Research and science bodies."
+  },
+  {
+   "id": "COMMUNITY",
+   "label": "Community",
+   "labelRu": "Сообщество",
+   "about": "Posts by people, ranked by people. Check before you trust."
+  },
+  {
+   "id": "YOUR_OWN",
+   "label": "Yours",
+   "labelRu": "Ваше",
+   "about": "Lives on this phone."
+  },
+  {
+   "id": "ADDED_BY_YOU",
+   "label": "Added by you",
+   "labelRu": "Добавлено вами",
+   "about": "A link you added."
+  }
+ ],
+ "starterKinds": {
+  "lsm-lv": "PUBLIC_NEWS",
+  "lsm-ru": "PUBLIC_NEWS",
+  "lsm-en-politics": "PUBLIC_NEWS",
+  "lsm-en-society": "PUBLIC_NEWS",
+  "bbc-world": "PUBLIC_NEWS",
+  "nasa": "SCIENCE",
+  "ars": "PUBLIC_NEWS",
+  "verge": "PUBLIC_NEWS",
+  "hacker-news": "COMMUNITY",
+  "cert-lv": "OFFICIAL",
+  "meteoalarm-lv": "OFFICIAL",
+  "ecb-press": "OFFICIAL",
+  "govuk-news": "OFFICIAL",
+  "who-news": "OFFICIAL",
+  "usgs-earthquakes": "SCIENCE",
+  "arxiv-ai": "SCIENCE",
+  "arxiv-astro": "SCIENCE",
+  "nasa-apod": "SCIENCE"
+ },
+ "howOften": {
+  "every_15_min": [
+   "Every 15 minutes",
+   "Каждые 15 минут"
+  ],
+  "every_hour": [
+   "Every hour",
+   "Каждый час"
+  ],
+  "few_times_a_day": [
+   "A few times a day",
+   "Несколько раз в день"
+  ],
+  "once_a_day": [
+   "Once a day",
+   "Раз в день"
+  ]
+ },
+ "rules": {
+  "kidsSafeNeedsGrownUpPin": true,
+  "httpsOnly": true,
+  "maxFeedBytes": 2097152,
+  "neverScoreSources": true
+ }
+}

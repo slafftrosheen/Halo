@@ -54,11 +54,11 @@ internal fun StudioCombineShapesDialog(document: StudioDocument, onApply: (Studi
             ShapeOperand(uiText("Second shape"), other, candidates.filter { it.id != target.id }) { other = it }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 StudioShapeOperation.entries.forEach { choice ->
-                    val label = when (choice) {
-                        StudioShapeOperation.WELD -> uiText("Weld")
-                        StudioShapeOperation.TRIM -> uiText("Trim")
-                        StudioShapeOperation.INTERSECT -> uiText("Intersect")
-                    }
+                    val label = androidx.compose.ui.res.stringResource(when (choice) {
+                        StudioShapeOperation.WELD -> com.halo.app.R.string.mk13_studio_join
+                        StudioShapeOperation.TRIM -> com.halo.app.R.string.mk13_studio_cut_out
+                        StudioShapeOperation.INTERSECT -> com.halo.app.R.string.mk13_studio_overlap
+                    })
                     FilterChip(operation == choice, { operation = choice }, label = { Text(label) },
                         modifier = Modifier.heightIn(min = 48.dp))
                 }
@@ -73,6 +73,9 @@ internal fun StudioCombineShapesDialog(document: StudioDocument, onApply: (Studi
             if (preview == null) LinearProgressIndicator(Modifier.fillMaxWidth())
             preview?.error?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
             preview?.layer?.let { layer ->
+                if (operation == StudioShapeOperation.WELD) com.halo.app.ui.theme.v13.Halo13Animation(
+                    com.halo.app.ui.theme.v13.Halo13Motion.JOIN_SHAPES, Modifier.fillMaxWidth().height(64.dp),
+                )
                 Canvas(Modifier.fillMaxWidth().height(152.dp)) {
                     val fit = minOf(size.width / document.width, size.height / document.height)
                     val width = document.width * fit

@@ -13,7 +13,7 @@ enum class HaloAccent { MINT, BLUE, LILAC, CORAL, SAGE, ROSE }
 enum class HaloTone { NATURAL, WARM, COOL, PAPER, SLATE }
 enum class HaloBackgroundStyle { STILL, HALO, MIST }
 data class HaloPalette(val accent: HaloAccent = HaloAccent.MINT, val tone: HaloTone = HaloTone.NATURAL,
-    val background: HaloBackgroundStyle = HaloBackgroundStyle.HALO)
+    val background: HaloBackgroundStyle = HaloBackgroundStyle.HALO, val wallpaperSeed: Int? = null)
 val LocalHaloPalette = androidx.compose.runtime.staticCompositionLocalOf { HaloPalette() }
 data class HaloPalettes(val light: HaloPalette = HaloPalette(), val dark: HaloPalette = HaloPalette())
 
@@ -31,7 +31,8 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
         val prefix = if (dark) "dark" else "light"
         return HaloPalette(runCatching { HaloAccent.valueOf(disk().getString("$prefix.accent", "MINT")!!) }.getOrDefault(HaloAccent.MINT),
             runCatching { HaloTone.valueOf(disk().getString("$prefix.tone", "NATURAL")!!) }.getOrDefault(HaloTone.NATURAL),
-            runCatching { HaloBackgroundStyle.valueOf(disk().getString("$prefix.background", "HALO")!!) }.getOrDefault(HaloBackgroundStyle.HALO))
+            runCatching { HaloBackgroundStyle.valueOf(disk().getString("$prefix.background", "HALO")!!) }.getOrDefault(HaloBackgroundStyle.HALO),
+            disk().getString("$prefix.wallpaperSeed", null)?.toIntOrNull())
     }
     private val loaded = scope.async {
         val restored = HaloPalettes(read(false), read(true))
@@ -53,7 +54,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
             writes.withLock {
                 if (generations[index].get() != generation) return@withLock
                 val prefix = if (dark) "dark" else "light"
-                if (!disk().edit().putString("$prefix.accent", palette.accent.name).putString("$prefix.tone", palette.tone.name).putString("$prefix.background", palette.background.name).commit())
+                if (!disk().edit().putPalette(prefix, palette).commit())
                     android.util.Log.w("HaloPalette", "Could not persist colour choices")
                 else com.halo.app.nativeactions.HaloNativeWidget.refreshAsync(context)
             }
@@ -65,9 +66,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
         writes.withLock {
             HaloLayoutLock.get(context).requireUnlocked()
             val prefix = if (dark) "dark" else "light"
-            check(disk().edit().putString("$prefix.accent", palette.accent.name)
-                .putString("$prefix.tone", palette.tone.name)
-                .putString("$prefix.background", palette.background.name).commit()) { "Could not save appearance" }
+            check(disk().edit().putPalette(prefix, palette).commit()) { "Could not save appearance" }
             synchronized(mutations) {
                 generations[if (dark) 1 else 0].incrementAndGet()
                 mutable.update { if (dark) it.copy(dark = palette) else it.copy(light = palette) }
@@ -82,9 +81,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
             HaloLayoutLock.get(context).requireUnlocked()
             val editor = disk().edit()
             listOf("light" to palettes.light, "dark" to palettes.dark).forEach { (prefix, palette) ->
-                editor.putString("$prefix.accent", palette.accent.name)
-                    .putString("$prefix.tone", palette.tone.name)
-                    .putString("$prefix.background", palette.background.name)
+                editor.putPalette(prefix, palette)
             }
             check(editor.commit()) { "Could not save appearance" }
             synchronized(mutations) {
@@ -139,7 +136,7 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
 
     private fun diskSnapshot(): Map<String, String?> = buildMap {
         listOf("light", "dark").forEach { prefix ->
-            listOf("accent", "tone", "background").forEach { field ->
+            listOf("accent", "tone", "background", "wallpaperSeed").forEach { field ->
                 val key = "$prefix.$field"
                 put(key, disk().getString(key, null))
             }
@@ -155,12 +152,16 @@ class PalettePreferences(context: Context, dispatcher: CoroutineDispatcher = Dis
     private fun writePair(palettes: HaloPalettes): Boolean {
         val editor = disk().edit()
         listOf("light" to palettes.light, "dark" to palettes.dark).forEach { (prefix, palette) ->
-            editor.putString("$prefix.accent", palette.accent.name)
-                .putString("$prefix.tone", palette.tone.name)
-                .putString("$prefix.background", palette.background.name)
+            editor.putPalette(prefix, palette)
         }
         return editor.commit()
     }
+
+    private fun android.content.SharedPreferences.Editor.putPalette(prefix: String, palette: HaloPalette) =
+        putString("$prefix.accent", palette.accent.name)
+            .putString("$prefix.tone", palette.tone.name)
+            .putString("$prefix.background", palette.background.name)
+            .putString("$prefix.wallpaperSeed", palette.wallpaperSeed?.toString())
 
     internal suspend fun awaitReady() { loaded.await(); scope.coroutineContext[Job]?.children?.toList()?.forEach { it.join() } }
 }

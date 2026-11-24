@@ -17,6 +17,36 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], application = android.app.Application::class)
 class WorkspaceOperabilityTest {
+    @Test fun assistantCanLinkOnlyAnObservedSketchOnTheExactBoard() = runBlocking {
+        WorkspaceFileToolsFixture().use { f ->
+            val context = f.contextOwner()
+            val drawings = com.halo.app.data.notebook.NotebookDrawingLinks(f.database, f.documents, f.canvases)
+            val notes = WorkspaceNoteActions(f.database, f.documents, com.halo.app.notebook.NotebookUseCases(f.notes), context,
+                drawings = drawings)
+            val note = f.notes.createNote("Meeting notes").id
+            val board = f.canvases.create("Meeting drawing")
+            val ink = "sketch:v1|10,20;20,30"
+            val sketch = f.canvases.addSketchNode(board, 10f, 10f, ink)
+            val text = f.canvases.addTextNode(board, 30f, 30f, "Text card")
+            suspend fun call(name: String, args: Map<String, Any>) = notes.execute(ToolCall("drawing-test", name, args))
+            fun json(result: ToolExecutionResult) = JSONObject((result as ToolExecutionResult.Success).output)
+            val version = json(call("halo_note_get", mapOf("noteId" to note))).getString("version")
+            val sourceVersion = requireNotNull(context.versionFor(board))
+            val args = mapOf("noteId" to note, "version" to version, "targetId" to board, "targetVersion" to sourceVersion)
+            val definition = notes.definitions().single { it.name == "halo_note_insert_reference" }
+            assertTrue((definition.parameters["properties"] as Map<*, *>).containsKey("canvasNodeId"))
+            assertTrue(call(definition.name, args + ("canvasNodeId" to text)) is ToolExecutionResult.Rejected)
+            val inserted = json(call(definition.name, args + ("canvasNodeId" to sketch)))
+            val block = inserted.getJSONArray("blockIds").getString(0)
+            val observed = json(call("halo_note_read_block", mapOf("noteId" to note,
+                "version" to inserted.getString("version"), "blockId" to block))).getJSONObject("block")
+            assertEquals(board, observed.getString("targetId"))
+            assertEquals(sketch, observed.getString("canvasNodeId"))
+            assertEquals(sourceVersion, context.versionFor(board))
+            assertEquals(listOf(ink), drawings.observe(board, sketch).first())
+        }
+    }
+
     @Test fun canvasEditingDescriptorsKeepDestructiveApprovalAndExactContractsWithoutRestrictingOrdinaryAllowedEdits() = runBlocking {
         WorkspaceFileToolsFixture().use { f ->
             val actions = WorkspaceCanvasActions(f.database, f.canvases)

@@ -126,4 +126,22 @@ class CanvasDrawingDraftRepositoryTest {
         assertNull(repository.drawingDraft(board))
         assertFalse(repository.clearDrawingDraft(board, replacement))
     }
+
+    @Test fun fullDrawingRecoveryExceedsLegacyRowLimitAndStillReopens() = runBlocking {
+        val board = repository.create()
+        val ink = com.halo.sdk.runtime.ink.InkCodec.encode(com.halo.sdk.runtime.ink.InkDocument(List(100) { stroke ->
+            com.halo.sdk.runtime.ink.InkStroke(com.halo.sdk.runtime.ink.InkTool.STYLUS, List(70) { point ->
+                com.halo.sdk.runtime.ink.InkPoint(500 + point, 650, timeMs = point * 1000,
+                    pressure = 999, tilt = 1300, orientation = -3000, buttons = 1000)
+            }, "stroke-$stroke")
+        }, 1400))
+        val draft = CanvasDrawingDraft("card", "sketch", ink, sketch = ink,
+            pages = (2..32).associateWith { ink })
+        assertTrue(draft.encode().length > 3_000_000)
+        repository.saveDrawingDraft(board, draft)
+        assertEquals(draft, repository.drawingDraft(board))
+        assertFalse(repository.clearDrawingDraft(board, draft.copy(receiptId = java.util.UUID.randomUUID().toString())))
+        assertTrue(repository.clearDrawingDraft(board, draft))
+        assertNull(repository.drawingDraft(board))
+    }
 }

@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -18,15 +19,21 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.halo.app.R
+import com.halo.app.di.ManualDependencyGraph as Graph
+import com.halo.app.language.uiText
 import com.halo.app.online.*
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
+import com.halo.app.ui.toolkit.requireAdultToolkit
+import com.halo.app.ui.workspace.WorkspaceNoteDestination
+import com.halo.app.ui.workspace.prepareWorkspaceNoteHandoff
 import kotlinx.coroutines.*
 import java.text.DateFormat
 import java.util.Date
 
-@Composable fun GroundedWebSearchDialog(initialQuery: String, onDismiss: () -> Unit) {
+@Composable fun GroundedWebSearchDialog(initialQuery: String, onOpenWorkspace: ((String) -> Unit)? = null, onDismiss: () -> Unit) {
     val service = rememberOnlineSearchService()
+    val context = LocalContext.current
     val language by com.halo.app.di.ManualDependencyGraph.appLanguagePreferences.language.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val uri = LocalUriHandler.current
@@ -36,6 +43,9 @@ import java.util.Date
     var savedToScreen by remember { mutableStateOf(false) }
     var savingToScreen by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf(false) }
+    var workspaceMenu by remember { mutableStateOf(false) }
+    var workspaceSaving by remember { mutableStateOf(false) }
+    var workspaceFailed by remember { mutableStateOf(false) }
     var prepared by remember { mutableStateOf<WebSearchReview?>(null) }
     var preparedQuery by remember { mutableStateOf("") }
     var preparedLanguage by remember { mutableStateOf("") }
@@ -63,7 +73,9 @@ import java.util.Date
                 Text(stringResource(R.string.online_search_price), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = { costs = true }) { Text(stringResource(R.string.online_costs)) }
                 if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text(stringResource(R.string.online_loading)) }
-                error?.let { Text(onlineProblemText(it), color = MaterialTheme.colorScheme.error)
+                error?.let {
+                    Text(if (it == OnlineProblem.KEY_REQUIRED) uiText("Set up an OpenAI or OpenRouter API key to search the web.")
+                        else onlineProblemText(it), color = MaterialTheme.colorScheme.error)
                     if (it == OnlineProblem.LOCAL_ONLY) com.halo.app.ui.components.CloudModeResolution() }
                 result?.let { answer ->
                     val linkStyle = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline)
@@ -85,7 +97,38 @@ import java.util.Date
                             Column(Modifier.fillMaxWidth()) { Text(source.title); Text(source.url, style = MaterialTheme.typography.labelSmall) }
                         }
                     }
-                    TextButton(enabled = !savedToScreen && !savingToScreen && answer.sources.any { it.url.startsWith("https://") }, onClick = {
+                    if (onOpenWorkspace != null) Box {
+                        TextButton(enabled = !workspaceSaving, onClick = { workspaceMenu = true }) {
+                            Text(uiText("Send to workspace"))
+                        }
+                        DropdownMenu(expanded = workspaceMenu, onDismissRequest = { workspaceMenu = false }) {
+                            WorkspaceNoteDestination.entries.forEach { destination ->
+                                DropdownMenuItem(text = { Text(uiText(destination.label)) }, onClick = {
+                                    workspaceMenu = false
+                                    workspaceFailed = false
+                                    workspaceSaving = true
+                                    val title = query.trim().take(120)
+                                    scope.launch {
+                                        try {
+                                            val family = requireAdultToolkit(context)
+                                            fun verify() {
+                                                check(!Graph.haloPause.isPaused() && result === answer)
+                                                requireAdultToolkit(context, family)
+                                            }
+                                            val route = prepareWorkspaceNoteHandoff(destination, ::verify) {
+                                                Graph.notebookUseCases.createNote(webAnswerNoteText(answer), title)
+                                            }
+                                            verify()
+                                            onDismiss()
+                                            onOpenWorkspace(route)
+                                        } catch (cancelled: CancellationException) { throw cancelled }
+                                        catch (_: Exception) { workspaceFailed = true }
+                                        finally { workspaceSaving = false }
+                                    }
+                                })
+                            }
+                        }
+                    } else TextButton(enabled = !savedToScreen && !savingToScreen && answer.sources.any { it.url.startsWith("https://") }, onClick = {
                         savingToScreen = true
                         scope.launch {
                             try {
@@ -145,10 +188,11 @@ import java.util.Date
                         style = MaterialTheme.typography.bodySmall)
                     if (saveError) Text(com.halo.app.language.uiText("Screen is full or could not save this research."),
                         color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    if (workspaceFailed) Text(uiText("Could not send this research to Workspace."),
+                        color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                     answer.reportedCostUsd?.let { Text(stringResource(R.string.online_reported, it.toPlainString())) }
                     TextButton(onClick = {
-                        clipboard.setText(AnnotatedString(answer.answer + "\n\n" +
-                            "Retrieved (UTC): ${java.time.Instant.ofEpochMilli(answer.retrievedAtMs)}\n" + answer.sources.joinToString("\n") { "${it.title}: ${it.url}" }))
+                        clipboard.setText(AnnotatedString(webAnswerNoteText(answer)))
                     }) { Text(stringResource(R.string.online_copy)) }
                 }
             }
@@ -196,3 +240,7 @@ import java.util.Date
     }
     if (costs) OnlineCostDialog { costs = false }
 }
+
+private fun webAnswerNoteText(answer: GroundedWebAnswer): String =
+    answer.answer + "\n\n" + "Retrieved (UTC): ${java.time.Instant.ofEpochMilli(answer.retrievedAtMs)}\n" +
+        answer.sources.joinToString("\n") { "${it.title}: ${it.url}" }

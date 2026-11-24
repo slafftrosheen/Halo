@@ -25,6 +25,7 @@ internal fun HomeChatActions(
     onNew: () -> Unit,
     onClear: () -> Unit,
     onHistory: () -> Unit,
+    onVoiceMode: (() -> Unit)? = null,
 ) {
     FlowRow(
         Modifier.fillMaxWidth(),
@@ -39,6 +40,9 @@ internal fun HomeChatActions(
         }
         TextButton(onClick = onClear, enabled = canClear, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(stringResource(R.string.home_clear_chat))
+        }
+        if (onVoiceMode != null) TextButton(onClick = onVoiceMode, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(uiText("Start Voice Mode"))
         }
     }
 }

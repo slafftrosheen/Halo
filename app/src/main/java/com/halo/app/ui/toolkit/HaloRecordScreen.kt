@@ -42,6 +42,8 @@ import com.halo.app.ui.presence.BindShellPageActions
 import com.halo.app.ui.presence.ShellPageAction
 import com.halo.app.ui.presence.ShellPageOwner
 import com.halo.app.ui.screens.notebook.ToolZoneHeader
+import com.halo.app.ui.workspace.WorkspaceNoteDestination
+import com.halo.app.ui.workspace.prepareWorkspaceNoteHandoff
 import com.halo.app.ui.zone6.rememberZone6PageSetting
 import com.halo.sdk.provider.*
 import java.io.File
@@ -53,6 +55,8 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -97,6 +101,15 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
     var capturePaused by remember { mutableStateOf(false) }
     var elapsed by rememberSaveable { mutableIntStateOf(0) }
     var captions by remember { mutableStateOf(emptyList<HaloRecordCaption>()) }
+    var captionTranslation by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var translationSettings by remember { mutableStateOf(false) }
+    var translationFrom by rememberSaveable { mutableStateOf("en") }
+    var translationTo by rememberSaveable { mutableStateOf("lv") }
+    var preparingTranslation by remember { mutableStateOf(false) }
+    var translationAttempt by remember { mutableIntStateOf(0) }
+    var includeTranscript by rememberSaveable { mutableStateOf(false) }
+    var noteDestinationMenu by remember { mutableStateOf(false) }
+    val translatedCaptions = remember(captionOwner, captionTranslation) { mutableStateMapOf<Int, String>() }
     var captionAvailable by remember { mutableStateOf<Boolean?>(null) }
     var speakerAvailable by remember { mutableStateOf<Boolean?>(null) }
     var speakerModelsInstalled by remember(context) { mutableStateOf(HaloRecordSpeakerModels.installed(context)) }
@@ -155,6 +168,60 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
     fun canRecord(): Boolean = !pauseOwner.isPaused() && !Graph.kidsPreferences.enabled.value &&
         context.getSystemService(KeyguardManager::class.java)?.isDeviceLocked == false
 
+    fun keepMeetingNotes(destination: WorkspaceNoteDestination) {
+        if (busy != null || !canRecord()) return
+        val familyRevision = runCatching { Graph.kidsPreferences.adultActionRevision() }.getOrNull() ?: return
+        val body = recordingNotesText(decided, todo, if (includeTranscript) activeCaptions else emptyList(),
+            translatedCaptions.toMap(), speakerPrefix)
+        if (body.isBlank()) return
+        busy = "Keeping the notes"
+        scope.launch {
+            try {
+                fun verify() {
+                    check(canRecord())
+                    Graph.kidsPreferences.requireAdultAction(familyRevision)
+                }
+                val route = prepareWorkspaceNoteHandoff(destination, ::verify) {
+                    Graph.notebookUseCases.createNote(body, "Recording notes")
+                }
+                verify()
+                preserveDraft = true
+                onOpen(route)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                status = "Could not keep the notes. Try again."
+            } finally {
+                busy = null
+            }
+        }
+    }
+
+    LaunchedEffect(captionOwner, captionTranslation, translationAttempt, pause.paused, profile) {
+        val (from, to) = captionTranslation ?: return@LaunchedEffect
+        if (pause.paused || profile) {
+            translatedCaptions.clear()
+            captionTranslation = null
+            return@LaunchedEffect
+        }
+        try {
+            snapshotFlow { captions }.collect { current ->
+                val pending = current.filter { it.startMs !in translatedCaptions }
+                for (batch in pending.chunked(36)) {
+                    if (!canRecord()) return@collect
+                    val lines = translateScanLines(batch.map { HaloScanLine(it.text, null, 0) }, from, to, download = false)
+                    coroutineContext.ensureActive()
+                    if (!canRecord()) return@collect
+                    batch.zip(lines).forEach { (caption, line) -> translatedCaptions[caption.startMs] = line.text }
+                }
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            status = "Caption translation stopped. Open the language settings to retry."
+        }
+    }
+
     val transport: HaloRecordTransport = rememberHaloRecordTransport(owner.lifecycle, draft, exactAudio, selection,
         allowed = ::canRecord, onFailure = { status = it })
 
@@ -191,6 +258,7 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
         speakerFilter = null
         decided = ""
         todo = ""
+        includeTranscript = false
         summaryReady = false
     }
 
@@ -215,7 +283,7 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
             try {
                 draft = capture.capture(
                     captionScope = scope,
-                    captionsEnabled = showCaptions,
+                    captionsEnabled = showCaptions || captionTranslation != null,
                     onStarted = { if (session === capture) startTime = SystemClock.elapsedRealtime() },
                     onCaption = {
                         if (captionOwner === capture) {
@@ -478,7 +546,7 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                     Text(uiText("On this phone"), style = MaterialTheme.typography.labelMedium)
                 }
             }
-            if (recording && showCaptions && captionAvailable == false)
+            if (recording && (showCaptions || captionTranslation != null) && captionAvailable == false)
                 Text(uiText("Live words need an installed local speech model. Audio capture can continue."))
             if (recording && startTime != 0L && showCaptions && captionAvailable == true) {
                 HaloRecordDisplayControl(activeDisplay, enabled = !stopping && !displayBusy,
@@ -486,13 +554,22 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
             }
             if (recording && showCaptions && captionAvailable == true && speakerAvailable == false)
                 Text(uiText("Speaker labels are unavailable for this recording."), style = MaterialTheme.typography.bodySmall)
-            if (showCaptions && (recording || activeCaptions.isNotEmpty())) {
+            if (!profile && !pause.paused && (showCaptions || captionTranslation != null)) {
+                TextButton(onClick = { translationSettings = true }, enabled = !stopping && !preparingTranslation &&
+                    (!recording || captionAvailable == true)) {
+                    val target = captionTranslation?.second?.let { code -> scanLanguages.first { it.code == code }.name }
+                    Text(if (target == null) uiText("Translate captions") else
+                        uiText("Caption translation") + " · " + uiText(target))
+                }
+            }
+            if ((showCaptions || captionTranslation != null) && (recording || activeCaptions.isNotEmpty())) {
                 Text(uiText(if (recording) "Live words" else "Transcript"), style = MaterialTheme.typography.titleMedium)
                 if (speakerAvailable == true) Text(uiText("Letters mark estimated speakers in this recording."),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (searchingCaptions) OutlinedTextField(captionQuery, { captionQuery = it.take(150) }, Modifier.fillMaxWidth(),
                     label = { Text(uiText("Find in transcript")) }, singleLine = true)
-                activeCaptions.filter { (captionQuery.isBlank() || it.text.contains(captionQuery, ignoreCase = true)) &&
+                activeCaptions.filter { (captionQuery.isBlank() || it.text.contains(captionQuery, ignoreCase = true) ||
+                    translatedCaptions[it.startMs]?.contains(captionQuery, ignoreCase = true) == true) &&
                     (speakerFilter == null || it.speaker?.toString() == speakerFilter) }.takeLast(42).forEach { caption ->
                     Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
                         Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -503,7 +580,13 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                                 val descriptor = caption.speaker?.let { "$speakerPrefix $it" } ?: uiText("Unclear speaker")
                                 Text(descriptor, style = MaterialTheme.typography.labelSmall)
                             }
-                            Text(caption.text, Modifier.weight(1f), style = if (easy) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium)
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                val style = if (easy) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium
+                                Text(caption.text, style = style)
+                                translatedCaptions[caption.startMs]?.let {
+                                    Text(it, style = style, color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
                         }
                     }
                 }
@@ -516,6 +599,12 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                     if (savedId == null) TextButton(onClick = { confirmDiscard = true }, enabled = busy == null) { Text(uiText("Discard")) }
                     else TextButton(onClick = ::reset, enabled = busy == null) { Text(uiText("New recording")) }
                 }
+                if (activeCaptions.isNotEmpty()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(includeTranscript, { includeTranscript = it }, enabled = busy == null && !pause.paused && !profile)
+                        Text(uiText("Include timestamped transcript"))
+                    }
+                }
                 if (!summaryReady) {
                     OutlinedButton(onClick = { if (activeCaptions.isEmpty()) summaryReady = true else summarize() }, enabled = busy == null) {
                         Text(uiText(if (activeCaptions.isEmpty()) "Add decisions and to-dos" else "Prepare summary"))
@@ -525,22 +614,21 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                         label = { Text(uiText("Decided")) }, minLines = 2)
                     OutlinedTextField(todo, { todo = it.take(4000) }, Modifier.fillMaxWidth(),
                         label = { Text(uiText("To do")) }, minLines = 2)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(enabled = takeReminder != null && busy == null && !pause.paused, onClick = {
-                            sendReminder()
-                        }) { Text(uiText("Prepare reminder")) }
-                        TextButton(enabled = (decided.isNotBlank() || todo.isNotBlank()) && busy == null && !pause.paused, onClick = {
-                            busy = "Keeping the notes"
-                            scope.launch {
-                                try {
-                                    val note = Graph.notebookUseCases.createNote("Decided\n$decided\n\nTo do\n$todo", "Recording notes")
-                                    preserveDraft = true
-                                    onOpen("notebook/note/${android.net.Uri.encode(note.id)}")
-                                } catch (cancel: CancellationException) { throw cancel }
-                                catch (_: Exception) { status = "Could not keep the notes. Try again." }
-                                finally { busy = null }
-                            }
-                        }) { Text(uiText("Keep notes")) }
+                    TextButton(enabled = takeReminder != null && busy == null && !pause.paused, onClick = {
+                        sendReminder()
+                    }) { Text(uiText("Prepare reminder")) }
+                }
+                if (summaryReady || includeTranscript) Box {
+                    TextButton(enabled = (decided.isNotBlank() || todo.isNotBlank() ||
+                        includeTranscript && activeCaptions.isNotEmpty()) && actionEnabled,
+                        onClick = { noteDestinationMenu = true }) { Text(uiText("Keep notes")) }
+                    DropdownMenu(expanded = noteDestinationMenu, onDismissRequest = { noteDestinationMenu = false }) {
+                        WorkspaceNoteDestination.entries.forEach { destination ->
+                            DropdownMenuItem(text = { Text(uiText(destination.label)) }, onClick = {
+                                noteDestinationMenu = false
+                                keepMeetingNotes(destination)
+                            })
+                        }
                     }
                 }
             }
@@ -554,6 +642,60 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                     contentColor = Color(0xFF173040))) { Text(primaryTitle) }
         }
     }
+
+    if (translationSettings && !pause.paused && !profile) AlertDialog(
+        onDismissRequest = { if (!preparingTranslation) translationSettings = false },
+        title = { Text(uiText("Caption translation")) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(uiText("Spoken language"))
+                TranslateLanguageMenu(translationFrom, !preparingTranslation) { translationFrom = it }
+                Text(uiText("Translate to"))
+                TranslateLanguageMenu(translationTo, !preparingTranslation) { translationTo = it }
+                Text(uiText(if (preparingTranslation) "Preparing languages…"
+                    else "Translation runs on this phone. Wi-Fi is used to download missing languages."))
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = !preparingTranslation && translationFrom != translationTo, onClick = {
+                val pair = translationFrom to translationTo
+                val recognitionLanguage = Graph.speechLanguageSettingsRepository.languageMode.value.substringBefore('-')
+                if (recognitionLanguage != "auto" && recognitionLanguage != pair.first) {
+                    translationSettings = false
+                    status = "Choose the spoken language or Automatic in Voice settings before translating captions."
+                    return@TextButton
+                }
+                preparingTranslation = true
+                scope.launch {
+                    try {
+                        check(canRecord())
+                        if (!scanTranslationReady(pair.first, pair.second)) {
+                            translateScanLines(emptyList(), pair.first, pair.second, download = true)
+                        }
+                        check(canRecord())
+                        showCaptions = true
+                        captionTranslation = pair
+                        translationAttempt++
+                        translationSettings = false
+                        status = null
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        translationSettings = false
+                        status = "Could not prepare caption translation. Check Wi-Fi and try again."
+                    } finally {
+                        preparingTranslation = false
+                    }
+                }
+            }) { Text(uiText("Enable translation")) }
+        },
+        dismissButton = {
+            TextButton(enabled = !preparingTranslation, onClick = {
+                if (captionTranslation != null) captionTranslation = null
+                translationSettings = false
+            }) { Text(uiText(if (captionTranslation == null) "Cancel" else "Turn off translation")) }
+        },
+    )
 
     val activeAudio = exactAudio
     val activeWindow = selection
@@ -705,6 +847,28 @@ fun HaloRecordScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
 }
 
 private fun recordClock(seconds: Int) = String.format(Locale.ROOT, "%02d:%02d", seconds / 60, seconds % 60)
+
+internal fun recordingNotesText(
+    decided: String,
+    todo: String,
+    captions: List<HaloRecordCaption>,
+    translations: Map<Int, String>,
+    speakerPrefix: String,
+): String = buildString {
+    if (decided.isNotBlank()) appendLine("Decided\n$decided\n")
+    if (todo.isNotBlank()) appendLine("To do\n$todo\n")
+    if (captions.isNotEmpty()) appendLine("Transcript")
+    for (caption in captions) {
+        val speaker = caption.speaker?.let { " $speakerPrefix $it" }.orEmpty()
+        val original = "${haloRecordControlClock(caption.startMs)}$speaker · ${caption.text}"
+        val translation = translations[caption.startMs]?.let { "\n$it" }.orEmpty()
+        if (length + original.length + translation.length > 180_000) {
+            appendLine("Transcript shortened.")
+            break
+        }
+        appendLine(original + translation)
+    }
+}.trimEnd()
 
 private suspend fun summarizeOnDevice(transcript: String): Pair<String, String> {
     val workload = AiWorkloadSpec(AiWorkloadKind.DOCUMENT_CONTEXT, allowRemote = false,

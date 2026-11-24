@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 internal enum class HaloHomeTab(val route: String, val title: Int) {
     TODAY("home/today", R.string.halo11_home_today),
+    CHAT(Screen.Home.route, R.string.home_chat_title),
     LIBRARY("notebook", R.string.halo11_home_library),
     TOOLS("home/tools", R.string.halo11_home_tools),
     READS("home/reads", R.string.halo11_home_reads);
@@ -51,6 +52,7 @@ internal enum class HaloHomeTab(val route: String, val title: Int) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun HaloHomeTabs(active: HaloHomeTab, onOpen: (String) -> Unit) {
     val easy = com.halo.app.ui.theme.rememberVisualPreferences().viewMode == com.halo.app.ui.theme.HaloViewMode.EASY
@@ -58,7 +60,11 @@ internal fun HaloHomeTabs(active: HaloHomeTab, onOpen: (String) -> Unit) {
     Surface(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(17.dp), color = ink.surfaceContainerLow,
         border = BorderStroke(1.dp, ink.outlineVariant)) {
-        Row(Modifier.fillMaxWidth().padding(3.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+        val fontScale = androidx.compose.ui.platform.LocalDensity.current.fontScale
+        val columns = if (configuration.screenWidthDp / fontScale < 290) 3 else HaloHomeTab.entries.size
+        FlowRow(Modifier.fillMaxWidth().padding(3.dp), horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp), maxItemsInEachRow = columns) {
             for (tab in HaloHomeTab.entries) {
                 val selected = active == tab
                 Surface(

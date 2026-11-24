@@ -64,6 +64,7 @@ sealed interface DocumentCommand {
         val afterBlockId: String?,
         val objectId: String,
         val label: String?,
+        val drawing: String? = null,
     ) : DocumentCommand
 
     /**
@@ -159,12 +160,14 @@ object DocumentReducer {
             ),
             newId,
             refObjectId = command.objectId,
+            drawing = command.drawing,
         )
         is DocumentCommand.SetReference -> update(blocks, command.blockId) { block ->
             block.copy(
                 type = NoteBlockType.REFERENCE,
                 refObjectId = command.objectId,
                 text = command.label?.take(200) ?: block.text,
+                presentation = block.presentation.copy(drawing = null),
             )
         }
         is DocumentCommand.ReplaceAll -> DocumentReduction(normalize(command.blocks))
@@ -179,6 +182,9 @@ object DocumentReducer {
                 checked = block.checked && block.type == NoteBlockType.CHECKLIST,
                 language = block.language?.takeIf { block.type == NoteBlockType.CODE && it.isNotBlank() },
                 refObjectId = block.refObjectId?.takeIf { block.type == NoteBlockType.REFERENCE },
+                presentation = block.presentation.copy(drawing = block.presentation.drawing.takeIf {
+                    com.halo.app.ui.notes.v13.NoteDrawing.target(block) != null
+                }),
             )
         }
 
@@ -187,6 +193,7 @@ object DocumentReducer {
         command: DocumentCommand.InsertBlock,
         newId: () -> String,
         refObjectId: String? = null,
+        drawing: String? = null,
     ): DocumentReduction {
         if (blocks.size >= MAX_BLOCKS) return DocumentReduction.unchanged(blocks)
         val anchorIndex = command.afterBlockId?.let { id -> blocks.indexOfFirst { it.id == id } } ?: -1
@@ -199,6 +206,7 @@ object DocumentReducer {
             checked = false,
             indent = if (command.type.isList) command.indent.coerceIn(0, MAX_INDENT) else 0,
             refObjectId = refObjectId,
+            presentation = NoteBlockPresentation(drawing = drawing),
         )
         val next = blocks.toMutableList().apply { add(insertAt, block) }
         return DocumentReduction(normalize(next), focusBlockId = block.id, focusOffset = block.text.length)

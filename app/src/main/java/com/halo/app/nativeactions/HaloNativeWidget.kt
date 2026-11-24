@@ -109,7 +109,8 @@ class HaloNativeWidget : AppWidgetProvider() {
         private fun repaint(context: Context, studyMotionFrom: Int? = null) {
             val manager = AppWidgetManager.getInstance(context)
             manager.getAppWidgetIds(ComponentName(context, HaloNativeWidget::class.java)).forEach { id ->
-                manager.updateAppWidget(id, renderViews(context, manager.getAppWidgetOptions(id), studyMotionFrom) { context.nativeUi(it) })
+                manager.updateAppWidget(id, renderViews(context, manager.getAppWidgetOptions(id), studyMotionFrom,
+                    ManualDependencyGraph.kidsPreferences.enabled.value) { context.nativeUi(it) })
             }
         }
 
@@ -129,10 +130,12 @@ class HaloNativeWidget : AppWidgetProvider() {
             return bitmap
         }
 
-        internal fun views(context: Context, options: Bundle, label: (String) -> String = { context.nativeUi(it) }): RemoteViews =
-            renderViews(context, options, null, label)
+        internal fun views(context: Context, options: Bundle,
+            kids: Boolean = ManualDependencyGraph.kidsPreferences.enabled.value,
+            label: (String) -> String = { context.nativeUi(it) }): RemoteViews =
+            renderViews(context, options, null, kids, label)
 
-        private fun renderViews(context: Context, options: Bundle, studyMotionFrom: Int?, label: (String) -> String): RemoteViews {
+        private fun renderViews(context: Context, options: Bundle, studyMotionFrom: Int?, kids: Boolean, label: (String) -> String): RemoteViews {
             if (com.halo.app.privacy.HaloPauseOwner.get(context).isPaused()) return haloPausedWidget(context, null)
             // Modern launchers supply actual portrait/landscape sizes. Render each
             // independently instead of combining unrelated minimum dimensions.
@@ -142,7 +145,7 @@ class HaloNativeWidget : AppWidgetProvider() {
                     .orEmpty().filter { it.width.isFinite() && it.height.isFinite() && it.width > 0 && it.height > 0 }
                     .distinct().take(16)
                 if (sizes.isNotEmpty()) return RemoteViews(sizes.associateWith { size ->
-                    viewsForSize(context, size.width.toInt(), size.height.toInt(), studyMotionFrom, label)
+                    viewsForSize(context, size.width.toInt(), size.height.toInt(), studyMotionFrom, kids, label)
                 })
             }
             val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 180).coerceAtLeast(120)
@@ -150,9 +153,9 @@ class HaloNativeWidget : AppWidgetProvider() {
             val maxWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, width)
             val maxHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, height)
             return if (maxWidth > width || maxHeight > height) RemoteViews(
-                viewsForSize(context, maxWidth, height, studyMotionFrom, label),
-                viewsForSize(context, width, maxHeight, studyMotionFrom, label),
-            ) else viewsForSize(context, width, height, studyMotionFrom, label)
+                viewsForSize(context, maxWidth, height, studyMotionFrom, kids, label),
+                viewsForSize(context, width, maxHeight, studyMotionFrom, kids, label),
+            ) else viewsForSize(context, width, height, studyMotionFrom, kids, label)
         }
 
         private fun widgetIcon(context: Context, resource: Int, tint: Int, size: Int): android.graphics.Bitmap {
@@ -164,7 +167,7 @@ class HaloNativeWidget : AppWidgetProvider() {
             return bitmap
         }
 
-        private fun viewsForSize(context: Context, requestedWidth: Int, requestedHeight: Int, studyMotionFrom: Int?, label: (String) -> String): RemoteViews {
+        private fun viewsForSize(context: Context, requestedWidth: Int, requestedHeight: Int, studyMotionFrom: Int?, kids: Boolean, label: (String) -> String): RemoteViews {
             val width = requestedWidth.coerceAtLeast(72)
             val height = requestedHeight.coerceAtLeast(72)
             val narrow = width < 240 || context.resources.configuration.fontScale >= 1.2f
@@ -177,7 +180,7 @@ class HaloNativeWidget : AppWidgetProvider() {
                     EverydayWidgetAppearance.background(context, config, scheme, width, height, pixelsLimit = 384f))
                 setImageViewBitmap(R.id.halo_widget_orb, nearbyOrb(context, (48*density).toInt(), scheme = scheme))
                 setContentDescription(R.id.halo_widget_orb, label("Open Mini Halo"))
-                val animated = EverydayWidgetMotion.level(context, kids = ManualDependencyGraph.kidsPreferences.enabled.value) ==
+                val animated = EverydayWidgetMotion.level(context, kids = kids) ==
                     com.halo.app.ui.theme.HaloLookMotion.FULL
                 val askAction = MiniHaloEntry.pending(context, 8000)
                 setOnClickPendingIntent(R.id.halo_widget_orb, askAction)
@@ -228,7 +231,6 @@ class HaloNativeWidget : AppWidgetProvider() {
                 if (wide) {
                     val iconTint = (if (android.os.Build.VERSION.SDK_INT >= 31) scheme.primary else scheme.onPrimaryContainer).toArgb()
                     val sizePx = (24 * density).toInt()
-                    val kids = ManualDependencyGraph.kidsPreferences.enabled.value
                     val progress = if (kids) null else learning
                     val latest = if (progress != null) studyRing(sizePx, progress.completed,
                         iconTint, scheme.outlineVariant.toArgb()) else widgetIcon(context, R.drawable.halo_ic_study, iconTint, sizePx)

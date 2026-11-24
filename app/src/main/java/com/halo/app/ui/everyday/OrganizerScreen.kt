@@ -9,18 +9,22 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.halo.app.di.ManualDependencyGraph as Graph
+import com.halo.app.R
 import com.halo.app.everyday.organizer.*
 import com.halo.app.everyday.organizer.android.*
 import com.halo.app.language.uiText
@@ -56,6 +60,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     val kind by model.kind.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
+    var reviewingLoad by rememberSaveable { mutableStateOf(false) }
     val zone = ZoneId.systemDefault()
     val selectedDay = LocalDate.parse(day)
     val motion = HaloInstrumentMotion.level()
@@ -87,6 +92,8 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     var dayInput by rememberSaveable(day) { mutableStateOf(day) }
     var adding by rememberSaveable { mutableStateOf(false) }
     var speaking by rememberSaveable { mutableStateOf(false) }
+    var findingTime by rememberSaveable { mutableStateOf(false) }
+    var naturalText by rememberSaveable { mutableStateOf("") }
     var instrumentCalendarFiles by rememberSaveable { mutableStateOf(false) }
     var instrumentDate by rememberSaveable { mutableStateOf(false) }
     var instrumentSearch by rememberSaveable { mutableStateOf(false) }
@@ -156,7 +163,8 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     LaunchedEffect(calendarView) { model.calendarView(calendarView) }
     LaunchedEffect(kids) {
         if (kids) {
-            adding = false; speaking = false; layoutDraft = null; reviewingDateFromEasy = false
+            adding = false; speaking = false; findingTime = false; naturalText = ""; model.clearFreeTime()
+            layoutDraft = null; reviewingDateFromEasy = false
             deleting = null; purging = null; occurrence = null
             instrumentCalendars = false; instrumentDrag = false
         }
@@ -184,7 +192,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
     val owner = ShellPageOwner("everyday_organizer", objectId = current?.id,
         sourceIdentity = "${current?.id}:${current?.version}:$kind:$day:${state.busy}:${state.draft != null}:$kids:${calendarView.key}",
         helpDescription = uiText("Choose a day to see its plan. Add by talking, then check the time and repeats before you save."),
-        guidanceBlocked = state.loading || state.busy || state.draft != null || state.leaveBy != null || speaking ||
+        guidanceBlocked = state.loading || state.busy || state.draft != null || state.leaveBy != null || speaking || adding || findingTime ||
             layoutDraft != null || instrumentCalendars,
         disabledActionReasons = mapOf("page.organizer.leave" to uiText(if (leaveByEvent == null) "Open an upcoming timed event." else "Wait for the current action to finish.")),
         defaultDisabledActionReason = uiText(if (kids) "A parent manages the saved plan." else "Wait for the current action to finish."))
@@ -231,6 +239,7 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                         })
                     }),
                 "planner.new_event" to HaloInstrumentAction({ model.new(OrganizerKind.EVENT, selectedDate = agendaDay) }, enabled),
+                "planner.tomorrow" to HaloInstrumentAction({ selectDate(today.plusDays(1)) }, enabled, agendaDay == today.plusDays(1)),
                 "planner.add_by_talking" to HaloInstrumentAction({ speaking = true }, enabled),
                 "planner.drag_to_move_resize" to HaloInstrumentAction({
                     instrumentDrag = !instrumentDrag
@@ -249,6 +258,8 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                 "planner.import_export" to HaloInstrumentAction({ instrumentCalendarFiles = true }, enabled),
             ), primary = "planner.new_event")
             if (instrumentDrag) {
+                com.halo.app.ui.theme.v13.Halo13Animation(com.halo.app.ui.theme.v13.Halo13Motion.TIMELINE_DRAG,
+                    Modifier.fillMaxWidth().height(60.dp))
                 Text(uiText("Drag an event to move it, or pull its lower edge to change its length."),
                     style = MaterialTheme.typography.bodySmall)
             }
@@ -435,6 +446,23 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
                     onReschedule = if (instrumentDrag && !kids && !easy && !state.busy && state.draft == null) model::reschedule else null,
                 )
                 val nudging = state.plannerBriefSettings?.let { it.proactive && !it.quiet(now.atZone(zone).toLocalTime()) } == true
+                if (!kids && !onlyEvents && query.isBlank() && !state.loading && nudging && agendaDay == today && currentRange) {
+                    val suggestions = plannerMoveSuggestions(rows, today, now, zone)
+                    if (suggestions.isNotEmpty()) item("planner-load-review") {
+                        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.tertiaryContainer) {
+                            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                                Text(stringResource(R.string.sp13_too_much_title), style = MaterialTheme.typography.titleSmall)
+                                TextButton(onClick = { reviewingLoad = true }, enabled = !state.busy) {
+                                    Text(stringResource(R.string.sp13_review_item))
+                                }
+                            }
+                        }
+                        if (reviewingLoad && !state.busy) PlannerLoadReview(suggestions, { reviewingLoad = false }) {
+                            reviewingLoad = false
+                            model.moveReviewedTasks(it, today, zone)
+                        }
+                    }
+                }
                 if (!easy && kind == "AGENDA" && query.isBlank() && !state.loading && nudging &&
                     agendaDay == today && currentRange && rows.isNotEmpty()) {
                     val end = today.atTime(20, 0).atZone(zone).toInstant()
@@ -505,11 +533,38 @@ fun OrganizerScreen(model: OrganizerViewModel, onBack: () -> Unit, onClocks: () 
             })
     }
     if (adding && !kids) EverydaySheet({ adding = false }) {
-        Column(Modifier.fillMaxWidth().padding(24.dp)) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(uiText("Add item"), style = MaterialTheme.typography.headlineSmall)
+            CompositionLocalProvider(com.halo.app.ui.components.LocalPrivateSpeech provides true) {
+                com.halo.app.ui.components.HaloTextField(naturalText, { naturalText = it },
+                    com.halo.app.ui.components.VoiceFieldKind.TEXT, Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.sp13_planner_add_hint)) }, maxChars = 500, minLines = 2)
+            }
+            Button({
+                model.previewNaturalAdd(naturalText)
+                naturalText = ""
+                adding = false
+            }, enabled = naturalText.isNotBlank() && !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.sp13_review_item))
+            }
+            OutlinedButton({
+                adding = false
+                findingTime = true
+            }, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.sp13_find_time))
+            }
             OrganizerKind.entries.forEach { type -> TextButton({ adding = false; model.new(type, selectedDate = agendaDay) }, Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text(uiText(organizerKindLabel(type))) } }
         }
     }
+    if (findingTime && !kids) PlannerFindTimeSheet(state, locale, onFind = { minutes, days -> model.findFreeTime(minutes, days, zone) },
+        onSelect = { title, slot ->
+            model.previewFreeTime(title, slot, zone)
+            findingTime = false
+        }, onDismiss = {
+            findingTime = false
+            model.clearFreeTime()
+        })
     if (!kids) state.draft?.let { OrganizerEditor(model, state, it) }
     if (exportReview && !kids) EverydaySheet({ if (!state.busy) exportReview = false }) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

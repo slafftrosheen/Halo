@@ -465,7 +465,7 @@ fun HaloAlbumScreen(onBack: () -> Unit, onOpen: (String) -> Unit, kidsMode: Bool
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
                 HaloVoiceTextActions(text = query, onText = { query = it; filter = it }, enabled = !busy, dictationRequest = spokenRequest,
-                    applySearchImmediately = true, appendDictation = false, showReadAction = false, maxChars = 180,
+                    appendDictation = false, showReadAction = false, maxChars = 180,
                     fieldContent = { voice ->
                         OutlinedTextField(query, { query = it.take(180); filter = query }, Modifier.fillMaxWidth(),
                             placeholder = { Text(uiText("Gran’s birthday last summer")) }, trailingIcon = voice,

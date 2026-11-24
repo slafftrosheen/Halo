@@ -49,8 +49,9 @@ class EverydayToolExecutor(
     private val examSchedule: suspend (LocalDate, List<Pair<String, Long>>) -> Pair<StudyExamSchedule, List<OrganizerLink>> =
         { date, lessons -> require(lessons.isEmpty()); StudyExamSchedule(date, emptyList()) to emptyList() },
     private val knowledge: () -> OfflineKnowledge = { error("Offline knowledge is unavailable") },
+    private val keepArticle: (suspend (SavedArticleIdentity) -> com.halo.app.data.workspace.WorkspaceContinuityItem)? = null,
 ) : ToolExecutor {
-    override fun definitions()=EverydayToolContracts.definitions
+    override fun definitions() = EverydayToolContracts.definitions.filter { it.name != "halo_source_keep_article" || keepArticle != null }
     override suspend fun execute(toolCall: ToolCall)=execute(toolCall,ToolExecutionContext())
     override suspend fun execute(toolCall: ToolCall,context: ToolExecutionContext): ToolExecutionResult = withContext(Dispatchers.IO) {
         var mutationStarted=false
@@ -66,6 +67,7 @@ class EverydayToolExecutor(
             val a=toolCall.arguments
             val childAction=toolCall.functionName=="halo_everyday_open" || toolCall.functionName=="halo_brief_action" && a["action"] in setOf("BUILD","READ","STOP")
             if(child && (toolCall.functionName.startsWith("halo_knowledge_") ||
+                    toolCall.functionName == "halo_organizer_query" && "freeMinutes" in a ||
                     toolCall.functionName in setOf("halo_library_receipt_totals", "halo_widget_query", "halo_day_context", "halo_today_overview", "halo_planner_calendars") ||
                     toolCall.functionName !in EverydayToolContracts.queries && !childAction)) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
             if(toolCall.functionName !in EverydayToolContracts.queries && context.interactionId.isNullOrBlank()) return@withContext rejected(ToolRejectionKind.PERMISSION_REQUIRED)
@@ -124,6 +126,14 @@ class EverydayToolExecutor(
             }
             "halo_day_context" -> dayContext(a)
             "halo_organizer_query" -> {
+                if (a.keys.any { it in setOf("freeMinutes", "freeDays", "zoneId") }) {
+                    require(a.keys == setOf("freeMinutes", "freeDays", "zoneId"))
+                    val zone = ZoneId.of(a.string("zoneId"))
+                    val slots = organizer.freeTimes(a.long("freeMinutes"), a.long("freeDays").toInt(), zone)
+                    return JSONObject().put("zoneId", zone.id).put("availableSlots", JSONArray(slots.map {
+                        JSONObject().put("start", it.start.toString()).put("end", it.end.toString())
+                    }))
+                }
                 val offset=a.optionalLong("offset")?.toInt() ?: 0
                 val kinds=a.optionalString("kind")?.let {setOf(OrganizerKind.valueOf(it))} ?: OrganizerKind.entries.toSet()
                 val grants=if(child) briefs.settings().childRecordIds else null
@@ -297,10 +307,24 @@ class EverydayToolExecutor(
                 } ?: cached?.payload
                 sourceSummary(value).put("content", SavedSourcePages.read(payload, a, articleContent))
             }
+            "halo_source_keep_article" -> {
+                val saved = requireNotNull(keepArticle).invoke(SavedArticleIdentity(id(), version(),
+                    a.string("contentRevision"), a.string("articleId")))
+                JSONObject().put("objectId", saved.objectId).put("sourceVersion", saved.version)
+            }
             "halo_source_preview" -> {
                 val value=preview.inspect(a.string("url"),CollectorKind.valueOf(a.string("kind")),a.string("language"))
+                val articles = ((value.result as? CollectorFetchResult.Updated)?.payload as? CollectorPayload.Articles)?.items.orEmpty()
                 JSONObject().put("validated",value.result is CollectorFetchResult.Updated).put("saved",false).put("title",value.candidate.title)
-                    .put("endpoint",value.candidate.endpoint).put("result",when(val result=value.result){is CollectorFetchResult.Unavailable -> result.reason;else -> "Preview available"})
+                    .put("endpoint",value.candidate.endpoint).put("requestedUrl",value.requestedUrl)
+                    .put("discoveredFeed",value.discoveredFeed).put("websiteWithoutFeed",value.websiteWithoutFeed)
+                    .put("sample",JSONArray(articles.take(3).map { it.title }))
+                    .put("untrustedContent",true)
+                    .put("result",when(val result=value.result){
+                        is CollectorFetchResult.Unavailable -> result.reason
+                        is CollectorFetchResult.Updated -> "Preview available"
+                        CollectorFetchResult.NotModified -> "No new preview"
+                    })
             }
             "halo_source_image" -> {
                 val current = source(id(), version(), child, true)
@@ -332,6 +356,9 @@ class EverydayToolExecutor(
                     p["selected"] as? Boolean ?: old?.selected ?: false,
                     p["enabled"] as? Boolean ?: old?.enabled ?: true,p["muted"] as? Boolean ?: old?.muted ?: false,p.optionalLong("refreshMinutes")?.toInt() ?: old?.refreshMinutes ?: 60,
                     place,p["childApproved"] as? Boolean ?: old?.childApproved ?: false,old?.version ?: 1)
+                require(!next.childApproved || old?.childApproved == true && old.endpoint == next.endpoint && old.kind == next.kind) {
+                    "Open Source settings and confirm the device screen lock to approve this source for Kids."
+                }
                 val saved=sources.save(next,old?.version)
                 sourceSummary(requireNotNull(sources.state(saved.id))).put("saved",true).put("fetched",false)
             }

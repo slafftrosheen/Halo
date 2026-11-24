@@ -25,6 +25,31 @@ import org.robolectric.annotation.Config
 class RichSourcesTest {
     @get:Rule val temporary = TemporaryFolder()
     private val now = Instant.parse("2026-11-16T10:00:00Z")
+
+    @Test fun keepingAnExactArticlePreservesFullTextAndRejectsStaleOrRevokedHandoffs() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        try {
+            val repository = RoomCollectorRepository(db)
+            val source = repository.save(CollectorSource("saved", "Fixture", "Publisher", CollectorKind.FEED,
+                SourceCategory.WORLD, "en", "https://example.org/feed", selected = true), null)
+            val reservation = (repository.reserve(source.id, source.version, now, true) as CollectorAdmission.Accepted).reservation
+            val article = ArticleFact("one", "Fixture", "Excerpt", "https://example.org/story", "Publisher", now, "en")
+            val snapshot = CollectorSnapshot(source.id, source.version, CollectorPayload.Articles(listOf(article)),
+                "article-revision", now, now, now.plusSeconds(3600))
+            assertTrue(repository.finish(reservation, snapshot, CollectorAttempt(source.id, now, CollectorAttemptState.CURRENT)))
+            val notebook = com.halo.app.notebook.NotebookUseCases(com.halo.app.data.notebook.RoomNotebookRepository(db.notebookDao()))
+            val cached = ArticleContent("Full article text.", emptyList(), "PAGE_CAPTURED", article.url!!, now.toString())
+            val workspace = ArticleWorkspace(db, repository, { cached }, notebook)
+            val identity = SavedArticleIdentity(source.id, source.version, snapshot.contentRevision, article.id)
+            val note = workspace.keep(identity) {}
+            assertEquals("Publisher\n$now\n${article.url}\n\nFull article text.", note.body)
+            assertEquals(snapshot.contentRevision, db.workspaceContextDao().provenanceFor(note.id)?.revision)
+            assertTrue(runCatching { workspace.keep(identity.copy(contentRevision = "previous")) {} }.exceptionOrNull() is CollectorConflict)
+            repository.save(source.copy(selected = false), source.version)
+            assertTrue(runCatching { workspace.keep(identity) {} }.exceptionOrNull() is CollectorConflict)
+        } finally { db.close() }
+    }
     @Test fun extractsBodyAndImagesWithoutExecutingOrRetainingActiveMarkup() {
         val page = """<html><nav>Menu only</nav><article><header><h1>Article heading</h1></header><p>First paragraph.</p><p>Second paragraph.</p>
             <figure><img srcset="/photo.png 640w, /large.png 1280w" alt="A red kite"><figcaption>The kite above the lake</figcaption></figure>

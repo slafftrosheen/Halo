@@ -1,0 +1,8 @@
+<!doctype html><html><body style="margin:0;background:#04021f"><div id="g" style="display:grid;grid-template-columns:repeat(6,200px);gap:10px;padding:10px"></div>
+<script src="lottie.min.js"></script><script>
+const q=new URLSearchParams(location.search);const name=q.get('n'),v=q.get('v')||'dark';
+window.run=(d)=>{const n=6,op=d.op;
+for(let i=0;i<n;i++){const el=document.createElement('div');el.style.cssText='width:200px;height:200px;border-radius:20px;background:'+(v=='dark'?'#0a0738':'#F6F4EC');document.getElementById('g').appendChild(el);
+const a=lottie.loadAnimation({container:el,renderer:'svg',loop:false,autoplay:false,animationData:JSON.parse(JSON.stringify(d))});a.goToAndStop(Math.round(i*(op-1)/(n-1)),true);}
+setTimeout(()=>window.done=1,400)}
+</script></body></html>

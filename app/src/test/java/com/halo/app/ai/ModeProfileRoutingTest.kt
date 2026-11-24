@@ -58,13 +58,13 @@ class ModeProfileRoutingTest {
         assertEquals(0, fixture.other.calls)
     }
 
-    @Test fun disabledWebFeatureStopsBeforeChallengeOrBudgetReservation() = runTest {
+    @Test fun privateModeStopsWebSearchBeforeChallengeOrBudgetReservation() = runTest {
         val fixture = Fixture()
-        fixture.store.edit(PrivacyMode.CLOUD) { it.copy(onlineFeatures = it.onlineFeatures - OnlineFeature.WEB) }
+        fixture.store.set(PrivacyMode.PRIVATE)
         val service = com.halo.app.online.GroundedWebSearchService(fixture.store.storage, fixture.router, { true })
         try { service.prepare("synthetic fixture", "en"); fail() }
         catch (failure: com.halo.app.online.OnlineOperationRejected) {
-            assertEquals(com.halo.app.online.OnlineProblem.FEATURE_DISABLED, failure.problem)
+            assertEquals(com.halo.app.online.OnlineProblem.LOCAL_ONLY, failure.problem)
         }
     }
 

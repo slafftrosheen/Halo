@@ -170,6 +170,27 @@ class ReloadableSpeechRecognitionProvider(
         lifecycle.withLock { currentDelegate.get().recognize(audio) }
     }
 
+    override suspend fun recognizeInLanguage(audio: AudioBuffer, language: String): RecognitionResult =
+        withContext(dispatchers.default) {
+            lifecycle.withLock {
+                val selected = currentDelegate.get()
+                if (!selected.metadata.local) return@withLock selected.recognizeInLanguage(audio, language)
+                val key = activeKey ?: error("Choose an installed speech model in Voice settings")
+                if (key.language == language && selected.health()) return@withLock selected.recognize(audio)
+                val spec = key.modelId?.let(SherpaSpeechModelCatalog::byId)
+                    ?: error("Choose an installed speech model in Voice settings")
+                require(spec.supportsLanguage(language) && installed(directory(spec), spec)) {
+                    "Choose an installed speech model that supports $language"
+                }
+                val recognizer = delegateFactory(directory(spec), spec, language)
+                try {
+                    recognizer.recognize(audio)
+                } finally {
+                    withContext(NonCancellable) { recognizer.close(); recognizer.awaitQuiescent() }
+                }
+            }
+        }
+
     override fun captureContext() = currentDelegate.get().captureContext()
 
     /** Memo transcription is explicitly local, even if settings change while decoding the file. */

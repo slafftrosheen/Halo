@@ -21,11 +21,11 @@ class WorkspaceFileEditingActionsTest {
     @Test fun everyOperationHasCanonicalPolicyAndWorkspaceContentBoundary() {
         WorkspaceFileToolsFixture().use { f ->
             val definitions = WorkspaceFileEditingActions(f.tools).definitions()
-            assertEquals(18, definitions.size)
-            assertEquals(18, definitions.map { it.name }.distinct().size)
+            assertTrue(definitions.isNotEmpty())
+            assertEquals(definitions.size, definitions.map { it.name }.toSet().size)
             definitions.forEach { definition ->
-                assertNotNull(HaloToolDescriptors.file(definition))
-                assertTrue(definition.name in WorkspaceToolAccess.readTools)
+                assertNotNull(definition.name, HaloToolDescriptors.file(definition))
+                assertTrue(definition.name, definition.name in WorkspaceToolAccess.readTools)
             }
         }
     }

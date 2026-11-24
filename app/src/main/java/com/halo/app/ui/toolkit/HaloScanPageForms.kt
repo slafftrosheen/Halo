@@ -47,10 +47,11 @@ internal fun ScanFilterDialog(onClose: () -> Unit, onFilter: (ScanPaperFilter) -
 }
 
 @Composable
-internal fun ScanCropDialog(onClose: () -> Unit, onApply: (Float) -> Unit) {
+internal fun ScanCropDialog(onClose: () -> Unit, preview: @Composable () -> Unit = {}, onApply: (Float) -> Unit) {
     var inset by remember { mutableFloatStateOf(.05f) }
     AlertDialog(onDismissRequest = onClose, title = { Text(uiText("Trim page edges")) }, text = {
         Column {
+            preview()
             Text(uiText("Trim %1\$d%% from each edge", (inset * 100).toInt()))
             Slider(inset, { inset = it }, valueRange = 0f..0.4f)
         }

@@ -8,6 +8,23 @@ import org.junit.Test
 
 class ToolRegistryTest {
 
+    @Test fun `only a unique declared enum choice is corrected before authorization`() {
+        val executor = object : ToolExecutor {
+            override fun definitions() = listOf(com.halo.sdk.provider.ToolDefinition("fixture_enum", "fixture_enum", "fixture",
+                mapOf("type" to "object", "properties" to mapOf(
+                    "operation" to mapOf("type" to "string", "enum" to listOf("READ", "OPEN")),
+                    "mixed" to mapOf("type" to "string", "enum" to listOf("FOO", "foo")),
+                    "targetId" to mapOf("type" to "string"),
+                ))))
+            override suspend fun execute(toolCall: ToolCall): ToolExecutionResult = error("Test validates without executing")
+        }
+        val registry = ToolRegistry(listOf(executor))
+        val call = ToolCall("example", "fixture_enum", mapOf("operation" to "read", "mixed" to "Foo", "targetId" to "ABC"))
+        val normalized = registry.canonicalEnumArguments(call)
+        assertEquals(mapOf("operation" to "READ", "mixed" to "Foo", "targetId" to "ABC"), normalized.arguments)
+        assertEquals("READ", registry.canonicalEnumArguments(normalized).arguments["operation"])
+    }
+
     private val registry =
         ToolRegistry(
             listOf(

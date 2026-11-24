@@ -53,7 +53,8 @@ object NotebookDocumentCodec {
             NoteBlockType.CODE -> "```${block.language.orEmpty()}\n${block.text}\n```"
             NoteBlockType.DIVIDER -> "---"
             NoteBlockType.REFERENCE -> {
-                val target = block.refObjectId?.takeIf { it.isNotBlank() }
+                val target = if (com.halo.app.ui.notes.v13.NoteDrawing.target(block) != null) block.presentation.drawing
+                    else block.refObjectId?.takeIf { it.isNotBlank() }
                 if (target == null) "[[${block.text}]]"
                 else if (block.text.isBlank()) "[[$target]]" else "[[$target|${block.text}]]"
             }
@@ -74,6 +75,7 @@ object NotebookDocumentCodec {
             checked: Boolean = false,
             refObjectId: String? = null,
             language: String? = null,
+            drawing: String? = null,
         ) {
             blocks += NoteBlock(
                 id = newId(),
@@ -84,6 +86,7 @@ object NotebookDocumentCodec {
                 indent = indent,
                 refObjectId = refObjectId,
                 language = language,
+                presentation = NoteBlockPresentation(drawing = drawing),
             )
         }
 
@@ -129,7 +132,9 @@ object NotebookDocumentCodec {
                     val match = reference.find(line)!!
                     val target = match.groupValues[1].trim()
                     val label = match.groupValues[2].trim()
-                    add(NoteBlockType.REFERENCE, label, refObjectId = target)
+                    val drawing = com.halo.app.ui.notes.v13.NoteDrawing.parse(target)
+                    add(NoteBlockType.REFERENCE, label, refObjectId = drawing?.first ?: target,
+                        drawing = target.takeIf { drawing != null })
                     index++
                 }
 

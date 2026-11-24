@@ -105,6 +105,26 @@ class ReloadableModelSelectionTest {
         assertEquals(SherpaSpeechModelCatalog.whisperSmall.providerId, selector.sttSelection.value.id)
         provider.close()
     }
+    @Test fun temporaryRecognitionLanguageDoesNotChangeTheSelectedModelOrSavedLanguage() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val selector = Selector()
+        val created = mutableListOf<Fake>()
+        val provider = ReloadableSpeechRecognitionProvider(File("test/sherpa-whisper-tiny"), selector = selector,
+            dispatchers = HaloDispatchers(dispatcher, dispatcher, dispatcher), installed = { _, _ -> true },
+            delegateFactory = { _, spec, language -> Fake(spec, language).also(created::add) })
+        try {
+            runCurrent()
+            val audio = AudioBuffer(emptyList())
+            assertEquals("ru", provider.recognizeInLanguage(audio, "ru").language)
+            assertEquals("en", provider.recognize(audio).language)
+            assertEquals("en", provider.readiness.value.language)
+            assertEquals(created[0].spec, created[1].spec)
+            assertFalse(created[0].closed)
+            assertTrue(created[1].closed)
+        } finally {
+            provider.close()
+        }
+    }
     @Test fun omnilingualLanguageChangesReloadButEquivalentConfigurationStaysResident() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val selector = Selector().also { it.selectStt(SherpaSpeechModelCatalog.omnilingual300m.providerId) }

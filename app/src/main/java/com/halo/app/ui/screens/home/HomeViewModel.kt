@@ -883,7 +883,10 @@ class HomeViewModel(
         submitTextInternal(literal, exact, active)
     }
     fun submitText(text: String) = submitTextInternal(text)
-    private fun submitTextInternal(text: String, exactDraft: ComposerDraftIdentity? = null, exactConversation: String? = null) {
+    internal fun askSavedArticle(question: String, arguments: String) = submitTextInternal(question, articleArguments = arguments)
+
+    private fun submitTextInternal(text: String, exactDraft: ComposerDraftIdentity? = null, exactConversation: String? = null,
+        articleArguments: String? = null) {
         if (ManualDependencyGraph.isHaloPaused()) { captureMessage.value = "Halo is paused"; return }
         if (_conversationChanging.value) return
         val normalized = text.trim()
@@ -910,6 +913,22 @@ class HomeViewModel(
                     ?: error("Conversation is not ready. Try again.")
                 check(conversations?.isConversationAvailable(conversationAtSend) == true) { "Conversation unavailable" }
                 textSubmissions.resolveConversation(interactionId, conversationAtSend)
+                if (articleArguments != null) {
+                    ManualDependencyGraph.kidsPreferences.adultActionRevision()
+                    val request = AiRequest(
+                        text = "Read the exact saved article with halo_source_get. Use these tool arguments: $articleArguments\n" +
+                            "Follow nextTextOffset using the same contentRevision. If the saved article is unavailable, report that.\n" +
+                            "User question: $normalized",
+                        toolUseMode = ToolUseMode.REQUIRED,
+                        priority = com.halo.sdk.provider.InferencePriority.INTERACTIVE,
+                    )
+                    cognitiveSession.submit(request, responseDelivery = ResponseDelivery.VISUAL_ONLY,
+                        metadata = mapOf("inputModality" to "TEXT", "input" to "keyboard", "mode" to selectedMode.value.name,
+                            "interactionId" to interactionId, "conversationId" to conversationAtSend,
+                            "executionRoute" to "AGENTIC", "requiresTools" to "true", "preferredRole" to "AGENTIC",
+                            "agenticHint" to "SAVED_ARTICLE"))
+                    return@runCatching
+                }
                 val imageArg = ManualDependencyGraph.interactionContext.owner.current(conversationAtSend.orEmpty())
                     .any { it.category == com.halo.runtime.cognition.context.ContextCategory.VISUAL }
 

@@ -30,7 +30,7 @@ class HaloWidgetVisualTest {
         context.getSharedPreferences("halo_palettes",Context.MODE_PRIVATE).edit().putString(if(dark) "dark.accent" else "light.accent", "LILAC").commit()
         val options = Bundle().apply { putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,width); putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,height) }
         if (sizes.isNotEmpty()) options.putParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES, ArrayList(sizes))
-        val remote = HaloNativeWidget.views(context,options) { key -> context.getString(requireNotNull(com.halo.app.language.uiCatalogue[key]) { "Missing widget translation: $key" }) }
+        val remote = HaloNativeWidget.views(context, options, kids = false) { key -> context.getString(requireNotNull(com.halo.app.language.uiCatalogue[key]) { "Missing widget translation: $key" }) }
         val view = remote.apply(context,FrameLayout(context))
         activity.setContentView(view, android.view.ViewGroup.LayoutParams(width,height))
         view.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(height,View.MeasureSpec.EXACTLY))

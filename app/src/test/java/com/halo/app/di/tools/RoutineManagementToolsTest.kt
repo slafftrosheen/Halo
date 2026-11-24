@@ -214,8 +214,11 @@ class RoutineManagementToolsTest {
         assertEquals(1, dispatched.size)
         failSchedule = true
         val edit = edit() + ("name" to "Persisted before schedule failure")
-        val scheduleFailure = tools.execute(call("halo_routine_save_existing", edit), authority) as ToolExecutionResult.Failed
-        assertTrue(scheduleFailure.completionUnknown)
+        val scheduleFailure = json(tools.execute(call("halo_routine_save_existing", edit), authority))
+        assertTrue(scheduleFailure.getBoolean("saved"))
+        assertEquals("SCHEDULE_FAILED", scheduleFailure.getString("scheduling"))
+        assertFalse(scheduleFailure.getBoolean("completionConfirmed"))
+        assertFalse(scheduleFailure.getBoolean("deliveryConfirmed"))
         assertEquals("Persisted before schedule failure", repository.get(RoutineId("routine-1"))!!.name)
         assertTrue(tools.execute(call("halo_routine_save_existing", edit), authority) is ToolExecutionResult.Rejected)
     } }

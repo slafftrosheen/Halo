@@ -136,8 +136,11 @@ internal fun StudyReviewEntry(count: Int, enabled: Boolean, onStart: () -> Unit)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(uiText("Keep practising"), style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold)
-                Text(uiText("Ready to review: %1\$d", count), style = MaterialTheme.typography.bodySmall,
+                Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.ln13_cards_done, count,
+                    com.halo.app.ui.study.v13.ReviewPlain.minutesFor(count)), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(androidx.compose.ui.res.stringResource(com.halo.app.R.string.ln13_no_streaks),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (large) Button(onStart, enabled = enabled,
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer,

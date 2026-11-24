@@ -270,7 +270,7 @@ class StudioService(private val context: Context, val projects: StudioProjectRep
                 when (request.operation) {
                     StudioPixelOperation.COPY -> maskStudioPixels(bitmap, requireNotNull(selection).mask, copy = true)
                     StudioPixelOperation.ERASE -> maskStudioPixels(bitmap, requireNotNull(selection).mask, copy = false)
-                    StudioPixelOperation.SMUDGE -> smudgeStudioPixels(bitmap, request.strokes, selection?.mask,
+                    StudioPixelOperation.SMUDGE -> smudgeStudioBatches(bitmap, request.strokes, selection?.mask,
                         maxOf(document.width, document.height))
                 }
             }

@@ -97,11 +97,12 @@ data class NoteBlockPresentation(
     val spacing: Int? = null,
     val comments: List<NoteComment> = emptyList(),
     val change: NoteChange? = null,
+    val drawing: String? = null,
 ) {
     fun encode(): String? = if (this == NoteBlockPresentation()) null else JSONObject()
         .put("fonts", JSONArray(fonts.map(NoteFontSpan::encode))).put("alignment", alignment?.name)
         .put("spacing", spacing).put("comments", JSONArray(comments.map(NoteComment::encode)))
-        .put("change", change?.encode()).toString()
+        .put("change", change?.encode()).put("drawing", drawing).toString()
 
     companion object {
         fun decode(raw: String?, length: Int): NoteBlockPresentation {
@@ -118,6 +119,7 @@ data class NoteBlockPresentation(
                     change = data.optJSONObject("change")?.let { stored ->
                         NoteChange(enumValue(stored, "kind", NoteChangeKind.TEXT), stored.optString("before").take(1_000_000))
                     },
+                    drawing = data.optString("drawing").takeIf { com.halo.app.ui.notes.v13.NoteDrawing.parse(it) != null },
                 )
             }.getOrDefault(NoteBlockPresentation())
         }

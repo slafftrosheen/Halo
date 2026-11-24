@@ -22,6 +22,7 @@ class WorkspaceNoteActions(
     private val documents: NotebookDocumentRepository,
     private val notes: NotebookUseCases,
     private val context: WorkspaceContextStore,
+    private val drawings: NotebookDrawingLinks? = null,
 ) : ToolExecutor {
     private val id = mapOf("type" to "string", "pattern" to WorkspaceActionIds.PATTERN)
     private val identity = mapOf("type" to "string", "pattern" to "^note:[a-f0-9]{64}$")
@@ -70,8 +71,8 @@ class WorkspaceNoteActions(
         definition("halo_note_merge_block", "Join the exact saved text block into its predecessor using the editor's merge command. Read both blocks first; retains combined text. No automatic replay.", block),
         definition("halo_note_duplicate_block", "Copy the exact observed block with a new saved block identity through the editor. A copied reference does not copy its source object.", block),
         definition("halo_note_delete_block", "After approval remove exactly the observed block through the editor's command owner. The editor retains a final block; use explicit whole-content replacement to clear it. Linked source objects remain. This has no durable assistant undo and must never be replayed automatically.", block),
-        definition("halo_note_insert_reference", "Insert a reference to an exact active Workspace target, using its observed targetVersion from halo_workspace_describe. Omit afterBlockId to append; source bytes remain unchanged. Never guess a target or replay insertion.",
-            current + target + mapOf("afterBlockId" to id, "label" to text(300)), current.keys + target.keys),
+        definition("halo_note_insert_reference", "Insert a reference to an exact active Workspace target, using its observed targetVersion from halo_workspace_describe. For a live linked drawing, supply canvasNodeId from an observed sketch on that canvas. Omit afterBlockId to append; source bytes remain unchanged. Never guess a target or replay insertion.",
+            current + target + mapOf("afterBlockId" to id, "label" to text(300), "canvasNodeId" to id), current.keys + target.keys),
         definition("halo_note_set_reference", "Relink an existing reference block to the exact active observed Workspace target/version. Omitted label uses the target's current title. Existing source objects remain unchanged.", block + target + ("label" to text(300)), block.keys + target.keys),
         definition("halo_note_replace_content", "After approval replace the entire observed note from explicit Markdown using the editor codec/commit owner. Existing formatting/blocks are replaced; no durable assistant undo. Unsupported syntax is refused unless allowLiteralFallback is explicitly true. New reference targets must instead be inserted with insert_reference. Never replay an uncertain replacement.",
             current + mapOf("markdown" to text(32000), "allowLiteralFallback" to boolean), current.keys + "markdown"),
@@ -294,7 +295,13 @@ class WorkspaceNoteActions(
                     }
                     "halo_note_duplicate_block" -> { canInsert(); command = DocumentCommand.DuplicateBlock(requireNotNull(selected).id) }
                     "halo_note_delete_block" -> { require(saved.blocks.size > 1); command = DocumentCommand.DeleteBlock(requireNotNull(selected).id) }
-                    "halo_note_insert_reference" -> { canInsert(); val target = reference(); command = DocumentCommand.InsertReference(anchor(), target.first, target.second) }
+                    "halo_note_insert_reference" -> {
+                        canInsert()
+                        val target = reference()
+                        val after = anchor()
+                        command = if ("canvasNodeId" in args) requireNotNull(drawings).link(after, target.first, id("canvasNodeId"), target.second)
+                            else DocumentCommand.InsertReference(after, target.first, target.second)
+                    }
                     "halo_note_set_reference" -> {
                         val item = requireNotNull(selected); require(item.type == NoteBlockType.REFERENCE)
                         val target = reference(); command = DocumentCommand.SetReference(item.id, target.first, target.second)
@@ -305,8 +312,10 @@ class WorkspaceNoteActions(
                         require(!parsed.lossy || ("allowLiteralFallback" in args && bool("allowLiteralFallback")))
                         if ("allowLiteralFallback" in args) bool("allowLiteralFallback")
                         require(parsed.blocks.size <= DocumentReducer.MAX_BLOCKS)
-                        val oldReferences = saved.blocks.filter { it.type == NoteBlockType.REFERENCE }.map { it.refObjectId to it.text }.toSet()
-                        require(parsed.blocks.filter { it.type == NoteBlockType.REFERENCE }.all { (it.refObjectId to it.text) in oldReferences })
+                        val oldReferences = saved.blocks.filter { it.type == NoteBlockType.REFERENCE }
+                            .map { Triple(it.refObjectId, it.text, it.presentation.drawing) }.toSet()
+                        require(parsed.blocks.filter { it.type == NoteBlockType.REFERENCE }
+                            .all { Triple(it.refObjectId, it.text, it.presentation.drawing) in oldReferences })
                         require(parsed.blocks.none { it.language?.startsWith("halo-") == true })
                         literalFallback = parsed.lossy
                         command = DocumentCommand.ReplaceAll(parsed.blocks)
@@ -348,6 +357,7 @@ class WorkspaceNoteActions(
         .put("text", text).put("textTruncated", truncated).put("textLength", block.text.length)
         .put("checked", block.checked).put("indent", block.indent).put("language", block.language?.take(40) ?: JSONObject.NULL)
         .put("targetId", block.refObjectId?.take(100) ?: JSONObject.NULL)
+        .put("canvasNodeId", com.halo.app.ui.notes.v13.NoteDrawing.target(block)?.second ?: JSONObject.NULL)
 
     private fun pageJson(page: NotePageSettings) = JSONObject().put("paper", page.size.name).put("landscape", page.landscape)
         .put("marginMm", page.marginMm).put("columns", page.columns).put("header", page.header).put("footer", page.footer)

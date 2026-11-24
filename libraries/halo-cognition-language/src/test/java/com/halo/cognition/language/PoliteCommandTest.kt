@@ -4,6 +4,16 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class PoliteCommandTest {
+    @Test fun explicitSavedSourceQuestionsRouteToSources() {
+        listOf("Could you check my sources?", "Find rockets in my saved sources", "What's new in my feeds?",
+            "Поищи в моих источниках", "Meklē manos avotos", "Podsumuj moje źródła").forEach { request ->
+            assertEquals(request, ToolActionReason.SOURCE_LOOKUP, ConversationSemantics.actionReason(request))
+        }
+        listOf("How do I search my sources?", "Explain what a news feed is", "Do not use tools. Summarize my sources",
+            "Summarize my notes").forEach { request ->
+            assertNotEquals(request, ToolActionReason.SOURCE_LOOKUP, ConversationSemantics.actionReason(request))
+        }
+    }
     @Test fun commonSpokenRequestsUseNativeCommands() {
         assertEquals(TimerIntent(300), NativeCommandParser.parse("Could you please set a timer for five minutes?"))
         assertEquals(VolumeIntent(percent = 30), NativeCommandParser.parse("Can you set volume to 30 percent?"))

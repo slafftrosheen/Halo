@@ -1,10 +1,13 @@
 package com.halo.app.ai
 
 import android.app.Application
+import android.content.ContextWrapper
 import androidx.test.core.app.ApplicationProvider
+import com.halo.app.audio.SupertonicSpeechProvider
 import com.halo.providers.litert.models.*
 import com.halo.providers.sherpa.stt.*
 import com.halo.sdk.runtime.Storage
+import com.halo.sdk.runtime.NativeResourceCoordinator
 import com.halo.app.di.tools.LocalModelSetupToolExecutor
 import com.halo.runtime.cognition.agent.ActionTruth
 import com.halo.runtime.cognition.tools.ToolExecutionResult
@@ -163,16 +166,18 @@ class LocalRolePackRecoveryTest {
 
     @Test fun queuedKeepCannotClearOrOverwriteANewerCanonicalReceiptWithTheSameToken() = runTest {
         for (typed in listOf(false, true)) {
-            val f = Fixture(backgroundScope)
+            val f = Fixture(backgroundScope, starterPackAvailable = true)
             val record = LocalRolePackJournal(LocalRolePackPhase.PAUSED, LocalRolePackStage.INTENT,
                 true, true, f.plan(), true, true, emptySet(), transactionId = TOKEN).encode()
             f.storage.putString(KEY, record)
+            f.speech.failRefresh = true
             val owner = f.owner()
             owner.startOrResume()
             if (typed) assertTrue(owner.request(LocalRolePackCommand.KEEP_FILES, TOKEN))
             else owner.keepDownloadedFiles()
+            withContext(Dispatchers.Default) { withTimeout(5000) { owner.state.first { it.phase == LocalRolePackPhase.FAILED } } }
             runCurrent()
-            // Unavailable TTS causes the real resume to persist FAILED under the SAME token.
+            // The failed preflight persists a newer receipt under the same token.
             val latest = requireNotNull(LocalRolePackJournal.decode(f.storage.getString(KEY)))
             assertEquals(TOKEN, latest.transactionId); assertEquals(LocalRolePackPhase.FAILED, latest.phase)
             assertNotEquals(record, f.storage.getString(KEY)); assertEquals(0, f.storage.removes)
@@ -182,9 +187,14 @@ class LocalRolePackRecoveryTest {
     }
 
     @Test fun failedTerminalWriteDoesNotLeaveACompletedJobPermanentlyBusy() = runTest {
-        val f = Fixture(backgroundScope)
+        val f = Fixture(backgroundScope, starterPackAvailable = true)
         val owner = f.owner()
-        f.storage.afterWrite = { key -> if (key == KEY) f.storage.failWrite = true }
+        f.storage.afterWrite = { key ->
+            if (key == KEY) {
+                f.storage.failWrite = true
+                f.speech.failRefresh = true
+            }
+        }
         owner.startOrResume()
         withContext(Dispatchers.Default) {
             withTimeout(5000) { owner.state.first { it.recoveryRequired } }
@@ -240,7 +250,7 @@ class LocalRolePackRecoveryTest {
     }
 
     @Test fun failedNewTransactionCannotMakeAPreviousCompletedPackRollbackEligible() = runTest {
-        val f = Fixture(backgroundScope)
+        val f = Fixture(backgroundScope, starterPackAvailable = true)
         val raw = LocalRolePackJournal(LocalRolePackPhase.COMPLETE, LocalRolePackStage.DONE,
             false, false, f.plan(), false, false, emptySet(), transactionId = TOKEN).encode()
         f.storage.putString(KEY, raw)
@@ -310,12 +320,17 @@ class LocalRolePackRecoveryTest {
         assertFalse(value.canResume); assertFalse(value.canRollback); assertFalse(value.busy)
     }
 
-    private inner class Fixture(private val scope: CoroutineScope, reviewed: Boolean = true) {
+    private inner class Fixture(private val scope: CoroutineScope, reviewed: Boolean = true, starterPackAvailable: Boolean = false) {
         val root = temporary.newFolder()
         val storage = RecordStorage()
         val speech = Speech()
         var downloads = 0
-        private val manager = LiteRtModelManager(ApplicationProvider.getApplicationContext(), File(root, "models"),
+        private val context = ApplicationProvider.getApplicationContext<Application>()
+        private val supertonic = if (starterPackAvailable) SupertonicSpeechProvider(
+            object : ContextWrapper(context) { override fun getNoBackupFilesDir() = root },
+            storage, NativeResourceCoordinator(scope = scope),
+        ) else null
+        private val manager = LiteRtModelManager(context, File(root, "models"),
             downloader = object : LiteRtModelDownloader {
                 override suspend fun download(artifact: LiteRtCatalogModel, destinationPart: File,
                     onProgress: (DownloadProgress) -> Unit, resumeFrom: Long): DownloadResult {
@@ -325,7 +340,7 @@ class LocalRolePackRecoveryTest {
         init {
             if (reviewed) check(owner().acknowledgeSourceReview(PrivateOfflinePack.fingerprint, true))
         }
-        fun owner() = LocalRolePackInstaller(storage, manager, speech, File(root, "speech"), null, scope)
+        fun owner() = LocalRolePackInstaller(storage, manager, speech, File(root, "speech"), supertonic, scope)
         fun plan(): String = LocalRolePackInstaller::class.java.getDeclaredMethod("currentPlanFingerprint")
             .apply { isAccessible = true }.invoke(owner()) as String
     }
@@ -333,7 +348,11 @@ class LocalRolePackRecoveryTest {
     private class Speech : SpeechModelInventoryRepository {
         override val state = MutableStateFlow(SpeechModelInventoryState(loading = false))
         var calls = 0
-        override suspend fun refresh(languageMode: String?) { calls++ }
+        var failRefresh = false
+        override suspend fun refresh(languageMode: String?) {
+            calls++
+            check(!failRefresh) { "Fixture preflight failure" }
+        }
         override suspend fun install(modelId: String, onProgress: (SpeechModelDownloadProgress) -> Unit): Result<Unit> { calls++; error("Unexpected acquisition") }
         override suspend fun remove(modelId: String): Result<Unit> { calls++; error("Unexpected removal") }
         override suspend fun removeOwned(modelId: String, owner: String): Result<Unit> { calls++; error("Unexpected removal") }

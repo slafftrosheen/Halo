@@ -26,6 +26,8 @@ internal object OrganizerCodec {
         put("calendarUid", record.calendarUid)
         put("calendar", record.calendar.name)
         record.studyExam?.let { plan -> put("studyExam", JSONObject().put("date", plan.examDate.toString())
+            .put("restDays", JSONArray(plan.restDays.sortedBy { it.value }.map { it.name }))
+            .put("quickReview", plan.quickReview)
             .put("lessons", JSONArray(plan.lessons.map { JSONObject().put("id", it.sessionId).put("title", it.title)
                 .put("version", it.version) }))) }
         record.time?.let { put("time", time(it)) }
@@ -52,7 +54,10 @@ internal object OrganizerCodec {
             require(lessons.length() <= 50)
             StudyExamSchedule(LocalDate.parse(plan.getString("date")), (0 until lessons.length()).map { index ->
                 lessons.getJSONObject(index).let { StudyExamLesson(it.getString("id"), it.getString("title"), it.getLong("version")) }
-            })
+            }, plan.optJSONArray("restDays")?.let { days ->
+                require(days.length() < 7)
+                (0 until days.length()).map { DayOfWeek.valueOf(days.getString(it)) }.toSet()
+            }.orEmpty(), plan.optBoolean("quickReview"))
         }
         return OrganizerRecord(json.getString("id"), OrganizerKind.valueOf(json.getString("kind")), json.getString("title"), json.getString("details"),
             json.optJSONObject("time")?.let(::time), rule, TaskPriority.valueOf(json.getString("priority")), OrganizerStatus.valueOf(json.getString("status")),

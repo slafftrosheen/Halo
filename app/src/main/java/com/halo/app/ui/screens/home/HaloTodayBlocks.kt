@@ -167,6 +167,9 @@ internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false
     val cachedNews by Graph.todayNews.history.collectAsStateWithLifecycle()
     val picturesVisible by Graph.articlePictureSettings.visible.collectAsStateWithLifecycle()
     val language by Graph.appLanguagePreferences.language.collectAsStateWithLifecycle()
+    val welcomeSuggestion by Graph.setupProgress.welcomeFirstTry.collectAsStateWithLifecycle()
+    val welcomeThinking by Graph.setupProgress.welcomeThinkingSetup.collectAsStateWithLifecycle()
+    val voiceReady by Graph.speechRecognitionAvailability.collectAsStateWithLifecycle()
     val weatherSettings: SourcesViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = com.halo.app.ui.everyday.EverydayViewModelFactory {
             SourcesViewModel(context.applicationContext as com.halo.app.HaloApplication, androidx.lifecycle.SavedStateHandle())
@@ -191,6 +194,7 @@ internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false
         }
     }
     var calendarGranted by remember { mutableStateOf(PhoneCalendarAgenda.permitted(context)) }
+    var calendarRationale by rememberSaveable { mutableStateOf(false) }
     val requestCalendar = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { calendarGranted = it }
     LaunchedEffect(now) { calendarGranted = PhoneCalendarAgenda.permitted(context) }
     val phoneEvents by produceState<List<PhoneCalendarEvent>>(emptyList(), calendarGranted, now) {
@@ -336,7 +340,11 @@ internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false
         if (!evening || "library" in pinned) recent?.let(::add)
         focus?.let(::add)
     }
+    val familyLoaded by Graph.kidsPreferences.loadedState.collectAsStateWithLifecycle()
+    val child by Graph.kidsPreferences.enabled.collectAsStateWithLifecycle()
+    val surfaceLocked = com.halo.app.ui.theme.rememberHaloLayoutLocked()
     HaloTodayContent(hour, available, choices, open, chooseWeatherCity = { chooseCity = true },
+        layoutLocked = surfaceLocked || child || !familyLoaded,
         news = cachedNews.filter { it.isVisible(feeds, language.tag, now) },
         newsPictures = picturesVisible,
         liveArticles = activeSources.flatMap { row ->
@@ -344,8 +352,27 @@ internal fun HaloTodayScreen(open: (String) -> Unit, savedPages: Boolean = false
         }.toSet(),
         newsEnabled = activeSources.any { it.source.kind == CollectorKind.FEED },
         phoneEvents = permittedPhoneEvents,
-        connectCalendar = if (!calendarGranted) ({ requestCalendar.launch(android.Manifest.permission.READ_CALENDAR) }) else null,
-        onAddWidget = { addWidget = true }, onMakePage = { adaptivePage = true })
+        connectCalendar = if (!calendarGranted) ({ calendarRationale = true }) else null,
+        onAddWidget = { addWidget = true }, onMakePage = { adaptivePage = true },
+        welcomeSuggestion = {
+            when {
+                welcomeSuggestion != null -> com.halo.app.ui.onboarding.v13.Halo13FirstTry(
+                    welcomeSuggestion, onOpen = open, onDismiss = Graph.setupProgress::dismissWelcomeFirstTry)
+                welcomeThinking != null -> com.halo.app.ui.onboarding.v13.Halo13FinishThinking(
+                    welcomeThinking, onOpen = open, onDismiss = Graph.setupProgress::dismissWelcomeThinkingSetup)
+                else -> com.halo.app.ui.onboarding.v13.Halo13SetupPrompts(Graph.setupProgress, today,
+                    voiceReady && androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) ==
+                        android.content.pm.PackageManager.PERMISSION_GRANTED,
+                    calendarGranted, onCalendar = { calendarRationale = true }, onOpen = open)
+            }
+        })
+    if (calendarRationale && !calendarGranted) com.halo.app.ui.onboarding.v13.Halo13AccessDialog(
+        R.string.ob13_access_calendar_title, R.string.ob13_access_calendar_body,
+        onAllow = {
+            calendarRationale = false
+            requestCalendar.launch(android.Manifest.permission.READ_CALENDAR)
+        }, onDismiss = { calendarRationale = false },
+    )
     if (addWidget) com.halo.app.nativeactions.EverydayWidgetPicker(
         initialKind = com.halo.app.everyday.presentation.EverydayCardKind.TODAY) { addWidget = false }
     if (chooseCity && !weatherSettingsState.kids) {
@@ -360,7 +387,8 @@ internal fun HaloTodayContent(hour: Int, available: List<HaloHomeBlock>, choices
     chooseWeatherCity: (() -> Unit)? = null, news: List<TodayNewsReport> = emptyList(), newsEnabled: Boolean = false,
     newsPictures: Boolean = true, liveArticles: Set<Pair<String, String>> = emptySet(),
     phoneEvents: List<PhoneCalendarEvent> = emptyList(), connectCalendar: (() -> Unit)? = null,
-    onAddWidget: (() -> Unit)? = null, onMakePage: (() -> Unit)? = null) {
+    onAddWidget: (() -> Unit)? = null, onMakePage: (() -> Unit)? = null, layoutLocked: Boolean = true,
+    welcomeSuggestion: (@Composable () -> Unit)? = null) {
     val evening = hour >= 18
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
@@ -375,28 +403,36 @@ internal fun HaloTodayContent(hour: Int, available: List<HaloHomeBlock>, choices
             R.string.today_why_phone_calendar, route, supporting = at)
     }
     val allBlocks = available + phoneBlocks
+    val aliases = buildMap {
+        allBlocks.firstOrNull { it.heading == R.string.today_block_day && it.id !in choices.hidden }
+            ?.let { put("next_thing", it.id) }
+        allBlocks.firstOrNull { it.heading == R.string.today_block_tomorrow && it.id !in choices.hidden }
+            ?.let { put("tomorrow", it.id) }
+    }
+    val layout = com.halo.app.ui.adaptive.rememberAdaptiveSurfaceLayout("today", allBlocks.map {
+        com.halo.app.ui.adaptive.v13.Block(it.id, com.halo.app.ui.adaptive.v13.Slot.MAIN)
+    }, aliases, com.halo.app.ui.adaptive.v13.ExperienceLevel.STANDARD, layoutLocked,
+        hour = hour, pins = com.halo.app.ui.adaptive.v13.Pins(choices.pinned, choices.hidden))
+    val promoted = layout.result.applied.map { it.change.blockId }.toSet()
+    val priority = layout.result.visible.map { it.id }.filter { it in promoted }
     var cannotOpenCalendar by remember { mutableStateOf(false) }
     var addPlan by remember { mutableStateOf(false) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                val greeting = when {
-                    evening -> R.string.today_greeting_evening
-                    hour >= 12 -> R.string.today_greeting_afternoon
-                    else -> R.string.today_greeting_morning
-                }
-                Text(stringResource(greeting), style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.today_local_sources), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            val greeting = when {
+                evening -> R.string.today_greeting_evening
+                hour >= 12 -> R.string.today_greeting_afternoon
+                else -> R.string.today_greeting_morning
             }
-            TextButton(onClick = { open("home") }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.home_chat_title))
-            }
+            Text(stringResource(greeting), style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.today_local_sources), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        welcomeSuggestion?.invoke()
         onMakePage?.let { make ->
             TextButton(make, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.adaptive_made_for_you))
@@ -438,6 +474,7 @@ internal fun HaloTodayContent(hour: Int, available: List<HaloHomeBlock>, choices
                 }
             }
         }
+        com.halo.app.ui.adaptive.AdaptiveSurfaceControl(layout)
         HaloHomeBlockDeck(allBlocks, choices, open = { route ->
             val phoneEvent = phoneRoutes[route]
             if (phoneEvent == null) open(route)
@@ -446,7 +483,7 @@ internal fun HaloTodayContent(hour: Int, available: List<HaloHomeBlock>, choices
                 check(PhoneCalendarAgenda.permitted(context))
                 context.startActivity(PhoneCalendarAgenda.intent(phoneEvent))
             }.isFailure
-        }, showSourceSummary = false, paged = true)
+        }, showSourceSummary = false, paged = true, priority = priority)
         if (cannotOpenCalendar) Text(stringResource(R.string.today_calendar_unavailable), style = MaterialTheme.typography.bodySmall)
         connectCalendar?.let { connect -> TextButton(connect) { Text(stringResource(R.string.today_connect_calendar)) } }
         if (newsEnabled || news.isNotEmpty()) TodayNewsCard(news, newsPictures, liveArticles, open)
@@ -534,6 +571,7 @@ internal fun HaloHomeBlockDeck(
     open: (String) -> Unit,
     showSourceSummary: Boolean = true,
     paged: Boolean = false,
+    priority: List<String> = emptyList(),
 ) {
     var order by remember { mutableStateOf(emptyList<String>()) }
     var fresh by remember { mutableStateOf(emptySet<String>()) }
@@ -551,7 +589,8 @@ internal fun HaloHomeBlockDeck(
     var requestedWhy by remember { mutableStateOf<String?>(null) }
     val visible = eligible.associateBy(HaloHomeBlock::id)
     val initialOrder = eligible.map(HaloHomeBlock::id).sortedBy { it !in choices.pinned }
-    val displayOrder = (order + initialOrder).distinct().filter(visible::containsKey)
+    val displayOrder = (initialOrder.filter { it in choices.pinned } + priority + order + initialOrder)
+        .distinct().filter(visible::containsKey)
     if (displayOrder.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (showSourceSummary) Text(stringResource(R.string.today_blocks_on_this_phone), style = MaterialTheme.typography.labelMedium,

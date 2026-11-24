@@ -1,7 +1,7 @@
 {
   "id": "halo.everyday",
   "name": "Your day, organizer and widgets",
-  "description": "Operate canonical local organizer, world clocks, selected sources, briefs and independent widgets. Power-only external preview/refresh follows the global policy; no mode changes or Android grants.",
+  "description": "Operate the organizer, world clocks, Reads and Sources, offline knowledge and wiki dumps, briefs and independent widgets. Power-only source updates use the shared network policy.",
   "schemaVersion": 2,
   "category": "WORKSPACE",
   "risk": "SENSITIVE",
@@ -23,6 +23,7 @@
     "halo_organizer_query",
     "halo_source_action",
     "halo_source_get",
+    "halo_source_keep_article",
     "halo_source_preview",
     "halo_source_query",
     "halo_source_save",
@@ -32,9 +33,23 @@
     "halo_day_context",
     "halo_today_overview",
     "halo_today_weather_city",
-    "halo_source_image"
+    "halo_source_image",
+    "halo_knowledge_catalogue",
+    "halo_knowledge_search",
+    "halo_knowledge_download",
+    "halo_library_receipt_totals",
+    "halo_planner_reschedule",
+    "halo_planner_calendars",
+    "halo_planner_calendar_appearance"
   ],
   "toolDefinitions": [
+    { "toolId": "halo_knowledge_catalogue", "risk": "READ_ONLY", "requiredPermissions": [] },
+    { "toolId": "halo_knowledge_search", "risk": "READ_ONLY", "requiredPermissions": [] },
+    { "toolId": "halo_knowledge_download", "risk": "SENSITIVE", "requiredPermissions": [] },
+    { "toolId": "halo_library_receipt_totals", "risk": "READ_ONLY", "requiredPermissions": [] },
+    { "toolId": "halo_planner_reschedule", "risk": "REVERSIBLE", "requiredPermissions": [] },
+    { "toolId": "halo_planner_calendars", "risk": "READ_ONLY", "requiredPermissions": [] },
+    { "toolId": "halo_planner_calendar_appearance", "risk": "REVERSIBLE", "requiredPermissions": [] },
     {
       "toolId": "halo_today_overview",
       "risk": "READ_ONLY",
@@ -127,6 +142,11 @@
     },
     {
       "toolId": "halo_source_preview",
+      "risk": "REVERSIBLE",
+      "requiredPermissions": []
+    },
+    {
+      "toolId": "halo_source_keep_article",
       "risk": "REVERSIBLE",
       "requiredPermissions": []
     },

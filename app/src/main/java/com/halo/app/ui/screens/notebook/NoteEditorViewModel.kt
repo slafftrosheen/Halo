@@ -25,6 +25,7 @@ import com.halo.app.data.notebook.InlineStyle
 import com.halo.app.data.notebook.NoteBlock
 import com.halo.app.data.notebook.NoteBlockType
 import com.halo.app.data.notebook.NotebookDocumentCodec
+import com.halo.app.data.notebook.NotebookDocument
 import com.halo.app.data.notebook.NotebookDocumentRepository
 import com.halo.app.data.notebook.NotebookStructuredResults
 import com.halo.app.data.notebook.ProposalPlacement
@@ -577,6 +578,34 @@ class NoteEditorViewModel(
 
     fun insertReference(objectId: String, label: String?, afterBlockId: String? = null) =
         dispatch(DocumentCommand.InsertReference(afterBlockId, objectId, label))
+
+    internal suspend fun addLinkedDrawing(after: String?, label: String, sheets: List<String>): Boolean =
+        writeLinkedDrawing { version, verify ->
+            com.halo.app.di.ManualDependencyGraph.notebookDrawingLinks.create(noteId, version, after, label, sheets, verify)
+        }
+
+    internal suspend fun linkDrawing(after: String?, canvasId: String, nodeId: String, label: String): Boolean =
+        writeLinkedDrawing { version, verify ->
+            com.halo.app.di.ManualDependencyGraph.notebookDrawingLinks.insert(noteId, version, after, canvasId, nodeId, label, verify)
+        }
+
+    private suspend fun writeLinkedDrawing(write: suspend (Long, () -> Unit) -> NotebookDocument): Boolean {
+        val family = com.halo.app.di.ManualDependencyGraph.kidsPreferences
+        val authority = family.adultActionRevision()
+        if (!flushBeforeStudy()) return false
+        return commitMutex.withLock {
+            val before = mutableUiState.value
+            if (!before.isEditable || before.mode != EditorMode.EDIT || before.status != SaveStatus.SAVED) return@withLock false
+            val changed = write(revision) { family.requireAdultAction(authority) }
+            pushUndo(before.blocks)
+            revision = changed.revision
+            mutableUiState.value = before.copy(title = changed.title, blocks = changed.blocks,
+                body = NotebookDocumentCodec.serialize(changed.blocks), revision = changed.revision,
+                selection = null, status = SaveStatus.SAVED, canUndo = true, canRedo = false)
+            recomputeUnlinkedReferences()
+            true
+        }
+    }
 
     /** Repair a legacy `[[object-id]]` placeholder or relink a reference whose target was deleted. */
     fun relinkReference(blockId: String, objectId: String, label: String?) =

@@ -65,6 +65,12 @@ class SpeechRule(
         if (actionReason == com.halo.cognition.language.ToolActionReason.EXPLICIT_TOOL_REQUEST)
             return RuleMatch(confidence = 0.99f, intent = com.halo.cognition.language.ToolActionIntent(actionReason),
                 consumedTokens = consumedTokens, diagnostics = "Explicit request for a Halo tool")
+        if (actionReason == com.halo.cognition.language.ToolActionReason.SOURCE_LOOKUP)
+            return RuleMatch(confidence = 0.95f, intent = com.halo.cognition.language.ToolActionIntent(actionReason),
+                consumedTokens = consumedTokens, diagnostics = "Saved sources require source reads")
+        if (actionReason == com.halo.cognition.language.ToolActionReason.WEB_LOOKUP)
+            return RuleMatch(confidence = 0.95f, intent = com.halo.cognition.language.ToolActionIntent(actionReason),
+                consumedTokens = consumedTokens, diagnostics = "Explicit live web lookup")
         val native = com.halo.cognition.language.NativeCommandParser.parse(transcript)
         native?.takeUnless { it is com.halo.cognition.language.NativeOpenApplicationIntent }?.let { intent ->
             return RuleMatch(confidence = 0.99f, intent = intent, consumedTokens = consumedTokens,

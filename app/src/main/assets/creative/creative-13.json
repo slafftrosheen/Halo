@@ -1,0 +1,42 @@
+{
+ "version": 13,
+ "canvas": {
+  "starts": ["BLANK", "MIND_MAP", "MOODBOARD", "COMPARE"],
+  "verbs": {"WRITE": ["TEXT", "NOTE", "STICKY"], "DRAW": ["SKETCH", "INK_SELECTION"], "PICTURE": ["IMAGE", "FILE"], "SHAPE": ["SHAPE", "FRAME"], "CONNECT": ["edges"]},
+  "longPress": ["GROUP", "TAG", "COMMENT"],
+  "depth": {"SIMPLE": ["WRITE", "DRAW", "PICTURE"], "STANDARD": ["WRITE", "DRAW", "PICTURE", "SHAPE", "CONNECT", "TIDY_UP", "FIND"], "PRO": ["*", "FRAMES", "REVIEW_PINS", "IMAGE_TOOLS", "PDF_PAGES", "MINIMAP"]},
+  "tidyUp": {"minLooseCards": 6, "maxOffersPerBoardPerDay": 1, "previewFirst": true, "oneUndoStep": true}
+ },
+ "drawing": {
+  "perSheetLimits": "InkLimits (256 strokes, 2048 points per stroke, 16384 points)",
+  "prepareNextAt": 0.9, "maxSheets": 32, "calmNoteAt": 24, "continuesEdgeLabel": "continues",
+  "showInkCapacityString": false, "upgradeV1OnFirstEdit": true, "keepOriginalUntilSaved": true,
+  "inNotes": {"blockType": "REFERENCE", "refPrefix": "canvas-sketch:", "hiddenBoardTitle": "Note drawings"},
+  "handwritingToText": {"onDevice": true, "unsureTone": "NEEDS_YOU"}
+ },
+ "studio": {
+  "starts": ["SQUARE", "POSTCARD", "PORTRAIT", "BLANK", "PHOTO"],
+  "toolGroups": ["DRAW", "SHAPES", "TEXT", "PHOTO", "COLOUR"],
+  "smudge": {"engineBatch": 12, "autoApply": true, "undoPerStroke": true},
+  "maxLayers": 32,
+  "depth": {"SIMPLE": ["DRAW", "TEXT", "PHOTO", "COLOUR"], "STANDARD": ["SHAPES", "LAYERS", "SMUDGE", "SYMMETRY"], "PRO": ["PATH_POINTS", "PIXEL_SELECTION", "COMBINE_SHAPES", "DXF", "COLOUR_NUMBERS"]},
+  "kids": {"bigBrushes": true, "fileExport": false, "autoSaveToGallery": true}
+ },
+ "notes": {
+  "bar": ["HEADING", "BULLET_LIST", "CHECKLIST", "DRAWING", "MORE"],
+  "templates": ["BLANK", "SHOPPING", "MEETING", "RECIPE", "DIARY", "CLASS"],
+  "checklistToPlanner": {"previewFirst": true, "linkedBothWays": true},
+  "pro": ["SUGGESTING", "FONTS", "PAGE_SIZE", "PAGE_NUMBERS", "CODE", "PDF"]
+ },
+ "translate": {
+  "languages": ["en", "lv", "pl", "ru", "de", "es", "fr", "uk"],
+  "first": "HOLD_TO_TALK", "modes": ["TALK", "TYPE", "CAMERA", "FACE_TO_FACE"], "phrasebookUnderMore": true,
+  "kids": ["TALK", "CAMERA"], "kidsOnlineLookup": false
+ },
+ "scan": {
+  "capture": "AUTO_WHEN_SHARP",
+  "offers": {"TEXT": ["READ_IT_TO_ME", "TRANSLATE", "SAVE_NOTE", "SAVE_PDF", "COPY_TEXT"], "FORM": ["FILL_FORM", "SIGN", "SAVE_PDF", "READ_IT_TO_ME"], "RECEIPT": ["SAVE_TO_INBOX", "DATE_TO_PLANNER", "SAVE_PDF"], "OBJECT": ["WHAT_IS_THIS"]},
+  "maxOffers": 5, "fixThePage": ["EDGES", "FILTER", "ROTATE"], "formsNeverGuess": true,
+  "kidsObjectNeedsApprovedSource": true
+ }
+}

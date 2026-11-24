@@ -8,6 +8,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -19,10 +21,12 @@ import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.ui.instruments.HaloInstrumentAction
 import com.halo.app.ui.instruments.HaloInstrumentBar
 import com.halo.app.ui.screens.notebook.ToolZoneHeader
+import com.halo.app.ui.theme.v13.Halo13Animation
+import com.halo.app.ui.theme.v13.Halo13Motion
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
-private data class TranslationTurn(val original: String, val translated: String, val language: String)
+private data class TranslationTurn(val original: String, val translated: String, val language: String, val fromFarSide: Boolean)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -35,9 +39,12 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
     var from by rememberSaveable { mutableStateOf("en") }
     var to by rememberSaveable { mutableStateOf("ru") }
     var conversation by rememberSaveable { mutableStateOf(false) }
+    var faceToFace by rememberSaveable { mutableStateOf(false) }
     var sayTurns by rememberSaveable { mutableStateOf(false) }
     var cloudVoice by rememberSaveable { mutableStateOf(false) }
     var translateSpoken by rememberSaveable { mutableStateOf(true) }
+    var voiceSettings by rememberSaveable { mutableStateOf(false) }
+    var historyOpen by rememberSaveable { mutableStateOf(false) }
     var input by remember { mutableStateOf("") }
     var replyInput by remember { mutableStateOf("") }
     var result by remember { mutableStateOf<TranslationTurn?>(null) }
@@ -60,6 +67,7 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
         from = source
         to = target
         result = null
+        turns = emptyList()
         savedId = null
         installed = null
         checked++
@@ -92,7 +100,7 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
             val family = requireAdultToolkit(context)
             val output = translateScanLines(listOf(HaloScanLine(original, null, 0)), source, target, download = false).single().text
             requireAdultToolkit(context, family)
-            val turn = TranslationTurn(original, output, target)
+            val turn = TranslationTurn(original, output, target, reverse)
             result = turn
             savedId = null
             if (isConversation) {
@@ -119,7 +127,11 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                 "translate.camera" to HaloInstrumentAction({
                     onOpen("scan?translate=true&from=${android.net.Uri.encode(from)}&to=${android.net.Uri.encode(to)}")
                 }, !busy),
-                "translate.type" to HaloInstrumentAction({ conversation = false }, !busy, selected = !conversation),
+                "translate.type" to HaloInstrumentAction({
+                    com.halo.app.ui.components.VoiceFieldCancellation.stop()
+                    conversation = false
+                    faceToFace = false
+                }, !busy, selected = !conversation),
                 "translate.offline" to HaloInstrumentAction({ packs = true }, !busy),
                 "translate.phrasebook" to HaloInstrumentAction(openPhrase, !busy),
             ), primary = if (conversation) "translate.talk" else "translate.type")
@@ -129,7 +141,20 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                 TranslateLanguageMenu(to, !busy) { select(from, it) }
             }
             if (conversation) {
-                Text(stringResource(R.string.halo11_translate_turns))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FilterChip(faceToFace, {
+                        com.halo.app.ui.components.VoiceFieldCancellation.stop()
+                        faceToFace = !faceToFace
+                        historyOpen = false
+                    }, enabled = !busy, label = { Text(stringResource(R.string.mk13_face_to_face)) })
+                    TextButton(onClick = { voiceSettings = true }, enabled = !busy) { Text(uiText("Voice")) }
+                    if (faceToFace && turns.isNotEmpty()) TextButton(onClick = { historyOpen = !historyOpen }) {
+                        Text(uiText(if (historyOpen) "Hide history" else "History"))
+                    }
+                }
+            }
+            if (voiceSettings) AlertDialog(onDismissRequest = { voiceSettings = false }, title = { Text(uiText("Voice")) }, text = {
+                Column {
                 com.halo.app.ui.workspace.HaloWorkspaceToggleRow(
                     title = stringResource(R.string.halo11_translate_spoken_turns), checked = translateSpoken,
                     onCheckedChange = { translateSpoken = it })
@@ -139,7 +164,8 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                 if (Graph.powerModeEnabled()) com.halo.app.ui.workspace.HaloWorkspaceToggleRow(
                     title = stringResource(R.string.halo11_translate_cloud_voice), checked = cloudVoice,
                     onCheckedChange = { cloudVoice = it })
-            }
+                }
+            }, confirmButton = { TextButton(onClick = { voiceSettings = false }) { Text(uiText("Done")) } })
             Text(stringResource(when (installed) {
                 true -> R.string.halo11_translate_local
                 false -> R.string.halo11_translate_pack_needed
@@ -148,16 +174,32 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
             if (installed == false) TextButton({ packs = true }, enabled = !busy) { Text(stringResource(R.string.halo11_translate_packs)) }
             val ready = !busy && installed == true
             if (conversation) {
-                TranslationSpeaker(
-                    language = from, value = input, onChange = { input = it }, busy = busy,
-                    canTranslate = ready, onTranslate = { translate(false) },
-                    onSpeech = if (ready && translateSpoken) ({ spoken -> input = spoken.take(4000); translate(false, spoken) }) else null,
-                )
-                TranslationSpeaker(
-                    language = to, value = replyInput, onChange = { replyInput = it }, busy = busy,
-                    canTranslate = ready, onTranslate = { translate(true) },
-                    onSpeech = if (ready && translateSpoken) ({ spoken -> replyInput = spoken.take(4000); translate(true, spoken) }) else null,
-                )
+                val near: @Composable () -> Unit = {
+                    TranslationSpeaker(
+                        language = from, value = input, onChange = { input = it }, busy = busy,
+                        canTranslate = ready, onTranslate = { translate(false) },
+                        onSpeech = if (ready && translateSpoken) ({ spoken -> input = spoken.take(4000); translate(false, spoken) }) else null,
+                        received = if (faceToFace) turns.lastOrNull { it.fromFarSide }?.translated else null,
+                        compact = faceToFace,
+                    )
+                }
+                val far: @Composable () -> Unit = {
+                    TranslationSpeaker(
+                        language = to, value = replyInput, onChange = { replyInput = it }, busy = busy,
+                        canTranslate = ready, onTranslate = { translate(true) },
+                        onSpeech = if (ready && translateSpoken) ({ spoken -> replyInput = spoken.take(4000); translate(true, spoken) }) else null,
+                        received = if (faceToFace) turns.lastOrNull { !it.fromFarSide }?.translated else null,
+                        compact = faceToFace,
+                    )
+                }
+                val privateSpeech = faceToFace || com.halo.app.ui.components.LocalPrivateSpeech.current
+                CompositionLocalProvider(com.halo.app.ui.components.LocalPrivateSpeech provides privateSpeech) {
+                    if (faceToFace) Column(Modifier.fillMaxWidth().height(384.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(Modifier.weight(1f).fillMaxWidth().rotate(180f).clipToBounds().verticalScroll(rememberScrollState())) { far() }
+                        Halo13Animation(Halo13Motion.FACE_TO_FACE, Modifier.fillMaxWidth().height(20.dp))
+                        Column(Modifier.weight(1f).fillMaxWidth().clipToBounds().verticalScroll(rememberScrollState())) { near() }
+                    } else { near(); far() }
+                }
             } else {
                 HaloTextField(input, { input = it.take(4000); result = null; savedId = null }, kind = VoiceFieldKind.TEXT,
                     modifier = Modifier.fillMaxWidth(), enabled = !busy, language = from,
@@ -169,7 +211,7 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
             }
             if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             if (error != 0) Text(stringResource(error), color = MaterialTheme.colorScheme.error)
-            if (latest != null) OutlinedCard(Modifier.fillMaxWidth()) {
+            if (latest != null && (!faceToFace || historyOpen)) OutlinedCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(14.dp)) {
                     SelectionContainer { Text(latest.translated) }
                     FlowRow {
@@ -181,7 +223,7 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
                     HaloReviewedDeviceText(latest.translated, latest.language, enabled = !busy) { currentResult === latest }
                 }
             }
-            if (conversation) for (turn in turns.asReversed().filter { it !== latest }) {
+            if (conversation && (!faceToFace || historyOpen)) for (turn in turns.asReversed().filter { it !== latest }) {
                 ListItem(headlineContent = { Text(turn.translated) }, supportingContent = { Text(turn.original) },
                     trailingContent = { TextButton({ read(turn) }) { Text(stringResource(R.string.halo11_translate_listen)) } })
             }
@@ -214,15 +256,20 @@ internal fun HaloTranslateScreen(onBack: () -> Unit, onOpen: (String) -> Unit) {
 
 @Composable
 private fun TranslationSpeaker(language: String, value: String, onChange: (String) -> Unit, busy: Boolean,
-    canTranslate: Boolean, onTranslate: () -> Unit, onSpeech: ((String) -> Unit)?) {
+    canTranslate: Boolean, onTranslate: () -> Unit, onSpeech: ((String) -> Unit)?,
+    received: String? = null, compact: Boolean = false) {
     val name = uiText(scanLanguages.first { it.code == language }.name)
     OutlinedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            received?.let { SelectionContainer { Text(it, style = MaterialTheme.typography.titleLarge) } }
             HaloTextField(value, { onChange(it.take(4000)) }, kind = VoiceFieldKind.TEXT,
                 modifier = Modifier.fillMaxWidth(), enabled = !busy, language = language,
-                voiceEnabled = !busy, maxChars = 4000, readText = null, minLines = 2, maxLines = 5,
+                voiceEnabled = canTranslate, maxChars = 4000, readText = null, minLines = if (compact) 1 else 2, maxLines = if (compact) 2 else 5,
+                recognitionLanguage = language,
                 onFinalSpeech = onSpeech,
+                holdToTalk = onSpeech != null,
                 label = { Text(stringResource(R.string.halo11_translate_speaker, name)) })
+            if (onSpeech != null) Text(stringResource(R.string.mk13_hold_hint), style = MaterialTheme.typography.bodySmall)
             TextButton(onTranslate, enabled = canTranslate && value.isNotBlank(), modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.halo11_translate_title))
             }
@@ -231,7 +278,7 @@ private fun TranslationSpeaker(language: String, value: String, onChange: (Strin
 }
 
 @Composable
-private fun TranslateLanguageMenu(selected: String, enabled: Boolean, onSelect: (String) -> Unit) {
+internal fun TranslateLanguageMenu(selected: String, enabled: Boolean, onSelect: (String) -> Unit) {
     var menu by remember { mutableStateOf(false) }
     Box {
         OutlinedButton({ menu = true }, enabled = enabled) { Text(uiText(scanLanguages.first { it.code == selected }.name)) }

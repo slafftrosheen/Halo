@@ -34,6 +34,10 @@ internal fun CanvasOrganizationDialog(viewModel: CanvasEditorViewModel, state: C
         text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (stale) Text(stringResource(R.string.canvas_organization_stale), color = MaterialTheme.colorScheme.error)
             else state.notice?.let { Text(uiText(it), color = MaterialTheme.colorScheme.error) }
+            if (!proposal.suggestedByAi && !stale) {
+                com.halo.app.ui.theme.v13.Halo13Animation(com.halo.app.ui.theme.v13.Halo13Motion.TIDY_UP,
+                    Modifier.fillMaxWidth().height(64.dp))
+            }
             Text(uiText("%1\$d source cards · %2\$d groups", proposal.sourceFingerprints.size, proposal.groups.size))
             val arranged = proposal.groups.sumOf { it.memberIds.size }
             Text(uiText("%1\$d cards will move; %2\$d will stay where they are.", arranged, proposal.sourceFingerprints.size - arranged))

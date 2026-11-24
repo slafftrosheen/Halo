@@ -5,6 +5,8 @@ import android.app.TimePickerDialog
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +35,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.room.withTransaction
 import com.halo.app.R
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.everyday.EverydayWriteAuthority
@@ -41,16 +44,21 @@ import com.halo.app.everyday.organizer.OrganizerLink
 import com.halo.app.everyday.organizer.OrganizerTime
 import com.halo.app.everyday.organizer.RepeatFrequency
 import com.halo.app.everyday.organizer.RepeatRule
+import com.halo.app.everyday.organizer.OccurrenceDisposition
+import com.halo.app.everyday.organizer.OccurrenceOverride
+import com.halo.app.everyday.organizer.OrganizerRecurrence
 import com.halo.app.everyday.organizer.StudyExamLesson
 import com.halo.app.everyday.organizer.StudyExamSchedule
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.ui.zone6.Zone6ButtonSheet
 import java.time.LocalDate
+import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.time.format.TextStyle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -61,6 +69,7 @@ internal fun studyExamDates(exam: LocalDate, time: LocalTime, days: Int, now: Zo
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: () -> Unit, onDismiss: () -> Unit,
     onSaved: (String, java.time.Instant) -> Unit) {
@@ -73,6 +82,8 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
     var minuteOfDay by rememberSaveable { mutableIntStateOf(18 * 60) }
     var days by rememberSaveable { mutableIntStateOf(5) }
     var minutes by rememberSaveable { mutableIntStateOf(25) }
+    var restMask by rememberSaveable { mutableIntStateOf(96) }
+    val restDays = DayOfWeek.entries.filter { restMask and (1 shl it.ordinal) != 0 }.toSet()
     var busy by remember { mutableStateOf(false) }
     var issue by remember { mutableIntStateOf(0) }
     var picker by remember { mutableStateOf<android.app.Dialog?>(null) }
@@ -82,7 +93,8 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
 
     val exam = examDay?.let(LocalDate::ofEpochDay)?.takeIf { it.year in 1970..2199 }
     val time = LocalTime.of(minuteOfDay / 60, minuteOfDay % 60)
-    val dates = exam?.let { studyExamDates(it, time, days, now) }.orEmpty()
+    val previewDates = exam?.let { studyExamDates(it, time, days, now) }.orEmpty()
+    val dates = previewDates.filterNot { it.dayOfWeek in restDays }
     val dateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
     val timeFormat = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
     val eventTitle = stringResource(R.string.study_exam_event, title.trim())
@@ -91,7 +103,7 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
     val lessonFallback = stringResource(R.string.study_exam_open_lesson)
     val plan = exam?.let { examDate -> StudyExamSchedule(examDate, course?.lessons.orEmpty().take(50).map {
         StudyExamLesson(it.id, it.goal?.trim()?.take(120)?.takeIf(String::isNotBlank) ?: lessonFallback, it.updatedAtEpochMs)
-    }) }
+    }, restDays, quickReview = true) }
 
     Zone6ButtonSheet(stringResource(R.string.study_exam_plan), onDismiss = { if (!busy) onDismiss() }) {
         Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState())
@@ -138,18 +150,38 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
                 for (count in listOf(3, 5, 7)) FilterChip(days == count, onClick = { days = count; issue = 0 },
                     enabled = !busy, label = { Text(count.toString()) })
             }
+            Text(stringResource(R.string.ln13_test_rest), style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DayOfWeek.entries.forEach { day ->
+                    val rest = day in restDays
+                    FilterChip(rest, onClick = { restMask = restMask xor (1 shl day.ordinal); issue = 0 },
+                        enabled = !busy && (rest || restDays.size < 6),
+                        label = { Text(day.getDisplayName(TextStyle.SHORT, locale)) })
+                }
+            }
             Text(stringResource(R.string.study_rehearsal_session_length), style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (duration in listOf(15, 25, 40)) FilterChip(minutes == duration, onClick = { minutes = duration; issue = 0 },
                     enabled = !busy, label = { Text(duration.toString()) })
             }
+            if (dates.isNotEmpty()) com.halo.app.ui.theme.v13.Halo13Animation(
+                com.halo.app.ui.theme.v13.Halo13Motion.EXAM_PLAN,
+                Modifier.fillMaxWidth().heightIn(min = 48.dp, max = 72.dp),
+            )
             if (dates.isNotEmpty()) Text(stringResource(R.string.study_exam_preview,
                 dateFormat.format(dates.first()), dateFormat.format(dates.last())), style = MaterialTheme.typography.bodyMedium)
             else if (exam != null) Text(stringResource(R.string.study_exam_no_days), style = MaterialTheme.typography.bodyMedium)
-            if (plan != null && course != null) dates.forEachIndexed { index, date ->
-                val assignments = plan.lessonsOn(index, dates.size)
-                if (assignments.isNotEmpty()) Text("${dateFormat.format(date)} · ${assignments.joinToString { it.title }}",
-                    style = MaterialTheme.typography.bodySmall)
+            if (plan != null) previewDates.forEach { date ->
+                val whenLabel = dateFormat.format(date)
+                when {
+                    plan.isRest(date) -> Text("$whenLabel · ${stringResource(R.string.ln13_test_rest)}")
+                    plan.isLight(date) -> Text("$whenLabel · ${stringResource(R.string.ln13_test_light)}")
+                    else -> {
+                        val lessons = plan.lessonsOn(date, previewDates)
+                        Text(if (lessons.isEmpty()) whenLabel else "$whenLabel · ${lessons.joinToString { it.title }}",
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
             if (courseId != null && (course == null || course.lessons.size > 50))
                 Text(stringResource(R.string.study_exam_course_unavailable), style = MaterialTheme.typography.bodySmall)
@@ -158,7 +190,7 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
                 val reviewedPlan = plan ?: return@Button
                 if (busy || dates.isEmpty() || title.isBlank()) return@Button
                 val reviewedNow = ZonedDateTime.now()
-                if (reviewedNow.zone != now.zone || studyExamDates(reviewedPlan.examDate, time, days, reviewedNow) != dates) {
+                if (reviewedNow.zone != now.zone || studyExamDates(reviewedPlan.examDate, time, days, reviewedNow) != previewDates) {
                     now = reviewedNow
                     issue = R.string.study_exam_changed
                     return@Button
@@ -168,14 +200,37 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
                 scope.launch {
                     try {
                         val start = dates.first().atTime(time)
-                        val end = start.atZone(reviewedNow.zone).plusMinutes(minutes.toLong())
+                        val duration = if (dates.size == 1 && reviewedPlan.isLight(dates.first())) minOf(minutes, 10) else minutes
+                        val end = start.atZone(reviewedNow.zone).plusMinutes(duration.toLong())
+                        val span = java.time.temporal.ChronoUnit.DAYS.between(dates.first(), dates.last()).toInt() + 1
+                        val quickReviewText = context.getString(R.string.ln13_test_light)
                         val saved = EverydayWriteAuthority.run(authority) {
                             val references = course?.lessons.orEmpty().flatMap { it.sourceObjectIds }.distinct()
                             require(references.size <= 50)
-                            Graph.organizerUseCases.create(OrganizerKind.EVENT, eventTitle, details = details,
-                                time = OrganizerTime(start, end.toLocalDateTime(), reviewedNow.zone.id, endOffset = end.offset),
-                                repeat = if (dates.size > 1) RepeatRule(RepeatFrequency.DAILY, count = dates.size) else null,
-                                links = references.map { OrganizerLink(it) }, studyExam = reviewedPlan)
+                            Graph.appDatabase.withTransaction {
+                                val anchor = OrganizerTime(start, end.toLocalDateTime(), reviewedNow.zone.id, endOffset = end.offset)
+                                var record = Graph.organizerUseCases.create(OrganizerKind.EVENT, eventTitle,
+                                    details = if (duration != minutes) "$details\n$quickReviewText" else details, time = anchor,
+                                    repeat = if (span > 1) RepeatRule(RepeatFrequency.DAILY, count = span) else null,
+                                    links = references.map { OrganizerLink(it) }, studyExam = reviewedPlan)
+                                if (span > 1) for (slot in OrganizerRecurrence.slots(anchor, record.repeat, reviewedNow.zone).take(span)) {
+                                    val zonedStart = slot.identity.atZone(reviewedNow.zone)
+                                    val day = zonedStart.toLocalDate()
+                                    val edit = when {
+                                        reviewedPlan.isRest(day) -> OccurrenceOverride(record.id, slot.identity, OccurrenceDisposition.CANCELLED)
+                                        reviewedPlan.isLight(day) -> {
+                                            val lightEnd = zonedStart.plusMinutes(minOf(minutes, 10).toLong())
+                                            OccurrenceOverride(record.id, slot.identity, OccurrenceDisposition.REPLACED,
+                                                anchor.copy(start = zonedStart.toLocalDateTime(), end = lightEnd.toLocalDateTime(),
+                                                    startOffset = zonedStart.offset, endOffset = lightEnd.offset),
+                                                replacementDetails = "$details\n$quickReviewText")
+                                        }
+                                        else -> null
+                                    }
+                                    if (edit != null) record = Graph.organizerRepository.saveOverride(edit, record.version)
+                                }
+                                record
+                            }
                         }
                         authority()
                         onSaved(saved.id, requireNotNull(saved.time).instant(reviewedNow.zone))
@@ -185,7 +240,7 @@ internal fun StudyExamPlanSheet(courses: List<HaloStudyCollection>, authority: (
                 }
             }, enabled = !busy && title.isNotBlank() && dates.isNotEmpty() &&
                 (courseId == null || course != null && course.lessons.size <= 50), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.study_exam_save))
+                Text(stringResource(R.string.ln13_to_planner))
             }
         }
     }

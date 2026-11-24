@@ -13,6 +13,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.halo.app.R
 import com.halo.app.language.uiText
+import com.halo.app.ui.canvas.v13.InkSheets
+import com.halo.app.ui.theme.v13.Halo13Animation
+import com.halo.app.ui.theme.v13.Halo13Motion
 import com.halo.sdk.runtime.ink.InkCodec
 import com.halo.sdk.runtime.ink.InkSelectionContext
 
@@ -63,30 +66,81 @@ internal fun CanvasSketchPadDialog(
     onDismiss: () -> Unit,
     editingExisting: Boolean = false,
     secure: Boolean = false,
+    sheetLimit: Int = 1,
+    sheetNumber: Int = 1,
+    recoveredSheets: List<String> = emptyList(),
+    onSheetDraft: (List<String>) -> Unit = {},
+    onSaveSheets: ((List<String>) -> Unit)? = null,
+    saving: Boolean = false,
+    saveFailed: Boolean = false,
 ) {
     // Keep the source stable while the parent receives drafts. Unchanged v1 is saved byte-for-byte.
     val source = remember(initial) { recovery ?: initial }
-    var draft by remember(source) { mutableStateOf(source) }
-    val document = remember(draft) { InkCodec.decode(draft) }
+    var sheets by remember(source) { mutableStateOf(listOf(source) + recoveredSheets) }
+    var sheet by remember(source) { mutableIntStateOf(sheets.lastIndex) }
+    var rollover by remember(source) { mutableIntStateOf(0) }
+    var overview by remember { mutableStateOf(false) }
+    val multiSheet = onSaveSheets != null
+    fun publish(next: List<String>) {
+        sheets = next
+        if (multiSheet) onSheetDraft(next) else onDraft(next.first())
+    }
     LaunchedEffect(Unit) { onSelectionChanged(null) }
     AlertDialog(
         modifier = Modifier.widthIn(max = 880.dp).fillMaxWidth().padding(horizontal = 16.dp),
         properties = DialogProperties(usePlatformDefaultWidth = false,
             securePolicy = if (secure) androidx.compose.ui.window.SecureFlagPolicy.SecureOn else androidx.compose.ui.window.SecureFlagPolicy.Inherit),
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!saving) onDismiss() },
         title = { Text(uiText("Sketch")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                CanvasInkSurface(source, onChanged = { encoded -> onDraft(encoded); draft = encoded },
-                    selectionOwnerId = selectionOwnerId, selectionPageId = selectionPageId, showBrushes = true,
-                    onSelectionChanged = onSelectionChanged, onSaveSelection = onSaveSelection)
+                if (multiSheet) {
+                    Text(stringResource(R.string.mk13_sheet_n, sheetNumber + sheet),
+                        style = MaterialTheme.typography.labelLarge)
+                    if (sheets.size > 1) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { sheet--; onSelectionChanged(null) }, enabled = sheet > 0) { Text(uiText("Previous")) }
+                        TextButton(onClick = { sheet++; onSelectionChanged(null) }, enabled = sheet < sheets.lastIndex) { Text(uiText("Next")) }
+                        TextButton(onClick = { overview = !overview }) { Text(stringResource(R.string.mk13_see_all)) }
+                    }
+                    if (sheetNumber + sheets.size - 1 >= InkSheets.CALM_NOTE_AT)
+                        Text(stringResource(R.string.mk13_sheets_calm), style = MaterialTheme.typography.bodySmall)
+                    if (rollover > 0) key(rollover) {
+                        Halo13Animation(Halo13Motion.SHEET_NEXT, Modifier.fillMaxWidth().height(54.dp))
+                    }
+                }
+                if (overview) {
+                    for (encoded in sheets) CanvasSketchPreview(encoded, Modifier.fillMaxWidth().height(128.dp))
+                } else key(sheet) {
+                    val sheetSource = remember { sheets[sheet] }
+                    CanvasInkSurface(sheetSource, onChanged = { encoded ->
+                        publish(sheets.toMutableList().apply { set(sheet, encoded) })
+                    }, selectionOwnerId = selectionOwnerId.takeIf { sheet == 0 },
+                        selectionPageId = selectionPageId.takeIf { sheet == 0 }, showBrushes = true,
+                        onSelectionChanged = onSelectionChanged, onSaveSelection = onSaveSelection,
+                        continueOnNewSheet = if (multiSheet) ({ encoded ->
+                            if (sheet != sheets.lastIndex || sheets.size >= sheetLimit) false
+                            else {
+                                publish(sheets + encoded)
+                                sheet = sheets.lastIndex
+                                rollover++
+                                true
+                            }
+                        }) else null)
+                }
                 Text(stringResource(R.string.ink_draft_help), style = MaterialTheme.typography.bodySmall)
+                if (saving) LinearProgressIndicator(Modifier.fillMaxWidth())
+                if (saveFailed) Text(stringResource(R.string.ink_draft_rejected), color = MaterialTheme.colorScheme.error)
             }
         },
         confirmButton = {
-            com.halo.app.ui.components.HaloActionButton(onClick = { onSave(draft) },
-                enabled = document != null && (editingExisting || document.strokes.isNotEmpty())) { Text(uiText("Save")) }
+            val documents = remember(sheets) { sheets.map(InkCodec::decode) }
+            com.halo.app.ui.components.HaloActionButton(onClick = {
+                if (onSaveSheets != null) onSaveSheets(sheets.filterIndexed { index, _ ->
+                    index == 0 && editingExisting || documents[index]?.strokes?.isNotEmpty() == true
+                }) else onSave(sheets.first())
+            }, enabled = !saving && documents.all { it != null } &&
+                (editingExisting || documents.any { it?.strokes?.isNotEmpty() == true })) { Text(uiText("Save")) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(uiText("Cancel")) } },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !saving) { Text(uiText("Cancel")) } },
     )
 }

@@ -96,6 +96,8 @@ class HaloLiveWallpaperService : WallpaperService() {
         private var photo: android.graphics.Bitmap? = null
         private var photoLoad: Job? = null
         private var environment = WallpaperEnvironment()
+        private var sky: com.halo.app.wallpaper.v13.SkyState? = null
+        private var skyEnvironment: WallpaperEnvironment? = null
         private var environmentStyle: HaloWallpaper? = null
         private var environmentRead: Job? = null
         private var runtimeAmbient = HaloAmbient.IDLE
@@ -217,7 +219,7 @@ class HaloLiveWallpaperService : WallpaperService() {
                     }
                 } else null
             }
-            val environmentTarget = wall.takeIf { watching && it.usesEnvironment }
+            val environmentTarget = wall.takeIf { watching && (option.followSky || it.usesEnvironment) }
             if (environmentStyle != environmentTarget) {
                 environmentStyle = environmentTarget
                 environmentRead?.cancel()
@@ -243,9 +245,17 @@ class HaloLiveWallpaperService : WallpaperService() {
                     }
                 }
             } else photoStyle = selectedPhoto
-            if (!watching) return
+            if (!watching) {
+                sky = null
+                return
+            }
+            if (!option.followSky) sky = null
+            else if (sky == null || skyEnvironment != environment || motion == HaloLookMotion.FULL || isPreview) {
+                skyEnvironment = environment
+                sky = environment.skyState()
+            }
             interactiveMotion = !wall.nearStill && motion != HaloLookMotion.STILL && !Graph.haloPause.isPaused() &&
-                wallpaperMotionAllowed(this@HaloLiveWallpaperService)
+                (!option.followSky || motion == HaloLookMotion.FULL) && wallpaperMotionAllowed(this@HaloLiveWallpaperService)
             val lockScreen = getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true
             night = option.calmerAtNight && !isPreview &&
                 (lockScreen || wallpaperQuietTime(time))
@@ -291,7 +301,7 @@ class HaloLiveWallpaperService : WallpaperService() {
                     ripples = interactiveMotion, dim = if (night) .25f else 0f,
                     width = viewportWidth.toFloat(), height = canvas.height.toFloat(),
                     environment = environment, photo = photo, ring = photoStyle?.ring ?: WallpaperRing.CENTER,
-                    ambientTime = (elapsed - listeningSince).coerceAtLeast(0f))
+                    ambientTime = (elapsed - listeningSince).coerceAtLeast(0f), sky = sky)
                 canvas.restore()
             } finally {
                 surfaceHolder.unlockCanvasAndPost(canvas)

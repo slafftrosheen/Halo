@@ -140,6 +140,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     onConfigureReadingVoice: (() -> Unit)? = null,
     onOpenCourseLesson: ((String) -> Unit)? = null,
     startingCardId: String? = null,
+    rehearsalFamily: com.halo.app.ui.screens.kids.KidsPreferences? = null,
     onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var presentation by remember(presentationStorage) { mutableStateOf(StudyPresentation.load(presentationStorage)) }
@@ -161,13 +162,18 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
     val acceptedCards = state.practiceItems.filter { it.accepted }
     var showHelp by rememberSaveable(state.session?.id) { mutableStateOf(false) }
     var rehearsalRevision by remember(state.session?.id) { mutableStateOf<Long?>(null) }
-    val rehearsalFamily = com.halo.app.di.ManualDependencyGraph.kidsPreferences
-    val rehearsalKids by rehearsalFamily.enabled.collectAsStateWithLifecycle()
-    val rehearsalReady by rehearsalFamily.loadedState.collectAsStateWithLifecycle()
-    val canRehearse = rehearsalReady && !rehearsalKids && state.sources.any { !it.stale && !it.excerpt.isNullOrBlank() && it.version != null }
-    if (canRehearse) rehearsalRevision?.let { revision ->
+    val canRehearse = if (rehearsalFamily == null) false else {
+        val kids by rehearsalFamily.enabled.collectAsStateWithLifecycle()
+        val ready by rehearsalFamily.loadedState.collectAsStateWithLifecycle()
+        ready && !kids && state.sources.any { !it.stale && !it.excerpt.isNullOrBlank() && it.version != null }
+    }
+    if (canRehearse && rehearsalFamily != null) rehearsalRevision?.let { revision ->
+        val context = androidx.compose.ui.platform.LocalContext.current
         StudyRehearsalSheet(state.sources, allowed = {
-            runCatching { rehearsalFamily.requireAdultAction(revision); com.halo.app.di.ManualDependencyGraph.haloPause.requireActive() }.isSuccess
+            runCatching {
+                rehearsalFamily.requireAdultAction(revision)
+                com.halo.app.privacy.HaloPauseOwner.get(context).requireActive()
+            }.isSuccess
         }, onDismiss = { rehearsalRevision = null })
     }
     var cardQuestion by rememberSaveable { mutableStateOf("") }
@@ -552,7 +558,7 @@ fun StudyScreen(viewModel: StudyViewModel, onOpenSource: (String) -> Unit = {}, 
             }, canRead, working = state.reader?.speaking == true),
             "study.say_it" to com.halo.app.ui.instruments.HaloInstrumentAction(onStartVoiceMode, pageActionsReady),
             "study.oral_rehearsal" to com.halo.app.ui.instruments.HaloInstrumentAction({
-                rehearsalRevision = runCatching { rehearsalFamily.adultActionRevision() }.getOrNull()
+                rehearsalRevision = runCatching { rehearsalFamily?.adultActionRevision() }.getOrNull()
             }, pageActionsReady && canRehearse),
             "study.make_cards" to com.halo.app.ui.instruments.HaloInstrumentAction(viewModel::createPracticeCards,
                 pageActionsReady && state.sources.isNotEmpty(), working = state.isGenerating),
@@ -948,6 +954,9 @@ internal fun StudyReviewQuestionFace(question: String, answer: String? = null) {
             Text(if (answer == null) uiText("Question") else question,
                 style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (answer != null) com.halo.app.ui.theme.v13.Halo13Animation(
+                com.halo.app.ui.theme.v13.Halo13Motion.CARD_FLIP, Modifier.size(52.dp),
+            )
             val face = answer ?: question
             Text(face, style = MaterialTheme.typography.headlineSmall.copy(
                 fontSize = if (face.length > 120) 24.sp else 32.sp,
@@ -1316,20 +1325,27 @@ private fun VerdictChip(verdict: StudyVerdict) {
     val lilac = com.halo.app.ui.theme.brandAccent(false, com.halo.app.ui.theme.HaloAccent.LILAC)
     val color = when (verdict) {
         StudyVerdict.CHECKS_OUT -> MaterialTheme.colorScheme.primaryContainer
-        StudyVerdict.NEEDS_WORK -> lilac.fill
+        StudyVerdict.NEEDS_WORK -> MaterialTheme.colorScheme.tertiaryContainer
+        StudyVerdict.UNVERIFIED -> lilac.fill
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
     val label = when (verdict) {
-        StudyVerdict.CHECKS_OUT -> "You got it"
-        StudyVerdict.NEEDS_WORK -> "Almost"
-        else -> verdict.label
+        StudyVerdict.CHECKS_OUT -> com.halo.app.R.string.ln13_check_ok
+        StudyVerdict.NEEDS_WORK -> com.halo.app.R.string.ln13_check_fix
+        StudyVerdict.INSUFFICIENT_EVIDENCE -> com.halo.app.R.string.ln13_check_cant_tell
+        StudyVerdict.UNVERIFIED -> com.halo.app.R.string.ln13_check_guess
     }
     Surface(shape = com.halo.app.ui.design.HaloShapes.control, color = color) {
         Text(
-            uiText(label),
+            stringResource(label),
             Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = if (verdict == StudyVerdict.NEEDS_WORK) lilac.onFill else MaterialTheme.colorScheme.onSurface,
+            color = when (verdict) {
+                StudyVerdict.CHECKS_OUT -> MaterialTheme.colorScheme.onPrimaryContainer
+                StudyVerdict.NEEDS_WORK -> MaterialTheme.colorScheme.onTertiaryContainer
+                StudyVerdict.UNVERIFIED -> lilac.onFill
+                StudyVerdict.INSUFFICIENT_EVIDENCE -> MaterialTheme.colorScheme.onSurfaceVariant
+            },
         )
     }
 }

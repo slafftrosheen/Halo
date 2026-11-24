@@ -1,6 +1,9 @@
 package com.halo.app.wallpaper
 
 import android.graphics.*
+import com.halo.app.wallpaper.v13.SkyPhase
+import com.halo.app.wallpaper.v13.SkyState
+import com.halo.app.wallpaper.v13.SkyWeather
 import kotlin.math.*
 
 internal enum class WallpaperCollection { LIVELY, CALM, WORLD }
@@ -36,6 +39,7 @@ internal class HaloWallpaperPainter {
         environment: WallpaperEnvironment = WallpaperEnvironment(), photo: Bitmap? = null,
         ring: WallpaperRing = WallpaperRing.CENTER,
         ambientTime: Float = t,
+        sky: SkyState? = null,
     ) {
         if (width <= 0f || height <= 0f) return
         val scale = width / 390f
@@ -47,7 +51,7 @@ internal class HaloWallpaperPainter {
             HaloWallpaper.DRIFT -> drift(c, h, t, accent)
             HaloWallpaper.AURORA -> aurora(c, h, t, accent)
             HaloWallpaper.TIDE -> tide(c, h, t, tod, accent)
-            HaloWallpaper.DAY_ARC -> dayArc(c, h, t, tod, accent)
+            HaloWallpaper.DAY_ARC -> if (sky == null) dayArc(c, h, t, tod, accent) else followSky(c, h, t, sky)
             HaloWallpaper.CONSTELLATION -> constellation(c, h, t, SIGNAL_MINT, st == HaloAmbient.WORKING)
             HaloWallpaper.PAPER -> paper(c, h, t)
             else -> toolkit.paint(c, w, h, t, tod, accent, st, environment, photo, ring)
@@ -117,6 +121,78 @@ internal class HaloWallpaperPainter {
         return 0xFF04021F.toInt() to 0xFF120D4A.toInt()
     }
     private fun mix(a: Int, b: Int, k: Float) = Color.rgb((Color.red(a) * (1 - k) + Color.red(b) * k).toInt(), (Color.green(a) * (1 - k) + Color.green(b) * k).toInt(), (Color.blue(a) * (1 - k) + Color.blue(b) * k).toInt())
+
+    private val skyTops = intArrayOf(0xff060330.toInt(), 0xff332369.toInt(), 0xff5579bc.toInt(),
+        0xff346ab3.toInt(), 0xff574184.toInt(), 0xff241452.toInt())
+    private val skyHorizons = intArrayOf(0xff18114f.toInt(), 0xffffbfaa.toInt(), 0xfff7dfc6.toInt(),
+        0xffcbe9e3.toInt(), 0xffffad79.toInt(), 0xffb77ca0.toInt())
+    private val seasons = intArrayOf(0xffcff0ff.toInt(), 0xffd5ebcd.toInt(), 0xffffedbd.toInt(), 0xffdba186.toInt())
+    private val skyLightsX = floatArrayOf(.82f, .34f, .64f, .79f, .68f, .45f)
+    private val skyLightsY = floatArrayOf(.22f, .61f, .43f, .22f, .53f, .69f)
+    private val skyRidge = Path()
+    private var skyGradientKey: Triple<Int, Int, Float>? = null
+    private var skyGradient: LinearGradient? = null
+
+    private fun followSky(c: Canvas, h: Float, t: Float, sky: SkyState) {
+        val fade = sky.blend * sky.blend * (3 - 2 * sky.blend)
+        val top = mix(skyTops[sky.phase.ordinal], skyTops[sky.next.ordinal], fade)
+        val horizon = mix(mix(skyHorizons[sky.phase.ordinal], skyHorizons[sky.next.ordinal], fade),
+            seasons[sky.season.ordinal], .12f)
+        val atmosphere = when (sky.weather) {
+            SkyWeather.CLEAR -> 0f
+            SkyWeather.CLOUDS -> .16f
+            SkyWeather.RAIN, SkyWeather.SNOW -> .24f
+            SkyWeather.FOG -> .36f
+        }
+        val key = Triple(mix(top, 0xffb0baca.toInt(), atmosphere), horizon, h)
+        if (skyGradientKey != key) {
+            skyGradientKey = key
+            skyGradient = LinearGradient(0f, 0f, 0f, h, key.first, horizon, Shader.TileMode.CLAMP)
+        }
+        p.color = Color.WHITE
+        p.shader = skyGradient
+        c.drawRect(0f, 0f, 390f, h, p)
+        p.shader = null
+        val stars = if (sky.phase == SkyPhase.NIGHT) 1 - fade else if (sky.next == SkyPhase.NIGHT) fade else 0f
+        if (stars > 0f) repeat(35) { index ->
+            p.color = withA(Color.WHITE, stars * (1 - atmosphere) * (.14f + rnd(index) * .36f))
+            c.drawCircle(rnd(index + 40) * 390, rnd(index + 75) * h * .62f, .5f + rnd(index + 2), p)
+        }
+        val phase = sky.phase.ordinal
+        val next = sky.next.ordinal
+        val discX = 390 * (skyLightsX[phase] * (1 - fade) + skyLightsX[next] * fade)
+        val discY = h * (skyLightsY[phase] * (1 - fade) + skyLightsY[next] * fade)
+        val disc = mix(0xffffdf87.toInt(), 0xfff2edff.toInt(), stars)
+        glow(c, discX, discY, 75f, disc, .34f * (1 - atmosphere))
+        p.color = withA(disc, .92f * (1 - atmosphere))
+        c.drawCircle(discX, discY, 14 + 4 * stars, p)
+        p.color = mix(top, 0xff18234b.toInt(), .68f)
+        skyRidge.rewind()
+        skyRidge.moveTo(0f, h * .83f)
+        skyRidge.cubicTo(130f, h * .75f, 256f, h * .71f, 390f, h * .79f)
+        skyRidge.lineTo(390f, h)
+        skyRidge.lineTo(0f, h)
+        skyRidge.close()
+        c.drawPath(skyRidge, p)
+        p.color = mix(top, 0xff08062f.toInt(), .82f)
+        skyRidge.rewind()
+        skyRidge.moveTo(0f, h * .84f)
+        skyRidge.cubicTo(126f, h * .77f, 242f, h * .89f, 390f, h * .94f)
+        skyRidge.lineTo(390f, h)
+        skyRidge.lineTo(0f, h)
+        skyRidge.close()
+        c.drawPath(skyRidge, p)
+        if (atmosphere > 0f) repeat(3) { index ->
+            glow(c, 195 + sin(t * .15f + index) * 100, h * (.40f + index * .14f), 175f, Color.WHITE, atmosphere * .55f)
+        }
+        if (sky.weather == SkyWeather.RAIN || sky.weather == SkyWeather.SNOW) repeat(28) { index ->
+            val y = (rnd(index + 21) * h + t * (if (sky.weather == SkyWeather.RAIN) 28 else 7)) % h
+            val x = rnd(index + 90) * 390
+            p.color = withA(Color.WHITE, .20f)
+            if (sky.weather == SkyWeather.RAIN) c.drawLine(x, y, x - 2, y + 9, p)
+            else c.drawCircle(x, y, 1 + rnd(index), p)
+        }
+    }
 
     private fun tide(c: Canvas, h: Float, t: Float, tod: Float, acc: Int) {
         val (a, b) = sky(tod); p.shader = LinearGradient(0f, 0f, 0f, h, intArrayOf(a, b, b), floatArrayOf(0f, .62f, 1f), Shader.TileMode.CLAMP); c.drawRect(0f, 0f, 390f, h, p); p.shader = null

@@ -126,10 +126,13 @@ fun AppShell(
     val navController = rememberNavController()
     val reducedMotion by rememberReducedMotion()
     val setupStore = ManualDependencyGraph.setupProgress
-    // Only the first un-dismissed launch opens setup. "Save and leave" is durable
-    // across Activity recreation/process death even when all checks remain incomplete.
-    val initialSetupNeeded = remember { setupStore.shouldAutoLaunch() }
-    var setupSession by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(initialSetupNeeded) }
+    val setupContext = LocalContext.current
+    val initialSetupNeeded = remember {
+        @Suppress("DEPRECATION")
+        val install = setupContext.packageManager.getPackageInfo(setupContext.packageName, 0)
+        install.firstInstallTime == install.lastUpdateTime && setupStore.shouldOpenWelcome13()
+    }
+    var setupSession by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val homeViewModel = ManualDependencyGraph.homeViewModel
     // Activity foreground owns voice; route disposal must not end a global session.
     val shellLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
@@ -535,7 +538,8 @@ fun AppShell(
     val editingWorkspace = backStackEntry?.destination?.route?.let {
         it.startsWith("notebook/note/") || it.startsWith("notebook/canvas/") || it.startsWith("notebook/study/") || it.startsWith("studio") || it.startsWith("file_tools")
     } == true
-    val shellOrbVisible = !mini && currentRoute != "guided_setup"
+    val welcomeRoute = com.halo.app.ui.onboarding.v13.HALO13_WELCOME_ROUTE
+    val shellOrbVisible = !mini && currentRoute !in setOf("guided_setup", welcomeRoute)
     var hintDismissed by androidx.compose.runtime.saveable.rememberSaveable {
         androidx.compose.runtime.mutableStateOf(ManualDependencyGraph.storage.getBoolean("interface4_orb_hint_seen", false))
     }
@@ -726,7 +730,12 @@ fun AppShell(
             com.halo.app.ui.components.HaloReadAloudBar(onVoiceSettings = { navigateSafely("settings/voice/output") })
             contextNotice?.let { Text(uiText(it), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall) }
         }
-        if (kidsReady && !kidsMode && homeTab != null) HaloHomeTabs(homeTab, ::navigateSafely)
+        if (kidsReady && !kidsMode && homeTab != null) HaloHomeTabs(homeTab) { route ->
+            val family = ManualDependencyGraph.kidsPreferences
+            if (route != HaloHomeTab.CHAT.route) navigateSafely(route)
+            else if (family.loadedState.value && !family.enabled.value)
+                navController.navigateToPrimary(route, restoreSavedState = false)
+        }
         kidsLoadError?.let { Text(uiText(it), Modifier.padding(16.dp)) }
         if (setupSession && backStackEntry?.destination?.route != "guided_setup") TextButton(onClick = { navigateSafely("guided_setup") }) { Text(uiText("Return to guided setup")) }
         Box(Modifier.weight(1f).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -738,7 +747,7 @@ fun AppShell(
             ) {
             if (!developerRouteBlocked) NavHost(
                 navController = navController,
-                startDestination = if (initialSetupNeeded) "guided_setup" else todayRoute,
+                startDestination = if (initialSetupNeeded && !kidsMode) welcomeRoute else todayRoute,
                 modifier = Modifier.widthIn(max = 1040.dp).fillMaxSize(),
                 enterTransition = { if (reducedMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(com.halo.app.ui.design.HaloMotion.pageEnterMs)) },
                 exitTransition = { if (reducedMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(com.halo.app.ui.design.HaloMotion.pageExitMs)) },
@@ -772,13 +781,20 @@ fun AppShell(
                             }
                         })
                 }
+                composable(welcomeRoute) {
+                    if (!kidsMode) com.halo.app.ui.onboarding.v13.Halo13Welcome(
+                        onBackup = { navigateSafely("storage_backup") },
+                        onFinish = { completed ->
+                            setupStore.finishWelcome13(completed)
+                            navController.navigate(todayRoute) {
+                                popUpTo(welcomeRoute) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                    )
+                }
                 composable("guided_setup") {
-                    LaunchedEffect(Unit) {
-                        setupSession = true
-                        // The welcome wizard is offered once, never imposed on every
-                        // app restart. Its stage remains resumable from Settings.
-                        if (initialSetupNeeded) setupStore.dismissAutomaticLaunch()
-                    }
+                    LaunchedEffect(Unit) { setupSession = true }
                     com.halo.app.ui.onboarding.HaloSetupScreen(setupStore, onOpen = ::navigateSafely, onExit = {
                         setupStore.dismissAutomaticLaunch()
                         setupSession = false
@@ -890,7 +906,7 @@ fun AppShell(
                         onOpenCanvas = { id -> navigateSafely("notebook/canvas/${android.net.Uri.encode(id)}") }, onOpenTool = ::navigateSafely,
                         requestedEntry = requestedKidsEntry, homeworkPhotoTicket = requestedKidsHomeworkPhoto,
                         onRequestedEntryConsumed = { requestedKidsEntry = null; requestedKidsHomeworkPhoto = null })
-                    else Column(Modifier.fillMaxSize()) {
+                    else if (kidsReady) Column(Modifier.fillMaxSize()) {
                         HomeScreen(
                         onOpenCapture = { id -> navigateSafely("notebook/note/${android.net.Uri.encode(id)}") },
                         onDailyAction = { action -> navigateSafely(dailyOwnerRoute(action)) },
@@ -1270,7 +1286,8 @@ fun AppShell(
                                 { id -> navigateSafely("notebook/study/${android.net.Uri.encode(id)}") }
                             } else null,
                             onStartVoiceMode = requestVoiceModeFromSurface, activeTools = ManualDependencyGraph.activeStudyToolsOwner,
-                            startingCardId = entry.arguments?.getString("cardId")) { navController.popBackStack() }
+                            startingCardId = entry.arguments?.getString("cardId"),
+                            rehearsalFamily = ManualDependencyGraph.kidsPreferences) { navController.popBackStack() }
                     }
                 }
 

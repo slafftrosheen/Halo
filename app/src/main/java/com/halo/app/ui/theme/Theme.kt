@@ -7,8 +7,12 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import com.halo.app.ui.theme.v13.LookEngine
+import com.halo.app.ui.theme.v13.Rgb
 
 private val HaloDarkColorScheme = darkColorScheme(
     primary = HaloPrimary,
@@ -88,10 +92,12 @@ private val HaloShapes = Shapes(
 internal fun haloColorScheme(dark: Boolean, palette: HaloPalette): androidx.compose.material3.ColorScheme {
     val base = if (dark) HaloDarkColorScheme else HaloLightColorScheme
     val surfaces = brandSurfaces(dark, palette.tone)
-    val accent = brandAccent(dark, palette.accent)
+    val wallpaper = palette.wallpaperSeed?.let { LookEngine.derive(it.rgb(), surfaces.raised.toArgb().rgb(), dark) }
+    val accent = wallpaper?.let { BrandAccent(it.accent.color(), it.accent.color(), it.onAccent.color()) }
+        ?: brandAccent(dark, palette.accent)
     return base.copy(
         primary = accent.ink,
-        onPrimary = if (dark) accent.onFill else androidx.compose.ui.graphics.Color.White,
+        onPrimary = if (dark || wallpaper != null) accent.onFill else Color.White,
         primaryContainer = accent.fill, onPrimaryContainer = accent.onFill,
         secondary = surfaces.muted, onSecondary = surfaces.background,
         secondaryContainer = surfaces.raised, onSecondaryContainer = surfaces.text,
@@ -107,6 +113,9 @@ internal fun haloColorScheme(dark: Boolean, palette: HaloPalette): androidx.comp
         surfaceTint = androidx.compose.ui.graphics.Color.Transparent,
     )
 }
+
+private fun Int.rgb() = Rgb(this shr 16 and 255, this shr 8 and 255, this and 255)
+private fun Rgb.color() = Color(r, g, b)
 
 @Composable
 fun HaloTheme(
@@ -133,9 +142,10 @@ fun HaloTheme(
         content = {
             val density = androidx.compose.ui.platform.LocalDensity.current
             androidx.compose.runtime.CompositionLocalProvider(
+                LocalHaloDarkTheme provides darkTheme,
                 LocalHaloPalette provides palette,
                 LocalHaloVisualOverride provides visual,
-                LocalHaloAccentInk provides brandAccent(darkTheme, palette.accent).ink,
+                LocalHaloAccentInk provides scheme.primary,
                 androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density,
                     effectiveFontScale(density.fontScale,
                         if (visual.viewMode == HaloViewMode.EASY) maxOf(fontScale, 1.15f) else fontScale)),
@@ -143,6 +153,8 @@ fun HaloTheme(
         }
     )
 }
+
+internal val LocalHaloDarkTheme = androidx.compose.runtime.staticCompositionLocalOf<Boolean?> { null }
 
 /** An app preference may enlarge text, but must never undo the system accessibility setting. */
 internal fun effectiveFontScale(systemScale: Float, requestedScale: Float): Float =

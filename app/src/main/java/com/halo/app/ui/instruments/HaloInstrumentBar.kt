@@ -38,6 +38,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.halo.app.di.ManualDependencyGraph as Graph
 import com.halo.app.language.uiText
+import com.halo.app.ui.adaptive.AdaptiveSurfaceControl
+import com.halo.app.ui.adaptive.rememberAdaptiveSurfaceLayout
+import com.halo.app.ui.adaptive.v13.Block
+import com.halo.app.ui.adaptive.v13.ExperienceLevel
+import com.halo.app.ui.adaptive.v13.Slot
 import com.halo.app.ui.components.HaloTextField
 import com.halo.app.ui.components.VoiceFieldKind
 import com.halo.app.ui.theme.HaloGuidanceAmount
@@ -56,6 +61,24 @@ data class HaloInstrumentAction(
 
 private val lilac = Color(0xFFBDA9F6)
 private val mint = Color(0xFF55D6B2)
+private val adaptiveInstrumentAliases = mapOf(
+    "canvas" to mapOf("draw" to "canvas.pen_highlighter", "brushes" to "canvas.pen_highlighter",
+        "shapes" to "canvas.shape", "layers_peek" to "canvas.layers_panel", "layers_panel" to "canvas.layers_panel"),
+    "studio" to mapOf("adjust" to "studio.fix_the_light_halo", "crop" to "studio.crop", "text" to "studio.text",
+        "layers" to "studio.layers_panel", "selection" to "studio.rectangle_ellipse_select", "fill" to "studio.fill",
+        "menus" to "studio.layers_panel"),
+    "notes" to mapOf("speak" to "notes.dictate", "photo" to "notes.insert_picture", "sketch" to "notes.draw",
+        "lists" to "notes.lists", "links" to "notes.link", "templates" to "notes.templates"),
+    "planner" to mapOf("today_list" to "planner.today_back_next", "add_by_voice" to "planner.add_by_talking",
+        "week" to "planner.views", "leave_by" to "planner.leave_by_time", "month" to "planner.mini_month",
+        "calendars" to "planner.calendars", "tomorrow" to "planner.tomorrow"),
+    "translate" to mapOf("talk" to "translate.talk", "point_camera" to "translate.camera", "type" to "translate.type",
+        "phrasebook" to "translate.phrasebook", "offline_packs" to "translate.offline"),
+    "scan" to mapOf("scan" to "scan.capture", "pages" to "scan.rotate_reorder", "tidy" to "scan.edges",
+        "file_to" to "scan.save_pdf", "ocr_layers" to "scan.found_text"),
+    "study" to mapOf("today_step" to "study.lesson_view", "ask_coach" to "study.hint", "plan" to "study.course_outline",
+        "cards" to "study.flashcards", "short_review" to "study.flashcards"),
+)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -85,20 +108,51 @@ fun HaloInstrumentBar(
     var chosenLevel by rememberSaveable(tool) {
         mutableStateOf(prefs.getString("$tool.level", null))
     }
-    val level = InstrumentLevel.entries.find { it.name == chosenLevel } ?: defaultLevel
-    val shown = usable.filter { it.isVisible(level) }
-    val groups = shown.groupBy { it.group }
+    val loadedFamily by Graph.kidsPreferences.loadedState.collectAsState()
+    val kids by Graph.kidsPreferences.enabled.collectAsState()
+    val layoutLocked = com.halo.app.ui.theme.rememberHaloLayoutLocked()
+    val configuredLevel = if (kids) InstrumentLevel.EASY else InstrumentLevel.entries.find { it.name == chosenLevel } ?: defaultLevel
+    var showAll by rememberSaveable(tool) { mutableStateOf(false) }
+    val level = if (showAll && !kids) InstrumentLevel.PRO else configuredLevel
+    val depthHistory = remember(tool, prefs) { InstrumentDepthHistory(prefs, tool) }
+    var levelOffer by remember(tool) { mutableStateOf<com.halo.app.ui.adaptive.v13.LevelDecision.Offer?>(null) }
+    var why by remember(tool) { mutableStateOf(false) }
+    var disableOffers by rememberSaveable(tool) { mutableStateOf(prefs.getBoolean("$tool.depth.quiet", false)) }
+    val canOffer = loadedFamily && !kids && !layoutLocked && !disableOffers && visual.guidanceAmount != HaloGuidanceAmount.OFF
+    fun assessDepth(advanced: Boolean = false, askedForHelp: Boolean = false) {
+        if (!canOffer) return
+        val today = java.time.LocalDate.now()
+        depthHistory.visit(today, advanced, askedForHelp)
+        if (levelOffer == null) {
+            levelOffer = depthHistory.offer(today, configuredLevel, chosenLevel != null)
+            if (levelOffer != null) depthHistory.shown(today)
+        }
+    }
+    LaunchedEffect(tool, canOffer) {
+        if (canOffer) assessDepth() else levelOffer = null
+    }
     val haptic = LocalHapticFeedback.current
     var openGroup by rememberSaveable(tool) { mutableStateOf<String?>(null) }
+    var toolsOpen by rememberSaveable(tool) { mutableStateOf(false) }
     var help by rememberSaveable(tool) { mutableStateOf(false) }
     var demonstration by rememberSaveable(tool) { mutableStateOf<String?>(null) }
     var query by rememberSaveable(tool) { mutableStateOf("") }
     var target by rememberSaveable(tool) { mutableStateOf<String?>(null) }
+    val experienceLevel = ExperienceLevel.entries[level.ordinal]
+    val slots = usable.map { spec ->
+        Block(spec.id, Slot.TOOLS, primary = spec.id == primary, availableAtLevel = spec.isVisible(level) || spec.id == target)
+    }
+    val layout = rememberAdaptiveSurfaceLayout(tool, slots, adaptiveInstrumentAliases[tool].orEmpty(),
+        experienceLevel, layoutLocked || kids || !loadedFamily,
+        availableTargets = actions.filterValues { it.enabled && !it.working }.keys)
+    val specsById = usable.associateBy(InstrumentSpec::id)
+    val shown = layout.result.visible.mapNotNull { specsById[it.id] }
+    val groups = shown.groupBy { it.group }
+    var levelChanged by remember(tool) { mutableStateOf(false) }
     var tag by remember(tool) { mutableStateOf<String?>(null) }
     var confirmation by remember(tool) { mutableStateOf<String?>(null) }
     var receipt by remember(tool) { mutableStateOf<String?>(null) }
-    var tour by rememberSaveable(tool) { mutableIntStateOf(if (!prefs.getBoolean("$tool.toured", false)
-        && visual.guidanceAmount != HaloGuidanceAmount.OFF) 0 else -1) }
+    var tour by rememberSaveable(tool) { mutableIntStateOf(-1) }
     var nudges by rememberSaveable(tool) { mutableStateOf(prefs.getBoolean("$tool.nudges", true)) }
     var taskActive by rememberSaveable(tool) { mutableStateOf(prefs.getBoolean("$tool.task", false)) }
     var taskChecked by remember(tool) { mutableStateOf(prefs.getStringSet("$tool.steps", null).orEmpty().toSet()) }
@@ -109,13 +163,20 @@ fun HaloInstrumentBar(
         (preferred.mapNotNull { id -> usable.find { it.id == id } } + usable)
             .distinctBy { it.id }.filterNot { it.hardStop }.take(4)
     }
-    val primaryInstrument = usable.firstOrNull { it.id == primary } ?: usable.firstOrNull()
+    val primaryInstrument = specsById[layout.result.primary?.id] ?: shown.firstOrNull() ?: usable.firstOrNull()
 
     fun instrumentName(spec: InstrumentSpec) = if (russian) spec.russianName else spec.name
     fun instrumentDescription(spec: InstrumentSpec) = if (russian) spec.russianDescription else spec.description
     fun selectLevel(value: InstrumentLevel) {
+        if (kids || layoutLocked) return
+        showAll = false
+        levelOffer = null
+        if (configuredLevel == value && chosenLevel == value.name) return
         chosenLevel = value.name
         openGroup = null
+        target = null
+        tag = null
+        levelChanged = true
         prefs.edit().putString("$tool.level", value.name).apply()
     }
     fun finishTour() {
@@ -123,11 +184,12 @@ fun HaloInstrumentBar(
         tour = -1
     }
     fun openHelp() {
+        assessDepth(askedForHelp = true)
         query = ""
+        toolsOpen = false
         help = true
     }
     fun reveal(spec: InstrumentSpec) {
-        if (!spec.isVisible(level)) selectLevel(InstrumentLevel.entries.first(spec::isVisible))
         openGroup = spec.group
         help = false
         target = spec.id
@@ -143,6 +205,8 @@ fun HaloInstrumentBar(
         }
         val shortcutAction = state.keyboardAction
         if (keyEvent != null && shortcutAction != null) shortcutAction(keyEvent) else state.run()
+        toolsOpen = false
+        if (!spec.isVisible(configuredLevel)) assessDepth(advanced = true)
         if (visual.haptics && motion != HaloLookMotion.STILL) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         if (taskActive && task.any { it.id == spec.id }) {
             taskChecked = taskChecked + spec.id
@@ -161,7 +225,7 @@ fun HaloInstrumentBar(
     }
     fun handleShortcut(event: AndroidKeyEvent): Boolean {
         if (help || confirmation != null || event.action != AndroidKeyEvent.ACTION_DOWN || event.repeatCount != 0) return false
-        val spec = shown.firstOrNull {
+        val spec = usable.firstOrNull {
             val state = actionsById[it.id]
             state?.enabled == true && !state.working && it.matchesShortcut(event)
         } ?: return false
@@ -187,30 +251,83 @@ fun HaloInstrumentBar(
 
     val wide = LocalConfiguration.current.screenWidthDp >= 650
     val selectedShape = RoundedCornerShape(18.dp)
-    Column(modifier.fillMaxWidth().onPreviewKeyEvent { handleShortcut(it.nativeKeyEvent) }
+    val adjustedIds = layout.result.applied.map { it.change.blockId }.toSet()
+    val quick = (listOfNotNull(specsById[target]) + shown.filter { it.id in adjustedIds } +
+        listOfNotNull(primaryInstrument) + shown.filter { actions[it.id]?.selected == true } + shown)
+        .distinctBy { it.id }.take(5)
+    Row(modifier.fillMaxWidth().onPreviewKeyEvent { handleShortcut(it.nativeKeyEvent) }, verticalAlignment = Alignment.CenterVertically) {
+        CandidateRow(quick, level, null, actions, toolTint, motion, russian, target,
+            { activate(it) }, { tag = it; toolsOpen = true }, showLabels = level == InstrumentLevel.EASY,
+            modifier = Modifier.weight(1f))
+        TextButton(onClick = { toolsOpen = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(uiText("Tools")) }
+    }
+    if (toolsOpen) ModalBottomSheet(onDismissRequest = { toolsOpen = false }, scrimColor = Color.Black.copy(alpha = .40f)) {
+    Column(Modifier.fillMaxWidth().heightIn(max = 600.dp).verticalScroll(rememberScrollState())
         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .42f), selectedShape)
         .padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
-            InstrumentLevel.entries.forEach { item ->
-                val label = if (russian) when (item) {
-                    InstrumentLevel.EASY -> "Просто"
-                    InstrumentLevel.STANDARD -> "Стандарт"
-                    InstrumentLevel.PRO -> "Профи"
-                } else item.label
-                FilterChip(selected = item == level, onClick = { selectLevel(item) }, label = { Text(label) },
+            if (!kids) InstrumentLevel.entries.forEach { item ->
+                val label = stringResource(when (item) {
+                    InstrumentLevel.EASY -> R.string.f13_depth_simple
+                    InstrumentLevel.STANDARD -> R.string.f13_depth_standard
+                    InstrumentLevel.PRO -> R.string.f13_depth_pro
+                })
+                FilterChip(selected = item == configuredLevel, onClick = { selectLevel(item) }, enabled = !layoutLocked, label = { Text(label) },
                     modifier = Modifier.padding(end = 6.dp))
             }
             TextButton(onClick = ::openHelp) { Text(stringResource(R.string.shell_find_action)) }
         }
+        if (!kids && configuredLevel != InstrumentLevel.PRO && usable.any { !it.isVisible(configuredLevel) }) {
+            TextButton(onClick = { showAll = !showAll }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(if (showAll) R.string.f13_show_less else R.string.f13_show_more))
+            }
+        }
+        val offer = levelOffer
+        if (offer != null && canOffer) {
+            val up = offer.to.ordinal > offer.from.ordinal
+            Text(stringResource(if (up) R.string.f13_offer_up_title else R.string.f13_offer_down_title),
+                style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(if (up) R.string.f13_offer_up_body else R.string.f13_offer_down_body),
+                style = MaterialTheme.typography.bodySmall)
+            Row {
+                TextButton(onClick = { selectLevel(InstrumentLevel.entries[offer.to.ordinal]) }) {
+                    Text(stringResource(R.string.f13_offer_yes))
+                }
+                TextButton(onClick = { levelOffer = null }) { Text(stringResource(R.string.f13_offer_no)) }
+                TextButton(onClick = { why = true }) { Text(stringResource(R.string.f13_why_title)) }
+            }
+            if (why) AlertDialog(onDismissRequest = { why = false },
+                title = { Text(stringResource(R.string.f13_why_title)) },
+                text = { Text(stringResource(if (up) R.string.f13_offer_up_body else R.string.f13_offer_down_body)) },
+                confirmButton = { TextButton(onClick = {
+                    disableOffers = true
+                    prefs.edit().putBoolean("$tool.depth.quiet", true).apply()
+                    levelOffer = null
+                    why = false
+                }) { Text(stringResource(R.string.f13_stop_changing)) } },
+                dismissButton = { TextButton(onClick = { why = false }) { Text(stringResource(android.R.string.cancel)) } })
+        }
 
-        OrderedToolMenus(tool, level == InstrumentLevel.EASY, shown, { it.menu }, { instrumentName(it) },
+        AdaptiveSurfaceControl(layout)
+        val keyboardMenus = tool == "studio" && layout.result.applied.any { it.id == "KEYBOARD:menus" }
+        OrderedToolMenus(tool, level == InstrumentLevel.EASY && !keyboardMenus, shown, { it.menu }, { instrumentName(it) },
             enabled = { actions[it.id]?.let { action -> action.enabled && !action.working } == true },
             onAction = { activate(it) }, onHelp = ::openHelp)
 
         Crossfade(level, animationSpec = HaloInstrumentMotion.spec(HaloInstrumentMotion.CALM, motion), label = "Instrument level") { areaLevel ->
-            CandidateRow(instruments.filter { it.id in actions && it.isVisible(areaLevel) }, areaLevel,
+            CandidateRow(if (areaLevel == level) shown else usable.filter { it.isVisible(areaLevel) || it.id == target }, areaLevel,
                 if (areaLevel == InstrumentLevel.PRO && wide) openGroup else null,
                 actions, toolTint, motion, russian, target, { spec -> activate(spec) }, { tag = it }, showLabels = areaLevel == InstrumentLevel.EASY)
+        }
+        val revealed = usable.firstOrNull { it.id == target && !it.isVisible(level) }
+        if (revealed != null) TextButton(
+            onClick = { activate(revealed) }, enabled = actions[revealed.id]?.let { it.enabled && !it.working } == true,
+            modifier = Modifier.heightIn(min = 48.dp),
+        ) { Text(instrumentName(revealed)) }
+        if (levelChanged) {
+            LaunchedEffect(level) { delay(1200); levelChanged = false }
+            com.halo.app.ui.theme.v13.Halo13Animation(com.halo.app.ui.theme.v13.Halo13Motion.LEVEL_SHIFT,
+                Modifier.fillMaxWidth().height(32.dp))
         }
 
         if (groups.size > 1 && (wide || level != InstrumentLevel.EASY)) {
@@ -257,6 +374,7 @@ fun HaloInstrumentBar(
             }
         }
     }
+    }
 
     if (help) InstrumentHelpSheet(
         tool, usable, actions.keys, russian, query, { query = it },
@@ -265,7 +383,7 @@ fun HaloInstrumentBar(
             taskActive = !taskActive
             prefs.edit().putBoolean("$tool.task", taskActive).apply()
             help = false
-        }, onReplay = { help = false; tour = 0 }, onToggleNudges = {
+        }, onReplay = { help = false; tour = 0; toolsOpen = true }, onToggleNudges = {
             nudges = !nudges
             prefs.edit().putBoolean("$tool.nudges", nudges).apply()
         }, onClose = { help = false }, onReveal = { spec, watch ->
@@ -345,6 +463,10 @@ private fun InstrumentNameTag(spec: InstrumentSpec?, target: String?, actions: M
         val active = target == spec.id
         val name = if (russian) spec.russianName else spec.name
         GuidancePanel {
+            if (expandedHelp) key(spec.id) {
+                com.halo.app.ui.theme.v13.Halo13Animation(com.halo.app.ui.theme.v13.Halo13Motion.EXPLAIN_BLOOM,
+                    Modifier.size(44.dp))
+            }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text((if (active) "↑  " else "") + name, Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
                 val shortcut = spec.shortcut?.let { instrumentShortcutLabel(it, russian) }
@@ -437,6 +559,7 @@ private fun CandidateRow(
     values: List<InstrumentSpec>, level: InstrumentLevel, group: String?, actions: Map<String, HaloInstrumentAction>,
     tint: Color, motion: HaloLookMotion, russian: Boolean, target: String?,
     activate: (InstrumentSpec) -> Unit, showTag: (String) -> Unit, showLabels: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val filtered = if (group == null) values else values.filter { it.group == group }
     val controls = when (level) {
@@ -444,7 +567,7 @@ private fun CandidateRow(
         InstrumentLevel.STANDARD -> if (showLabels) filtered else filtered.take(7) + filtered.drop(7).filter { it.id == target || actions[it.id]?.selected == true }
         InstrumentLevel.PRO -> filtered
     }
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         for (spec in controls) {
             val state = actions[spec.id] ?: continue
             key(spec.id) {
